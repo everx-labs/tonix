@@ -1,7 +1,10 @@
 build
 test
-etc
-bin
+bin/*
 fs
 man
-
+std/*
+etc/*
+system/*/*
+.vscode
+tonos-cli.conf.json
