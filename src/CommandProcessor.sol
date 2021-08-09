@@ -44,7 +44,7 @@ contract CommandProcessor is FSCache, IOptions {
 
         if (_op_network(c)) {
             if (c == ping) out = _ping(flags, args[0], wd);
-//            if (c == account) out = _account(flags, args[0], wd);
+            if (c == account) out = _account(flags, args[0], wd);
         }
 
         if (target != "") {
@@ -273,7 +273,8 @@ contract CommandProcessor is FSCache, IOptions {
                     continue;
             } else {
                 if (etype > 0)
-                    ios.push(IOEventS(etype, to_dir ? t_ino : wd, iop, to_dir ? s : t_path, _inodes[iop].text_data));
+//                    ios.push(IOEventS(etype, to_dir ? t_ino : wd, iop, to_dir ? s : t_path, _inodes[iop].text_data));
+                    ios.push(IOEventS(etype, to_dir ? t_ino : wd, iop, _not_dir(to_dir ? s : t_path), _inodes[iop].text_data));
                 if (c == mv)
                     ios.push(IOEventS(IO_UNLINK, de.parent, op, "", ""));
             }
@@ -319,7 +320,7 @@ contract CommandProcessor is FSCache, IOptions {
         (ino, ) = _lookup_in_dir(s, _init_ids[4]);
     }
 
-    /*function _account(uint flags, string arg, uint16 wd) private view returns (string out) {
+    function _account(uint flags, string arg, uint16 wd) private view returns (string out) {
         if ((flags & _d) == 0) {
 //            uint16 ihosts = _get_etc("hosts");
             (uint16 ihosts, ) = _lookup_in_dir("hosts", _init_ids[4]);
@@ -330,7 +331,7 @@ contract CommandProcessor is FSCache, IOptions {
             out += addr + " : " + accnt + "\n";
 //            out += _hosts(ihosts);
         }
-    }*/
+    }
 
     /********************** File system read commands *************************/
     function _cmp(uint flags, string[] args, uint16 wd) private view returns (string out, string err) {

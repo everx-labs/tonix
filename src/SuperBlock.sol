@@ -127,7 +127,7 @@ contract SuperBlock is Base, SyncFS {
     }
 
     function init3() external accept view {
-        INodeS[] etc_files = _files(["exports", "fstab", "group", "hostname", "hosts", "magic", "motd", "passwd", "shadow"],
+        INodeS[] etc_files = _files("/etc", ["exports", "fstab", "group", "hostname", "hosts", "magic", "motd", "passwd", "shadow"],
         ["/etc\n", "rootfs\t/\text4\t\t0\t1\n", "root\t0\nboris\t1000\n", format("{}\n", address(this)), "0:2f6e387ac062b790697109194e98617e7237c5edb436e09e6339089de80c7234\tCommandProcessor\n0:d6b7400b6aa477d01be6e4cd9ef0f86bc438f2cdb8446539096f65b9bda0364c\tStat\n0:439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb\tDataVolume\n0:68c00d417291837826ed9e7aa451d40629dde6d7cf8bcc4fec63cc0978d08205\tSuperBlock\n0:41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5\tBlockDevice\n0:ae0333bad53398ec089f0505b8b99fcdc12b25a96d8aa475eda0d8988640ff6f\tInputParser\n0:6e14e41808289276817c94383b5943c25fc3c813e281dca00af152ebd94fdf61\tOptions\n",
         "11\n", "Welcome to Tonix.\nType \"help\" to get a list of commands.\n\"man <COMMAND>\" or \"help <COMMAND>\" sometimes might be helpful.\nSome options for certain commands work as well.\nFeel free to navigate a pre-made file system using intuitive commands.\nPath resolution does not work yet, one step at a time please.\nYour feedback is highly appreciated!\nHave fun :)\n",
         "root\t0\t0\troot\t/root\nboris\t1000\t1000\t/home/boris", ""]);

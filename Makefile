@@ -50,47 +50,55 @@ $(BLD)/%.deployed: $(BLD)/%.shift $(BLD)/%.tvc $(BLD)/%.abi.json $(RKEYS) $(BLD)
 $(BLD)/%.stateInit: $(BLD)/%.tvc
 	$(BASE64) $< >$@
 
+define t-addr
+$$(eval $1_a!=grep $1 etc/hosts | cut -f 1)
+$(SYS)/$1/upgrade.args: $(BLD)/$1.stateInit
+	$$(file >$$@,$$(call _args,c,$$(file <$$<)))
+endef
+
+$(foreach c,$(TA),$(eval $(call t-addr,$c)))
+
 define t-call
-$(SYS)/$1/$2.res: $(SYS)/$1/address $(BLD)/$1.abi.json $(SYS)/$1/$2.args
-	$(TOC) call $$(file <$$<) --abi $$(word 2,$$^) $2 $$(word 3,$$^) >$$@
+$(SYS)/$1/$2.res: $(SYS)/$1/$2.args
+	$(TOC) call $$($1_a) --abi $(BLD)/$1.abi.json $2 $$(word 1,$$^) >$$@
 endef
 
 define t-run
-$(SYS)/$1/$2.out: $(SYS)/$1/address $(BLD)/$1.abi.json $(SYS)/$1/$2.args
-	$(TOC) -j run $$(file <$$<) --abi $$(word 2,$$^) $2 $$(word 3,$$^) >$$@
+$(SYS)/$1/$2.out: $(SYS)/$1/$2.args
+	$(TOC) -j run $$($1_a) --abi $(BLD)/$1.abi.json $2 $$(word 1,$$^) >$$@
 endef
 
-$(SYS)/%/upgrade.args: $(BLD)/%.stateInit
-	$(file >$@,$(call _args,c,$(file <$<)))
+#$(SYS)/%/upgrade.args: $(BLD)/%.stateInit
+#	$(file >$@,$(call _args,c,$(file <$<)))
 
-$(SYS)/$I/upgrade.args: $(BLD)/$I.stateInit
-	$(file >$@,$(call _args,c,$(file <$<)))
-$(SYS)/$C/upgrade.args: $(BLD)/$C.stateInit
-	$(file >$@,$(call _args,c,$(file <$<)))
-$(SYS)/$O/upgrade.args: $(BLD)/$O.stateInit
-	$(file >$@,$(call _args,c,$(file <$<)))
-$(SYS)/$F/upgrade.args: $(BLD)/$F.stateInit
-	$(file >$@,$(call _args,c,$(file <$<)))
-$(SYS)/$S/upgrade.args: $(BLD)/$S.stateInit
-	$(file >$@,$(call _args,c,$(file <$<)))
+#$(SYS)/$I/upgrade.args: $(BLD)/$I.stateInit
+#	$(file >$@,$(call _args,c,$(file <$<)))
+#$(SYS)/$C/upgrade.args: $(BLD)/$C.stateInit
+#	$(file >$@,$(call _args,c,$(file <$<)))
+#$(SYS)/$O/upgrade.args: $(BLD)/$O.stateInit
+#	$(file >$@,$(call _args,c,$(file <$<)))
+#$(SYS)/$F/upgrade.args: $(BLD)/$F.stateInit
+#	$(file >$@,$(call _args,c,$(file <$<)))
+#$(SYS)/$S/upgrade.args: $(BLD)/$S.stateInit
+#	$(file >$@,$(call _args,c,$(file <$<)))
 
 _d=init upgrade
-$(foreach b,$D $I $B $C $O $F $S,$(foreach c,$(_d),$(eval $(call t-call,$b,$c))))
+$(foreach b,$(TA),$(foreach c,$(_d),$(eval $(call t-call,$b,$c))))
 
-$(STD)/read.out: $(STD)/read.args $(SYS)/$B/address $(BLD)/$B.abi.json
-	$(TOC) -j run $(file < $(word 2,$^)) --abi $(word 3,$^) read $< >$@
+$(STD)/read.out: $(STD)/read.args
+	$(TOC) -j run $($B_a) --abi $(BLD)/$B.abi.json read $< >$@
 
-$(STD)/write.res: $(STD)/write.args $(SYS)/$B/address $(BLD)/$B.abi.json
-	$(TOC) call $(file < $(word 2,$^)) --abi $(word 3,$^) put $< >$@
+$(STD)/write.res: $(STD)/write.args
+	$(TOC) call $($B_a) --abi $(BLD)/$B.abi.json put $< >$@
 
-$(STD)/parse.out: $(SYS)/$I/address $(BLD)/$I.abi.json $(STD)/parse.args
-	$(TOC) -j run $(file < $<) --abi $(word 2,$^) parse $(word 3,$^) >$@
+$(STD)/parse.out: $(STD)/parse.args
+	$(TOC) -j run $($I_a) --abi $(BLD)/$I.abi.json parse $(word 1,$^) >$@
 	jq -r '.action' < $@ >$(STD)/action
-$(STD)/stat.out: $(SYS)/$F/address $(BLD)/$F.abi.json $(STD)/stat.args
-	$(TOC) -j run $(file < $<) --abi $(word 2,$^) fstat $(word 3,$^) >$@
+$(STD)/stat.out: $(STD)/stat.args
+	$(TOC) -j run $($F_a) --abi $(BLD)/$F.abi.json fstat $(word 1,$^) >$@
 	jq -r '.action' < $@ >$(STD)/action2
-$(STD)/process.out: $(SYS)/$C/address $(BLD)/$C.abi.json $(STD)/process.args
-	$(TOC) -j run $(file < $<) --abi $(word 2,$^) process $(word 3,$^) >$@
+$(STD)/process.out: $(STD)/process.args
+	$(TOC) -j run $($C_a) --abi $(BLD)/$C.abi.json process $(word 1,$^) >$@
 	jq -r '.action' < $@ >$(STD)/action3
 	jq -r '.o_ses.wd' < $@ >$(STD)/wd
 	jq -r '.o_ses' < $@ >$(STD)/session
@@ -115,7 +123,7 @@ pv_$B=$(pv_FSync) _dev _cdata _char_dev
 pv_$D=_exports _command_names _error_text
 pv_$O=_exports
 
-$(foreach c,$C $S $I $B $F $D $O,$(eval $(call t-dump,$c)))
+$(foreach c,$(TA),$(eval $(call t-dump,$c)))
 
 tt: bin/xterm
 	./$<

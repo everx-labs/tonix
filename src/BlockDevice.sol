@@ -118,15 +118,6 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         _init_ids.push(active_user_de);  // 14*/
     }
 
-/*    function init_etc() external accept view {
-        INodeS[] etc_files = _files(["exports", "fstab", "group", "hostname", "hosts", "magic", "motd", "passwd", "shadow"],
-        ["/etc\n", "rootfs\t/\text4\t\t0\t1\n", "root\t0\nboris\t1000\n", format("{}\n", address(this)), "0:72c71b29995fb176b187bf9c57d2750bd7b3a2ab04b355e6b46a3eb59c75cb6a\tCommandProcessor\n0:44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9\tStat\n0:439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb\tDataVolume\n0:68c00d417291837826ed9e7aa451d40629dde6d7cf8bcc4fec63cc0978d08205\tSuperBlock\n0:41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5\tBlockDevice\n0:78a427fb136f940f38df2505d67632120aade8f1af9e3eb68d8d5aceda751823\tInputParser\n0:6e14e41808289276817c94383b5943c25fc3c813e281dca00af152ebd94fdf61\tOptions\n",
-//        "11\n", "Welcome to Tonix.\nType \"help\" to get a list of commands.\n\"man <COMMAND>\" or \"help <COMMAND>\" sometimes might be helpful.\nSome options for certain commands work as well.\nFeel free to navigate a pre-made file system using intuitive commands.\nPath resolution does not work yet, one step at a time please.\nYour feedback is highly appreciated!\nHave fun :)\n",
-        "11\n", "Welcome to Tonix.\nType \"help\" for a list of commands.\nHave fun :)\n",
-        "root\t0\t0\troot\t/root\nboris\t1000\t1000\t/home/boris", ""]);
-        this.import_text_inodes{value: 0.9 ton}(_init_ids[4], etc_files);
-    }*/
-
     function iread(uint16 id) external view returns (string out) {
         out = _inodes[id].text_data;
     }
@@ -255,19 +246,18 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
             }
         }
 
-//        if (pino > 0 && inodes.length > 0) {
         if (pino > 0) {
             ISync(this).add_inodes{value: 0.1 ton}(pino, inodes);
             ISync(_cmd_proc).add_inodes{value: 0.1 ton}(pino, inodes);
             ISync(_fstat).add_inodes{value: 0.1 ton}(pino, inodes);
         }
-//        if (pino_add > 0 && dirents_add.length > 0) {
+
         if (pino_add > 0) {
             ISync(this).add_dirents{value: 0.1 ton}(pino_add, dirents_add);
             ISync(_cmd_proc).add_dirents{value: 0.1 ton}(pino_add, dirents_add);
             ISync(_fstat).add_dirents{value: 0.1 ton}(pino_add, dirents_add);
         }
-//        if (pino_rem > 0 && dirents_rem.length > 0) {
+
         if (pino_rem > 0) {
             ISync(this).rem_dirents{value: 0.1 ton}(pino_rem, dirents_rem);
             ISync(_cmd_proc).rem_dirents{value: 0.1 ton}(pino_rem, dirents_rem);
@@ -322,7 +312,7 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
     }
     function _mkroot() private returns (uint16 ino, uint16 dei) {
         ino = ++_ino_counter;
-        _inodes[ino] = INodeS(DEF_DIR_MODE, SUPER_USER, ROOT_USER_GROUP, 1024, 1, "", "");
+        _inodes[ino] = INodeS(DEF_DIR_MODE, SUPER_USER, ROOT_USER_GROUP, 4, 1, "", "");
         _the_time_is_now(ino);
         dei = _de_counter;
         _de[dei] = DirEntry(ino, ino, ".", FT_DIR);
@@ -332,12 +322,12 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         _de_counter += 2;
     }
 
-    function _mkdir(uint16 owner, uint16 gid, uint16 pino, string filename, string fullpath) private returns (uint16 ino, uint16 dei) {
+    function _mkdir(uint16 owner, uint16 gid, uint16 pino, string file_name, string full_path) private returns (uint16 ino, uint16 dei) {
         ino = ++_ino_counter;
-        _inodes[ino] = INodeS(DEF_DIR_MODE, owner, gid, 1024, 2, filename, fullpath);
+        _inodes[ino] = INodeS(DEF_DIR_MODE, owner, gid, uint32(full_path.byteLength()), 2, file_name, full_path);
         _the_time_is_now(ino);
         dei = _de_counter;
-        _de[dei] = DirEntry(ino, pino, filename, FT_DIR);
+        _de[dei] = DirEntry(ino, pino, file_name, FT_DIR);
         _de[dei + 1] = DirEntry(ino, ino, ".", FT_DIR);
         _de[dei + 2] = DirEntry(pino, ino, "..", FT_DIR);
 
@@ -349,12 +339,12 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         _inodes[pino].n_links++;
     }
 
-    function _mknode(uint16 owner, uint16 gid, uint16 pino, string filename, string text_data) private returns (uint16 ino, uint16 dei) {
+    function _mknode(uint16 owner, uint16 gid, uint16 pino, string file_name, string text_data) private returns (uint16 ino, uint16 dei) {
         ino = ++_ino_counter;
-        _inodes[ino] = INodeS(DEF_FILE_MODE, owner, gid, uint32(text_data.byteLength()), 1, filename, text_data);
+        _inodes[ino] = INodeS(DEF_FILE_MODE, owner, gid, uint32(text_data.byteLength()), 1, file_name, text_data);
         _the_time_is_now(ino);
         dei = ++_de_counter;
-        _de[dei] = DirEntry(ino, pino, filename, FT_REG_FILE);
+        _de[dei] = DirEntry(ino, pino, file_name, FT_REG_FILE);
         _dc[pino].push(dei);
         _inodes[pino].n_links++;
     }
@@ -390,12 +380,18 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         this.init1{value: 1 ton}();
     }
 
-    function init1() external accept {
-        INodeS[] etc_files = _files(["exports", "fstab", "group", "hostname", "hosts", "magic", "motd", "passwd", "shadow"],
-        ["/etc\n", "rootfs\t/\text4\t\t0\t1\n", "root\t0\nboris\t1000\n", format("{}\n", address(this)), "0:72c71b29995fb176b187bf9c57d2750bd7b3a2ab04b355e6b46a3eb59c75cb6a\tCommandProcessor\n0:44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9\tStat\n0:439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb\tDataVolume\n0:68c00d417291837826ed9e7aa451d40629dde6d7cf8bcc4fec63cc0978d08205\tSuperBlock\n0:41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5\tBlockDevice\n0:78a427fb136f940f38df2505d67632120aade8f1af9e3eb68d8d5aceda751823\tInputParser\n0:6e14e41808289276817c94383b5943c25fc3c813e281dca00af152ebd94fdf61\tOptions\n",
-        "11\n", "Welcome to Tonix.\nType \"help\" to get a list of commands.\n\"man <COMMAND>\" or \"help <COMMAND>\" sometimes might be helpful.\nSome options for certain commands work as well.\nFeel free to navigate a pre-made file system using intuitive commands.\nPath resolution does not work yet, one step at a time please.\nYour feedback is highly appreciated!\nHave fun :)\n",
-//        "11\n", "Welcome to Tonix.\nType \"help\" for a list of commands.\nHave fun :)\n",
-        "root\t0\t0\troot\t/root\nboris\t1000\t1000\t/home/boris", ""]);
+    function init1() external view accept {
+        INodeS[] etc_files = _files(
+            ["exports", "fstab", "group", "hostname", "hosts", "magic", "motd", "passwd", "shadow"], [
+            "/etc\n",
+            "rootfs\t/\text4\t\t0\t1\n",
+            "root\t0\nboris\t1000\nguest\t10000\n",
+            format("{}\n", address(this)),
+            "0:72c71b29995fb176b187bf9c57d2750bd7b3a2ab04b355e6b46a3eb59c75cb6a\tCommandProcessor\n0:44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9\tStat\n0:439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb\tDataVolume\n0:68c00d417291837826ed9e7aa451d40629dde6d7cf8bcc4fec63cc0978d08205\tSuperBlock\n0:41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5\tBlockDevice\n0:78a427fb136f940f38df2505d67632120aade8f1af9e3eb68d8d5aceda751823\tInputParser\n0:6e14e41808289276817c94383b5943c25fc3c813e281dca00af152ebd94fdf61\tOptions\n",
+            "11\n",
+            "Welcome to Tonix.\nType \"help\" to get a list of commands.\n\"man <COMMAND>\" or \"help <COMMAND>\" sometimes might be helpful.\nSome options for certain commands work as well.\nFeel free to navigate a pre-made file system using intuitive commands.\nPath resolution does not work yet, one step at a time please.\nYour feedback is highly appreciated!\nHave fun :)\n",
+            "root\t0\t0\troot\t/root\nboris\t1000\t1000\t/home/boris",
+            ""]);
         this.mount_dir{value: 1 ton}(_init_ids[4], etc_files);
         this.init2{value: 1 ton}();
     }

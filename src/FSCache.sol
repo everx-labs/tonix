@@ -61,33 +61,17 @@ abstract contract FSCache is Errors, SyncFS {
     }
 
     function _lookup_in_dir(string path, uint16 dir) internal view returns (uint16, uint16) {
-
         if (_is_special_dir(path))
             return _get_special_dir(path, dir);
-
         string name = path;
         uint16 p = _strchr(path, "/");
-//        uint16 len = uint16(path.byteLength());
         if (p > 0) {
             uint16 q = _strrchr(path, "/");
             if (p == 1) {
-                if (q == 1) {
-                    dir = _init_ids[2];
-                    name = _not_dir(path);
-//                    name = path.substr(1, len - 1);
-                } else {
-                    name = _not_dir(path); //path.substr(q, len - q);
-//                    string dir_name = path.substr(0, q - 2);
-                    string dir_name = _dir(path);
-                    dir = _resolve_abs_path(dir_name);
-                }
+                dir = q == 1 ? _init_ids[2] : _resolve_abs_path(_dir(path));
+                name = _not_dir(path);
             }
         }
-        /*while (p > 0) {
-            string nd = path.substr(0, p - 1);
-            string tail = path.substr(p, path.byteLength() - nd.byteLength() - 2);
-            p = _strchr(tail, "/");
-        }*/
 
         for (uint16 j: _dc[dir]) {
             if (j == 0) continue;
