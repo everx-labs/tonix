@@ -13,8 +13,9 @@ I:=InputParser
 C:=CommandProcessor
 O:=Options
 S:=SuperBlock
+R:=FileReader
 INIT:=$T
-TA:=$D $F $B $I $C $O $S
+TA:=$D $F $B $I $C $O $S $R
 #TA:=$S $T
 RKEYS:=$(KEY)/k1.keys
 VAL0:=15
@@ -52,35 +53,21 @@ $(BLD)/%.stateInit: $(BLD)/%.tvc
 
 define t-addr
 $$(eval $1_a!=grep $1 etc/hosts | cut -f 1)
-$(SYS)/$1/upgrade.args: $(BLD)/$1.stateInit
+$(STD)/$1/upgrade.args: $(BLD)/$1.stateInit
 	$$(file >$$@,$$(call _args,c,$$(file <$$<)))
 endef
 
 $(foreach c,$(TA),$(eval $(call t-addr,$c)))
 
 define t-call
-$(SYS)/$1/$2.res: $(SYS)/$1/$2.args
+$(STD)/$1/$2.res: $(STD)/$1/$2.args
 	$(TOC) call $$($1_a) --abi $(BLD)/$1.abi.json $2 $$(word 1,$$^) >$$@
 endef
 
 define t-run
-$(SYS)/$1/$2.out: $(SYS)/$1/$2.args
-	$(TOC) -j run $$($1_a) --abi $(BLD)/$1.abi.json $2 $$(word 1,$$^) >$$@
+$(STD)/$1/$2.out:
+	$(TOC) -j run $$($1_a) --abi $(BLD)/$1.abi.json $2 {} >$$@
 endef
-
-#$(SYS)/%/upgrade.args: $(BLD)/%.stateInit
-#	$(file >$@,$(call _args,c,$(file <$<)))
-
-#$(SYS)/$I/upgrade.args: $(BLD)/$I.stateInit
-#	$(file >$@,$(call _args,c,$(file <$<)))
-#$(SYS)/$C/upgrade.args: $(BLD)/$C.stateInit
-#	$(file >$@,$(call _args,c,$(file <$<)))
-#$(SYS)/$O/upgrade.args: $(BLD)/$O.stateInit
-#	$(file >$@,$(call _args,c,$(file <$<)))
-#$(SYS)/$F/upgrade.args: $(BLD)/$F.stateInit
-#	$(file >$@,$(call _args,c,$(file <$<)))
-#$(SYS)/$S/upgrade.args: $(BLD)/$S.stateInit
-#	$(file >$@,$(call _args,c,$(file <$<)))
 
 _d=init upgrade
 $(foreach b,$(TA),$(foreach c,$(_d),$(eval $(call t-call,$b,$c))))
@@ -100,24 +87,23 @@ $(STD)/stat.out: $(STD)/stat.args
 $(STD)/process.out: $(STD)/process.args
 	$(TOC) -j run $($C_a) --abi $(BLD)/$C.abi.json process $(word 1,$^) >$@
 	jq -r '.action' < $@ >$(STD)/action3
-	jq -r '.o_ses.wd' < $@ >$(STD)/wd
-	jq -r '.o_ses' < $@ >$(STD)/session
 
-u_%: $(SYS)/%/upgrade.res
-	echo $^
-i_%: $(SYS)/%/init.res
-	echo $^
+u_%: $(STD)/%/upgrade.args
+	$(TOC) call $($*_a) --abi $(BLD)/$*.abi.json upgrade $(word 1,$^)
+i_%:
+	$(TOC) call $($*_a) --abi $(BLD)/$*.abi.json init {}
 
 define t-dump
 $$(foreach r,$$(pv_$1),$$(eval $$(call t-run,$1,$$r)))
 
-d_$1: $$(patsubst %,$(SYS)/$1/%.out,$$(pv_$1))
+d_$1: $$(patsubst %,$(STD)/$1/%.out,$$(pv_$1))
 	jq -r '.' <$$<
 endef
-pv_FSync:=_init_ids _inodes _ugroups _users  _dc _de
+pv_FSync:=_init_ids _inodes _ugroups _users  _dc
 pv_$C=$(pv_FSync)
 pv_$F=$(pv_FSync)
 pv_$S=$(pv_FSync)
+pv_$R=$(pv_FSync)
 pv_$I=$(pv_FSync) _command_names
 pv_$B=$(pv_FSync) _dev _cdata _char_dev
 pv_$D=_exports _command_names _error_text

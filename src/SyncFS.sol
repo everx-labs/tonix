@@ -4,11 +4,11 @@ import "Commands.sol";
 import "ISync.sol";
 import "IBlockDevice.sol";
 import "INode.sol";
+import "String.sol";
 
-abstract contract SyncFS is Commands, ISync, INode {
+abstract contract SyncFS is String, Commands, ISync, INode {
     uint16 _user_counter = USERS;
     uint16 _ino_counter = INODES;
-    uint16 _de_counter = DIRENTS;
 
     uint16[] public _init_ids;
 
@@ -16,7 +16,6 @@ abstract contract SyncFS is Commands, ISync, INode {
     mapping (uint16 => INodeTimeS) public _ino_ts;
     mapping (uint16 => UserGroup) public _ugroups;
     mapping (uint16 => User) public _users;
-    mapping (uint16 => DirEntry) public _de;
     mapping (uint16 => uint16[]) public _dc;
 
     uint8 constant IO_WR_NEW        = 1;
@@ -65,56 +64,16 @@ abstract contract SyncFS is Commands, ISync, INode {
     uint8 constant INO_STORE    = 11;
     uint8 constant INO_OTHER    = 12;
 
-    /*function deploy_inodes(uint16 ino_counter, uint16 pino, mapping (uint16 => INode) inodes, mapping (uint16 => INodeTime) ino_ts) external override accept {
-        for ((uint16 i, INode inode): inodes) {
-            if ((inode.mode & S_IFMT) == S_IFDIR)
-                _expand_inode_dir(pino, i, inode);
-        }
-        for ((uint16 i, INodeTime ino_t): ino_ts)
-            _ino_ts[i] = ino_t;
-        _ino_counter = ino_counter;
-    }*/
-
-
     function _expand_inode_dir(uint16 pino, uint16 ino, INodeS inode) internal {
+        inode.text_data = _get_dots(ino, pino);
         _inodes[ino] = inode;
-        _expand_dir_inode_dirents(pino, ino, _de_counter, inode.file_name);
-        _de_counter += 3;
-        _the_time_is_now(ino);
+        _ino_ts[ino] = _the_time_is_now();
         _inodes[pino].n_links++;
-    }
-    function _expand_inode_reg(uint16 pino, uint16 ino, INodeS inode) internal {
-        _inodes[ino] = inode;
-        _expand_reg_inode_dirent(pino, ino, _de_counter++, inode.file_name);
-        _the_time_is_now(ino);
-        _inodes[pino].n_links++;
+        _inodes[pino].text_data.append(_write_de(ino, inode.file_name, FT_DIR));
     }
 
-    function _expand_dir_inode_dirents(uint16 pino, uint16 i, uint16 dei, string file_name) internal {
-        (DirEntry de, DirEntry dot, DirEntry dotdot) = _get_dirents(pino, i, file_name);
-        _de[dei] = de;
-        _de[dei + 1] = dot;
-        _de[dei + 2] = dotdot;
-        _dc[pino].push(dei);
-        _dc[i].push(dei + 1);
-        _dc[i].push(dei + 2);
-    }
-    function _expand_reg_inode_dirent(uint16 pino, uint16 i, uint16 dei, string file_name) internal {
-        _de[dei] = _get_dirent(pino, i, file_name);
-        _dc[pino].push(dei);
-    }
-    function _the_time_is_now(uint16 ino) internal {
-        _ino_ts[ino] = INodeTimeS(now, now, now);
-    }
-
-    function _get_dirents(uint16 pino, uint16 ino, string name) internal pure returns (DirEntry de, DirEntry dot, DirEntry dotdot) {
-        de = DirEntry(ino, pino, name, FT_DIR);
-        dot = DirEntry(ino, ino, ".", FT_DIR);
-        dotdot = DirEntry(pino, ino, "..", FT_DIR);
-    }
-
-    function _get_dirent(uint16 pino, uint16 ino, string name) internal pure returns (DirEntry de) {
-        de = DirEntry(ino, pino, name, FT_REG_FILE);
+    function _the_time_is_now() internal pure returns (INodeTimeS) {
+        return INodeTimeS(now, now, now);
     }
 
     function _is_reg(uint16 id) internal view returns (bool) {
@@ -129,19 +88,13 @@ abstract contract SyncFS is Commands, ISync, INode {
         return _inodes.exists(id) && _mode_is_symlink(_inodes[id].mode);
     }
 
-    function update_users(uint16[] init_ids, mapping (uint16 => UserGroup) ugroups, mapping (uint16 => User) users, uint16 ino_counter, uint16 de_counter) external override accept {
+    function update_users(uint16[] init_ids, mapping (uint16 => UserGroup) ugroups, mapping (uint16 => User) users, uint16 ino_counter) external override accept {
         _init_ids = init_ids;
         _ino_counter = ino_counter;
-        _de_counter = de_counter;
         for ((uint16 i, UserGroup ug): ugroups)
             _ugroups[i] = ug;
         for ((uint16 i, User u): users)
             _users[i] = u;
-    }
-
-    function update_dirents(mapping (uint16 => DirEntry) dirents) external override accept {
-        for ((uint16 i, DirEntry de): dirents)
-            _de[i] = de;
     }
 
     function update_children(mapping (uint16 => uint16[]) children) external override accept {
@@ -156,25 +109,19 @@ abstract contract SyncFS is Commands, ISync, INode {
             _ino_ts[i] = ino_t;
     }
 
-    function add_dirents(uint16 pino, DirEntry[] add) external override accept {
-        for (DirEntry d: add) {
-            uint16 dei = ++_de_counter;
-            _de[dei] = d;
-            _dc[pino].push(dei);
-            _inodes[pino].n_links++;
-            _inodes[d.inode].n_links++;
+    function update(uint16 pino, INodeS[] inodes) external override accept {
+        for (INodeS i: inodes) {
+            _inodes[pino] = i;
         }
     }
     function rem_dirents(uint16 pino, uint16[] rem) external override accept {
-        INodeTimeS it = INodeTimeS(now, now, now);
+        INodeTimeS it = _the_time_is_now();
         uint16[] pd = _dc[pino];
         for (uint i = 0; i < pd.length; i++) {
             for (uint16 dei: rem) {
                 if (pd[i] == dei) {
                     _dc[pino][i] = 0;
-                    _inodes[_de[dei].inode].n_links--;
                     _inodes[pino].n_links--;
-                    delete _de[dei];
                     if (_inodes[pino].n_links == 0) {
                         delete _inodes[pino];
                         break;
@@ -186,27 +133,21 @@ abstract contract SyncFS is Commands, ISync, INode {
         _ino_ts[pino] = it;
     }
 
-    function add_inodes(uint16 pino, INodeS[] inodes) external override accept {
-        INodeTimeS it = INodeTimeS(now, now, now);
+    function add(uint16 pino, INodeS[] inodes) external override accept {
+        INodeTimeS it = _the_time_is_now();
         for (INodeS i: inodes) {
             uint16 ino = ++_ino_counter;
             uint16 mode = i.mode;
             _inodes[ino] = i;
-            uint16 dei = ++_de_counter;
-            uint8 ft = _mode_is_reg(mode) ? FT_REG_FILE : _mode_is_dir(mode) ? FT_DIR : _mode_is_symlink(mode) ? FT_SYMLINK : FT_UNKNOWN;
-            DirEntry d = DirEntry(ino, pino, i.file_name, ft);
-            _de[dei] = d;
-            _dc[pino].push(dei);
+            uint8 file_type = _mode_is_reg(mode) ? FT_REG_FILE : _mode_is_dir(mode) ? FT_DIR : _mode_is_symlink(mode) ? FT_SYMLINK : FT_UNKNOWN;
             _ino_ts[ino] = it;
+            _inodes[pino] = _add_dir_entry(_inodes[pino], ino, i.file_name, file_type);
 
             if (_mode_is_dir(mode)) {
-                _de[dei + 1] = DirEntry(ino, ino, ".", FT_DIR);
-                _de[dei + 2] = DirEntry(pino, ino, "..", FT_DIR);
-                _dc[ino].push(dei + 1);
-                _dc[ino].push(dei + 2);
-                _de_counter += 2;
+                string dots = _get_dots(ino, pino);
+                _inodes[ino].text_data = dots;
+                _inodes[ino].file_size = uint32(dots.byteLength());
             }
-            _inodes[pino].n_links++;
         }
         _ino_ts[pino] = it;
     }
@@ -222,14 +163,13 @@ abstract contract SyncFS is Commands, ISync, INode {
     }
 
     function import_text_inodes(uint16 pino, INodeS[] inodes) external accept pure {
-        this.add_inodes{value: 1 ton}(pino, inodes);
+        this.add{value: 1 ton}(pino, inodes);
     }
 
     address _bdev;
     function _sync_fs_cache() internal {
         delete _inodes;
         delete _ino_ts;
-        delete _de;
         delete _dc;
         _bdev = address.makeAddrStd(0, 0x41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5);
         IBlockDevice(_bdev).query_fs_cache();

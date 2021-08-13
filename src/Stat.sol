@@ -7,13 +7,9 @@ import "INode.sol";
 contract Stat is IOptions, FSCache {
 
     function fstat(SessionS ses, InputS input) external view returns (Std std, SessionS o_ses, INodeEventS[] ines, IOEventS[] ios, uint16 action) {
-        /* Validate session info: uid, gid and wd */
-        uint16 uid = _users.exists(ses.uid) ? ses.uid : _init_ids[11];
-        uint16 gid = _ugroups.exists(ses.gid) ? ses.gid : _get_group_id(uid);
-        uint16 wd = _inodes.exists(ses.wd) ? ses.wd : _users[uid].home_dir;
+        (uint16 uid, uint16 gid, uint16 wd) = ses.unpack();
         o_ses = SessionS(uid, gid, wd);
         (uint8 c, string[] args, uint flags, string target) = input.unpack();
-//        string in_;
         string out;
         string err;
 
@@ -22,7 +18,7 @@ contract Stat is IOptions, FSCache {
             (out, err) = _stat_ops(c, args, flags, wd);
 
         if (target != "") {
-            (uint16 tgt, ) = _lookup_in_dir(target, wd);
+            (uint16 tgt, ) = _lookup_inode_in_dir(target, wd);
             ios.push(tgt < INODES ? IOEventS(IO_MKFILE, wd, 0, target, out) : IOEventS(IO_WR_APPEND, wd, tgt, target, out));
             out = "";
         }
@@ -35,24 +31,28 @@ contract Stat is IOptions, FSCache {
 
     /* File stat operations common routine */
     function _stat_ops(uint8 c, string[] args, uint flags, uint16 wd) private view returns (string out, string err) {
+        if (c == cksum)
+            return (_cksum(), err);
+
         ErrS[] errors;
         for (string s: args) {
-            (, uint16 op) = _lookup_in_dir(s, wd);
-            if (op >= DIRENTS && _de.exists(op)) {
-                DirEntry de = _de[op];
-                if ((c == cat || c == paste || c == wc) && de.file_type != FT_REG_FILE) {
+            (uint16 ino, uint8 ft) = _lookup_inode_in_dir(s, wd);
+            out.append("WD: \n" + _inodes[wd].text_data);
+            out.append(format(">> Stat lookup: {} {} => {} {} \n", s, wd, ino, ft));
+            if (ino > 0 && _inodes.exists(ino)) {
+
+                if ((c == cat || c == paste || c == wc) && ft == FT_DIR) {
                     errors.push(ErrS(1, _command_reason(c), EISDIR, s));
                     continue;
                 }
-                if (c == cat) out.append(_cat(flags, de));
-                if (c == cksum) out.append(_cksum(de));
-                if (c == df) out.append(_df(de));
-                if (c == du) out.append(_du(flags, de));
-                if (c == file) out.append(_file(flags, s, de));
-                if (c == paste) out.append(_paste(de));
-                if (c == ls) out.append(_ls(flags, de));
-                if (c == stat) out.append(_stat(flags, de));
-                if (c == wc) out.append(_wc(flags, de));
+                if (c == cat) out.append(_cat(flags, ino));
+                if (c == df) out.append(_df(ino));
+                if (c == du) out.append(_du(flags, s, ino));
+                if (c == file) out.append(_file(flags, s, ino, ft));
+                if (c == paste) out.append(_paste(ino));
+                if (c == ls) out.append(_ls(flags, s, ino, ft));
+                if (c == stat) out.append(_stat(flags, s, ino));
+                if (c == wc) out.append(_wc(flags, ino));
             } else
                 errors.push(ErrS(1, _command_reason(c), ENOENT, s));
         }
@@ -61,7 +61,8 @@ contract Stat is IOptions, FSCache {
     }
     /********************** File system read commands *************************/
     // read contents(inode)
-    function _cat(uint flags, DirEntry dirent) private view returns (string out) {
+
+    function _cat(uint flags, uint16 ino) private view returns (string out) {
         bool number_lines = (flags & _n) > 0;
         bool number_nonempty_lines = (flags & _b) > 0;
         bool dollar_at_line_end = (flags & _E + _e + _A) > 0;
@@ -70,9 +71,7 @@ contract Stat is IOptions, FSCache {
         bool show_nonprinting = (flags & _v + _e + _t + _A) > 0;
 
         bool repeated_empty_line = false;
-        INodeS inode = _inodes[dirent.inode];
-        string text = inode.text_data;
-        string[] lines = _get_lines(text);
+        string[] lines = _get_lines(_inodes[ino].text_data);
         for (uint16 i = 0; i < uint16(lines.length); i++) {
             string line = lines[i];
             uint16 len = uint16(line.byteLength());
@@ -97,61 +96,50 @@ contract Stat is IOptions, FSCache {
             }
             out.append(prefix + body + suffix + "\n");
         }
-        return out;
     }
 
-    function _paste(DirEntry dirent) private view returns (string out) {
-        return _inodes[dirent.inode].text_data;
+    function _paste(uint16 inode) private view returns (string out) {
+        return _inodes[inode].text_data;
     }
 
-    function _cksum(DirEntry/* dis*/) private view returns (string out) {
+    function _cksum() private view returns (string out) {
         for ((uint16 i, INodeS ino): _inodes) {
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, string file_name, ) = ino.unpack();
+            (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, string file_name, string text_data) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} SZ {} NL {}\n", i, file_name, mode, owner_id, group_id, file_size, n_links));
-        }
-        for ((uint16 i, DirEntry d): _de) {
-            (uint16 id, uint16 parent, string name,) = d.unpack();
-            out.append(format("D {} INO {} PAR {} {}\n", i, id, parent, name));
-        }
-        for ((uint16 i, uint16[] cc): _dc) {
-            out.append(format("DIR: {}\t{}\t", i, _inodes[i].text_data));
-            for (uint16 c: cc) {
-                if (c == 0) continue;
-                out.append(format("{} {}  ", c, _de[c].name));
-            }
-            out.append("\n");
+            if (_mode_is_dir(mode))
+                out.append("\n" + text_data);
         }
         out.append("\n");
     }
 
-    function _df(DirEntry dirent) private view returns (string out) {
-        out = format("DI {} Inodes: {}\n", dirent.inode, _ino_counter);
+    function _df(uint16 inode) private view returns (string out) {
+        out = format("DI {} Inodes: {}\n", inode, _ino_counter);
     }
 
-    function _count_dir(uint flags, DirEntry dirent) private view returns (uint32[] counts, string[] outs) {
+    function _count_dir(uint flags, string dir_name, uint16 ino) private view returns (uint32[] counts, string[] outs) {
         uint32 cnt;
         bool count_files = (flags & _a) > 0;
         bool include_subdirs = (flags & _S) == 0;
 
-        if (dirent.file_type == FT_DIR) {
-            DirEntry[] des = _read_dir_contents(dirent.inode);
-            for (DirEntry d: des) {
-                (uint32[] cnts, string[] nms) = _count_dir(flags, d);
+        if (_is_dir(ino)) {
+            (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_inodes[ino]);
+            for (uint j = 0; j < inodes.length; j++) {
+                (uint32[] cnts, string[] nms) = _count_dir(flags, names[j], inodes[j]);
                 for (uint i = 0; i < cnts.length; i++) {
-                    if (include_subdirs || d.file_type != FT_DIR)
+                    if (include_subdirs || types[j] != FT_DIR)
                         cnt += cnts[i];
                     counts.push(cnts[i]);
-                    outs.push(dirent.name + "/" + nms[i]);
+                    outs.push(names[j] + "/" + nms[i]);
                 }
             }
         }
-        if (count_files || dirent.file_type != FT_REG_FILE) {
-            counts.push(cnt + _inodes[dirent.inode].file_size);
-            outs.push(dirent.name);
+        if (count_files || _is_reg(ino)) {
+            counts.push(cnt + _inodes[ino].file_size);
+            outs.push(dir_name);
         }
     }
 
-    function _du(uint flags, DirEntry de) private view returns (string out) {
+    function _du(uint flags, string path, uint16 ino) private view returns (string out) {
 
         string line_end = (flags & _0) > 0 ? "\x00" : "\n";
         bool count_files = (flags & _a) > 0;
@@ -161,7 +149,7 @@ contract Stat is IOptions, FSCache {
         if (count_files && summarize)
             return "du: cannot both summarize and show all entries\n";
 
-        (uint32[] counts, string[] outs) = _count_dir(flags, de);
+        (uint32[] counts, string[] outs) = _count_dir(flags, path, ino);
         if (produce_total) {
             counts.push(counts[counts.length - 1]);
             outs.push("total");
@@ -171,9 +159,9 @@ contract Stat is IOptions, FSCache {
             out.append((human_readable ? _human_readable(counts[i]) : format("{}", counts[i])) + format("\t{}{}", outs[i], line_end));
     }
 
-    function _stat(uint flags, DirEntry dirent) private view returns (string out) {
+    function _stat(uint flags, string name, uint16 id) private view returns (string out) {
         bool dereference_links = (flags & _L) > 0;
-        (uint16 id, , string name, uint8 ft) = dirent.unpack();
+        uint8 ft = _is_reg(id) ? FT_REG_FILE : FT_DIR; // also symlink
         if (dereference_links && (ft == FT_SYMLINK))
             id = _get_symlink_target(id);
         (uint32 accessed_at, uint32 modified_at, uint32 last_modified) = _ino_ts[id].unpack();
@@ -187,17 +175,16 @@ contract Stat is IOptions, FSCache {
             id, n_links, mode, _permissions(mode), owner_id, u.name, group_id, ug.name, _ts(accessed_at), _ts(modified_at), _ts(last_modified)));
     }
 
-    function _file(uint flags, string arg, DirEntry dirent) private view returns (string out) {
+    function _file(uint flags, string name, uint16 id, uint8 ft) private view returns (string out) {
         if ((flags & _v) > 0)
             return "version 2.0\n";
         bool brief_mode = (flags & _b) > 0;
         bool dont_pad = (flags & _N) > 0;
         bool add_null = (flags & _0) > 0;
-        (uint16 id, , string name, uint8 ft) = dirent.unpack();
         if (!_inodes.exists(id)) {
             if ((flags & _E) > 0)
                 out = "ERROR: ";
-            return out + "cannot stat" + _quote(arg) + "(No such file or directory)\n";
+            return out + "cannot stat" + _quote(name) + "(No such file or directory)\n";
         }
         uint32 fs = _inodes[id].file_size;
         if (!brief_mode)
@@ -211,50 +198,17 @@ contract Stat is IOptions, FSCache {
         out = _if(out, ft == FT_SYMLINK, "symbolic link") + "\n";
     }
 
-    function _read_dirents(DirEntry dirent, bool recurse, bool skip_dots) private view returns (string out, DirEntry[] dirents) {
-            out.append(dirent.name + ":\n");
-            for (uint16 c: _dc[dirent.inode]) {
-                if (c > 0 && _de.exists(c)) {
-                    DirEntry d = _de[c];
-                    DirEntry[] ds;
-                    string s;
-                    if (d.name == "." || d.name == "..") {
-                        if (skip_dots)
-                            continue;
-                    }
-                    if (!skip_dots || (d.name != "." && d.name != ".."))
-                        (s, ds) = _read_dirents(d, recurse, skip_dots);
-                    out.append(s);
-                    for (DirEntry dc: ds) {
-                        dirents.push(dc);
-                        out.append(dirent.name + "/" + dc.name);
-                    }
-                }
-            }
-//        dirents.push(dirent);
-    }
-
-    function _ls_r(uint /*f*/, DirEntry de) private view returns (string out) {
-        (string s, DirEntry[] des) = _read_dirents(de, true, true);
-        out = s;
-        for (DirEntry c: des) {
-            out.append(c.name + "\n");
-        }
-    }
-
     function _human_readable(uint32 n) private pure returns (string s) {
         if (n < 1024)
             return format("{}", n);
         (uint d, uint m) = math.divmod(n, 1024);
         return (d > 10) ? format("{}K", d) : format("{}.{}K", d, m / 100);
     }
-    function _ls(uint f, DirEntry de) private view returns (string out) {
+    function _ls(uint f, string s, uint16 id, uint8 ft) private view returns (string out) {
 
-        uint16 id = de.inode;
-        uint8 ft = de.file_type;
-        bool recurse = (f & _R) > 0;
-        if (recurse)
-            return _ls_r(f, de);
+//        bool recurse = (f & _R) > 0;
+//        if (recurse)
+//            return _ls_r(f, s, id, ft);
         bool long = (f & _l + _n + _g + _o) > 0;    // any of -l, -n, -g, -o
         bool dots = (f & _a) > 0;
         bool inode = (f & _i) > 0;
@@ -272,20 +226,25 @@ contract Stat is IOptions, FSCache {
         // record separator: newline for long format or -1, comma for -m, tabulation otherwise (should be columns)
         string sp = long || (f & _1) > 0 ? "\n" : (f & _m) > 0 ? ", " : "\t";
 
-        mapping (uint => DirEntry) ds;
-        if (ft == FT_REG_FILE || ft == FT_DIR && ((f & _d) > 0)) ds[_ls_sort_rating(f, id, id, use_ctime, use_atime)] = de;
-        else if (ft == FT_DIR) {
-            DirEntry[] des = _read_dir(id);
-            for (uint16 i = 0; i < uint16(des.length); i++) {
-                DirEntry c = des[i];
-                if (dots || (c.name != "." && c.name != ".."))
-                    ds[_ls_sort_rating(f, i, c.inode, use_ctime, use_atime)] = c;
-            }
+        mapping (uint => uint16) ds;
+        uint16[] inodes;
+        string[] names;
+        uint8[] types;
+        if (ft == FT_REG_FILE || ft == FT_DIR && ((f & _d) > 0)) {
+            inodes.push(id);
+            names.push(s);
+            types.push(ft);
+            ds[_ls_sort_rating(f, id, use_ctime, use_atime)] = 0;
+        } else if (ft == FT_DIR) {
+            (inodes, names, types) = _get_dir_contents(_inodes[id]);
+            for (uint16 j = 0; j < inodes.length; j++)
+                if (dots || (names[j] != "." && names[j] != ".."))
+                    ds[_ls_sort_rating(f, inodes[j], use_ctime, use_atime)] = j;
         }
-        optional (uint, DirEntry) p = ds.min();
+        optional (uint, uint16) p = ds.min();
         while (p.hasValue()) {
-            (uint xk, DirEntry c) = p.get();
-            (uint16 i, , string name, uint8 ftt) = c.unpack();
+            (uint xk, uint16 j) = p.get();
+            (uint16 i, string name, uint8 ftt) = (inodes[j], names[j], types[j]);
             out = _if(out, inode, format("{:3} ", i));
             if (long) {
                 (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, , ) = _inodes[i].unpack();
@@ -305,19 +264,19 @@ contract Stat is IOptions, FSCache {
         out.append("\n");
     }
 
-    function _ls_sort_rating(uint f, uint16 cde, uint16 id, bool use_ctime, bool use_atime) private view returns (uint rating) {
+    function _ls_sort_rating(uint f, uint16 id, bool use_ctime, bool use_atime) private view returns (uint rating) {
         (uint32 accessed_at, uint32 modified_at, uint32 last_modified) = _ino_ts[id].unpack();
         if ((f & _t) > 0)
             rating = use_atime ? accessed_at : use_ctime ? modified_at : last_modified;
         if ((f & _U + _f) > 0) rating = 0;
         if ((f & _S) > 0) rating = 0xFFFFFFFF - _inodes[id].file_size;
-        rating = (rating << 32) + cde;
+        rating = (rating << 32) + id;
         if ((f & _r) > 0)
             rating = 0xFFFFFFFFFFFFFFFF - rating;
     }
 
-    function _wc(uint flags, DirEntry dirent) private view returns (string out) {
-        INodeS inode = _inodes[dirent.inode];
+    function _wc(uint flags, uint16 ino) private view returns (string out) {
+        INodeS inode = _inodes[ino];
         bool print_bytes = true;
         bool print_chars = false;
         bool print_lines = true;
@@ -340,83 +299,46 @@ contract Stat is IOptions, FSCache {
         out = _if(out, print_chars, format(" {} ", cc));
         out = _if(out, print_max_width, format(" {} ", mw));
         out.append(file_name + "\n");
-        return out;
     }
 
     /******* Helpers ******************/
-    function _read_dir(uint16 dir) private view returns (DirEntry[] dirents) {
-        for (uint16 c: _dc[dir]) {
-            if (c == 0) continue;
-            dirents.push(_de[c]);
-        }
-    }
-
-    function _read_dir_contents(uint16 dir) private view returns (DirEntry[] dirents) {
-        for (uint16 c: _dc[dir]) {
-            if (c > 0 && _de.exists(c)) {
-                DirEntry d = _de[c];
-                if (d.name != "." && d.name != "..")
-                    dirents.push(d);
-            }
-        }
-    }
-
-    function _recurse(DirEntry dirent) private view returns (DirEntry[] dirents) {
-        if (dirent.file_type == FT_DIR)
-            for (uint16 c: _dc[dirent.inode]) {
-                if (c > 0 && _de.exists(c)) {
-                    DirEntry d = _de[c];
-                    DirEntry[] ds;
-                    if (d.name != "." && d.name != "..")
-                        ds = _recurse(d);
-                    for (DirEntry dc: ds)
-                        dirents.push(dc);
-                }
-            }
-        dirents.push(dirent);
-    }
-
-    function _print_dir(uint16 dir) private view returns (string s) {
-        for (uint16 c: _dc[dir]) {
-            if (c == 0) continue;
-            (uint16 id, , string name, uint8 ft) = _de[c].unpack();
-            if (ft == FT_REG_FILE) s.append(name + "\n");
-            else if (ft == FT_DIR) s.append(_print_dir(id));
-        }
-    }
-
-    function _ft_sign(uint16 mode) private pure returns (string) {
+    function _ft_sign(uint16 mode) internal pure returns (string) {
         if ((mode & S_IFMT) == S_IFREG) return "-";
         if ((mode & S_IFMT) == S_IFDIR) return "d";
         if ((mode & S_IFMT) == S_IFLNK) return "l";
     }
-    function _ft(uint16 mode) private pure returns (string) {
+
+    function _ft(uint16 mode) internal pure returns (string) {
         if ((mode & S_IFMT) == S_IFREG) return "regular file";
         if ((mode & S_IFMT) == S_IFDIR) return "directory";
         if ((mode & S_IFMT) == S_IFLNK) return "symbolic link";
     }
-    function _permissions(uint16 p) private pure returns (string) {
+
+    function _permissions(uint16 p) internal pure returns (string) {
         return _ft_sign(p) + _p_octet(p >> 6 & 0x0007) + _p_octet(p >> 3 & 0x0007) + _p_octet(p & 0x0007);
     }
 
-    function _p_octet(uint16 p) private pure returns (string out) {
+    function _p_octet(uint16 p) internal pure returns (string out) {
         out = ((p & 4) > 0) ? "r" : "-";
         out.append(((p & 2) > 0) ? "w" : "-");
         out.append(((p & 1) > 0) ? "x" : "-");
     }
 
-    function _ts(uint32 t) private pure returns (string) {
-//        uint32 j1 = 1625097600;
-        uint32 j1 = 1627776000;
-        if (t < j1) return format("past: {}", t);
-        uint32 t0 = t - j1;
-        uint32 d = t0 / 86400;
+    function _to_date(uint32 t) internal pure returns (uint32 ds, uint32 hrs, uint32 mins, uint32 secs) {
+        uint32 start_period = 1627776000; // Aug 1st
+        if (t < start_period) return (0, 0, 0, 0);
+        uint32 t0 = t - start_period;
+        ds = t0 / 86400 + 1;
         uint32 t1 = t0 % 86400;
-        uint32 h = t1 / 3600;
+        hrs = t1 / 3600;
         uint32 t2 = t1 % 3600;
-        uint32 m = t2 / 60;
-        uint32 t3 = t2 % 60;
-        return format("Aug {} {:02}:{:02}:{:02}", d + 1, h, m, t3);
+        mins = t2 / 60;
+        secs = t2 % 60;
+    }
+
+    function _ts(uint32 t) internal pure returns (string) {
+        (uint32 ds, uint32 hrs, uint32 mins, uint32 secs) = _to_date(t);
+        return format("Aug {} {:02}:{:02}:{:02}", ds, hrs, mins, secs);
     }
 
     function init() external override accept {

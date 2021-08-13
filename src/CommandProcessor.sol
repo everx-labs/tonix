@@ -8,10 +8,7 @@ import "INode.sol";
 contract CommandProcessor is FSCache, IOptions {
 
     function process(SessionS ses, InputS input) external view returns (Std std, SessionS o_ses, INodeEventS[] ines, IOEventS[] ios, uint16 action) {
-        /* Validate session info: uid and wd */
-        uint16 uid = _users.exists(ses.uid) ? ses.uid : _init_ids[11];
-        uint16 gid = _ugroups.exists(ses.gid) ? ses.gid : _get_group_id(uid);
-        uint16 wd = _inodes.exists(ses.wd) ? ses.wd : _users[uid].home_dir;
+        (uint16 uid, uint16 gid, uint16 wd) = ses.unpack();
         o_ses = SessionS(uid, gid, wd);
         (uint8 c, string[] args, uint flags, string target) = input.unpack();
         string in_;
@@ -19,11 +16,6 @@ contract CommandProcessor is FSCache, IOptions {
         string err;
 
         ErrS[] errors;
-
-        if (args.length == 0) {
-            if (c == pwd) out = _pwd(flags, wd) + "\n";
-            if (c == whoami) out = _users[uid].name + "\n";
-        }
 
         /* Process related operations in separate subroutines */
         if (_op_access(c))
@@ -35,7 +27,6 @@ contract CommandProcessor is FSCache, IOptions {
         if (c == cp || c == mv || c == ln)
             (out, ios, errors) = _file_ops(c, args, flags, wd);
 
-        if (c == cd) (o_ses.wd, errors) = _cd(flags, args[0], wd);
         if (c == echo) out = _echo(flags, args);
         if (c == dd) out = _dd(args[0]);
         if (c == cmp) (out, err) = _cmp(flags, args, wd);
@@ -48,7 +39,7 @@ contract CommandProcessor is FSCache, IOptions {
         }
 
         if (target != "") {
-            (uint16 tgt, ) = _lookup_in_dir(target, wd);
+            (uint16 tgt, ) = _lookup_inode_in_dir(target, wd);
             ios.push(tgt < INODES ? IOEventS(IO_MKFILE, wd, gid, target, out) : IOEventS(IO_WR_APPEND, tgt, gid, target, out));
             out = "";
         }
@@ -61,25 +52,6 @@ contract CommandProcessor is FSCache, IOptions {
         if (!in_.empty()) action |= PRINT_IN;
         if (!ines.empty()) action |= INODE_EVENT;
         if (!ios.empty()) action |= IO_EVENT;
-    }
-
-    /* Session commands */
-    function _cd(uint flags, string s, uint16 cwd) private view returns (uint16 wd, ErrS[] es) {
-        if (((flags & _e + _P) > 0) && cwd < DIRENTS)
-            es.push(ErrS(1, 0, /*no_such_file_or_dir*/ENOENT, s));
-        wd = cwd;
-        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
-        (uint16 di, ) = follow_symlinks ? _lookup_opnd_deref(s, wd, 1) : _lookup_in_dir(s, wd);
-        if (di < INODES)
-            es.push(ErrS(1, 0, /*no_such_file_or_dir*/ENOENT, s));
-        else
-            wd = di;
-    }
-
-    function _pwd(uint flags, uint16 wd) private view returns (string) {
-        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
-        (uint16 di, ) = follow_symlinks ? _lookup_opnd_deref(_inodes[wd].file_name, wd, 1) : (wd, 0);
-        return _inodes[di].text_data;
     }
 
     /* Access operations common routine */
@@ -115,40 +87,44 @@ contract CommandProcessor is FSCache, IOptions {
             for (string s: args) {
                 if (s == s0)
                     continue;
-                (, uint16 di) = _lookup_in_dir(s, wd);
-                if (di < DIRENTS)
-                    errors.push(ErrS(1, _command_reason(c), di, ""));
+                (uint16 ino, uint8 ft) = _lookup_inode_in_dir(s, wd);
+                if (ino < INODES)
+                    errors.push(ErrS(1, _command_reason(c), ino, ""));
                 else
-                    (ins, errors) = _process_access_op(c, flags, val, _de[di]);
+                    (ins, errors) = _process_access_op(c, flags, val, ino, ft);
             }
         }
     }
 
 //    function _process_access_op(uint8 c, uint flags, uint16 val, uint16[] dis) private view returns (INodeEventS[] ins, ErrS[] errors) {
-    function _process_access_op(uint8 c, uint flags, uint16 val, DirEntry dirent) private view returns (INodeEventS[] ins, ErrS[] errors) {
+    function _process_access_op(uint8 c, uint flags, uint16 val, uint16 ino, uint8 ft) private view returns (INodeEventS[] ins, ErrS[] errors) {
         bool recursive = (flags & _R) > 0;
         /*bool traverse_arg = (flags & _H) > 0;
         bool traverse_all_symlinks = (flags & _L) > 0;
         bool do_not_traverse_symlinks = (flags & _P) > 0;*/
-        uint16 op = dirent.inode;
-        if (op < INODES)
-            errors.push(ErrS(1, _command_reason(c), op, ""));
-        else {
-            if (c == chgrp) ins.push(INodeEventS(INO_CHATTR, op, 0, val, 0));
-            if (c == chmod) ins.push(INodeEventS(INO_PERMISSION, op, val, 0, 0));
-            if (c == chown) ins.push(INodeEventS(INO_CHATTR, op, val, 0, 0));
-            if (recursive && dirent.file_type == FT_DIR) {
-                for (uint16 dc:_dc[op]) {
-                    if (dc > 0 && _de.exists(dc)) {
-                        DirEntry d = _de[dc];
-                        if (d.name == "." || d.name == "..")
-                            continue;
-                        (INodeEventS[] inss, ErrS[] errorss) = _process_access_op(c, flags, val, d);
-                        for (INodeEventS e: inss) ins.push(e);
-                        for (ErrS e: errorss) errors.push(e);
-                    }
-                }
-            }
+//        uint16 op = dirent.inode;
+        if (ino < INODES) {
+            errors.push(ErrS(1, _command_reason(c), ino, ""));
+            return (ins, errors);
+        }
+
+        if (c == chgrp) ins.push(INodeEventS(INO_CHATTR, ino, 0, val, 0));
+        if (c == chmod) ins.push(INodeEventS(INO_PERMISSION, ino, val, 0, 0));
+        if (c == chown) ins.push(INodeEventS(INO_CHATTR, ino, val, 0, 0));
+
+        if (!recursive || ft != FT_DIR)
+            return (ins, errors);
+
+        (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_inodes[ino]);
+
+        for (uint16 j = 0; j < inodes.length; j++) {
+            if (names[j] == "." || names[j] == "..")
+                continue;
+            (INodeEventS[] inss, ErrS[] errorss) = _process_access_op(c, flags, val, inodes[j], types[j]);
+            for (INodeEventS e: inss)
+                ins.push(e);
+            for (ErrS e: errorss)
+                errors.push(e);
         }
     }
 
@@ -156,9 +132,9 @@ contract CommandProcessor is FSCache, IOptions {
         bool verbose = (flags & _v) > 0;
         bool md = c == mkdir;
         for (string s: args) {
-            (uint16 iop, uint16 op) = _lookup_in_dir(s, wd);
-            if (op < DIRENTS)
-                ios.push(IOEventS(md ? IO_MKDIR : IO_MKFILE, wd, 0, s, md ? _pwd(0, wd) + "/" + s : ""));
+            (uint16 iop, ) = _lookup_inode_in_dir(s, wd);
+            if (iop < INODES)
+                ios.push(IOEventS(md ? IO_MKDIR : IO_MKFILE, wd, 0, s, ""));
             else {
                 if (md)
                     errors.push(ErrS(1, _command_reason(c), EEXIST, s));
@@ -170,24 +146,25 @@ contract CommandProcessor is FSCache, IOptions {
             for (IOEventS e: ios)
                 out.append("mkdir: created directory" + _quote(e.path) + "\n");
     }
+
     function _remove_file_ops(uint8 c, string[] args, uint flags, uint16 wd) private view returns (string out, IOEventS[] ios, ErrS[] errors) {
         bool verbose = (flags & _v) > 0;
         bool rf = c == rm;
         for (string s: args) {
-            (, uint16 op) = _lookup_in_dir(s, wd);
-            if (op < DIRENTS)
+            (uint16 iop, uint8 ft) = _lookup_inode_in_dir(s, wd);
+
+            if (iop < INODES)
                 errors.push(ErrS(1, _command_reason(c), ENOENT, s));
             else {
-                (uint16 inode, uint16 parent, string name, uint8 ft) = _de[op].unpack();
                 if (rf) {
                     if (ft != FT_DIR)
-                        ios.push(IOEventS(IO_UNLINK, parent, op, name, ""));
+                        ios.push(IOEventS(IO_UNLINK, wd, iop, s, ""));
                     else
                         errors.push(ErrS(1, _command_reason(c), EISDIR, s));
                 } else {
                     if (ft == FT_DIR) {
-                        if (_dc[inode].length <= 2)
-                            ios.push(IOEventS(IO_UNLINK, parent, op, name, ""));
+                        if (_inodes[iop].file_size <= 10)
+                            ios.push(IOEventS(IO_UNLINK, wd, iop, s, ""));
                         else
                             errors.push(ErrS(1, _command_reason(c), ENOTEMPTY, s));
                     } else
@@ -214,18 +191,15 @@ contract CommandProcessor is FSCache, IOptions {
         bool recurse = (flags & _r + _R) > 0;
 
         uint nargs = args.length;
-        (uint16 t_ino, uint16 t_fop) = _lookup_in_dir(args[to_dir_flag ? 0 : nargs - 1], wd);
-        bool dest_exists = t_fop >= DIRENTS;
-        DirEntry dt;
+        string target = args[to_dir_flag ? 0 : nargs - 1];
+        (uint16 t_ino, uint8 t_ft) = _lookup_inode_in_dir(target, wd);
+        bool dest_exists = t_ino >= INODES;
 
-        if (dest_exists) {
-            dt = _de[t_fop];
-            if (dt.file_type == FT_DIR)
-                to_dir = true;
-        }
+        if (dest_exists && t_ft == FT_DIR)
+            to_dir = true;
 
-        bool collision = dest_exists && dt.file_type == FT_REG_FILE;
-        string t_path = collision ? dt.name : args[to_dir_flag ? 0 : nargs - 1];
+        bool collision = dest_exists && t_ft == FT_REG_FILE;
+        string t_path = collision ? target : args[to_dir_flag ? 0 : nargs - 1];
         bool overwrite_dest = collision && (!preserve || force);
 
         if (collision) {
@@ -251,36 +225,34 @@ contract CommandProcessor is FSCache, IOptions {
 
         for (uint i = first; i < last; i++) {
             string s = args[i];
-            (uint16 iop, uint16 op) = _lookup_in_dir(s, wd);
+            (uint16 iop, uint8 s_ft) = _lookup_inode_in_dir(s, wd);
 
-            if (op < DIRENTS && iop < INODES) {
+            if (iop < INODES) {
                 errors.push(ErrS(1, _command_reason(c), ENOENT, s));
                 return (out, ios, errors);
             }
-            DirEntry de = _de[op];
 
             if (verbose) {
                 if (c == mv) out.append("renamed");
                 out.append(_quote(s) + (c == ln ? "->" : "=>") + _quote(t_path));
             }
 
-            if (de.file_type == FT_DIR && !recurse)
+            if (s_ft == FT_DIR && !recurse)
                 errors.push(ErrS(1, omitting_directory, 0, "-r not specified; omitting directory " + s));
-            else if (to_file_flag && to_dir && de.file_type == FT_REG_FILE)
+            else if (to_file_flag && to_dir && s_ft == FT_REG_FILE)
                 errors.push(ErrS(1, cant_overwrite_dir, 0, "cannot overwrite directory" + _quote(t_path) + "with non-directory"));
             else if (collision && newer_only) {
                 if (_ino_ts[t_ino].modified_at > _ino_ts[iop].modified_at)
                     continue;
             } else {
                 if (etype > 0)
-//                    ios.push(IOEventS(etype, to_dir ? t_ino : wd, iop, to_dir ? s : t_path, _inodes[iop].text_data));
                     ios.push(IOEventS(etype, to_dir ? t_ino : wd, iop, _not_dir(to_dir ? s : t_path), _inodes[iop].text_data));
                 if (c == mv)
-                    ios.push(IOEventS(IO_UNLINK, de.parent, op, "", ""));
+                    ios.push(IOEventS(IO_UNLINK, wd, iop, "", ""));
             }
         }
         if (overwrite_dest && errors.empty())
-            ios.push(IOEventS(IO_UNLINK, dt.parent, t_fop, "", ""));
+            ios.push(IOEventS(IO_UNLINK, wd, t_ino, "", ""));
     }
 
 //    function _read_fstab() private view returns ()
@@ -317,42 +289,52 @@ contract CommandProcessor is FSCache, IOptions {
     }
 
     function _get_etc(string s) private view returns (uint16 ino) {
-        (ino, ) = _lookup_in_dir(s, _init_ids[4]);
+        (ino, ) = _lookup_inode_in_dir(s, _init_ids[4]);
     }
 
-    function _account(uint flags, string arg, uint16 wd) private view returns (string out) {
+    function _account(uint flags, string arg, uint16 /*wd*/) private view returns (string out) {
+        out = arg;
         if ((flags & _d) == 0) {
-//            uint16 ihosts = _get_etc("hosts");
-            (uint16 ihosts, ) = _lookup_in_dir("hosts", _init_ids[4]);
+            (uint16 ihosts, ) = _lookup_inode_in_dir("hosts", _init_ids[4]);
             INodeS hosts = _inodes[ihosts];
             string text = hosts.text_data;
             out = text;
             (string addr, string accnt) = _hosts(ihosts);
             out += addr + " : " + accnt + "\n";
-//            out += _hosts(ihosts);
         }
+        out.append("\n");
     }
 
     /********************** File system read commands *************************/
     function _cmp(uint flags, string[] args, uint16 wd) private view returns (string out, string err) {
+        bool verbose = (flags & _l) > 0;
+        bool print_bytes = (flags & _b) > 0;
+
+        (uint16 i1,) = _lookup_inode_in_dir(args[0], wd);
+        (uint16 i2,) = _lookup_inode_in_dir(args[1], wd);
+        string t1 = _inodes[i1].text_data;
+        string t2 = _inodes[i2].text_data;
+        bytes b1 = bytes(t1);
+        bytes b2 = bytes(t2);
+        for (uint16 i = 0; i < t1.byteLength(); i++) {
+            uint8 u1 = uint8(b1[i]);
+            uint8 u2 = uint8(b2[i]);
+            if (u1 != u2) {
+                if (!verbose) {
+                    out = _inodes[i1].file_name + " " + _inodes[i2].file_name + " differ: byte" + _if(format(" {}", i), print_bytes, format(" is {}", u1)) + "\n";
+                    return (out, err);
+                }
+                out += format("{:3} {:3} {:3}\n", i, u1, u2);
+            }
+        }
     }
 
     function _dd(string /*s*/) private view returns (string out) {
         for ((uint16 i, INodeS ino): _inodes) {
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, string file_name, ) = ino.unpack();
+            (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, string file_name, string text_data) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} SZ {} NL {}\n", i, file_name, mode, owner_id, group_id, file_size, n_links));
-        }
-        for ((uint16 i, DirEntry d): _de) {
-            (uint16 id, uint16 parent, string name,) = d.unpack();
-            out.append(format("D {} INO {} PAR {} N {} \n", i, id, parent, name));
-        }
-        for ((uint16 i, uint16[] cc): _dc) {
-            out.append(format("DIR: {}\t", i) + _inodes[i].text_data + "\t");
-            for (uint16 c: cc) {
-                if (c == 0) continue;
-                out.append(format("{} ", c) + _de[c].name + "  ");
-            }
-            out.append("\n");
+            if (_mode_is_dir(mode))
+                out.append("\n" + text_data);
         }
         out.append("\n");
     }

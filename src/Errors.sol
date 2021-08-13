@@ -10,11 +10,11 @@ struct ErrS {
     string arg;
 }
 
-abstract contract Errors is String, Commands {
+abstract contract Errors is Commands {
 
     uint8 constant ENOENT   = 0; // "No such file or directory" A component of pathname does not exist or is a dangling symbolic link; pathname is an empty string and AT_EMPTY_PATH was not specified in flags.
     uint8 constant EEXIST   = 1; // "File exists"
-    uint8 constant ENOTDIR  = 2;//  "Not a directory" A component of the path prefix of pathname is not a directory.
+    uint8 constant ENOTDIR  = 2; //  "Not a directory" A component of the path prefix of pathname is not a directory.
     uint8 constant EISDIR   = 3; //"Is a directory"
     uint8 constant EACCES   = 4; // "Permission denied" Search permission is denied for one of the directories in the path prefix of pathname.  (See also path_resolution(7).)
 
@@ -101,7 +101,7 @@ abstract contract Errors is String, Commands {
 
     function _error_message2(uint8 command, ErrS e) internal view returns (string s) {
         (, uint8 reason, uint16 explanation, string arg) = e.unpack();
-        s = _command_names[command] + ": " + ((reason == 200) ? _command_names[command] : _error_text[reason]) + _quote(arg);
+        s = _command_names[command] + ": " + ((reason == 200) ? _command_names[command] : _error_text[reason]) + arg;
         if (explanation < _error_text.length)
             s.append(_error_text[uint8(explanation)]);
         s.append("\n");

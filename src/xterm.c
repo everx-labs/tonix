@@ -12,6 +12,7 @@ unsigned const INODE_EVENT       = 64;
 unsigned const IO_EVENT          = 128;
 unsigned const WRITE_EVENT       = IO_EVENT + INODE_EVENT;
 unsigned const READ_EVENT       = 256;
+unsigned const CHANGE_DIR       = 512;
 
 void a2h(char* input, char* output) {
     int loop = 0, i = 0;
@@ -82,7 +83,8 @@ int _prompt(int wd) {
 
     char mega[30000];
     char *pm = mega;
-    pm += sprintf(pm, "{\"s_input\":\"%s\",\"sin\":{\"uid\":2000,\"gid\":1000,\"wd\":%d}}", s2, wd);
+//    pm += sprintf(pm, "{\"s_input\":\"%s\",\"sin\":{\"uid\":2000,\"gid\":1000,\"wd\":%d}}", s2, wd);
+    pm += sprintf(pm, "{\"i_ses\":{\"uid\":2000,\"gid\":1000,\"wd\":%d},\"s_input\":\"%s\"}", wd, s2);
     int mlen = strlen(mega);
     FILE *fp;
 
@@ -110,18 +112,26 @@ int _prompt(int wd) {
     }
     fflush(stdout);
 
+//    if (action & CHANGE_DIR) {
+        system("jq -r '.ses.wd' <std/parse.out >std/wd");
+        fp = fopen("std/wd", "rt");
+        fscanf(fp, "%d", &wd);
+        fclose(fp);
+//    }
     if (action < PRINT_STAT)
         return wd;
 
     if (action & PRINT_STAT) {
-        system("{ echo -n '{\"ses\":'; cat std/session; echo -n ',\"input\":'; jq '.input' <std/parse.out; echo -n '}'; } >std/stat.args");
+//        system("{ echo -n '{\"ses\":'; cat std/session; echo -n ',\"input\":'; jq '.input' <std/parse.out; echo -n '}'; } >std/stat.args");
+        system("jq -r 'del(.re,.action,.std)' < std/parse.out >std/stat.args");
         system("make std/stat.out");
         fp = fopen("std/action2", "rt");
         fscanf(fp, "%u", &action2);
         fclose(fp);
     }
     else if (action & PROCESS_COMMAND) {
-        system("{ echo -n '{\"ses\":'; cat std/session; echo -n ',\"input\":'; jq '.input' <std/parse.out; echo -n '}'; } >std/process.args");
+        system("jq -r 'del(.re,.action,.std)' < std/parse.out >std/process.args");
+//        system("{ echo -n '{\"ses\":'; cat std/session; echo -n ',\"input\":'; jq '.input' <std/parse.out; echo -n '}'; } >std/process.args");
         system("make std/process.out");
         fp = fopen("std/action3", "rt");
         fscanf(fp, "%u", &action3);
@@ -134,9 +144,6 @@ int _prompt(int wd) {
         system("jq -r '.std.err' < std/stat.out");
     if (action3 & PRINT_OUT) {
         system("jq -r '.std.out' < std/process.out");
-        fp = fopen("std/wd", "rt");
-        fscanf(fp, "%d", &wd);
-        fclose(fp);
     }
     if (action3 & PRINT_ERROR)
         system("jq -r '.std.err' < std/process.out");

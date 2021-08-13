@@ -23,8 +23,8 @@ contract DataVolume is Errors, ISource, ExportFS {
         string m = name + "\t\tUser Commands\nNAME\n\t" + name + " - " + purpose + "\nSYNOPSIS\n" + usage + "DESCRIPTION\n\t" + description + "\n";
         string h = "Usage: " + usage + "\n" + description + "\n";
 
-        _exports[0].files.push(_get_reg_file_node(name + "_man", m));
-        _exports[1].files.push(_get_reg_file_node(name + "_help", h));
+        _exports[0].files.push(_get_reg_file_node(name, m));
+        _exports[1].files.push(_get_reg_file_node(name, h));
     }
 
     function init1() external accept {

@@ -1,14 +1,12 @@
 pragma ton-solidity >= 0.48.0;
 
-import "Commands.sol";
-import "INode.sol";
 import "ExportFS.sol";
 
-contract Options is Commands, ExportFS {
+contract Options is ExportFS {
 
-    function _c11() private {
+    function _c0() private {
         string[] empty;
-        _add_command("res0", empty);
+        _add_command("", empty);
         _add_command("basename", [
             "a", "support multiple arguments and treat each as a NAME",
             "s", "remove a trailing SUFFIX; implies -a",
@@ -24,7 +22,7 @@ contract Options is Commands, ExportFS {
         _add_command("cd", [
             "L", "force symbolic links to be followed",
             "P", "use the physical directory structure without following symbolic links",
-            "e", "if the -P option is supplied, and the current working directory cannot be determined successfully, exit with a non-zero status"]);
+            "e", "with -P, and if the current working directory is invalid, signal error"]);
         _add_command("chgrp", [
             "c", "like verbose but report only when a change is made",
             "f", "suppress most error messages",
@@ -48,9 +46,11 @@ contract Options is Commands, ExportFS {
             "P", "do not traverse any symbolic links (default)"]);
         _add_command("cksum", empty);
         _add_command("cmp", [
+            "b", "print differing bytes",
+            "l", "output byte numbers and differing byte values",
             "s", "suppress all normal output"]);
     }
-    function _c12() private {
+    function _c1() private {
         string[] empty;
         _add_command("cp", [
             "a", "same as -dR -p",
@@ -69,14 +69,21 @@ contract Options is Commands, ExportFS {
             "v", "explain what is being done",
             "x", "stay on this file system"]);
         _add_command("dd", empty);
-        _add_command("df", empty);
+        _add_command("df", [
+            "a", "include pseudo, duplicate, inaccessible file systems",
+            "h", "print sizes in powers of 1024 (e.g., 1023M)",
+            "H", "print sizes in powers of 1000 (e.g., 1.1G)",
+            "i", "list inode information instead of block usage",
+            "k", "block size = 1K",
+            "l", "limit listing to local file systems",
+            "P", "use the POSIX output format"]);
         _add_command("dirname", [
             "z", "end each output line with NUL, not newline"]);
         _add_command("du", [
             "0", "end each output line with NUL, not newline",
             "a", "write counts for all files, not just directories",
             "b", "block size = 1 byte", "c", "produce a grand total",
-            "D, H", "dereference only symlinks that are listed on the command line",
+            "D, -H", "dereference only symlinks that are listed on the command line",
             "h", "print sizes in human readable format (e.g., 1K 234M 2G)",
             "k", "block size = 1K",
             "L", "dereference all symbolic links",
@@ -169,7 +176,7 @@ contract Options is Commands, ExportFS {
             "P", "avoid all symlinks"]);
         _add_command("rm", [
             "f", "ignore nonexistent files and arguments, never prompt",
-            "r, R", "remove directories and their contents recursively",
+            "r, -R", "remove directories and their contents recursively",
             "d", "remove empty directories",
             "v", "explain what is being done"]);
         _add_command("rmdir", [
@@ -219,23 +226,30 @@ contract Options is Commands, ExportFS {
             "v", "verbose output"]);
         _add_command("account", [
             "d", "dump account StateInit to a tvc file"]);
+        /*_add_command("grep", [
+            "i", "Ignore case distinctions in patterns and input data, so that characters that differ only in case match each other",
+            "v", "Invert the sense of matching, to select non-matching lines",
+            "w", "Select only those lines containing matches that form whole words",
+            "x", "Select only those matches that exactly match the whole line"]);*/
     }
 
     function _add_command(string cmd_name, string[] names) private {
         string s;
         for (uint i = 0; i < names.length / 2; i++)
-            s.append("\t-" + names[i * 2] + "\t\t" + names[i * 2 + 1] + "\n");
+//            s.append("\t-" + names[i * 2] + "\t\t" + names[i * 2 + 1] + "\n");
+            s.append(format("\t-{}\t\t{}\n", names[i * 2], names[i * 2 + 1]));
         s.append("\t--help\t\tdisplay this help and exit\n\t--version\toutput version information and exit\n");
-        INodeS inode = _get_reg_file_node(cmd_name + "_opt", s);
-        _exports[0].files.push(inode);
+        _exports[0].files.push(_get_reg_file_node(cmd_name, s));
     }
 
-    function init12() external accept {
-        _c12();
+    function init1() external accept {
+        _c1();
     }
+
     function init2() external accept {
         _c2();
     }
+
     function init3() external accept {
         _c3();
     }
@@ -243,9 +257,8 @@ contract Options is Commands, ExportFS {
     function init() external override accept {
         INodeS[] empty;
         _exports.push(ExportDirS("/usr/share/options", empty));
-        _init_commands();
-        _c11();
-        this.init12();
+        _c0();
+        this.init1();
         this.init2();
         this.init3();
     }

@@ -108,6 +108,10 @@ abstract contract Commands is Base {
         return c == ping || c == account;
     }
 
+    function _op_file_read(uint8 c) internal pure returns (bool) {
+        return c == cat || c == cmp || c == echo || c == paste || c == wc;
+    }
+
     function _reads_file_fixed(uint8 c) internal pure returns (bool) {
         return c == help || c == man;
     }
