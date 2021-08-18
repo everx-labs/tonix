@@ -1,0 +1,7 @@
+help t
+help --help
+help help
+help
+man help
+quit
+

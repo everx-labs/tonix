@@ -1,0 +1,49 @@
+Welcome to Tonix.
+Type "help" to get a list of commands.
+"man <COMMAND>" or "help <COMMAND>" sometimes might be helpful.
+Some options for certain commands work as well.
+Feel free to navigate a pre-made file system using intuitive commands.
+Path resolution does not work yet, one step at a time please.
+Your feedback is highly appreciated!
+Have fun :)
+$ No manual entry for t
+
+$ Usage: 	man [COMMAND]
+
+man is the system's manual pager.  Each page argument given to man is normally the name of a program, utility or function.
+	-a		find all matching manual pages
+	--help		display this help and exit
+	--version	output version information and exit
+
+$ help		User Commands
+NAME
+	help - help
+SYNOPSIS
+	help 
+DESCRIPTION
+	
+	-d		output short description for each topic
+	-m		display usage in pseudo-manpage format
+	--help		display this help and exit
+	--version	output version information and exit
+
+$ Usage: 	man [COMMAND]
+
+man is the system's manual pager.  Each page argument given to man is normally the name of a program, utility or function.
+	-a		find all matching manual pages
+	--help		display this help and exit
+	--version	output version information and exit
+
+$ man		User Commands
+NAME
+	man - an interface to the system reference manuals
+SYNOPSIS
+	man [COMMAND]
+DESCRIPTION
+	man is the system's manual pager.  Each page argument given to man is normally the name of a program, utility or function.
+	-a		find all matching manual pages
+	--help		display this help and exit
+	--version	output version information and exit
+
+$ 
+$ Bye.
