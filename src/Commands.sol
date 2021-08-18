@@ -57,6 +57,11 @@ abstract contract Commands is Base {
     uint16 constant INODE_EVENT      = 64;
     uint16 constant IO_EVENT         = 128;
     uint16 constant READ_EVENT       = 256;
+    uint16 constant CHECK_STATUS     = 512;
+    uint16 constant QUERY_BALANCE    = 1024;
+    uint16 constant WRITE_TO_FILE    = 2048;
+    uint16 constant CHANGE_DIR       = 4096;
+    uint16 constant PIPE_OUT_TO_FILE = 8192;
 //    uint16 constant READ_INODE       = 6;
 
     string[CMD_NAME_LAST + 1] public _command_names;
@@ -81,7 +86,7 @@ abstract contract Commands is Base {
     }
 
     function _is_pure(uint8 c) internal pure returns (bool) {
-        return c == basename || c == dirname || c == uname;
+        return c == basename || c == dirname || c == echo || c == uname;
     }
 
     function _op_stat(uint8 c) internal pure returns (bool) {
@@ -97,7 +102,7 @@ abstract contract Commands is Base {
     }
 
     function _op_session(uint8 c) internal pure returns (bool) {
-        return c == pwd || c == whoami || c == cd || c == echo || c == dd || c == cmp;
+        return c == pwd || c == whoami || c == cd || c == dd || c == cmp;
     }
 
     function _op_fs(uint8 c) internal pure returns (bool) {
@@ -109,7 +114,7 @@ abstract contract Commands is Base {
     }
 
     function _op_file_read(uint8 c) internal pure returns (bool) {
-        return c == cat || c == cmp || c == echo || c == paste || c == wc;
+        return c == cat || c == cmp || c == paste || c == wc;
     }
 
     function _reads_file_fixed(uint8 c) internal pure returns (bool) {

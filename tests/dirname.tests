@@ -1,0 +1,8 @@
+dirname t
+dirname --help
+help dirname
+man dirname
+dirname /usr/share
+dirname /etc/motd
+quit
+

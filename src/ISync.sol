@@ -15,7 +15,7 @@ struct User {
 }
 
 interface ISync {
-    function update_users(uint16[] init_ids, mapping (uint16 => UserGroup) ugroups, mapping (uint16 => User) users, uint16 ino_counter) external;
+    function update_users(mapping (uint16 => UserGroup) ugroups, mapping (uint16 => User) users, uint16 ino_counter) external;
     function update_inodes(mapping (uint16 => INodeS) inodes, mapping (uint16 => INodeTimeS) ino_ts) external;
     function update_children(mapping (uint16 => uint16[]) children) external;
     function add(uint16 pino, INodeS[] inodes) external;

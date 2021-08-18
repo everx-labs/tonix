@@ -6,10 +6,9 @@ import "FSCache.sol";
 import "INode.sol";
 contract Stat is IOptions, FSCache {
 
-    function fstat(SessionS ses, InputS input) external view returns (Std std, SessionS o_ses, INodeEventS[] ines, IOEventS[] ios, uint16 action) {
-        (uint16 uid, uint16 gid, uint16 wd) = ses.unpack();
-        o_ses = SessionS(uid, gid, wd);
-        (uint8 c, string[] args, uint flags, string target) = input.unpack();
+    function fstat(SessionS ses, InputS input) external view returns (Std std, INodeEventS[] ines, IOEventS[] ios, uint16 action) {
+        (,, uint16 wd) = ses.unpack();
+        (uint8 c, string[] args, uint flags, ) = input.unpack();
         string out;
         string err;
 
@@ -17,11 +16,6 @@ contract Stat is IOptions, FSCache {
         if (_op_stat(c))
             (out, err) = _stat_ops(c, args, flags, wd);
 
-        if (target != "") {
-            (uint16 tgt, ) = _lookup_inode_in_dir(target, wd);
-            ios.push(tgt < INODES ? IOEventS(IO_MKFILE, wd, 0, target, out) : IOEventS(IO_WR_APPEND, wd, tgt, target, out));
-            out = "";
-        }
         std = Std(out, err);
         if (!err.empty()) action |= PRINT_ERROR;
         if (!out.empty()) action |= PRINT_OUT;
@@ -36,18 +30,15 @@ contract Stat is IOptions, FSCache {
 
         ErrS[] errors;
         for (string s: args) {
-            (uint16 ino, uint8 ft) = _lookup_inode_in_dir(s, wd);
-            out.append("WD: \n" + _inodes[wd].text_data);
-            out.append(format(">> Stat lookup: {} {} => {} {} \n", s, wd, ino, ft));
+            (uint16 ino, uint8 ft) = _lookup_inode_and_type(s, wd);
             if (ino > 0 && _inodes.exists(ino)) {
-
                 if ((c == cat || c == paste || c == wc) && ft == FT_DIR) {
                     errors.push(ErrS(1, _command_reason(c), EISDIR, s));
                     continue;
                 }
                 if (c == cat) out.append(_cat(flags, ino));
                 if (c == df) out.append(_df(ino));
-                if (c == du) out.append(_du(flags, s, ino));
+                if (c == du) out.append(_du(flags, s, ino, ft));
                 if (c == file) out.append(_file(flags, s, ino, ft));
                 if (c == paste) out.append(_paste(ino));
                 if (c == ls) out.append(_ls(flags, s, ino, ft));
@@ -121,26 +112,31 @@ contract Stat is IOptions, FSCache {
         bool count_files = (flags & _a) > 0;
         bool include_subdirs = (flags & _S) == 0;
 
-        if (_is_dir(ino)) {
-            (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_inodes[ino]);
-            for (uint j = 0; j < inodes.length; j++) {
-                (uint32[] cnts, string[] nms) = _count_dir(flags, names[j], inodes[j]);
-                for (uint i = 0; i < cnts.length; i++) {
-                    if (include_subdirs || types[j] != FT_DIR)
-                        cnt += cnts[i];
-                    counts.push(cnts[i]);
-                    outs.push(names[j] + "/" + nms[i]);
-                }
+        (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_inodes[ino], true);
+        for (uint j = 0; j < inodes.length; j++) {
+            (uint32[] cnts, string[] nms) = _count_any(flags, dir_name + "/" + names[j], inodes[j], types[j]);
+            for (uint i = 0; i < cnts.length; i++) {
+                if (include_subdirs || types[j] != FT_DIR)
+                    cnt += cnts[i];
+                counts.push(cnts[i]);
+                outs.push(nms[i]);
             }
-        }
-        if (count_files || _is_reg(ino)) {
-            counts.push(cnt + _inodes[ino].file_size);
-            outs.push(dir_name);
         }
     }
 
-    function _du(uint flags, string path, uint16 ino) private view returns (string out) {
+    function _count_any(uint flags, string dir_name, uint16 ino, uint8 ft) private view returns (uint32[] counts, string[] outs) {
+        if (ft == FT_REG_FILE)
+            return _count_reg_file(dir_name, ino);
+        if (ft == FT_DIR)
+            return _count_dir(flags, dir_name, ino);
+    }
 
+    function _count_reg_file(string dir_name, uint16 ino) private view returns (uint32[] counts, string[] outs) {
+        counts.push(_inodes[ino].file_size);
+        outs.push(dir_name);
+    }
+
+    function _du(uint flags, string path, uint16 ino, uint8 ft) private view returns (string out) {
         string line_end = (flags & _0) > 0 ? "\x00" : "\n";
         bool count_files = (flags & _a) > 0;
         bool human_readable = (flags & _h) > 0;
@@ -149,7 +145,8 @@ contract Stat is IOptions, FSCache {
         if (count_files && summarize)
             return "du: cannot both summarize and show all entries\n";
 
-        (uint32[] counts, string[] outs) = _count_dir(flags, path, ino);
+        (uint32[] counts, string[] outs) = _count_any(flags, path, ino, ft);
+
         if (produce_total) {
             counts.push(counts[counts.length - 1]);
             outs.push("total");
@@ -166,8 +163,8 @@ contract Stat is IOptions, FSCache {
             id = _get_symlink_target(id);
         (uint32 accessed_at, uint32 modified_at, uint32 last_modified) = _ino_ts[id].unpack();
         (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, , ) = _inodes[id].unpack();
-        User u = _users.exists(owner_id) ? _users[owner_id] : _users[_init_ids[11]];
-        UserGroup ug = _ugroups.exists(group_id) ? _ugroups[group_id] : _ugroups[u.group_id];
+        User u = _users[_users.exists(owner_id) ? owner_id : REG_USER];
+        UserGroup ug = _ugroups[_ugroups.exists(group_id) ? group_id : u.group_id];
         out.append(format("   File: {}\n   Size: {}\t\tBlocks: {}\tIO Block: 4096\t", name, file_size, file_size / 16384));
         out = _if(out, file_size == 0, "regular empty file");
         out = _if(out, file_size > 0, _ft(mode));
@@ -210,7 +207,7 @@ contract Stat is IOptions, FSCache {
 //        if (recurse)
 //            return _ls_r(f, s, id, ft);
         bool long = (f & _l + _n + _g + _o) > 0;    // any of -l, -n, -g, -o
-        bool dots = (f & _a) > 0;
+        bool skip_dots = (f & _a) == 0;
         bool inode = (f & _i) > 0;
         bool no_owner = (f & _g) > 0;
         bool no_group = (f & _o) > 0;
@@ -236,10 +233,9 @@ contract Stat is IOptions, FSCache {
             types.push(ft);
             ds[_ls_sort_rating(f, id, use_ctime, use_atime)] = 0;
         } else if (ft == FT_DIR) {
-            (inodes, names, types) = _get_dir_contents(_inodes[id]);
+            (inodes, names, types) = _get_dir_contents(_inodes[id], skip_dots);
             for (uint16 j = 0; j < inodes.length; j++)
-                if (dots || (names[j] != "." && names[j] != ".."))
-                    ds[_ls_sort_rating(f, inodes[j], use_ctime, use_atime)] = j;
+                ds[_ls_sort_rating(f, inodes[j], use_ctime, use_atime)] = j;
         }
         optional (uint, uint16) p = ds.min();
         while (p.hasValue()) {
@@ -249,8 +245,8 @@ contract Stat is IOptions, FSCache {
             if (long) {
                 (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, , ) = _inodes[i].unpack();
                 out.append(format("{} {:2} ", _permissions(mode), n_links));
-                User u = _users.exists(owner_id) ? _users[owner_id] : _users[_init_ids[11]];
-                UserGroup ug = _ugroups.exists(group_id) ? _ugroups[group_id] : _ugroups[u.group_id];
+                User u = _users[_users.exists(owner_id) ? owner_id : REG_USER];
+                UserGroup ug = _ugroups[_ugroups.exists(group_id) ? group_id : u.group_id];
                 out = _if(out, !no_owner, (num ? format("{:5}", owner_id) : format("{:5}", u.name)) + " ");
                 out = _if(out, !no_group, num ? format("{:5}", group_id) : no_group_names ? "" : format("{:5}", ug.name));
                 out.append(" " + (human_readable ? _human_readable(file_size) : format("{:5}", file_size)) + " ");

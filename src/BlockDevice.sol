@@ -2,11 +2,13 @@ pragma ton-solidity >= 0.48.0;
 
 import "IBlockDevice.sol";
 import "IData.sol";
-import "SyncFS.sol";
+import "FSCache.sol";
 import "IMount.sol";
 import "ExportFS.sol";
+import "Map.sol";
+import "INode.sol";
 
-contract BlockDevice is SyncFS, IBlockDevice, IMount {
+contract BlockDevice is FSCache, IBlockDevice, IMount, Map {
 
     struct BlockS {
         bytes data;
@@ -32,7 +34,7 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
     ISync[4] _readers;
 
     function mount_dir(uint16 pino, INodeS[] inodes) external override accept {
-        this.add{value: 1 ton}(pino, inodes);
+        _add_reg_files(pino, inodes);
     }
 
     function _add_device(uint8 device_type, uint16 id, string name, uint16 blk_size, uint16 n_blocks) private pure returns (DeviceInfo dev_info, Device dev) {
@@ -58,20 +60,9 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
             blocks.push(i);
     }
 
-    function _make_fs() private {
-        _user_counter = USERS;
-        _ino_counter = INODES;
-        _init_ids.push(SUPER_USER); // 0
+    function _make_fs() private returns (uint16 etc_dir, uint16 man_dir, uint16 help_dir, uint16 options_dir) {
+        INodeTimeS nts = _the_time_is_now();
 
-        uint16 root_dir = ++_ino_counter;
-        _inodes[root_dir] = _get_dir_node_full(root_dir, root_dir, SUPER_USER, ROOT_USER_GROUP, "");
-        _ino_ts[root_dir] = _the_time_is_now();
-
-        _users[SUPER_USER] = User(ROOT_USER_GROUP, "root", root_dir);
-        UserGroup[] groups = _make_groups(["root", "boris", "guest"]);
-        INodeS[] sys = _sub(["home", "etc", "usr"]);
-        INodeS[] usr = _sub(["share"]);
-        INodeS[] usr_share = _sub(["man", "help", "version", "options"]);
         (DeviceInfo dev_info0, Device dev0) = _add_device(1, 1, "Dev0", 1024, 100);
         (DeviceInfo dev_info1, Device dev1) = _add_device(1, 2, "Dev1", 127, 1000);
         (DeviceInfo dev_info2, Device dev2) = _add_device(1, 3, "Dev2", 4096, 50);
@@ -81,58 +72,98 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         _char_dev.push(dev0);
         _char_dev.push(dev1);
         _char_dev.push(dev2);
-        _ugroups[ROOT_USER_GROUP] = groups[0];
-        _ugroups[REG_USER_GROUP] = groups[1];
-        _ugroups[GUEST_USER_GROUP] = groups[2];
 
-        _init_ids.push(root_dir);    // 1
-        _init_ids.push(root_dir);   // 2
-        uint16 counter = _ino_counter + 1;
-        uint16 home_dir = counter;
-        uint16 etc_dir = counter + 1;
-        uint16 usr_dir = counter + 2;
-        uint16 usr_share_dir = counter + 3;
-        uint16 man_dir = counter + 4;
-        uint16 help_dir = counter + 5;
-        uint16 version_dir = counter + 6;
-        uint16 options_dir = counter + 7;
+        (_inodes[ROOT_DIR], ) = _get_dir_node(ROOT_DIR, ROOT_DIR, SUPER_USER, SUPER_USER_GROUP, "");
+        _ino_counter = ROOT_DIR + 1;
+        uint16 counter = _ino_counter;
 
-        _init_ids.push(home_dir);  // 3 home
-        for (uint16 i = 0; i < uint16(sys.length); i++)
-            _expand_inode_dir(root_dir, counter + i, sys[i]);
-        _expand_inode_dir(usr_dir, usr_share_dir, usr[0]);
-        for (uint16 i = 0; i < uint16(usr_share.length); i++)
-            _expand_inode_dir(usr_share_dir, usr_share_dir + i + 1, usr_share[i]);
+        _ugroups[SUPER_USER_GROUP] = UserGroup(DEF_FILE_MODE, DEF_DIR_MODE, "root");
+        _ugroups[REG_USER_GROUP] = UserGroup(DEF_FILE_MODE, DEF_DIR_MODE, "boris");
+        _ugroups[GUEST_USER_GROUP] = UserGroup(DEF_FILE_MODE, DEF_DIR_MODE, "guest");
+        _users[SUPER_USER] = User(SUPER_USER_GROUP, "root", ROOT_DIR);
+        _users[REG_USER_GROUP] = User(REG_USER_GROUP, "boris", counter + 7);
+        _users[GUEST_USER_GROUP] = User(GUEST_USER_GROUP, "guest", counter + 8);
 
-        _init_ids.push(etc_dir);  // 4
-        _init_ids.push(usr_dir);    // 5
-        _init_ids.push(usr_share_dir);  // 6
-        _init_ids.push(man_dir);  // 7
-        _init_ids.push(help_dir); // 8
-        _init_ids.push(version_dir);  //9
-        _init_ids.push(options_dir);  //10
+        _create_subdirs(ROOT_DIR, ["etc", "home", "usr"]);
+        _create_subdirs(counter + 2, ["share"]);
+        _create_subdirs(counter + 3, ["help", "man", "options"]);
+        _create_subdirs(counter + 1, ["boris", "guest"]);
 
-        _ino_counter = options_dir;
+        etc_dir = counter;
+        help_dir = counter + 4;
+        man_dir = counter + 5;
+        options_dir = counter + 6;
 
-        uint16 active_user_id = REG_USER_GROUP + _user_counter++;
-        uint16 guest_user_id = GUEST_USER_GROUP + _user_counter++;
-        uint16 ino = ++_ino_counter;
-        uint16 active_user_home_dir_id = ino;
-
-        _inodes[ino] = _get_dir_node_full(ino, home_dir, REG_USER, REG_USER_GROUP, "boris");
-        _inodes[home_dir] = _add_dir_entry(_inodes[home_dir], ino, "boris", FT_DIR);
-        _users[active_user_id] = User(REG_USER_GROUP, "boris", active_user_home_dir_id);
-
-        ino = ++_ino_counter;
-        uint16 guest_user_home_dir_id = ino;
-        _inodes[ino] = _get_dir_node_full(ino, home_dir, GUEST_USER, GUEST_USER_GROUP, "guest");
-        _inodes[home_dir] = _add_dir_entry(_inodes[home_dir], ino, "guest", FT_DIR);
-        _users[guest_user_id] = User(GUEST_USER_GROUP, "guest", guest_user_home_dir_id);
-
-        _init_ids.push(active_user_id);  // 11
-        _init_ids.push(guest_user_id); // 12
-        _init_ids.push(active_user_home_dir_id);  // 13
+        for (uint16 i = ROOT_DIR; i < _ino_counter; i++)
+            _ino_ts[i] = nts;
     }
+
+    function _create_subdirs(uint16 pino, string[] files) private {
+        uint16 len = uint16(files.length);
+        uint16 counter = _ino_counter;
+        INodeS dir = _inodes[pino];
+        string text = dir.text_data;
+        string dirent;
+        for (uint16 i = 0; i < len; i++) {
+            (_inodes[counter + i], dirent) = _get_dir_node(counter + i, pino, SUPER_USER, SUPER_USER_GROUP, files[i]);
+            text.append(dirent);
+        }
+        dir.text_data = text;
+        dir.file_size = uint32(text.byteLength());
+        dir.n_links += len;
+        _inodes[pino] = dir;
+        _ino_counter += len;
+    }
+
+    function init() external override accept {
+        (uint16 etc_dir, uint16 man_dir, uint16 help_dir, uint16 options_dir) = _make_fs();
+        _init_commands();
+        this.init1{value: 0.1 ton}(etc_dir);
+        this.init2{value: 0.1 ton}(man_dir, help_dir, options_dir);
+    }
+
+    function init1(uint16 etc_dir) external accept {
+        INodeS[] etc_files = _files(
+            ["exports", "fstab", "group", "hostname", "hosts", "magic", "motd", "passwd", "shadow"], [
+            "/etc\n",
+            "rootfs\t/\text4\t\t0\t1\n",
+            "root\t0\nboris\t1000\nguest\t10000\n",
+            format("{}\n", address(this)),
+            "0:47169541fd28e7688079c4319a8de3b358ce13d87e25bbd3eaded12ae9b09f40\tCommandProcessor\n0:44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9\tStat\n0:439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb\tDataVolume\n0:68c00d417291837826ed9e7aa451d40629dde6d7cf8bcc4fec63cc0978d08205\tSuperBlock\n0:41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5\tBlockDevice\n0:4be68a2f14b949f1388f8e5dce3bbee14d35518abd8efcc93919bbb921218f8d\tInputParser\n0:46b494f9e5c5ecfd9a48ddffbe6a85af564445ab58ed1241fd0fb6a666ec369e\tOptions\n",
+            "11\n",
+            "Welcome to Tonix.\nType \"help\" to get a list of commands.\n\"man <COMMAND>\" or \"help <COMMAND>\" sometimes might be helpful.\nSome options for certain commands work as well.\nFeel free to navigate a pre-made file system using intuitive commands.\nPath resolution does not work yet, one step at a time please.\nYour feedback is highly appreciated!\nHave fun :)\n",
+            "root\t0\t0\troot\t/root\nboris\t1000\t1000\t/home/boris",
+            ""]);
+        _add_reg_files(etc_dir, etc_files);
+    }
+
+    function init2(uint16 man_dir, uint16 help_dir, uint16 options_dir) external pure accept {
+        address data_volume = address.makeAddrStd(0, 0x439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb);
+        ExportFS(data_volume).export_all{value: 0.9 ton}("/usr/share/man", man_dir);
+        ExportFS(data_volume).export_all{value: 0.9 ton}("/usr/share/help", help_dir);
+        address command_options_source = address.makeAddrStd(0, 0x46b494f9e5c5ecfd9a48ddffbe6a85af564445ab58ed1241fd0fb6a666ec369e);
+        ExportFS(command_options_source).export_all{value: 0.95 ton}("/usr/share/options", options_dir);
+        this.init3{value: 0.1 ton}();
+    }
+
+    /*function _lookup_address(string name) internal view returns (address) {
+        uint16 ihosts = _lookup_inode_in_dir("hosts", _get_etc_dir());
+        string s_addr = _lookup_value(name, _inodes[ihosts].text_data);
+        string s_hex = "0x" + s_addr.substr(2, s_addr.byteLength() - 2);
+        (uint u_addr, ) = stoi(s_hex);
+        return address.makeAddrStd(0, u_addr);
+    }*/
+
+    function init3() external accept {
+        address command_processor = address.makeAddrStd(0, 0x47169541fd28e7688079c4319a8de3b358ce13d87e25bbd3eaded12ae9b09f40);
+        address file_status_reader = address.makeAddrStd(0, 0x44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9);
+        address input_parser = address.makeAddrStd(0, 0x4be68a2f14b949f1388f8e5dce3bbee14d35518abd8efcc93919bbb921218f8d);
+        _readers = [ISync(address(this)), ISync(command_processor), ISync(file_status_reader), ISync(input_parser)/*, ISync(_file_reader)*/];
+        Base(command_processor).init{value: 0.2 ton}();
+        Base(file_status_reader).init{value: 0.2 ton}();
+        Base(input_parser).init{value: 0.2 ton}();
+    }
+
 
     function iread(uint16 id) external view returns (string out) {
         out = _inodes[id].text_data;
@@ -174,8 +205,19 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
             inodes.push(_inodes[id]);
     }
 
-     function put(SessionS o_ses, INodeEventS[] ines, IOEventS[] ios) external accept {
-        (uint16 uid, uint16 gid) = (o_ses.uid, o_ses.gid);
+    function write_to_file(SessionS ses, string path, string text) external accept {
+        (uint16 uid, uint16 gid, uint16 wd) = (ses.uid, ses.gid, ses.wd);
+        INodeS[] inodes;
+        uint16 pino_add;
+        pino_add = wd;
+        inodes.push(_get_file_node(uid, gid, path, text));
+        _write_text(0, text);
+        for (address addr: _readers)
+            ISync(addr).add{value: 0.1 ton}(pino_add, inodes);
+    }
+
+    function put(SessionS ses, INodeEventS[] ines, IOEventS[] ios) external accept {
+        (uint16 uid, uint16 gid) = (ses.uid, ses.gid);
         uint16 pino_add;
         uint16 pino_update;
         uint16 pino_rem;
@@ -280,11 +322,6 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         _ino_ts[id] = _the_time_is_now();
     }
 
-    function _make_groups(string[] groups) private pure returns (UserGroup[] ug) {
-        for (string s: groups)
-            ug.push(UserGroup(DEF_FILE_MODE, DEF_DIR_MODE, s));
-    }
-
     function _generic_version_file(uint8 command) private view returns (string) {
         return _command_names[command];
     }
@@ -305,72 +342,14 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         }
     }
 
-    function init() external override accept {
-        _make_fs();
-        _init_commands();
-        this.init1{value: 0.1 ton}();
-    }
-
-    function init1() external view accept {
-        INodeS[] etc_files = _files(
-            ["exports", "fstab", "group", "hostname", "hosts", "magic", "motd", "passwd", "shadow"], [
-            "/etc\n",
-            "rootfs\t/\text4\t\t0\t1\n",
-            "root\t0\nboris\t1000\nguest\t10000\n",
-            format("{}\n", address(this)),
-            "0:47169541fd28e7688079c4319a8de3b358ce13d87e25bbd3eaded12ae9b09f40\tCommandProcessor\n0:44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9\tStat\n0:439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb\tDataVolume\n0:68c00d417291837826ed9e7aa451d40629dde6d7cf8bcc4fec63cc0978d08205\tSuperBlock\n0:41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5\tBlockDevice\n0:4be68a2f14b949f1388f8e5dce3bbee14d35518abd8efcc93919bbb921218f8d\tInputParser\n0:46b494f9e5c5ecfd9a48ddffbe6a85af564445ab58ed1241fd0fb6a666ec369e\tOptions\n",
-            "11\n",
-            "Welcome to Tonix.\nType \"help\" to get a list of commands.\n\"man <COMMAND>\" or \"help <COMMAND>\" sometimes might be helpful.\nSome options for certain commands work as well.\nFeel free to navigate a pre-made file system using intuitive commands.\nPath resolution does not work yet, one step at a time please.\nYour feedback is highly appreciated!\nHave fun :)\n",
-            "root\t0\t0\troot\t/root\nboris\t1000\t1000\t/home/boris",
-            ""]);
-        this.mount_dir{value: 0.1 ton}(_init_ids[4], etc_files);
-        this.init2{value: 0.1 ton}();
-    }
-
-    function init2() external view accept {
-        address _data_volume = address.makeAddrStd(0, 0x439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb);
-        ExportFS(_data_volume).export_all{value: 1 ton}("/usr/share/man", _init_ids[7], 3);
-        ExportFS(_data_volume).export_all{value: 1 ton}("/usr/share/help", _init_ids[8], 3);
-        address _command_options_source = address.makeAddrStd(0, 0x46b494f9e5c5ecfd9a48ddffbe6a85af564445ab58ed1241fd0fb6a666ec369e);
-        ExportFS(_command_options_source).export_all{value: 1 ton}("/usr/share/options", _init_ids[10], 3);
-        this.init3{value: 0.1 ton}();
-    }
-
-    address _command_processor;
-    address _file_status_reader;
-    address _file_reader;
-
-    function init3() external accept {
-        _command_processor = address.makeAddrStd(0, 0x47169541fd28e7688079c4319a8de3b358ce13d87e25bbd3eaded12ae9b09f40);
-        _file_status_reader = address.makeAddrStd(0, 0x44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9);
-//        _file_reader = address.makeAddrStd(0, 0x44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9);
-        _readers = [ISync(address(this)), ISync(_command_processor), ISync(_file_status_reader)/*, ISync(_file_reader)*/];
-        Base(_command_processor).init{value: 0.2 ton}();
-        Base(_file_status_reader).init{value: 0.2 ton}();
-  //      Base(_file_reader).init{value: 1 ton}();
-    }
-
     function query_fs_cache() external override accept {
-        ISync(msg.sender).update_users{value: 0.1 ton}(_init_ids, _ugroups, _users, _ino_counter);
+        ISync(msg.sender).update_users{value: 0.1 ton}(_ugroups, _users, _ino_counter);
 
         uint16 chunk_size = 70;
         uint16 chunks = _ino_counter / chunk_size;
         for (uint16 i = 0; i < chunks; i++)
             this.update_inodes_chunk{value: 0.1 ton}(msg.sender, i * chunk_size, chunk_size);
         this.update_inodes_chunk{value: 0.1 ton}(msg.sender, chunks * chunk_size, _ino_counter - chunks * chunk_size);
-
-        /*uint j = 0;
-        uint16[] inn;
-        for ((uint16 i, ): _inodes) {
-            inn.push(i);
-            j++;
-            if (j > 70) {
-                this.call_update_inodes{value: 1 ton}(msg.sender, inn);
-                j = 0;
-                delete inn;
-            }
-        }
-        this.call_update_inodes{value: 1 ton}(msg.sender, inn);*/
     }
 
     function update_inodes_chunk(address addr, uint16 start, uint16 count) external view accept {
@@ -385,16 +364,6 @@ contract BlockDevice is SyncFS, IBlockDevice, IMount {
         }
         ISync(addr).update_inodes{value: 1 ton}(inn, inn_t);
     }
-
-    /*function call_update_inodes(address addr, uint16[] inns) external view accept {
-        mapping (uint16 => INodeS) inn;
-        mapping (uint16 => INodeTimeS) inn_t;
-        for (uint16 i: inns) {
-            inn[i] = _inodes[i];
-            inn_t[i] = _ino_ts[i];
-        }
-        ISync(addr).update_inodes{value: 1 ton}(inn, inn_t);
-    }*/
 
     function call_update_children(address addr) external view accept {
         ISync(addr).update_children{value: 0.2 ton}(_dc);

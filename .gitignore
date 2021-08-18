@@ -6,5 +6,6 @@ man
 std/*
 etc/*
 system/*/*
+*.log
 .vscode
 tonos-cli.conf.json

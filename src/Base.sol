@@ -2,7 +2,7 @@ pragma ton-solidity >= 0.48.0;
 
 abstract contract Base {
 
-    uint16 constant ROOT_USER_GROUP = 1;
+    uint16 constant SUPER_USER_GROUP = 1;
     uint16 constant REG_USER_GROUP = 1000;
     uint16 constant GUEST_USER_GROUP = 10000;
 
@@ -11,7 +11,7 @@ abstract contract Base {
     uint16 constant GUEST_USER  = 10000;
 
     uint16 constant INODES = 10;
-    uint16 constant DIRENTS = 100;
+    uint16 constant ROOT_DIR = INODES + 1;
     uint16 constant USERS = 1000;
 
     modifier accept {

@@ -7,10 +7,7 @@ import "INode.sol";
 import "String.sol";
 
 abstract contract SyncFS is String, Commands, ISync, INode {
-    uint16 _user_counter = USERS;
-    uint16 _ino_counter = INODES;
-
-    uint16[] public _init_ids;
+    uint16 _ino_counter;
 
     mapping (uint16 => INodeS) public _inodes;
     mapping (uint16 => INodeTimeS) public _ino_ts;
@@ -64,14 +61,6 @@ abstract contract SyncFS is String, Commands, ISync, INode {
     uint8 constant INO_STORE    = 11;
     uint8 constant INO_OTHER    = 12;
 
-    function _expand_inode_dir(uint16 pino, uint16 ino, INodeS inode) internal {
-        inode.text_data = _get_dots(ino, pino);
-        _inodes[ino] = inode;
-        _ino_ts[ino] = _the_time_is_now();
-        _inodes[pino].n_links++;
-        _inodes[pino].text_data.append(_write_de(ino, inode.file_name, FT_DIR));
-    }
-
     function _the_time_is_now() internal pure returns (INodeTimeS) {
         return INodeTimeS(now, now, now);
     }
@@ -88,8 +77,7 @@ abstract contract SyncFS is String, Commands, ISync, INode {
         return _inodes.exists(id) && _mode_is_symlink(_inodes[id].mode);
     }
 
-    function update_users(uint16[] init_ids, mapping (uint16 => UserGroup) ugroups, mapping (uint16 => User) users, uint16 ino_counter) external override accept {
-        _init_ids = init_ids;
+    function update_users(mapping (uint16 => UserGroup) ugroups, mapping (uint16 => User) users, uint16 ino_counter) external override accept {
         _ino_counter = ino_counter;
         for ((uint16 i, UserGroup ug): ugroups)
             _ugroups[i] = ug;
@@ -152,6 +140,25 @@ abstract contract SyncFS is String, Commands, ISync, INode {
         _ino_ts[pino] = it;
     }
 
+    function _add_reg_files(uint16 pino, INodeS[] inodes) internal {
+        INodeTimeS it = _the_time_is_now();
+        uint16 len = uint16(inodes.length);
+        uint16 counter = _ino_counter;
+        INodeS dir = _inodes[pino];
+        string text = dir.text_data;
+        for (uint16 i = 0; i < len; i++) {
+            _inodes[counter + i] = inodes[i];
+            _ino_ts[counter + i] = it;
+            text.append(_write_de(counter + i, inodes[i].file_name, FT_REG_FILE));
+        }
+        dir.text_data = text;
+        dir.file_size = uint32(text.byteLength());
+        dir.n_links += len;
+        _inodes[pino] = dir;
+        _ino_counter += len;
+        _ino_ts[pino] = it;
+    }
+
     function change_attrs(uint16[] ids, INodeS[] inodes) external override accept {
         for (uint16 i = 0; i < uint16(ids.length); i++)
             _inodes[ids[i]] = inodes[ids[i]];
@@ -160,10 +167,6 @@ abstract contract SyncFS is String, Commands, ISync, INode {
     function update_time(uint16[] ids, INodeTimeS[] ino_tss) external override accept {
         for (uint16 i = 0; i < uint16(ids.length); i++)
             _ino_ts[ids[i]] = ino_tss[ids[i]];
-    }
-
-    function import_text_inodes(uint16 pino, INodeS[] inodes) external accept pure {
-        this.add{value: 1 ton}(pino, inodes);
     }
 
     address _bdev;

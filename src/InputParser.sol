@@ -15,110 +15,99 @@ contract InputParser is IOptions, FSCache {
     mapping (uint8 => CmdInfoS) public _command_info;
 
     /* Primary entry point */
-    function parse(SessionS i_ses, string s_input) external view returns (Std std, SessionS ses, InputS input, ReadEventS[] re, uint16 action) {
+    function parse(SessionS i_ses, string s_input) external view returns (Std std, SessionS ses, InputS input, ReadEventS[] re, IOEventS[] ios, INodeEventS[] ines, uint16 action) {
         string out;
         string err;
 
         /* Validate session info: uid and wd */
-        uint16 uid = _users.exists(i_ses.uid) ? i_ses.uid : _init_ids[11];
+        uint16 uid = _users.exists(i_ses.uid) ? i_ses.uid : REG_USER;
         uint16 gid = _ugroups.exists(i_ses.gid) ? i_ses.gid : _get_group_id(uid);
         uint16 wd = _inodes.exists(i_ses.wd) ? i_ses.wd : _users[uid].home_dir;
         ses = SessionS(uid, gid, wd);
 
         /* Parse input line */
-        (uint8 cmd, string cmds, string[] args, uint flags, string ostr, string target) = _parse_input(s_input);
-        if (cmd == 0) {
+        (uint8 c, string cmds, string[] args, uint flags, string ostr, string target) = _parse_input(s_input);
+        if (c == 0) {
             err = cmds + ": command not found\n";
-            input = InputS(cmd, args, flags, target);
+            input = InputS(c, args, flags, target);
         } else if (flags >= (1 << 254)) {
-                if ((flags & 1 << 255) > 0) {
-                    uint16 hf = _get_help_file(cmds);
-                    if (hf > 0) {
-                        re.push(ReadEventS(READ_ANY, hf, 0, 0));
-                        uint16 ol = _get_options_list(cmds);
-                        if (ol > 0)
-                            re.push(ReadEventS(READ_ANY, ol, 0, 0));
-                    }
-                }
+            if ((flags & 1 << 255) > 0)
+                out = _get_help_text(cmds);
         } else {
-            if (_is_pure(cmd)) {
-                /* Execute FS-independent commands right away */
-                if (cmd == basename) out = _basename(args, flags);
-                if (cmd == dirname) out = _dirname(args);
-                if (cmd == uname) out = _uname(flags);
-            }
-            if (_reads_file_fixed(cmd)) {
-                /* Dispatch queries to the data of known location */
-                if (cmd == help) {
-                    if (args.length > 0) {
-                        for (string s: args) {
-                            uint16 hf = _get_help_file(s);
-                            if (hf > 0) {
-                                re.push(ReadEventS(READ_ANY, hf, 0, 0));
-                                uint16 ol = _get_options_list(s);
-                                if (ol > 0)
-                                    re.push(ReadEventS(READ_ANY, ol, 0, 0));
-                            } else {
-                                err.append("help: no help topics match" + _quote(s) + "\nTry" + _quote("help help") + "or" + _quote("man -k " + s) + "or" + _quote("info " + s) + "\n");
-                                break;
-                            }
-                        }
-                    } else {
-                        out.append("Commands: ");
-                        for (string s: _command_names)
-                            out.append(s + " ");
-                        out.append("\n");
-                    }
-                } else {
-                    for (string s: args) {
-                        uint16 mp = _get_man_page(s);
-                        uint16 ol = _get_options_list(s);
-                        if (mp > 0)
-                            re.push(ReadEventS(READ_ANY, mp, 0, 0));
-                        else
-                            out.append("No manual entry for " + s + "\n");
-                        if (ol > 0)
-                            re.push(ReadEventS(READ_ANY, ol, 0, 0));
-                    }
+            if (c == basename) out = _basename(args, flags);
+            if (c == dirname) out = _dirname(args);
+            if (c == uname) out = _uname(flags);
+            if (c == help) (out, err) = _read_help_file(args);
+            if (c == echo) out = _echo(flags, args);
+            if (c == man)
+                for (string s: args) {
+                    string text = _get_man_text(s);
+                    out.append(text.empty() ? "No manual entry for " + s + "\n" : text);
                 }
-            }
 
             /* Push assumed arguments for certain commands */
-            if ((args.length == 0) && (cmd == du || cmd == ls || cmd == df))
+            if (args.empty() && (c == du || c == ls || c == df))
                 args.push(".");
-            if ((args.length == 0) && (cmd == cd))
+            if (args.empty() && c == cd)
                 args.push("~");
 
             /* Diagnose common errors early:
                 - missing or extra operands
                 - unknown options        */
-            input = InputS(cmd, args, flags, target);
-            CmdInfoS ci = _command_info[cmd];
+            input = InputS(c, args, flags, target);
+            CmdInfoS ci = _command_info[c];
             uint odiff = flags - (ci.options & flags);
             uint16 nargs = uint16(args.length);
             if (nargs < ci.min_args || nargs > ci.max_args || odiff > 0) {
                 err.append(cmds + ": ");
-                if (nargs < ci.min_args) err.append("missing file operand");
-                else if (nargs > ci.max_args) err.append("extra operand" + _quote(args[ci.max_args]));
-                else if (odiff > 0) err.append("invalid option --" + _quote(ostr));
+                if (nargs < ci.min_args)
+                    err.append("missing file operand");
+                else if (nargs > ci.max_args)
+                    err.append("extra operand" + _quote(args[ci.max_args]));
+                else if (odiff > 0)
+                    err.append("invalid option --" + _quote(ostr));
                 err += "\nTry " + cmds + " --help for more information.\n";
             }
-            if (_op_session(cmd)) {
-                if (cmd == pwd) out = _pwd(flags, wd) + "\n";
-                if (cmd == whoami) out = _users[uid].name + "\n";
-                if (cmd == cd) (ses.wd, ) = _cd(flags, args[0], wd);
+            if (_op_session(c)) {
+                if (c == pwd) out = _pwd(flags, wd) + "\n";
+                if (c == whoami) out = _users[uid].name + "\n";
+                if (c == cd) {
+                    (ses.wd, ) = _cd(flags, args[0], wd);
+                    action |= CHANGE_DIR;
+                }
             }
         }
 
+        if (!target.empty()) action |= PIPE_OUT_TO_FILE;
         if (!err.empty()) action |= PRINT_ERROR;
         if (!out.empty()) action |= PRINT_OUT;
-        else {
-            if (!re.empty()) action |= READ_EVENT;
-            if (_op_stat(cmd)) action |= PRINT_STAT;
-            if (_op_file(cmd) || _op_access(cmd)) action |= PROCESS_COMMAND;
-        }
+        if (!ios.empty()) action |= IO_EVENT;
+        if (!re.empty()) action |= READ_EVENT;
+        if (_op_stat(c)) action |= PRINT_STAT;
+        if (_op_file(c) || _op_access(c) || _op_fs(c) || _op_network(c)) action |= PROCESS_COMMAND;
+
         std = Std(out, err);
     }
+
+    function _read_help_file(string[] args) private view returns (string out, string err) {
+        if (!args.empty()) {
+            for (string s: args) {
+                string help_text = _get_help_text(s);
+                if (!help_text.empty())
+                    out.append(help_text);
+                else {
+                    err.append("help: no help topics match" + _quote(s) + "\nTry" + _quote("help help") + "or" + _quote("man -k " + s) + "or" + _quote("info " + s) + "\n");
+                    break;
+                }
+            }
+        } else {
+            out.append("Commands: ");
+            for (string s: _command_names)
+                out.append(s + " ");
+            out.append("\n");
+        }
+    }
+
     /* Parser */
     function _parse_input(string s) private view returns (uint8 cmd, string cmds, string[] args, uint flags, string ostr, string target) {
         uint len = s.byteLength();
@@ -162,11 +151,12 @@ contract InputParser is IOptions, FSCache {
 
     /* Session commands */
     function _cd(uint flags, string s, uint16 cwd) private view returns (uint16 wd, ErrS[] es) {
-        if (((flags & _e + _P) > 0) && cwd < DIRENTS)
+        if (((flags & _e + _P) > 0) && cwd < INODES)
             es.push(ErrS(1, 0, /*no_such_file_or_dir*/ENOENT, s));
         wd = cwd;
-        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
-        (uint16 di, ) = follow_symlinks ? _lookup_opnd_deref(s, wd, 1) : _lookup_inode_in_dir(s, wd);
+//        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
+//        (uint16 di, ) = follow_symlinks ? _lookup_opnd_deref(s, wd, 1) : _lookup_inode_in_dir(s, wd);
+        uint16 di = _lookup_inode_in_dir(s, wd);
         if (di < INODES)
             es.push(ErrS(1, 0, /*no_such_file_or_dir*/ENOENT, s));
         else
@@ -174,16 +164,15 @@ contract InputParser is IOptions, FSCache {
     }
 
     function _get_abs_path(uint16 dir) internal view returns (string) {
-        if (dir == _init_ids[2])
+        if (dir == ROOT_DIR)
             return "/";
         uint16 parent = _get_parent_dir(dir);
         string dir_name = _lookup_name(dir, _inodes[parent].text_data);
-        return _get_abs_path(parent) + "/" + dir_name;
+        return (parent == ROOT_DIR ? "" : _get_abs_path(parent)) + "/" + dir_name;
     }
 
-    function _pwd(uint flags, uint16 wd) private view returns (string) {
-        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
-        (uint16 di, ) = follow_symlinks ? _lookup_opnd_deref(_inodes[wd].file_name, wd, 1) : (wd, 0);
+    function _pwd(uint /*flags*/, uint16 wd) private view returns (string) {
+//        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
         return _get_abs_path(wd);
     }
 
@@ -201,9 +190,8 @@ contract InputParser is IOptions, FSCache {
     }
 
     function _dirname(string[] args) internal pure returns (string out) {
-        for (string s: args) {
+        for (string s: args)
             out += _dir(s) + "\n";
-        }
     }
 
     function _uname(uint flags) private pure returns (string out) {
@@ -214,6 +202,16 @@ contract InputParser is IOptions, FSCache {
         if ((flags & _p) > 0) out.append("TON ");
         if ((flags & _a) > 0) out = "Tonix FileSys TON TONOS TON";
         out.append("\n");
+    }
+
+    function _echo(uint flags, string[] ss) private pure returns (string out) {
+        bool no_trailing_newline = (flags & _n) > 0;
+        uint len = ss.length;
+        if (len > 0) out = ss[0];
+        for (uint i = 1; i < len; i++)
+            out.append(" " + ss[i]);
+        if (!no_trailing_newline)
+            out.append("\n");
     }
 
     function _c1() private {
@@ -271,22 +269,31 @@ contract InputParser is IOptions, FSCache {
         return (pos > start ? s.substr(start, pos - start) : "", pos);
     }
 
-    function _get_man_page(string s) private view returns (uint16 ino) {
-        (ino, ) = _lookup_inode_in_dir(s, _init_ids[7]);
+    function _get_usr_share_dir() private view returns (uint16) {
+        return _lookup_inode_in_dir("share", _lookup_inode_in_dir("usr", ROOT_DIR));
     }
 
-    function _get_help_file(string s) private view returns (uint16 ino) {
-        (ino, ) = _lookup_inode_in_dir(s, _init_ids[8]);
+    function _get_help_text(string s) private view returns (string text) {
+        uint16 hf = _lookup_inode_in_dir(s, _lookup_inode_in_dir("help", _get_usr_share_dir()));
+        if (hf > 0) {
+            text = _inodes[hf].text_data;
+            text.append(_get_options_text(s));
+        }
     }
 
-    function _get_version_file(string s) private view returns (uint16 ino) {
-        (ino, ) = _lookup_inode_in_dir(s, _init_ids[9]);
+    function _get_man_text(string s) private view returns (string text) {
+        uint16 mp = _lookup_inode_in_dir(s, _lookup_inode_in_dir("man", _get_usr_share_dir()));
+        if (mp > 0) {
+            text = _inodes[mp].text_data;
+            text.append(_get_options_text(s));
+        }
     }
 
-    function _get_options_list(string s) private view returns (uint16 ino) {
-        (ino, ) = _lookup_inode_in_dir(s, _init_ids[10]);
+    function _get_options_text(string s) private view returns (string) {
+        uint16 ol = _lookup_inode_in_dir(s, _lookup_inode_in_dir("options", _get_usr_share_dir()));
+        if (ol > 0)
+            return _inodes[ol].text_data;
     }
-
 
     function init() external override accept {
         _init_commands();

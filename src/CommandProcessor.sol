@@ -4,13 +4,13 @@ import "IData.sol";
 import "IOptions.sol";
 import "FSCache.sol";
 import "INode.sol";
+import "Map.sol";
 
-contract CommandProcessor is FSCache, IOptions {
+contract CommandProcessor is FSCache, IOptions, Map {
 
-    function process(SessionS ses, InputS input) external view returns (Std std, SessionS o_ses, INodeEventS[] ines, IOEventS[] ios, uint16 action) {
-        (uint16 uid, uint16 gid, uint16 wd) = ses.unpack();
-        o_ses = SessionS(uid, gid, wd);
-        (uint8 c, string[] args, uint flags, string target) = input.unpack();
+    function process(SessionS ses, InputS input) external view returns (Std std, INodeEventS[] ines, IOEventS[] ios, uint16 action) {
+        (, , uint16 wd) = ses.unpack();
+        (uint8 c, string[] args, uint flags, ) = input.unpack();
         string in_;
         string out;
         string err;
@@ -27,22 +27,22 @@ contract CommandProcessor is FSCache, IOptions {
         if (c == cp || c == mv || c == ln)
             (out, ios, errors) = _file_ops(c, args, flags, wd);
 
-        if (c == echo) out = _echo(flags, args);
         if (c == dd) out = _dd(args[0]);
         if (c == cmp) (out, err) = _cmp(flags, args, wd);
 
         if (_op_fs(c)) out = _mount(flags, args, wd);
 
         if (_op_network(c)) {
-            if (c == ping) out = _ping(flags, args[0], wd);
-            if (c == account) out = _account(flags, args[0], wd);
+            if (c == ping) {
+                out = _ping(flags, args[0]);
+                if (!out.empty()) action |= CHECK_STATUS;
+            }
+            if (c == account) {
+                out = _account(flags, args[0]);
+                if (!out.empty()) action |= QUERY_BALANCE;
+            }
         }
 
-        if (target != "") {
-            (uint16 tgt, ) = _lookup_inode_in_dir(target, wd);
-            ios.push(tgt < INODES ? IOEventS(IO_MKFILE, wd, gid, target, out) : IOEventS(IO_WR_APPEND, tgt, gid, target, out));
-            out = "";
-        }
         for (ErrS e: errors)
             err.append((e.code == 1) ? _error_message2(c, e) : _internal_error_message(c, e));
         std = Std(out, err);
@@ -87,7 +87,7 @@ contract CommandProcessor is FSCache, IOptions {
             for (string s: args) {
                 if (s == s0)
                     continue;
-                (uint16 ino, uint8 ft) = _lookup_inode_in_dir(s, wd);
+                (uint16 ino, uint8 ft) = _lookup_inode_and_type(s, wd);
                 if (ino < INODES)
                     errors.push(ErrS(1, _command_reason(c), ino, ""));
                 else
@@ -132,7 +132,7 @@ contract CommandProcessor is FSCache, IOptions {
         bool verbose = (flags & _v) > 0;
         bool md = c == mkdir;
         for (string s: args) {
-            (uint16 iop, ) = _lookup_inode_in_dir(s, wd);
+            uint16 iop = _lookup_inode_in_dir(s, wd);
             if (iop < INODES)
                 ios.push(IOEventS(md ? IO_MKDIR : IO_MKFILE, wd, 0, s, ""));
             else {
@@ -151,7 +151,7 @@ contract CommandProcessor is FSCache, IOptions {
         bool verbose = (flags & _v) > 0;
         bool rf = c == rm;
         for (string s: args) {
-            (uint16 iop, uint8 ft) = _lookup_inode_in_dir(s, wd);
+            (uint16 iop, uint8 ft) = _lookup_inode_and_type(s, wd);
 
             if (iop < INODES)
                 errors.push(ErrS(1, _command_reason(c), ENOENT, s));
@@ -192,7 +192,7 @@ contract CommandProcessor is FSCache, IOptions {
 
         uint nargs = args.length;
         string target = args[to_dir_flag ? 0 : nargs - 1];
-        (uint16 t_ino, uint8 t_ft) = _lookup_inode_in_dir(target, wd);
+        (uint16 t_ino, uint8 t_ft) = _lookup_inode_and_type(target, wd);
         bool dest_exists = t_ino >= INODES;
 
         if (dest_exists && t_ft == FT_DIR)
@@ -225,7 +225,7 @@ contract CommandProcessor is FSCache, IOptions {
 
         for (uint i = first; i < last; i++) {
             string s = args[i];
-            (uint16 iop, uint8 s_ft) = _lookup_inode_in_dir(s, wd);
+            (uint16 iop, uint8 s_ft) = _lookup_inode_and_type(s, wd);
 
             if (iop < INODES) {
                 errors.push(ErrS(1, _command_reason(c), ENOENT, s));
@@ -279,30 +279,22 @@ contract CommandProcessor is FSCache, IOptions {
             }
         }
     }
-    function _ping(uint flags, string arg, uint16 wd) private pure returns (string out) {
+    function _ping(uint flags, string arg) private view returns (string out) {
         if ((flags & _q) == 0) {
-            if (wd > 0)
-                out = arg;
-            if ((flags & _v) > 0) {
-            }
+            uint16 ihosts = _lookup_inode_in_dir("hosts", _get_etc_dir());
+            out = _lookup_value(arg, _inodes[ihosts].text_data) + "\n";
         }
     }
 
     function _get_etc(string s) private view returns (uint16 ino) {
-        (ino, ) = _lookup_inode_in_dir(s, _init_ids[4]);
+        ino = _lookup_inode_in_dir(s, _get_etc_dir());
     }
 
-    function _account(uint flags, string arg, uint16 /*wd*/) private view returns (string out) {
-        out = arg;
+    function _account(uint flags, string arg) private view returns (string out) {
         if ((flags & _d) == 0) {
-            (uint16 ihosts, ) = _lookup_inode_in_dir("hosts", _init_ids[4]);
-            INodeS hosts = _inodes[ihosts];
-            string text = hosts.text_data;
-            out = text;
-            (string addr, string accnt) = _hosts(ihosts);
-            out += addr + " : " + accnt + "\n";
+            uint16 ihosts = _lookup_inode_in_dir("hosts", _get_etc_dir());
+            out = _lookup_value(arg, _inodes[ihosts].text_data) + "\n";
         }
-        out.append("\n");
     }
 
     /********************** File system read commands *************************/
@@ -310,8 +302,8 @@ contract CommandProcessor is FSCache, IOptions {
         bool verbose = (flags & _l) > 0;
         bool print_bytes = (flags & _b) > 0;
 
-        (uint16 i1,) = _lookup_inode_in_dir(args[0], wd);
-        (uint16 i2,) = _lookup_inode_in_dir(args[1], wd);
+        uint16 i1 = _lookup_inode_in_dir(args[0], wd);
+        uint16 i2 = _lookup_inode_in_dir(args[1], wd);
         string t1 = _inodes[i1].text_data;
         string t2 = _inodes[i2].text_data;
         bytes b1 = bytes(t1);
@@ -337,16 +329,6 @@ contract CommandProcessor is FSCache, IOptions {
                 out.append("\n" + text_data);
         }
         out.append("\n");
-    }
-
-    function _echo(uint flags, string[] ss) private pure returns (string out) {
-        bool no_trailing_newline = (flags & _n) > 0;
-        uint len = ss.length;
-        if (len > 0) out = ss[0];
-        for (uint i = 1; i < len; i++)
-            out.append(" " + ss[i]);
-        if (!no_trailing_newline)
-            out.append("\n");
     }
 
     /******* Helpers ******************/

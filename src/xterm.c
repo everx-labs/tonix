@@ -12,7 +12,11 @@ unsigned const INODE_EVENT       = 64;
 unsigned const IO_EVENT          = 128;
 unsigned const WRITE_EVENT       = IO_EVENT + INODE_EVENT;
 unsigned const READ_EVENT       = 256;
-unsigned const CHANGE_DIR       = 512;
+unsigned const CHECK_STATUS     = 512;
+unsigned const QUERY_BALANCE    = 1024;
+unsigned const WRITE_TO_FILE    = 2048;
+unsigned const CHANGE_DIR       = 4096;
+unsigned const PIPE_OUT_TO_FILE = 8192;
 
 void a2h(char* input, char* output) {
     int loop = 0, i = 0;
@@ -51,6 +55,11 @@ int _prompt(int wd) {
         args[x++] = strdup(t);
         t = strtok(NULL, " ");
     }
+
+    /*if (!(strcmp(cmds, "test"))) {
+        system("make test");
+        return wd;
+    }*/
 
     if (!(strcmp(cmds, "quit"))) {
         printf("Bye.\n");
@@ -92,67 +101,96 @@ int _prompt(int wd) {
     fwrite(&mega, 1, mlen, fp);
     fclose(fp);
 
-    if (system("make std/parse.out"))
-        return wd;
+    if (system("make std/action std/out std/err")) {
+        exit(0);
+//        return wd;
+    }
 
     unsigned action = 0, action2 = 0, action3 = 0;
-    system("jq -r '.action' < std/parse.out >std/action");
+//    system("jq -r '.action' < std/parse.out >std/action");
     fp = fopen("std/action", "rt");
     fscanf(fp, "%u", &action);
     fclose(fp);
 
-    if (action & PRINT_OUT)
-        system("jq -r '.std.out' < std/parse.out");
-    if (action & PRINT_ERROR)
-        system("jq -r '.std.err' < std/parse.out");
     if (action & READ_EVENT) {
         system("jq 'del(.std,.input)' < std/parse.out >std/read.args");
         system("make std/read.out");
         system("jq -r '.outs[]' < std/read.out");
     }
-    fflush(stdout);
 
-//    if (action & CHANGE_DIR) {
+    if (action & CHANGE_DIR) {
         system("jq -r '.ses.wd' <std/parse.out >std/wd");
         fp = fopen("std/wd", "rt");
         fscanf(fp, "%d", &wd);
         fclose(fp);
-//    }
-    if (action < PRINT_STAT)
-        return wd;
+    }
+//    if (action < PRINT_STAT)
+//        return wd;
 
     if (action & PRINT_STAT) {
-//        system("{ echo -n '{\"ses\":'; cat std/session; echo -n ',\"input\":'; jq '.input' <std/parse.out; echo -n '}'; } >std/stat.args");
-        system("jq -r 'del(.re,.action,.std)' < std/parse.out >std/stat.args");
+        system("jq -r 'del(.re,.action,.std,.ios,.ines)' < std/parse.out >std/stat.args");
         system("make std/stat.out");
         fp = fopen("std/action2", "rt");
         fscanf(fp, "%u", &action2);
         fclose(fp);
     }
     else if (action & PROCESS_COMMAND) {
-        system("jq -r 'del(.re,.action,.std)' < std/parse.out >std/process.args");
-//        system("{ echo -n '{\"ses\":'; cat std/session; echo -n ',\"input\":'; jq '.input' <std/parse.out; echo -n '}'; } >std/process.args");
+        system("jq -r 'del(.re,.action,.std,.ios,.ines)' < std/parse.out >std/process.args");
         system("make std/process.out");
         fp = fopen("std/action3", "rt");
         fscanf(fp, "%u", &action3);
         fclose(fp);
     }
 
-    if (action2 & PRINT_OUT)
-        system("jq -r '.std.out' < std/stat.out");
-    if (action2 & PRINT_ERROR)
-        system("jq -r '.std.err' < std/stat.out");
-    if (action3 & PRINT_OUT) {
-        system("jq -r '.std.out' < std/process.out");
+    if (action3 & CHECK_STATUS) {
+        system("make std/status");
+        system("cat std/status");
     }
-    if (action3 & PRINT_ERROR)
-        system("jq -r '.std.err' < std/process.out");
 
-    if (action2 + action3 & WRITE_EVENT) {
-        if (action2 & IO_EVENT)
-            system("jq 'del(.std,.action)' < std/stat.out > std/write.args");
-        else if (action3 & WRITE_EVENT)
-            system("jq 'del(.std,.action)' < std/process.out > std/write.args");
+    if (action3 & QUERY_BALANCE) {
+        system("make std/balance");
+        system("cat std/balance");
+    }
+
+    if (action2 & PRINT_OUT)
+        system("jq -r '.std.out' < std/stat.out >>std/out");
+    if (action2 & PRINT_ERROR)
+        system("jq -r '.std.err' < std/stat.out >>std/err");
+    if (action3 & PRINT_OUT)
+        system("jq -r '.std.out' < std/process.out >>std/out");
+    if (action3 & PRINT_ERROR)
+        system("jq -r '.std.err' < std/process.out >>std/err");
+
+    system("cat std/out");
+    if (action + action2 + action3 & PRINT_ERROR)
+        system("cat std/err");
+    fflush(stdout);
+
+    if (action & PIPE_OUT_TO_FILE) {
+        system("make std/write_to_file.res");
+    }
+
+    if (action + action2 + action3 & WRITE_EVENT) {
+        if (action & IO_EVENT)
+            system("jq 'del(.std,.action,.input,.re)' < std/parse.out > std/write.args");
+        if (action2 & IO_EVENT) {
+//            system("jq 'del(.std,.action)' < std/stat.out > std/write.args");
+            system("jq 'del(.std,.action,.input,.re,.ios,.ines)' < std/parse.out > std/ses.temp");
+            system("sed '7d' std/ses.temp > std/ses2.temp");
+            system("echo ',' >> std/ses2.temp");
+            system("jq 'del(.std,.action)' < std/stat.out > std/proc.temp");
+            system("sed '1d' std/proc.temp > std/proc2.temp");
+            system("cat std/ses2.temp std/proc2.temp > std/write.args");
+
+        } else if (action3 & WRITE_EVENT) {
+            system("jq 'del(.std,.action,.input,.re,.ios,.ines)' < std/parse.out > std/ses.temp");
+            system("sed '7d' std/ses.temp > std/ses2.temp");
+            system("echo ',' >> std/ses2.temp");
+            system("jq 'del(.std,.action)' < std/process.out > std/proc.temp");
+            system("sed '1d' std/proc.temp > std/proc2.temp");
+            system("cat std/ses2.temp std/proc2.temp > std/write.args");
+
+        }
         system("make std/write.res");
     }
 
@@ -161,15 +199,17 @@ int _prompt(int wd) {
 }
 
 int main(int argc, char **argv) {
-    int wd = argc < 2 ? 1 : atoi(argv[2]);
+    int wd = argc < 2 ? 11 : atoi(argv[2]);
     setbuf(stdout, NULL);
     system("cat etc/motd");
     while (1) {
         printf("$ ");
         int ret = _prompt(wd);
 
-        if (ret == 0)
+        if (ret == 0) {
             printf("??? Session failed?\n");
+            exit(0);
+        }
         else
             wd = ret;
     }

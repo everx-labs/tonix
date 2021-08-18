@@ -1,0 +1,8 @@
+basename t
+basename --help
+help basename
+man basename
+basename /usr/share
+basename /etc/motd
+quit
+

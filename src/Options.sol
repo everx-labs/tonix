@@ -4,6 +4,8 @@ import "ExportFS.sol";
 
 contract Options is ExportFS {
 
+    uint8 constant CMD_NAME_LAST = 33;
+
     function _c0() private {
         string[] empty;
         _add_command("", empty);
@@ -236,10 +238,24 @@ contract Options is ExportFS {
     function _add_command(string cmd_name, string[] names) private {
         string s;
         for (uint i = 0; i < names.length / 2; i++)
-//            s.append("\t-" + names[i * 2] + "\t\t" + names[i * 2 + 1] + "\n");
             s.append(format("\t-{}\t\t{}\n", names[i * 2], names[i * 2 + 1]));
         s.append("\t--help\t\tdisplay this help and exit\n\t--version\toutput version information and exit\n");
-        _exports[0].files.push(_get_reg_file_node(cmd_name, s));
+
+        uint16 cnt = _counter++;
+        uint16 batch_size = _exports[0].batch_size;
+        uint16 n_batches = _exports[0].n_batches;
+        uint16 batch_counter = cnt % batch_size;
+        uint16 chunk_counter = cnt / batch_size;
+
+        if (batch_counter == 0 && chunk_counter + 1 < n_batches) {
+            INodeS[] empty;
+            _exports[0].batches.push(empty);
+        }
+
+        if (chunk_counter + 1 >= n_batches)
+            chunk_counter = n_batches - 1;
+
+        _exports[0].batches[chunk_counter].push(_get_reg_file_node(cmd_name, s));
     }
 
     function init1() external accept {
@@ -255,8 +271,11 @@ contract Options is ExportFS {
     }
 
     function init() external override accept {
-        INodeS[] empty;
-        _exports.push(ExportDirS("/usr/share/options", empty));
+        INodeS[][] empty;
+        INodeS[] also_empty;
+        empty.push(also_empty);
+        _exports.push(ExportDirS("/usr/share/options", CMD_NAME_LAST + 1, 4, CMD_NAME_LAST / 4, empty));
+
         _c0();
         this.init1();
         this.init2();

@@ -1,0 +1,83 @@
+Welcome to Tonix.
+Type "help" to get a list of commands.
+"man <COMMAND>" or "help <COMMAND>" sometimes might be helpful.
+Some options for certain commands work as well.
+Feel free to navigate a pre-made file system using intuitive commands.
+Path resolution does not work yet, one step at a time please.
+Your feedback is highly appreciated!
+Have fun :)
+$ Tonix 
+
+uname: extra operand 't' 
+Try uname --help for more information.
+
+$ Usage: 	uname [OPTION]...
+
+Print certain system information.  With no OPTION, same as -s.
+	-a		print all information, in the following order, except omit -p and -i if unknown:
+	-s		print the kernel name
+	-n		print the network node hostname
+	-r		print the kernel release
+	-v		print the kernel version
+	-m		print the machine hardware name
+	-p		print the processor type (non-portable)
+	-i		print the hardware platform (non-portable)
+	-o		print the operating system
+	--help		display this help and exit
+	--version	output version information and exit
+
+$ Usage: 	uname [OPTION]...
+
+Print certain system information.  With no OPTION, same as -s.
+	-a		print all information, in the following order, except omit -p and -i if unknown:
+	-s		print the kernel name
+	-n		print the network node hostname
+	-r		print the kernel release
+	-v		print the kernel version
+	-m		print the machine hardware name
+	-p		print the processor type (non-portable)
+	-i		print the hardware platform (non-portable)
+	-o		print the operating system
+	--help		display this help and exit
+	--version	output version information and exit
+
+$ uname		User Commands
+NAME
+	uname - print system information
+SYNOPSIS
+	uname [OPTION]...
+DESCRIPTION
+	Print certain system information.  With no OPTION, same as -s.
+	-a		print all information, in the following order, except omit -p and -i if unknown:
+	-s		print the kernel name
+	-n		print the network node hostname
+	-r		print the kernel release
+	-v		print the kernel version
+	-m		print the machine hardware name
+	-p		print the processor type (non-portable)
+	-i		print the hardware platform (non-portable)
+	-o		print the operating system
+	--help		display this help and exit
+	--version	output version information and exit
+
+$ Tonix FileSys TON TONOS TON
+
+$ Tonix 
+
+$ FileSys 
+
+$ 
+
+$ 
+
+$ TON 
+
+$ TON 
+
+$ TON 
+
+$ TON OS 
+
+$ Tonix FileSys TON TON OS TON 
+
+$ Bye.

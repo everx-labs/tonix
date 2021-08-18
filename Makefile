@@ -19,7 +19,7 @@ TA:=$D $F $B $I $C $O $S $R
 #TA:=$S $T
 RKEYS:=$(KEY)/k1.keys
 VAL0:=15
-
+TST:=tests
 PHONY += all genaddr init deploy balances compile clean brief
 all: compile
 
@@ -78,18 +78,33 @@ $(STD)/read.out: $(STD)/read.args
 $(STD)/write.res: $(STD)/write.args
 	$(TOC) call $($B_a) --abi $(BLD)/$B.abi.json put $< >$@
 
+$(STD)/ses.temp: $(STD)/parse.out
+	jq 'del(.std,.action,.input,.re,.ios,.ines)' < $< | sed '7d' > $@
+
+$(STD)/write_to_file.args: $(STD)/parse.out $(STD)/ses.temp $(STD)/out
+	$(eval file_name!=jq -r '.input.target' <$<)
+	$(file >$@,$(file < $(word 2,$^))$(comma)"path":"$(file_name)","text":"$(strip $(file <$(word 3,$^)))"})
+
+$(STD)/write_to_file.res: $(STD)/write_to_file.args
+	$(TOC) call $($B_a) --abi $(BLD)/$B.abi.json write_to_file $< >$@
+
 $(STD)/parse.out: $(STD)/parse.args
-	$(TOC) -j run $($I_a) --abi $(BLD)/$I.abi.json parse $(word 1,$^) >$@
-	jq -r '.action' < $@ >$(STD)/action
+	$(TOC) -j run $($I_a) --abi $(BLD)/$I.abi.json parse $< >$@
+$(STD)/action: $(STD)/parse.out
+	jq -r '.action' < $< >$@
+$(STD)/out: $(STD)/parse.out
+	jq -r '.std.out' < $< >$@
+$(STD)/err: $(STD)/parse.out
+	jq -r '.std.err' < $< >$@
 $(STD)/stat.out: $(STD)/stat.args
-	$(TOC) -j run $($F_a) --abi $(BLD)/$F.abi.json fstat $(word 1,$^) >$@
+	$(TOC) -j run $($F_a) --abi $(BLD)/$F.abi.json fstat $< >$@
 	jq -r '.action' < $@ >$(STD)/action2
 $(STD)/process.out: $(STD)/process.args
-	$(TOC) -j run $($C_a) --abi $(BLD)/$C.abi.json process $(word 1,$^) >$@
+	$(TOC) -j run $($C_a) --abi $(BLD)/$C.abi.json process $< >$@
 	jq -r '.action' < $@ >$(STD)/action3
 
 u_%: $(STD)/%/upgrade.args
-	$(TOC) call $($*_a) --abi $(BLD)/$*.abi.json upgrade $(word 1,$^)
+	$(TOC) call $($*_a) --abi $(BLD)/$*.abi.json upgrade $<
 i_%:
 	$(TOC) call $($*_a) --abi $(BLD)/$*.abi.json init {}
 
@@ -99,7 +114,7 @@ $$(foreach r,$$(pv_$1),$$(eval $$(call t-run,$1,$$r)))
 d_$1: $$(patsubst %,$(STD)/$1/%.out,$$(pv_$1))
 	jq -r '.' <$$<
 endef
-pv_FSync:=_init_ids _inodes _ugroups _users  _dc
+pv_FSync:=_inodes _ugroups _users  _dc
 pv_$C=$(pv_FSync)
 pv_$F=$(pv_FSync)
 pv_$S=$(pv_FSync)
@@ -111,10 +126,31 @@ pv_$O=_exports
 
 $(foreach c,$(TA),$(eval $(call t-dump,$c)))
 
+$(STD)/status: $(STD)/process.args $(STD)/process.out
+	$(eval status!=$(TOC) account `jq -r '.std.out' < $(word 2,$^)` | grep acc_type)
+	$(eval host!=jq -r '.input.args[]' < $(word 1,$^))
+	$(file >$@,$(host) $(if $(findstring Active,$(status)),is alive,))
+
+$(STD)/balance: $(STD)/process.out
+	$(TOC) account `jq -r '.std.out' < $<` | grep balance | cut -d ' ' -f 8 > $@
+
 tt: bin/xterm
 	./$<
 bin/xterm: $(SRC)/xterm.c
 	gcc $< -o $@
+
+#TEST_DIRS:=$(wildcard $(TST)/*/*.in)
+TEST_DIRS:=$(wildcard $(TST)/*/*01.in)
+test: $(TEST_DIRS)
+	./bin/xterm <$^
+
+test0:
+	./bin/xterm <$(TST)/basename.tests >$(TST)/basename.log
+	diff $(TST)/basename.log $(TST)/basename.golden
+
+test1:
+	./bin/xterm <$(TST)/dirname.tests >$(TST)/dirname.log
+	diff $(TST)/basename.log $(TST)/basename.golden
 
 $(SYS)/%.args:
 	$(file >$@,{})

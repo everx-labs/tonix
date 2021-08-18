@@ -23,8 +23,24 @@ contract DataVolume is Errors, ISource, ExportFS {
         string m = name + "\t\tUser Commands\nNAME\n\t" + name + " - " + purpose + "\nSYNOPSIS\n" + usage + "DESCRIPTION\n\t" + description + "\n";
         string h = "Usage: " + usage + "\n" + description + "\n";
 
-        _exports[0].files.push(_get_reg_file_node(name, m));
-        _exports[1].files.push(_get_reg_file_node(name, h));
+        uint16 cnt = _counter++;
+        uint16 batch_size = _exports[0].batch_size;
+        uint16 n_batches = _exports[0].n_batches;
+        uint16 batch_counter = cnt % batch_size;
+        uint16 chunk_counter = cnt / batch_size;
+
+        if (batch_counter == 0 && chunk_counter + 1 < n_batches) {
+            INodeS[] empty;
+            _exports[0].batches.push(empty);
+            _exports[1].batches.push(empty);
+        }
+
+        if (chunk_counter + 1 >= n_batches)
+            chunk_counter = n_batches - 1;
+
+        _exports[0].batches[chunk_counter].push(_get_reg_file_node(name, m));
+        _exports[1].batches[chunk_counter].push(_get_reg_file_node(name, h));
+
     }
 
     function init1() external accept {
@@ -74,9 +90,11 @@ contract DataVolume is Errors, ISource, ExportFS {
     }
 
     function init() external override accept {
-        INodeS[] empty;
-        _exports.push(ExportDirS("/usr/share/man", empty));
-        _exports.push(ExportDirS("/usr/share/help", empty));
+        INodeS[][] empty;
+        INodeS[] also_empty;
+        empty.push(also_empty);
+        _exports.push(ExportDirS("/usr/share/man", CMD_NAME_LAST + 1, 3, CMD_NAME_LAST / 3, empty));
+        _exports.push(ExportDirS("/usr/share/help", CMD_NAME_LAST + 1, 3, CMD_NAME_LAST / 3, empty));
         _init_commands();
         _error_text = ["", "missing operand", "cannot remove", "cannot stat", "cannot access", "cannot create directory",
             "cannot open", "invalid option", "extra operand", "failed to remove", "missing operand after",
@@ -86,9 +104,10 @@ contract DataVolume is Errors, ISource, ExportFS {
             "No such file or directory", "File exists", "Not a directory", "Is a directory", "Permission denied",
             "direntry not found", "inode not found", "parent direntry not found", "child direntry not found", "invalid user id",
             "invalid working directory"];
-        this.init1();
-        this.init2();
-        this.init3();
+        this.init1{value: 0.1 ton}();
+        this.init2{value: 0.1 ton}();
+        this.init3{value: 0.1 ton}();
+//        this.init4();
     }
 
 }
