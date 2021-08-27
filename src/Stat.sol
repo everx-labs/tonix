@@ -1,59 +1,95 @@
-pragma ton-solidity >= 0.48.0;
+pragma ton-solidity >= 0.49.0;
+pragma experimental ABIEncoderV2;
 
-import "IData.sol";
 import "IOptions.sol";
-import "FSCache.sol";
-import "INode.sol";
-contract Stat is IOptions, FSCache {
+import "SyncFS.sol";
+import "Format.sol";
 
-    function fstat(SessionS ses, InputS input) external view returns (Std std, INodeEventS[] ines, IOEventS[] ios, uint16 action) {
-        (,, uint16 wd) = ses.unpack();
-        (uint8 c, string[] args, uint flags, ) = input.unpack();
+contract Stat is IOptions, Format, SyncFS {
+
+    function fstat(SessionS ses, InputS input) external view returns (Std std, uint16 action) {
+
+        (uint8 c, string[] args, uint flags) = input.unpack();
+
         string out;
         string err;
-
-        /* Process related operations in separate subroutines */
-        if (_op_stat(c))
-            (out, err) = _stat_ops(c, args, flags, wd);
-
-        std = Std(out, err);
-        if (!err.empty()) action |= PRINT_ERROR;
-        if (!out.empty()) action |= PRINT_OUT;
-        if (!ios.empty()) action |= IO_EVENT;
-        ines = ines;
-    }
-
-    /* File stat operations common routine */
-    function _stat_ops(uint8 c, string[] args, uint flags, uint16 wd) private view returns (string out, string err) {
-        if (c == cksum)
-            return (_cksum(), err);
+        if (c == cksum) out = _cksum(); // 250
 
         ErrS[] errors;
+
+        if (_op_dev_stat(c))
+            out.append(_dev_stat(c, flags, args, ses.wd));  // 2.3
+
         for (string s: args) {
-            (uint16 ino, uint8 ft) = _lookup_inode_and_type(s, wd);
-            if (ino > 0 && _inodes.exists(ino)) {
+            (uint16 ino, uint8 ft) = _inode_and_type(s, ses.wd);
+            if (ino > 0 && _fs.inodes.exists(ino)) {
                 if ((c == cat || c == paste || c == wc) && ft == FT_DIR) {
-                    errors.push(ErrS(1, _command_reason(c), EISDIR, s));
+                    errors.push(ErrS(0, EISDIR, s));
                     continue;
                 }
-                if (c == cat) out.append(_cat(flags, ino));
-                if (c == df) out.append(_df(ino));
-                if (c == du) out.append(_du(flags, s, ino, ft));
-                if (c == file) out.append(_file(flags, s, ino, ft));
-                if (c == paste) out.append(_paste(ino));
-                if (c == ls) out.append(_ls(flags, s, ino, ft));
-                if (c == stat) out.append(_stat(flags, s, ino));
-                if (c == wc) out.append(_wc(flags, ino));
+                INodeS inode = _fs.inodes[ino];
+                if (c == cat) out.append(_cat(flags, inode));         // 550
+                if (c == column) out.append(_column(flags, inode));
+                if (c == du) out.append(_du(flags, s, ino, ft));    // 800
+                if (c == file) out.append(_file(flags, s, inode, ft));// 500
+//                if (c == grep) out.append(_grep(flags, s, ino, ft));
+                if (c == paste) out.append(_paste(flags, inode));     // 120
+                if (c == ls) out.append(_ls(flags, s, ino, ft));    // 1.3
+                if (c == stat) out.append(_stat(flags, s, ino, ft));// 800
+                if (c == wc) out.append(_wc(flags, inode));           // 600
+                out.append("\n");
             } else
-                errors.push(ErrS(1, _command_reason(c), ENOENT, s));
+                errors.push(ErrS(0, ENOENT, s));
         }
         for (ErrS e: errors)
-            err.append(_error_message2(c, e));
+            err.append(_error_message(c, e)); // 700
+        action = 0;
+        std = Std(out, err);
+    }
+
+    function _dev_stat(uint8 c, uint flags, string[] args, uint16 /*wd*/) private view returns (string out) {
+        if (c == df) out.append(_df(flags, args));      // 600
+        if (c == lsblk) out.append(_lsblk(flags, args));// 800
+        if (c == findmnt) out.append(_findmnt(flags, args));// 500
+
     }
     /********************** File system read commands *************************/
-    // read contents(inode)
+    function _column(uint flags, INodeS inode) private pure returns (string out) {
+        bool ignore_empty_lines = (flags & _e) == 0;
+        bool merge_delimiters = (flags & _n) == 0;
+//        bool create_table = (flags & _t) > 0;
+        bool columns_before_rows = (flags & _x) > 0;
+        string delimiter = " ";
+        string line_delimiter = "\n";
 
-    function _cat(uint flags, uint16 ino) private view returns (string out) {
+        uint8 pad_mode = ignore_empty_lines ? 1 : merge_delimiters ? 2 : columns_before_rows ? 3 : 0;
+
+        string text = inode.text_data;
+        string[] lines = _get_lines(text);
+
+        uint[] max_widths = _max_row_widths(text);
+
+        for (string line: lines) {
+            string[] fields = _read_entry(line);
+            for (uint j = 0; j < fields.length; j++)
+                out.append(_pad(fields[j], max_widths[j], pad_mode) + delimiter);
+            out.append(line_delimiter);
+        }
+    }
+
+    /*function _grep(uint flags, string arg, uint16 ino, uint8 ft) private view returns (string out) {
+        bool ignore_case = (flags & _i) > 0;
+        bool invert_match = (flags & _v) > 0;
+        bool match_words = (flags & _w) > 0;
+        bool match_lines = (flags & _x) > 0;
+
+        string[] lines = _get_lines(_fs.inodes[ino].text_data);
+        for (uint16 i = 0; i < uint16(lines.length); i++) {
+        }
+
+    }*/
+
+    function _cat(uint flags, INodeS inode) private pure returns (string out) {
         bool number_lines = (flags & _n) > 0;
         bool number_nonempty_lines = (flags & _b) > 0;
         bool dollar_at_line_end = (flags & _E + _e + _A) > 0;
@@ -62,7 +98,7 @@ contract Stat is IOptions, FSCache {
         bool show_nonprinting = (flags & _v + _e + _t + _A) > 0;
 
         bool repeated_empty_line = false;
-        string[] lines = _get_lines(_inodes[ino].text_data);
+        string[] lines = _get_lines(inode.text_data);
         for (uint16 i = 0; i < uint16(lines.length); i++) {
             string line = lines[i];
             uint16 len = uint16(line.byteLength());
@@ -89,22 +125,143 @@ contract Stat is IOptions, FSCache {
         }
     }
 
-    function _paste(uint16 inode) private view returns (string out) {
-        return _inodes[inode].text_data;
+    function _paste(uint flags, INodeS inode) private pure returns (string out) {
+        string line_delimiter = (flags & _z) > 0 ? "\x00" : "\n";
+        string[] lines = _get_lines(inode.text_data);
+        for (uint16 i = 0; i < uint16(lines.length); i++)
+            out.append(lines[i] + line_delimiter);
     }
 
     function _cksum() private view returns (string out) {
-        for ((uint16 i, INodeS ino): _inodes) {
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, string file_name, string text_data) = ino.unpack();
+        for ((uint16 i, INodeS ino): _fs.inodes) {
+            (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, , , , string file_name, string text_data) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} SZ {} NL {}\n", i, file_name, mode, owner_id, group_id, file_size, n_links));
-            if (_mode_is_dir(mode))
-                out.append("\n" + text_data);
+            if ((mode & S_IFMT) == S_IFDIR)
+                out.append(text_data);
         }
-        out.append("\n");
     }
 
-    function _df(uint16 inode) private view returns (string out) {
-        out = format("DI {} Inodes: {}\n", inode, _ino_counter);
+    function _df(uint flags, string[] /*args*/) private view returns (string out) {
+        SuperBlock sb = _fs.sb;
+        (, , string file_system_OS_type, uint16 inode_count, uint16 block_count,
+            uint16 free_inodes, uint16 free_blocks, uint16 block_size, , , , ,
+            , , , uint16 inode_size) = sb.unpack();
+
+//        bool all_file_systems = (flags & _a) > 0;
+        bool human_readable = (flags & _h) > 0;
+//        bool powers_of_1000 = (flags & _H) > 0;
+        bool list_inodes = (flags & _i) > 0;
+//        bool block_1k = (flags & _k) > 0;
+//        bool local_file_systems = (flags & _l) > 0;
+        bool posix_output = (flags & _P) > 0;
+
+        string header_body;
+        uint16 total = list_inodes ? inode_count + free_inodes : block_count + free_blocks;
+        uint16 unit;
+        if (list_inodes) {
+            header_body = "Inodes\tIUsed\tIFree\tIUse%";
+            unit = inode_size;
+        } else if (human_readable) {
+            header_body = "Size\tUsed\tAvail\tUse%";
+            unit = block_size;
+        } else if (posix_output) {
+            header_body = "1024-blocks\tUsed\tAvailable\tCapacity%";
+            unit = 1024;
+        } else {
+            header_body = "1K-blocks\tUsed\tAvailable\tUse%";
+            unit = 1000;
+        }
+        uint32 size = uint32(total) * unit;
+        uint16 used = list_inodes ? inode_count : block_count;
+        uint16 free = list_inodes ? free_inodes : free_blocks;
+
+        string header = "Filesystem\t" + header_body + "\tMounted on";
+        string row0 = format("{}\t{}\t{}\t{}\t{}%\t/",
+                    file_system_OS_type, _get_file_size(size, human_readable), used, free, used * 100 / total);
+        string[] table;
+        table.push(header);
+        table.push(row0);
+        out.append(_format_rows(table, " ", "\n", 1));
+    }
+
+    function _lsblk(uint flags, string[] args) private view returns (string out) {
+
+        bool human_readable = (flags & _b) == 0;
+        bool print_header = (flags & _n) == 0;
+        bool all_columns = (flags & _O) > 0;
+        bool fs_info = (flags & _f) > 0;
+        bool full_path = (flags & _p) > 0;
+        string[] table;
+        string header;
+
+        if (print_header) {
+            header = fs_info ? "NAME\tFSTYPE\tLABEL\tUUID\tFSAVAIL\tFSUSE%\tMOUNTPOINT" : "NAME\tMAJ:MIN\tRM\tSIZE\tRO\tTYPE\tMOUNTPOINT";
+            table.push(header);
+        }
+        if (args.empty())
+            args.push("sda");
+
+        uint16 block_size = _fs.sb.block_size;
+        uint16 block_count = _fs.sb.block_count;
+        for (string s: args) {
+            string[] lines = _get_lines(_get_file_contents("/dev/" + s));
+            if (!lines.empty()) {
+                string[] fields0 = _read_entry(lines[0]);
+                string name = (full_path ? "/dev/" : "") + fields0[2];
+                if (!all_columns) {
+                    string l;
+                    if (fs_info) {
+                        l = format("{}\t{}:{}\t{}\t{}\t{}\t{}\t{}", name, " ", " ", " ", _get_file_size(block_count * block_size, human_readable), 0, "disk", "/");
+                    } else {
+                        l = format("{}\t{}:{}\t{}\t{}\t{}\t{}\t{}", name, fields0[0], fields0[1], 0, _get_file_size(block_count * block_size, human_readable), 0, "disk", "/");
+                    }
+                    table.push(l);
+                }
+            }
+            else
+                out.append(s + ": not a block device\n");
+        }
+        out.append(_format_rows(table, " ", "\n", 2));
+    }
+
+    function _findmnt(uint flags, string[] /*args*/) private view returns (string out) {
+        bool search_fstab_only = (flags & _s) > 0;
+        bool search_mtab_only = (flags & _m) > 0;
+//        bool search_kernel = (flags & _k) > 0;
+//        bool print_all_fs = (flags & _A) > 0;
+//        bool size_in_bytes = (flags & _b) > 0;
+        bool like_df = (flags & _D) > 0;
+        bool first_fs_only = (flags & _f) > 0;
+        bool no_headings = (flags & _n) > 0;
+//        bool no_truncate = (flags & _u) > 0;
+
+        string[] table;
+
+        string header = no_headings ? "" : like_df ? "SOURCE\tSIZE\tUSED\tAVAIL\tUSE%\tTARGET" : "TARGET\tSOURCE\tFSTYPE\tOPTIONS";
+        if (!no_headings)
+            table.push(header);
+
+        if (!search_mtab_only) {
+            string[] lines = _get_lines(_get_file_contents("/etc/fstab"));
+            for (string line: lines) {
+                string[] fields = _read_entry(line);
+                string l = format("{}\t{}\t{}\t{}", fields[1], fields[0], fields[2], fields[3]);
+                table.push(l);
+                if (first_fs_only)
+                    break;
+            }
+        }
+        if (!search_fstab_only) {
+            string[] lines = _get_lines(_get_file_contents("/etc/mtab"));
+            for (string line: lines) {
+                string[] fields = _read_entry(line);
+                string l = format("{}\t{}\t{}\t{}", fields[1], fields[0], fields[2], fields[3]);
+                table.push(l);
+                if (first_fs_only)
+                    break;
+            }
+        }
+        out.append(_format_rows(table, " ", "\n", 2));
     }
 
     function _count_dir(uint flags, string dir_name, uint16 ino) private view returns (uint32[] counts, string[] outs) {
@@ -112,28 +269,40 @@ contract Stat is IOptions, FSCache {
         bool count_files = (flags & _a) > 0;
         bool include_subdirs = (flags & _S) == 0;
 
-        (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_inodes[ino], true);
+        (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_fs.inodes[ino], true);
         for (uint j = 0; j < inodes.length; j++) {
             (uint32[] cnts, string[] nms) = _count_any(flags, dir_name + "/" + names[j], inodes[j], types[j]);
             for (uint i = 0; i < cnts.length; i++) {
-                if (include_subdirs || types[j] != FT_DIR)
-                    cnt += cnts[i];
-                counts.push(cnts[i]);
-                outs.push(nms[i]);
+                if (types[j] == FT_REG_FILE) {
+                    if (count_files) {
+                        counts.push(cnts[i]);
+                        outs.push(nms[i]);
+                    } else
+                        cnt += cnts[i];
+                }
+                if (types[j] == FT_DIR) {
+                    counts.push(cnts[i]);
+                    outs.push(nms[i]);
+                    if (include_subdirs)
+                        cnt += cnts[i];
+                }
             }
         }
+        counts.push(_fs.inodes[ino].file_size + cnt);
+        outs.push(dir_name);
     }
 
     function _count_any(uint flags, string dir_name, uint16 ino, uint8 ft) private view returns (uint32[] counts, string[] outs) {
-        if (ft == FT_REG_FILE)
-            return _count_reg_file(dir_name, ino);
-        if (ft == FT_DIR)
-            return _count_dir(flags, dir_name, ino);
+        return ft == FT_REG_FILE ? _count_reg_file(dir_name, ino) : _count_dir(flags, dir_name, ino);
     }
 
     function _count_reg_file(string dir_name, uint16 ino) private view returns (uint32[] counts, string[] outs) {
-        counts.push(_inodes[ino].file_size);
+        counts.push(_fs.inodes[ino].file_size);
         outs.push(dir_name);
+    }
+
+    function _get_file_size(uint32 file_size, bool human_readable) private pure returns (string) {
+        return file_size == 0 ? "0" : human_readable ? _human_readable(file_size) : format("{:5}", file_size);
     }
 
     function _du(uint flags, string path, uint16 ino, uint8 ft) private view returns (string out) {
@@ -153,54 +322,54 @@ contract Stat is IOptions, FSCache {
         }
         uint start = summarize ? counts.length - 1 : 0;
         for (uint i = start; i < counts.length; i++)
-            out.append((human_readable ? _human_readable(counts[i]) : format("{}", counts[i])) + format("\t{}{}", outs[i], line_end));
+            out.append(_get_file_size(counts[i], human_readable) + "\t" + outs[i] + line_end);
     }
 
-    function _stat(uint flags, string name, uint16 id) private view returns (string out) {
-        bool dereference_links = (flags & _L) > 0;
-        uint8 ft = _is_reg(id) ? FT_REG_FILE : FT_DIR; // also symlink
-        if (dereference_links && (ft == FT_SYMLINK))
-            id = _get_symlink_target(id);
-        (uint32 accessed_at, uint32 modified_at, uint32 last_modified) = _ino_ts[id].unpack();
-        (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, , ) = _inodes[id].unpack();
-        User u = _users[_users.exists(owner_id) ? owner_id : REG_USER];
-        UserGroup ug = _ugroups[_ugroups.exists(group_id) ? group_id : u.group_id];
-        out.append(format("   File: {}\n   Size: {}\t\tBlocks: {}\tIO Block: 4096\t", name, file_size, file_size / 16384));
-        out = _if(out, file_size == 0, "regular empty file");
-        out = _if(out, file_size > 0, _ft(mode));
-        out.append(format("\nDevice: 820h/2080d\tInode: {}\tLinks: {}\nAccess: ({}/{})  Uid: ({}/{})  Gid: ({}/{})\nAccess: {}\nModify: {}\nChange: {}\n Birth: -\n", 
-            id, n_links, mode, _permissions(mode), owner_id, u.name, group_id, ug.name, _ts(accessed_at), _ts(modified_at), _ts(last_modified)));
+    function _stat(uint /*flags*/, string name, uint16 id, uint8 ft) private view returns (string out) {
+        (uint8 device_type, uint16 device_n, , uint16 blk_size, ) = _dev[0].unpack();
+        (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 accessed_at, uint32 modified_at, uint32 last_modified, , string text_data) = _fs.inodes[id].unpack();
+        out.append(format("   File: {}\n   Size: {}\t\tBlocks: {}\tIO Block: {}\t", name, file_size, file_size / blk_size, blk_size));
+        out.append(ft == FT_REG_FILE && file_size == 0 ? "regular empty file" : _file_type_description(mode));
+        uint16 device_id = (uint16(device_type) << 8) + device_n;
+        out.append(format("\nDevice: {}h/{}d\tInode: {}\tLinks: {}", device_id, device_id, id, n_links));   // TODO: fix {}h
+        if (_is_char_dev(mode) || _is_block_dev(mode)) {
+            (string major, string minor) = _get_device_version(text_data);
+            out.append(format("\tDevice type: {},{}\n", major, minor));
+        }
+        out.append(format("\nAccess: ({}/{})  Uid: ({}/{})  Gid: ({}/{})\nAccess: {}\nModify: {}\nChange: {}\n Birth: -\n",
+            mode, _permissions(mode), owner_id, _get_user_name(owner_id), group_id, _get_group_name(group_id), _ts(accessed_at), _ts(modified_at), _ts(last_modified)));
     }
 
-    function _file(uint flags, string name, uint16 id, uint8 ft) private view returns (string out) {
+    function _file(uint flags, string name, INodeS inode, uint8 ft) private pure returns (string out) {
         if ((flags & _v) > 0)
             return "version 2.0\n";
         bool brief_mode = (flags & _b) > 0;
         bool dont_pad = (flags & _N) > 0;
         bool add_null = (flags & _0) > 0;
-        if (!_inodes.exists(id)) {
-            if ((flags & _E) > 0)
-                out = "ERROR: ";
-            return out + "cannot stat" + _quote(name) + "(No such file or directory)\n";
-        }
-        uint32 fs = _inodes[id].file_size;
+
+        uint16 mode = inode.mode;
         if (!brief_mode)
             out = _if(name, add_null, "\x00") + _if(": ", !dont_pad, "\t");
         if (ft == FT_REG_FILE) {
+            uint32 fs = inode.file_size;
             out = _if(out, fs == 0, "empty");
             out = _if(out, fs == 1, "very short file (no magic)");
             out = _if(out, fs > 1, "ASCII text");
+        } else
+            out.append(_file_type_description(mode));
+        if (_is_char_dev(mode) || _is_block_dev(mode)) {
+            (string major, string minor) = _get_device_version(inode.text_data);
+            out.append(" (" + major + "/" + minor + ")");
         }
-        out = _if(out, ft == FT_DIR, "directory");
-        out = _if(out, ft == FT_SYMLINK, "symbolic link") + "\n";
     }
 
-    function _human_readable(uint32 n) private pure returns (string s) {
+    function _human_readable(uint32 n) private pure returns (string) {
         if (n < 1024)
             return format("{}", n);
         (uint d, uint m) = math.divmod(n, 1024);
-        return (d > 10) ? format("{}K", d) : format("{}.{}K", d, m / 100);
+        return d > 10 ? format("{}K", d) : format("{}.{}K", d, m / 100);
     }
+
     function _ls(uint f, string s, uint16 id, uint8 ft) private view returns (string out) {
 
 //        bool recurse = (f & _R) > 0;
@@ -231,11 +400,11 @@ contract Stat is IOptions, FSCache {
             inodes.push(id);
             names.push(s);
             types.push(ft);
-            ds[_ls_sort_rating(f, id, use_ctime, use_atime)] = 0;
+            ds[_ls_sort_rating(f, id, _fs.inodes[id], use_ctime, use_atime)] = 0;
         } else if (ft == FT_DIR) {
-            (inodes, names, types) = _get_dir_contents(_inodes[id], skip_dots);
+            (inodes, names, types) = _get_dir_contents(_fs.inodes[id], skip_dots);
             for (uint16 j = 0; j < inodes.length; j++)
-                ds[_ls_sort_rating(f, inodes[j], use_ctime, use_atime)] = j;
+                ds[_ls_sort_rating(f, inodes[j], _fs.inodes[inodes[j]], use_ctime, use_atime)] = j;
         }
         optional (uint, uint16) p = ds.min();
         while (p.hasValue()) {
@@ -243,36 +412,31 @@ contract Stat is IOptions, FSCache {
             (uint16 i, string name, uint8 ftt) = (inodes[j], names[j], types[j]);
             out = _if(out, inode, format("{:3} ", i));
             if (long) {
-                (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, , ) = _inodes[i].unpack();
+                (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 accessed_at, uint32 modified_at, uint32 last_modified, , ) = _fs.inodes[i].unpack();
                 out.append(format("{} {:2} ", _permissions(mode), n_links));
-                User u = _users[_users.exists(owner_id) ? owner_id : REG_USER];
-                UserGroup ug = _ugroups[_ugroups.exists(group_id) ? group_id : u.group_id];
-                out = _if(out, !no_owner, (num ? format("{:5}", owner_id) : format("{:5}", u.name)) + " ");
-                out = _if(out, !no_group, num ? format("{:5}", group_id) : no_group_names ? "" : format("{:5}", ug.name));
-                out.append(" " + (human_readable ? _human_readable(file_size) : format("{:5}", file_size)) + " ");
-                out.append(_ts(use_atime ? _ino_ts[i].accessed_at : use_ctime ? _ino_ts[i].modified_at : _ino_ts[i].last_modified) + " ");
+                out = _if(out, !no_owner, (num ? format("{:5}", owner_id) : format("{:5}", _get_user_name(owner_id))) + " ");
+                out = _if(out, !no_group, num ? format("{:5}", group_id) : no_group_names ? "" : format("{:5}", _get_group_name(group_id)));
+                out.append(" " + _get_file_size(file_size, human_readable) + " ");
+                out.append(_ts(use_atime ? accessed_at : use_ctime ? modified_at : last_modified) + " ");
             }
             out = _if(out, double_quotes, "\"") + name;
             out = _if(out, double_quotes, "\"");
             out = _if(out, append_slash_to_dirs && ftt == FT_DIR, "/") + sp;
             p = ds.next(xk);
         }
-        out.append("\n");
     }
 
-    function _ls_sort_rating(uint f, uint16 id, bool use_ctime, bool use_atime) private view returns (uint rating) {
-        (uint32 accessed_at, uint32 modified_at, uint32 last_modified) = _ino_ts[id].unpack();
-        if ((f & _t) > 0)
-            rating = use_atime ? accessed_at : use_ctime ? modified_at : last_modified;
+    function _ls_sort_rating(uint f, uint16 id, INodeS inode, bool use_ctime, bool use_atime) private pure returns (uint rating) {
+       if ((f & _t) > 0)
+            rating = use_atime ? inode.accessed_at : use_ctime ? inode.modified_at : inode.last_modified;
         if ((f & _U + _f) > 0) rating = 0;
-        if ((f & _S) > 0) rating = 0xFFFFFFFF - _inodes[id].file_size;
+        if ((f & _S) > 0) rating = 0xFFFFFFFF - inode.file_size;
         rating = (rating << 32) + id;
         if ((f & _r) > 0)
             rating = 0xFFFFFFFFFFFFFFFF - rating;
     }
 
-    function _wc(uint flags, uint16 ino) private view returns (string out) {
-        INodeS inode = _inodes[ino];
+    function _wc(uint flags, INodeS inode) private pure returns (string out) {
         bool print_bytes = true;
         bool print_chars = false;
         bool print_lines = true;
@@ -286,7 +450,7 @@ contract Stat is IOptions, FSCache {
             print_max_width = (flags & _L) > 0;
             print_words = (flags & _w) > 0;
         }
-        (, , , uint32 bc, , string file_name, string text) = inode.unpack();
+        (, , , uint32 bc, , , , , string file_name, string text) = inode.unpack();
         (uint16 lc, uint16 wc, uint32 cc, uint16 mw) = _line_and_word_count(text);
 
         out = _if("", print_lines, format("  {} ", lc));
@@ -294,24 +458,12 @@ contract Stat is IOptions, FSCache {
         out = _if(out, print_bytes, format(" {} ", bc));
         out = _if(out, print_chars, format(" {} ", cc));
         out = _if(out, print_max_width, format(" {} ", mw));
-        out.append(file_name + "\n");
+        out.append(file_name);
     }
 
     /******* Helpers ******************/
-    function _ft_sign(uint16 mode) internal pure returns (string) {
-        if ((mode & S_IFMT) == S_IFREG) return "-";
-        if ((mode & S_IFMT) == S_IFDIR) return "d";
-        if ((mode & S_IFMT) == S_IFLNK) return "l";
-    }
-
-    function _ft(uint16 mode) internal pure returns (string) {
-        if ((mode & S_IFMT) == S_IFREG) return "regular file";
-        if ((mode & S_IFMT) == S_IFDIR) return "directory";
-        if ((mode & S_IFMT) == S_IFLNK) return "symbolic link";
-    }
-
     function _permissions(uint16 p) internal pure returns (string) {
-        return _ft_sign(p) + _p_octet(p >> 6 & 0x0007) + _p_octet(p >> 3 & 0x0007) + _p_octet(p & 0x0007);
+        return _inode_mode_sign(p) + _p_octet(p >> 6 & 0x0007) + _p_octet(p >> 3 & 0x0007) + _p_octet(p & 0x0007);
     }
 
     function _p_octet(uint16 p) internal pure returns (string out) {
@@ -322,14 +474,15 @@ contract Stat is IOptions, FSCache {
 
     function _to_date(uint32 t) internal pure returns (uint32 ds, uint32 hrs, uint32 mins, uint32 secs) {
         uint32 start_period = 1627776000; // Aug 1st
-        if (t < start_period) return (0, 0, 0, 0);
-        uint32 t0 = t - start_period;
-        ds = t0 / 86400 + 1;
-        uint32 t1 = t0 % 86400;
-        hrs = t1 / 3600;
-        uint32 t2 = t1 % 3600;
-        mins = t2 / 60;
-        secs = t2 % 60;
+        if (t >= start_period) {
+            uint32 t0 = t - start_period;
+            ds = t0 / 86400 + 1;
+            uint32 t1 = t0 % 86400;
+            hrs = t1 / 3600;
+            uint32 t2 = t1 % 3600;
+            mins = t2 / 60;
+            secs = t2 % 60;
+        }
     }
 
     function _ts(uint32 t) internal pure returns (string) {
@@ -337,9 +490,7 @@ contract Stat is IOptions, FSCache {
         return format("Aug {} {:02}:{:02}:{:02}", ds, hrs, mins, secs);
     }
 
-    function init() external override accept {
-        _init_commands();
-        _init_errors();
+    function _init() internal override accept {
         _sync_fs_cache();
     }
 

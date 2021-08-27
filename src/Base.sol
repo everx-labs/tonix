@@ -2,7 +2,7 @@ pragma ton-solidity >= 0.48.0;
 
 abstract contract Base {
 
-    uint16 constant SUPER_USER_GROUP = 1;
+    uint16 constant SUPER_USER_GROUP = 0;
     uint16 constant REG_USER_GROUP = 1000;
     uint16 constant GUEST_USER_GROUP = 10000;
 
@@ -31,8 +31,8 @@ abstract contract Base {
 
     function onCodeUpgrade() internal {
         tvm.resetStorage();
-        this.init();
+        _init();
     }
 
-    function init() external virtual;
+    function _init() internal virtual;
 }

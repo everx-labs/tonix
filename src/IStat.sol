@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.48.0;
+pragma ton-solidity >= 0.49.0;
 
 abstract contract IStat {
 
@@ -30,9 +30,13 @@ abstract contract IStat {
     uint16 constant S_IFSOCK = S_IFREG + S_IFDIR; //   socket
     uint16 constant S_IFMT  = 0xF000; //   bit mask for the file type bit field
 
-    uint16 constant DEF_FILE_MODE = S_IRUSR + S_IWUSR + S_IRGRP + S_IROTH + S_IFREG;
-    uint16 constant DEF_DIR_MODE = S_IRWXU + S_IRGRP + S_IXGRP + S_IROTH + S_IXOTH + S_IFDIR;
-    uint16 constant DEF_SYMLINK_MODE = S_IRWXU + S_IRWXG + S_IRWXO + S_IFLNK;
+    uint16 constant DEF_REG_FILE_MODE   = S_IFREG + S_IRUSR + S_IWUSR + S_IRGRP + S_IROTH;
+    uint16 constant DEF_DIR_MODE        = S_IFDIR + S_IRWXU + S_IRGRP + S_IXGRP + S_IROTH + S_IXOTH;
+    uint16 constant DEF_SYMLINK_MODE    = S_IFLNK + S_IRWXU + S_IRWXG + S_IRWXO;
+    uint16 constant DEF_BLOCK_DEV_MODE  = S_IFBLK + S_IRUSR + S_IWUSR;
+    uint16 constant DEF_CHAR_DEV_MODE   = S_IFCHR + S_IRUSR + S_IWUSR;
+    uint16 constant DEF_FIFO_MODE       = S_IFIFO + S_IRUSR + S_IWUSR + S_IRGRP + S_IROTH;
+    uint16 constant DEF_SOCK_MODE       = S_IFSOCK + S_IRWXU + S_IRGRP + S_IXGRP + S_IROTH + S_IXOTH;
 
     uint16 constant STATX_TYPE  = 1 << 0; /* Want/got stx_mode & S_IFMT */
     uint16 constant STATX_MODE  = 1 << 1; /* Want/got stx_mode & ~S_IFMT */

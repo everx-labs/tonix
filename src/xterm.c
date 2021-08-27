@@ -2,21 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-unsigned const NO_ACTION   = 0;
-unsigned const PRINT_ERROR       = 1;
-unsigned const PRINT_OUT         = 2;
-unsigned const PRINT_IN          = 4;
-unsigned const PRINT_STAT        = 8;
-unsigned const PROCESS_COMMAND   = 16;
-unsigned const INODE_EVENT       = 64;
-unsigned const IO_EVENT          = 128;
-unsigned const WRITE_EVENT       = IO_EVENT + INODE_EVENT;
-unsigned const READ_EVENT       = 256;
+unsigned const NO_ACTION        = 0;
+unsigned const PRINT_STATUS     = 1;
+unsigned const PROCESS_COMMAND  = 2;
+unsigned const ADD_NODES        = 4;
+unsigned const UPDATE_NODES     = 8;
+unsigned const IO_EVENT         = 128;
 unsigned const CHECK_STATUS     = 512;
-unsigned const QUERY_BALANCE    = 1024;
-unsigned const WRITE_TO_FILE    = 2048;
+unsigned const OPEN_DIR         = 2048;
 unsigned const CHANGE_DIR       = 4096;
 unsigned const PIPE_OUT_TO_FILE = 8192;
+unsigned const MOUNT_FS         = 16384;
+unsigned const OPEN_FILE        = 32768;
+
+char *login;
+char *cwd;
 
 void a2h(char* input, char* output) {
     int loop = 0, i = 0;
@@ -29,14 +29,11 @@ void a2h(char* input, char* output) {
     output[i++] = '\0';
 }
 
-int _prompt(int wd) {
-    size_t size = 20000;
-    char *s = (char *)malloc(size);
-
+int _prompt(char *s) {
 /**********************************************************
     Read line from stdin
 **********************************************************/
-    int bytes_read = getline(&s, &size, stdin);
+//    getline(&s, &size, stdin);
     if (strchr(s, '\n')) {
         int lf_i = strchr(s, '\n') - s;
         s[lf_i] = '\0';
@@ -56,11 +53,6 @@ int _prompt(int wd) {
         t = strtok(NULL, " ");
     }
 
-    /*if (!(strcmp(cmds, "test"))) {
-        system("make test");
-        return wd;
-    }*/
-
     if (!(strcmp(cmds, "quit"))) {
         printf("Bye.\n");
         exit(0);
@@ -74,143 +66,148 @@ int _prompt(int wd) {
             if (!(strcmp(c, "dc")))
                 system("make d_CommandProcessor");
         }
-        return wd;
+        return 0;
     }
     if (!(strcmp(cmds, "sh"))) {
         char buffer[200];
         sprintf(buffer, "%s", &s2[strlen(cmds) + 1]);
         system(buffer);
-        return wd;
+        return 0;
     }
 
 /**********************************************************
     pack our findings to the contact as metadata
 **********************************************************/
-    int len = strlen(s2);
+    /*int len = strlen(s2);
     char hex_str[(len * 2) + 1];
-    a2h(s2, hex_str);
+    a2h(s2, hex_str);*/
 
     char mega[30000];
     char *pm = mega;
-//    pm += sprintf(pm, "{\"s_input\":\"%s\",\"sin\":{\"uid\":2000,\"gid\":1000,\"wd\":%d}}", s2, wd);
-    pm += sprintf(pm, "{\"i_ses\":{\"uid\":2000,\"gid\":1000,\"wd\":%d},\"s_input\":\"%s\"}", wd, s2);
-    int mlen = strlen(mega);
-    FILE *fp;
 
-    fp = fopen("std/parse.args", "wt");
+    pm += sprintf(pm, "{\"i_login\":\"%s\",\"i_cwd\":\"%s\",\"s_input\":\"%s\"}", login, cwd, s2);
+    int mlen = strlen(mega);
+    FILE *fp = fopen("std/parse.args", "wt");
     fwrite(&mega, 1, mlen, fp);
     fclose(fp);
 
-    if (system("make std/action std/out std/err")) {
-        exit(0);
-//        return wd;
-    }
-
     unsigned action = 0, action2 = 0, action3 = 0;
-//    system("jq -r '.action' < std/parse.out >std/action");
-    fp = fopen("std/action", "rt");
+    system("make std/action.1");
+    fp = fopen("std/action.1", "rt");
     fscanf(fp, "%u", &action);
     fclose(fp);
 
-    if (action & READ_EVENT) {
-        system("jq 'del(.std,.input)' < std/parse.out >std/read.args");
-        system("make std/read.out");
-        system("jq -r '.outs[]' < std/read.out");
-    }
-
     if (action & CHANGE_DIR) {
-        system("jq -r '.ses.wd' <std/parse.out >std/wd");
-        fp = fopen("std/wd", "rt");
-        fscanf(fp, "%d", &wd);
+        system("jq -r '.ses.cwd' <std/parse.out >std/cwd");
+        fp = fopen("std/cwd", "rt");
+        fscanf(fp, "%s", cwd);
         fclose(fp);
     }
-//    if (action < PRINT_STAT)
-//        return wd;
 
-    if (action & PRINT_STAT) {
+    if (action & CHECK_STATUS) {
+        system("jq -r '.addresses[]' < std/parse.out >std/addresses");
+        system("jq -r '.names[]' < std/parse.out >std/hosts");
+        system("make account_data");
+        system("make std/status");
+    }
+
+    if (action & MOUNT_FS) {
+        system("jq -r '.addresses[]' < std/parse.out >std/addresses");
+        system("jq 'del(.std,.action,.input,.redirect)' < std/parse.out > std/request_mount.args");
+        system("make std/request_mount");
+    }
+    if (action & OPEN_FILE) {
+        system("make std/ses.temp");
+        system("make std/open");
+    }
+    if (action & OPEN_DIR) {
+        system("rm -f std/dirs_to_open std/files_to_open");
+        system("make std/dirs_to_open");
+        system("make std/files_to_open");
+        system("make std/carr");
+        system("make std/mount_el");
+    }
+
+    if (action & PRINT_STATUS) {
         system("jq -r 'del(.re,.action,.std,.ios,.ines)' < std/parse.out >std/stat.args");
-        system("make std/stat.out");
-        fp = fopen("std/action2", "rt");
-        fscanf(fp, "%u", &action2);
-        fclose(fp);
+        system("make std/action.2");
     }
     else if (action & PROCESS_COMMAND) {
         system("jq -r 'del(.re,.action,.std,.ios,.ines)' < std/parse.out >std/process.args");
-        system("make std/process.out");
-        fp = fopen("std/action3", "rt");
+        system("make std/action.3");
+        fp = fopen("std/action.3", "rt");
         fscanf(fp, "%u", &action3);
         fclose(fp);
     }
 
-    if (action3 & CHECK_STATUS) {
-        system("make std/status");
-        system("cat std/status");
-    }
-
-    if (action3 & QUERY_BALANCE) {
-        system("make std/balance");
-        system("cat std/balance");
-    }
-
-    if (action2 & PRINT_OUT)
-        system("jq -r '.std.out' < std/stat.out >>std/out");
-    if (action2 & PRINT_ERROR)
-        system("jq -r '.std.err' < std/stat.out >>std/err");
-    if (action3 & PRINT_OUT)
-        system("jq -r '.std.out' < std/process.out >>std/out");
-    if (action3 & PRINT_ERROR)
-        system("jq -r '.std.err' < std/process.out >>std/err");
-
-    system("cat std/out");
-    if (action + action2 + action3 & PRINT_ERROR)
-        system("cat std/err");
-    fflush(stdout);
-
-    if (action & PIPE_OUT_TO_FILE) {
+    if (action & PIPE_OUT_TO_FILE)
         system("make std/write_to_file.res");
-    }
 
-    if (action + action2 + action3 & WRITE_EVENT) {
-        if (action & IO_EVENT)
-            system("jq 'del(.std,.action,.input,.re)' < std/parse.out > std/write.args");
-        if (action2 & IO_EVENT) {
-//            system("jq 'del(.std,.action)' < std/stat.out > std/write.args");
-            system("jq 'del(.std,.action,.input,.re,.ios,.ines)' < std/parse.out > std/ses.temp");
-            system("sed '7d' std/ses.temp > std/ses2.temp");
-            system("echo ',' >> std/ses2.temp");
-            system("jq 'del(.std,.action)' < std/stat.out > std/proc.temp");
-            system("sed '1d' std/proc.temp > std/proc2.temp");
-            system("cat std/ses2.temp std/proc2.temp > std/write.args");
+    /*if (action3 & ADD_NODES) {
+        system("jq 'del(.std,.action,.input,.re,.ios,.redirect,.names,.addresses)' < std/parse.out > std/ses.temp");
+        system("jq 'del(.std,.action)' < std/process.out > std/proc.temp");
+        system("jq -s '.[0] + .[1]' std/ses.temp std/proc.temp > std/add_nodes.args");
+        system("make std/add_nodes.res");
+    }*/
 
-        } else if (action3 & WRITE_EVENT) {
-            system("jq 'del(.std,.action,.input,.re,.ios,.ines)' < std/parse.out > std/ses.temp");
-            system("sed '7d' std/ses.temp > std/ses2.temp");
-            system("echo ',' >> std/ses2.temp");
-            system("jq 'del(.std,.action)' < std/process.out > std/proc.temp");
-            system("sed '1d' std/proc.temp > std/proc2.temp");
-            system("cat std/ses2.temp std/proc2.temp > std/write.args");
-
-        }
-        system("make std/write.res");
+    if (action3 & UPDATE_NODES) {
+        system("jq 'del(.std,.action,.input,.re,.ios,.redirect,.names,.addresses)' < std/parse.out > std/ses.temp");
+        system("jq 'del(.std,.action)' < std/process.out > std/proc.temp");
+        system("jq -s '.[0] + .[1]' std/ses.temp std/proc.temp > std/update_nodes.args");
+        system("make std/update_nodes.res");
     }
 
     // !!! jq '.u | del(.std) | .[] | select (length > 0)' < get.out !!!
-    return wd;
+    return 0;
 }
 
 int main(int argc, char **argv) {
-    int wd = argc < 2 ? 11 : atoi(argv[2]);
+
+    size_t lsize = 32;
+    login = (char *)malloc(lsize);
+    FILE *fp = fopen("std/login", "rt");
+    if (!fp) {
+        printf("login: ");
+        getline(&login, &lsize, stdin);
+        int len = strlen(login);
+        fp = fopen("std/login", "wt");
+        fwrite(login, 1, len, fp);
+        fclose(fp);
+    } else {
+        fscanf(fp, "%s", login);
+        fclose(fp);
+    }
+
+    printf("Logged in as: %s\n", login);
+
+    size_t cwdsize = 32;
+    cwd = (char *)malloc(cwdsize);
+    FILE *cfp = fopen("std/cwd", "rt");
+    if (!cfp) {
+        cfp = fopen("std/cwd", "wt");
+        fwrite("/", 1, 1, cfp);
+        fclose(cfp);
+    } else {
+        fscanf(cfp, "%s", cwd);
+        fclose(cfp);
+    }
+
+    printf("Working dir: %s\n", cwd);
+
+//    int wd = argc < 2 ? 11 : atoi(argv[2]);
     setbuf(stdout, NULL);
     system("cat etc/motd");
     while (1) {
-        printf("$ ");
-        int ret = _prompt(wd);
 
-        if (ret == 0) {
+        printf("$ ");
+        size_t size = 20000;
+        char *s = (char *)malloc(size);
+        getline(&s, &size, stdin);
+        int ret = _prompt(s);
+
+        if (ret > 0) {
             printf("??? Session failed?\n");
             exit(0);
         }
-        else
-            wd = ret;
     }
 }

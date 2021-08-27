@@ -1,46 +1,49 @@
-pragma ton-solidity >= 0.48.0;
+pragma ton-solidity >= 0.49.0;
 
 import "Base.sol";
 import "String.sol";
 
 abstract contract Map is Base, String {
 
-    function _read_pair(string s) internal pure returns (string field1, string field2) {
-        uint16 p = _strchr(s, "\t");
-        field1 = s.substr(0, p - 1);
-        field2 = s.substr(p, uint16(s.byteLength()) - p);
-    }
-
-    function _read_triple(string s) internal pure returns (string field1, string field2, string field3) {
-        uint16 p = _strchr(s, "\t");
-        uint16 q = _strrchr(s, "\t");
-        field1 = s.substr(0, p - 1);
-        field2 = s.substr(p, q - 1);
-        field3 = s.substr(q, uint16(s.byteLength()) - q);
-    }
-
     function _read_entry(string s) internal pure returns (string[] fields) {
-        uint16 p = _strchr(s, "\t");
-        uint16 len = uint16(s.byteLength());
-        string field;
-        string tail;
-
-        field = s.substr(0, p - 1);
-        tail = s.substr(p, len - p);
-        fields.push(field);
-        string[] tail_fields = _read_entry(tail);
-        for (string s0: tail_fields)
-            fields.push(s0);
+        if (!s.empty())
+            return _split(s, "\t");
     }
 
-    function _lookup_value(string name, string text) internal pure returns (string) {
-        string[] lines = _get_lines(text);
-        for (string s: lines) {
-            (string key, string value) = _read_pair(s);
+    function _lookup_pair_value(string name, string text) internal pure returns (string) {
+        for (string s: _get_lines(text)) {
+            uint16 p = _strchr(s, "\t");
+            string key = s.substr(0, p - 1);
+            string value = s.substr(p, uint16(s.byteLength()) - p);
             if (key == name)
                 return value;
             if (value == name)
                 return key;
         }
     }
+
+    function _match_value_at_index(uint16 key_index, string key, uint16 value_index, string text) internal pure returns (string) {
+        if (key_index > 0 && value_index > 0)
+            for (string s: _get_lines(text)) {
+                string[] fields = _read_entry(s);
+                if (fields[key_index - 1] == key)
+                    return fields[value_index - 1];
+            }
+    }
+
+    function _lookup_record(uint16 field, string key, string text) internal pure returns (string[]) {
+        for (string s: _get_lines(text)) {
+            string[] fields = _read_entry(s);
+            if (fields[field] == key)
+                return fields;
+        }
+    }
+
+    function _lookup_field(string s, string text) internal pure returns (uint16) {
+        string[] fields = _read_entry(text);
+        for (uint i = 0; i < fields.length; i++)
+            if (fields[i] == s)
+                return uint16(i + 1);
+    }
+
 }

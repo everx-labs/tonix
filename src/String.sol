@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.48.0;
+pragma ton-solidity >= 0.49.0;
 
 abstract contract String {
 
@@ -35,7 +35,9 @@ abstract contract String {
     function _dir(string s0) internal pure returns (string) {
         string s = _path(s0);
         uint16 q = _strrchr(s, "/");
-        return (q < 2) ? s : s.substr(0, q - 1);
+        if (q == 0) return ".";
+        if (q == 1) return "/";
+        return s.substr(0, q - 1);
     }
 
     function _strchr(string s, string c) internal pure returns (uint16) {
@@ -45,10 +47,54 @@ abstract contract String {
     }
 
     function _strrchr(string s, string c) internal pure returns (uint16) {
-        uint16 len = uint16(s.byteLength());
-        for (uint16 i = len; i > 0; i--)
+        for (uint16 i = uint16(s.byteLength()); i > 0; i--)
             if (s.substr(i - 1, 1) == c)
                 return i;
+    }
+
+    function _split(string s, string delimiter) internal pure returns (string[] res) {
+        uint16 len = uint16(s.byteLength());
+        uint16 prev = 0;
+        uint16 cur = 0;
+        while (cur < len - 1) {
+            if (s.substr(cur, 1) == delimiter) {
+                res.push(s.substr(prev, cur - prev));
+                prev = cur + 1;
+            }
+            cur++;
+        }
+        res.push(s.substr(prev, cur - prev + 1));
+    }
+
+    function _strtok(string text, string delimiter) internal pure returns (string[] res) {
+        for (string line: _get_lines(text))
+            for (string s: _split(line, delimiter))
+                res.push(s);
+    }
+
+    function _element_at(uint16 line, uint16 column, string text, string delimiter) internal pure returns (string) {
+        if (line > 0 && column > 0) {
+            string[] lines = _get_lines(text);
+            if (line <= lines.length) {
+                string[] records = _split(lines[line - 1], delimiter);
+                if (column <= records.length)
+                    return records[column - 1];
+            }
+        }
+    }
+
+    function _join_lines(string[] lines) internal pure returns (string text) {
+        for (string s: lines)
+            text.append(s + "\n");
+    }
+
+    function _join_fields(string[] fields) internal pure returns (string line) {
+        uint len = fields.length;
+        if (len > 0) {
+            line = fields[0];
+            for (uint i = 1; i < len; i++)
+                line.append("\t" + fields[i]);
+        }
     }
 
     function _if(string s1, bool flag, string s2) internal pure returns (string) {
@@ -60,7 +106,7 @@ abstract contract String {
     }
 
     function _get_lines(string text) internal pure returns (string[] lines) {
-        if (text != "") {
+        if (!text.empty()) {
             uint16 l = _strchr(text, "\n");
             if (l == 0)
                 lines.push(text);
@@ -72,8 +118,9 @@ abstract contract String {
             }
         }
     }
+
     function _get_words(string line) internal pure returns (string[] words) {
-        if (line != "") {
+        if (!line.empty()) {
             uint16 l = _strchr(line, "\n");
             if (l == 0)
                 words.push(line);
@@ -87,23 +134,23 @@ abstract contract String {
     }
 
     function _line_and_word_count(string text) internal pure returns (uint16 lc, uint16 wc, uint32 cc, uint16 mw) {
-        if (text == "") return (0, 0, 0, 0);
-
-        string[] lines = _get_lines(text);
-        lc = uint16(lines.length);
-        for (uint16 i = 0; i < lc; i++) {
-            string line = lines[i];
-            uint16 len = uint16(line.byteLength());
-            cc += len;
-            wc += _word_count(line);
-            if (len > mw) mw = len;
+        if (!text.empty()) {
+            string[] lines = _get_lines(text);
+            lc = uint16(lines.length);
+            for (uint16 i = 0; i < lc; i++) {
+                string line = lines[i];
+                uint16 len = uint16(line.byteLength());
+                cc += len;
+                wc += _word_count(line);
+                if (len > mw) mw = len;
+            }
         }
     }
+
     function _word_count(string text) internal pure returns (uint16) {
-        if (text == "") return 0;
-        uint16 l = _strchr(text, " ");
-        return l == 0 ? 1 : _word_count(text.substr(l, text.byteLength() - l)) + 1;
+        if (!text.empty()) {
+            uint16 l = _strchr(text, " ");
+            return l == 0 ? 1 : _word_count(text.substr(l, text.byteLength() - l)) + 1;
+        }
     }
-
-
 }

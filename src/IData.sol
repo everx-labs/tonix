@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.48.0;
+pragma ton-solidity >= 0.49.0;
 
 struct Std {
     string out;
@@ -6,26 +6,16 @@ struct Std {
 }
 
 struct InputS {
-    uint8 process_command;
+    uint8 command;
     string[] args;
     uint flags;
-    string target;
-}
-
-struct INodeEventS {
-    uint8 intype;
-    uint16 iid;
-    uint16 val;
-    uint16 val2;
-    uint32 attr;
 }
 
 struct IOEventS {
     uint8 iotype;
-    uint16 iid;
-    uint16 val;
-    string path;
-    string text;
+    uint16 parent;
+    uint16[] indices;
+    string[] paths;
 }
 
 struct ReadEventS {
@@ -36,7 +26,9 @@ struct ReadEventS {
 }
 
 struct SessionS {
+    string login;
     uint16 uid;
     uint16 gid;
     uint16 wd;
+    string cwd;
 }
