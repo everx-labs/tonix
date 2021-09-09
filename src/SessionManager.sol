@@ -1,0 +1,612 @@
+pragma ton-solidity >= 0.49.0;
+pragma ignoreIntOverflow;
+import "SyncFS.sol";
+
+contract SessionManager is SyncFS {
+
+    uint16 constant CANON_NONE  = 0;
+    uint16 constant CANON_MISS  = 1;
+    uint16 constant CANON_DIRS  = 2;
+    uint16 constant CANON_EXISTS = 3;
+    uint16 constant EXPAND_SYMLINKS = 8;
+
+    uint16 constant EXT_NO_ACTION   = 0;
+    uint16 constant EXT_READ_IN     = 1;
+    uint16 constant EXT_WRITE_IN    = 2;
+    uint16 constant EXT_MAP_FILE    = 4;
+    uint16 constant EXT_OPEN_FILE   = 8;
+    uint16 constant EXT_READ_DIR    = 16;
+    uint16 constant EXT_PIPE_TO     = 32;
+    uint16 constant EXT_OPEN_DIR    = 64;
+    uint16 constant EXT_READ_TREE   = 128;
+    uint16 constant EXT_OPEN_TREE   = 256;
+    uint16 constant EXT_WRITE_FILES = 512;
+    uint16 constant EXT_ACCOUNT     = 2048;
+    uint16 constant EXT_CHANGE_DIR  = 4096;
+    uint16 constant EXT_MOUNT_FS    = 8192;
+    uint16 constant EXT_SPAWN       = 16384;
+
+    struct CmdInfoS {
+        uint8 min_args;
+        uint16 max_args;
+        uint options;
+    }
+    mapping (uint8 => CmdInfoS) public _command_info;
+    string[] public _commands;
+
+    /* Primary entry point */
+    function parse(string i_login, string i_cwd, string s_input) external view returns (string out, string err, SessionS session,
+                    InputS input, uint16 action, uint16 ext_action, string source, string target, string[] names, address[] addresses, ErrS[] errors, ArgS[] arg_list, string cwd) {
+        /* Validate session info: uid and wd */
+        (uint16 uid, uint16 gid, string user_name, string group_name, ) = _query_user_data(i_login).unpack();
+        uint16 pid = _get_process_id(uid);
+        uint16 wd = _resolve_abs_path(i_cwd);
+        cwd = wd > 0 ? i_cwd : ROOT;
+        session = SessionS(pid, uid, gid, wd);
+        /* Parse input line */
+        (uint8 c, string cmds, string[] args, uint flags, string x_source, string x_target) = _parse_input(s_input);
+        target = x_target;
+        source = x_source;
+        if (c == CMD_UNKNOWN) {
+            err = cmds + ": command not found\n";
+        } else if (flags >= (1 << 254)) {
+            if ((flags & 1 << 255) > 0) {
+                delete args;
+                args.push(cmds);
+                input = InputS(help, args, 0);
+                action = PROCESS_COMMAND;
+            }
+        } else {
+            /* Push assumed arguments for certain commands */
+            if (args.empty()) {
+                if (c == du || c == ls || c == df)
+                    args.push(".");
+                if (c == cd)
+                    args.push("~");
+            }
+            if (c == ln && args.length == 1)
+                args.push(".");
+            input = InputS(c, args, flags);
+            /* Diagnose common errors early:
+                - missing or extra operands
+                - unknown options        */
+            CmdInfoS ci = _command_info[c];
+            uint16 nargs = uint16(args.length);
+            uint extra_flags = flags - (ci.options & flags);
+            string args_check;
+            if (nargs < ci.min_args)
+                args_check = "missing file operand";
+            if (nargs > ci.max_args)
+                args_check = "extra operand" + _quote(args[ci.max_args]);
+            if (extra_flags > 0) {
+                string extra_flags_s;
+                for (uint i = 0; i < 255; i++)
+                    if ((extra_flags & (1 << i)) > 0)
+                        extra_flags_s.append(format("{} ", i));
+                args_check = "invalid option -- " + extra_flags_s;
+            }
+            if (!args_check.empty())
+                err.append(cmds + ": " + args_check + "\nTry " + cmds + " --help for more information.\n");
+            else {
+                bool follow_symlinks = _op_format(c) || c == readlink || (flags & _L) > 0;
+                uint16 deref_mode = follow_symlinks ? EXPAND_SYMLINKS : 0;
+                if (c == readlink) (out, errors) = _readlink(flags, args, wd);
+                if (c == realpath) (out, errors) = _realpath(flags, args, wd);
+                if (_op_format(c) || _op_stat(c) || _op_access(c) || _op_file(c) || c == readlink || c == realpath || c == cd) {
+                    for (string s: args) {
+                        if (arg_list.empty() && _op_access(c))
+                            continue;
+                        ArgS arg = _dereference(deref_mode, s, session.wd);
+                        arg_list.push(arg);
+                        (string path, uint8 ft, uint16 ino, , ) = arg.unpack();
+                        if (ino > 0 && _fs.inodes.exists(ino)) {
+                            if ((c == cat || c == paste || c == wc) && ft == FT_DIR)
+                                errors.push(ErrS(0, EISDIR, path));
+                        } else if (_op_format(c) || _op_stat(c) || _op_access(c))
+                            errors.push(ErrS(0, ino, path));
+                    }
+                }
+                if (c == hostname) out = _hostname(flags) + "\n";
+                if (c == id) out = _id(flags, user_name, uid, gid, group_name) + "\n";
+                if (c == pwd) out = cwd + "\n";
+                if (c == whoami) out = user_name + "\n";
+                if (c == cd) {
+                    uint16 nwd;
+                    string n_cwd;
+                    (nwd, n_cwd, errors) = _cd(flags, args[0], wd);
+                    if (nwd != wd) {
+                        session.wd = nwd;
+                        cwd = n_cwd;
+                        ext_action |= EXT_CHANGE_DIR;
+                    }
+                }
+                if (_op_network(c))
+                    (out, names, addresses, ext_action) = _network_op(c, flags, args);
+                if (c == fallocate) {
+                    (names, errors) = _fallocate(arg_list, wd);
+                    if (!names.empty())
+                        ext_action |= EXT_OPEN_FILE;
+                        source = names[0];
+                }
+                if (c == dd) {
+                    (names, errors) = _dd(arg_list, wd);
+                    if (!names.empty()) {
+                        source = names[0];
+                        target = names[0];
+                        ext_action |= WRITE_FILES;
+                    }
+                }
+            }
+        }
+
+        if (!x_target.empty()) {
+            source = "vfs/proc/2/fd/1/out";
+            action |= PIPE_OUT_TO_FILE;
+        }
+        if (!errors.empty())
+            action |= PRINT_ERRORS;
+        else {
+            if (_op_stat(c) || _op_dev_stat(c)) action |= PRINT_STATUS;
+            if (_op_file(c) || _op_access(c)) action |= FILE_OP;
+            if (_is_pure(c) || _reads_file_fixed(c)) action |= PROCESS_COMMAND;
+            if (_op_format(c)) action |= READ_INDEX;
+        }
+    }
+
+    /* Session commands */
+    function _cd(uint flags, string s, uint16 wd) private view returns (uint16 nwd, string cwd, ErrS[] es) {
+        if (((flags & _e + _P) > 0) && wd < INODES)
+            es.push(ErrS(0, ENOENT, s));
+        nwd = wd;
+        (uint16 di, uint8 ft) = _lookup_dir_entry(s, nwd);
+        if (di < INODES)
+            es.push(ErrS(0, ENOENT, s));
+        else if (ft != FT_DIR)
+            es.push(ErrS(0, ENOTDIR, s));
+        else if (es.empty()) {
+            nwd = di;
+            cwd = _get_abs_path(nwd);
+        }
+    }
+
+    function _id(uint flags, string user_name, uint16 uid, uint16 gid, string group_name) private pure returns (string out) {
+        bool effective_gid_only = (flags & _g) > 0;
+        bool name_not_number = (flags & _n) > 0;
+        bool real_id = (flags & _r) > 0;
+        bool effective_uid_only = (flags & _u) > 0;
+
+        bool is_ugG = (flags & _u + _g + _G) > 0;
+
+        if ((name_not_number || real_id) && !is_ugG)
+            out = "id: cannot print only names or real IDs in default format";
+        else if (effective_gid_only && effective_uid_only)
+            out = "id: cannot print \"only\" of more than one choice";
+        else if (effective_gid_only)
+            out = name_not_number ? group_name : format("{}", gid);
+        else if (effective_uid_only)
+            out = name_not_number ? user_name : format("{}", uid);
+        else
+            out = format("uid={}({}) gid={}({})", uid, user_name, gid, group_name);
+    }
+
+    function _pwd(uint /*flags*/, uint16 wd) private view returns (string) {
+//        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
+        return _get_abs_path(wd);
+    }
+
+    function _hostname(uint flags) internal view returns (string out) {
+        bool long_host_name = (flags & _f) > 0;
+        bool addresses = (flags & _i) > 0;
+
+        string[] f_hostname = _get_file_contents("/etc/hostname");
+        string s_domain = "tonix";
+
+        if (addresses)
+           return f_hostname[1];
+        out = f_hostname[0];
+        if (long_host_name)
+            out.append("." + s_domain);
+    }
+
+    /* Path resolution commands */
+    function _readlink(uint flags, string[] s_args, uint16 wd) internal view returns (string out, ErrS[] errors) {
+        bool canon_existing_dir = (flags & _f) > 0;
+        bool canon_existing = (flags & _e) > 0;
+        bool canon_missing = (flags & _m) > 0;
+        bool no_newline = (flags & _n) > 0;
+        bool print_errors = (flags & _v) > 0;
+        string line_delimiter = (flags & _z) > 0 ? "\x00" : "\n";
+
+        bool canon = (flags & _f + _e + _m) > 0;
+        uint16 mode = canon_existing ? 3 : canon_existing_dir ? 2 : canon_missing ? 1 : 0;
+
+        for (string s_arg: s_args) {
+            (, uint8 ft, uint16 parent, ) = _lookup_dir_entry_plus(s_arg, wd);
+            string path;
+            bool exists;
+            if (canon)
+                (path, exists) = _canonicalize(mode, s_arg, parent);
+            else if (ft == FT_SYMLINK) {
+                ArgS arg = _dereference(mode + EXPAND_SYMLINKS, s_arg, wd);
+                (path, ft, , , ) = arg.unpack();
+                exists = ft > FT_UNKNOWN;
+            } else
+                continue;
+
+            if (!exists) {
+                if (print_errors)
+                    errors.push(ErrS(0, ENOENT, s_arg));
+                continue;
+            }
+            out.append(path);
+            out = _if(out, !no_newline, line_delimiter);
+        }
+    }
+
+    function _realpath(uint flags, string[] s_args, uint16 wd) internal view returns (string out, ErrS[] errors) {
+        bool canon_existing = (flags & _e) > 0;
+        bool canon_missing = (flags & _m) > 0;
+        bool canon_existing_dir = (flags & _m + _e) == 0;
+//        bool logical = (flags & _L) > 0;
+//        bool physical = (flags & _P) > 0;
+        bool expand_symlinks = (flags & _s) == 0;
+        bool print_errors = (flags & _q) == 0;
+        string line_delimiter = (flags & _z) > 0 ? "\x00" : "\n";
+
+        for (string s_arg: s_args) {
+            (string arg_dir, string arg_base) = _dir(s_arg);
+            string path;
+            uint16 dir_index;
+            uint16 cur_dir;
+            if (s_arg.substr(0, 1) == "/") {
+                path = s_arg;
+                cur_dir = _resolve_abs_path(arg_dir);
+            } else {
+                path = _xpath(s_arg, wd);
+                cur_dir = wd;
+            }
+
+            if (canon_existing_dir || canon_existing)
+                dir_index = _dir_index(arg_base, cur_dir);
+
+            if (dir_index > 0 && expand_symlinks) {
+                (, , uint8 ft) = _read_dir_entry(_fs.inodes[cur_dir].text_data[dir_index - 1]);
+                if (ft == FT_SYMLINK) {
+                    ArgS arg = _dereference(EXPAND_SYMLINKS, s_arg, wd);
+                    (path, ft, , , dir_index) = arg.unpack();
+                }
+            }
+
+            if (!canon_missing && dir_index == 0) {
+                if (print_errors)
+                    errors.push(ErrS(0, ENOENT, s_arg));
+                continue;
+            }
+            out.append(path + line_delimiter);
+        }
+    }
+
+    /* Experimental commands */
+    function _dd(ArgS[] args, uint16 wd) private view returns (string[] names, ErrS[] errors) {
+        for (ArgS arg: args) {
+            (string dir_name, string file_name) = _dir(arg.path);
+            uint16 dir = dir_name == "." ? wd : _resolve_abs_path(dir_name);
+            (uint16 ino, ) = _lookup_dir_entry(file_name, dir);
+            if (ino >= INODES)
+                errors.push(ErrS(0, EEXIST, arg.path));
+            else
+                names.push(file_name);
+        }
+    }
+
+    function _fallocate(ArgS[] args, uint16 wd) private view returns (string[] names, ErrS[] errors) {
+        for (ArgS arg: args) {
+            (string dir_name, string file_name) = _dir(arg.path);
+            uint16 dir = dir_name == "." ? wd : _resolve_abs_path(dir_name);
+            (uint16 ino, ) = _lookup_dir_entry(file_name, dir);
+            if (ino >= INODES)
+                errors.push(ErrS(0, EEXIST, arg.path));
+            else
+                names.push(file_name);
+        }
+    }
+
+    /* Network commands */
+    function _network_op(uint8 c, uint flags, string[] args) private view returns (string out, string[] names, address[] addresses, uint16 ext_action) {
+        if (c == mount) {
+            (out, names, addresses) = _mount(flags, args);
+            if (!addresses.empty())
+                ext_action |= EXT_MOUNT_FS;
+            else if (!names.empty())
+                ext_action |= EXT_OPEN_DIR;
+        }
+        if (c == ping) {
+//            (names, addresses) = _ping(flags, args);
+            if (!addresses.empty())
+                ext_action |= EXT_ACCOUNT;
+        }
+        if (c == account) {
+            (names, addresses) = _account(flags, args);
+            if (!addresses.empty())
+                ext_action |= EXT_ACCOUNT;
+        }
+    }
+
+    function _mount(uint flags, string[] args) private view returns (string out, string[] names, address[] addresses) {
+        bool mount_all = (flags & _a) > 0;
+//        bool canonicalize_paths = (flags & _c) == 0;
+        bool dry_run = (flags & _f) > 0;
+//        bool show_labels = (flags & _l) > 0;
+//        bool no_mtab = (flags & _n) > 0;
+//        bool verbose = (flags & _v) > 0;
+//        bool read_write = (flags & _w) > 0;
+//        bool alt_fstab = (flags & _T) > 0;
+//        bool read_only = (flags & _r) > 0;
+        bool another_namespace = (flags & _N) > 0;
+//        bool bind_subtree = (flags & _B) > 0;
+//        bool move_subtree = (flags & _M) > 0;
+
+        if (another_namespace) {
+            names.push(args[0]);
+        } else {
+            if (args.empty() && mount_all) {
+                for (string s: _get_file_contents("/etc/fstab")) {
+                    string[] fields = _read_entry(s);
+                    address source = _to_address(_lookup_pair_value(fields[0], _get_file_contents("/etc/hosts")));
+                    string target = fields[1];
+                    if (!dry_run) {
+                        names.push(target);
+                        addresses.push(source);
+                    } else
+                        out.append(format("{}\t{}\n", target, source));
+                }
+            } else {
+                for (string s: args) {
+                    names.push(_match_value_at_index(1, s, 2, _get_file_contents("/etc/fstab")));
+                    addresses.push(_to_address(_lookup_pair_value(s, _get_file_contents("/etc/hosts"))));
+                }
+            }
+        }
+    }
+
+    function _ping(uint flags, string[] args) private view returns (string[] names, address[] addresses) {
+        string[] text = _get_file_contents("/etc/hosts");
+        if (!args.empty())
+            for (string s: args) {
+                if ((flags & _d) == 0) {
+                    if ((flags & _D) > 0)
+                        s = format("[{}] ", now) + s;
+                    names.push(s);
+                    addresses.push(_to_address(_lookup_pair_value(s, text)));
+                }
+            }
+        else {
+            for (string s: text) {
+                string[] fields = _read_entry(s);
+                names.push(fields[1]);
+                addresses.push(_to_address(fields[0]));
+            }
+        }
+    }
+
+    function _account(uint flags, string[] args) private view returns (string[] host_names, address[] addresses) {
+        string[] text = _get_file_contents("/etc/hosts");
+        if (!args.empty())
+            for (string s: args) {
+                if ((flags & _d) == 0) {
+                    host_names.push(s);
+                    addresses.push(_to_address(_lookup_pair_value(s, text)));
+                }
+            }
+        else {
+            for (string s: text) {
+                string[] fields = _read_entry(s);
+                host_names.push(fields[1]);
+                addresses.push(_to_address(fields[0]));
+            }
+        }
+    }
+
+    /* Path utilities helpers */
+    function _abs_path_walk_up(uint16 dir) internal view returns (string path) {
+        uint16 cur_dir = dir;
+        while (cur_dir > ROOT_DIR) {
+            INodeS inode = _fs.inodes[cur_dir];
+            path = inode.file_name + "/" + path;
+            (, uint16 parent, ) = _read_dir_entry(inode.text_data[1]);
+            cur_dir = parent;
+        }
+    }
+
+    function _canonicalize(uint16 mode, string s_arg, uint16 wd) internal view returns (string res, bool valid) {
+        uint16 canon_mode = mode & 3;
+
+        (string arg_dir, string arg_base) = _dir(s_arg);
+        string path;
+        uint16 dir_index;
+        uint16 cur_dir;
+        valid = true;
+
+        if (s_arg.substr(0, 1) == "/") {
+            path = s_arg;
+            cur_dir = _resolve_abs_path(arg_dir);
+        } else {
+            path = _xpath(s_arg, wd);
+            cur_dir = wd;
+        }
+
+        if (canon_mode >= CANON_DIRS) {
+            dir_index = _dir_index(arg_base, cur_dir);
+            valid = dir_index > 0;
+        }
+
+        if (canon_mode == CANON_NONE)
+            res = s_arg;
+        if (canon_mode == CANON_MISS || canon_mode == CANON_EXISTS)
+            res = path;
+        if (canon_mode == CANON_DIRS)
+            res = _xpath(arg_dir, _resolve_abs_path(arg_dir)) + "/" + arg_base;
+    }
+
+    function _dereference(uint16 mode, string s_arg, uint16 wd) internal view returns (ArgS arg_out) {
+        bool expand_symlinks = (mode & EXPAND_SYMLINKS) > 0;
+        (uint16 ino, uint8 ft, uint16 parent, uint16 idx) = _lookup_dir_entry_plus(s_arg, wd);
+        INodeS inode;
+        if (ino > 0 && _fs.inodes.exists(ino))
+            inode = _fs.inodes[ino];
+        if (expand_symlinks && ft == FT_SYMLINK)
+            (s_arg, ino, ft) = _symlink_target(inode);
+        arg_out = ArgS(s_arg, ft, ino, parent, idx);
+    }
+
+    /* Network helpers */
+    function _to_address(string s_addr) private pure returns (address addr) {
+        uint len = s_addr.byteLength();
+        if (len > 60) {
+            string s_hex = "0x" + s_addr.substr(2, len - 2);
+            (uint u_addr, bool success) = stoi(s_hex);
+            if (success)
+                return address.makeAddrStd(0, u_addr);
+        }
+    }
+
+    /* Session helpers */
+    function _get_process_id(uint16 uid) internal view returns (uint16) {
+        for ((, ProcessInfo pi): _proc)
+            if (pi.owner_id == uid)
+                return pi.self_id;
+    }
+
+    function _query_user_data(string login) internal view returns (UserInfo) {
+        for ((, UserInfo user_info): _users)
+            if (login == user_info.user_name)
+                return user_info;
+    }
+
+    /* Parsing helpers */
+    function _command_index(string s) internal view returns (uint8) {
+        for (uint8 i = 0; i < _commands.length; i++)
+            if (_commands[i] == s)
+                return i + 1;
+    }
+    /* Parser */
+    function _parse_input(string s) private view returns (uint8 cmd, string cmds, string[] args, uint flags, string source, string target) {
+        uint len = s.byteLength();
+        uint pos;
+        bool src_next;
+        bool tgt_next;
+        string lexem;
+        uint16 p = _strchr(s, " ");
+        cmds = p > 0 ? s.substr(0, p - 1) : s;
+//        cmd = uint8(_lookup_field(cmds, _get_file_contents("/etc/commands")));
+        cmd = _command_index(cmds);
+        if (cmd == 0)
+            return (CMD_UNKNOWN, cmds, args, flags, source, target);
+        pos = p > 0 ? p - 1 : len;
+        while (pos < len) {
+            pos++;
+            (lexem, pos) = _parse_to_symbol(s, pos, len, " ");
+            uint l = lexem.byteLength();
+            if (l == 0)
+                break;
+            if (lexem.substr(0, 1) == "-") {
+                if (l > 1 && lexem.substr(1, 1) == "-") {
+                    if (lexem == "--help") flags |= 1 << 255;
+                    if (lexem == "--version") flags |= 1 << 254;
+                } else {
+                    bytes opts = bytes(lexem);
+                    for (uint i = 1; i < opts.length; i++)
+                        flags |= uint(1) << uint8(opts[i]);
+                }
+            } else if (lexem.substr(0, 1) == ">") {
+                if (l == 1)
+                    tgt_next = true;
+                else
+                    target = lexem.substr(1, l - 1);
+            } else if (tgt_next) {
+                target = lexem;
+                tgt_next = false;
+            } else if (lexem.substr(0, 1) == "<") {
+                if (l == 1)
+                    src_next = true;
+                else
+                    source = lexem.substr(1, l - 1);
+            } else if (src_next) {
+                source = lexem;
+                src_next = false;
+            } else
+                args.push(lexem);
+        }
+    }
+
+    function _init() internal override {
+        _sync_fs_cache();
+        uint _RHLP = _R + _H + _L + _P;
+        uint _bfntTv = _b + _f + _n + _t + _T + _v;
+        _insert(account,    0, M, _d);
+        _insert(basename,   1, M, _a + _s + _z);
+        _insert(cat,        1, M, _b + _e + _E + _n + _s + _t + _T + _u + _v);
+        _insert(cd,         1, 1, _L + _P + _e);
+        _insert(chgrp,      2, M, _c + _f + _v + _h + _RHLP);
+        _insert(chmod,      2, M, _c + _f + _v + _R);
+        _insert(chown,      2, M, _c + _f + _v + _h + _RHLP);
+        _insert(cksum,      1, M, 0);
+        _insert(cmp,        2, 2, _b + _i + _l + _n + _s + _v);
+        _insert(column,     0, M, _e + _n + _t + _x);
+        _insert(cp,         2, M, _a + _d + _l + _p + _r + _s + _u + _x + _RHLP + _bfntTv);
+        _insert(cut,        0, 1, _f + _s + _z);
+        _insert(dd,         0, M, 0);
+        _insert(df,         1, M, _a + _h + _H + _i + _k + _l + _P + _v);
+        _insert(dirname,    1, M, _z);
+        _insert(du,         1, M, _a + _b + _c + _D + _h + _H + _k + _l + _L + _m + _P + _s + _S + _x + _0);
+        _insert(echo,       1, M, _n);
+        _insert(fallocate,  1, 1, _d + _l + _n + _v + _x + _z);
+        _insert(file,       1, M, _b + _E + _L + _h + _N + _v + _0);
+        _insert(findmnt,    0, M, _s + _m + _k + _A + _b + _D + _f + _n + _u);
+        _insert(fuser,      0, 1, _a + _l + _m + _s + _u + _v);
+        _insert(getent,     1, 2, 0);
+        _insert(grep,       2, M, _i + _v + _w + _x);
+        _insert(head,       1, M, _n + _q + _v + _z);
+        _insert(help,       0, M, _d + _m);
+        _insert(hostname,   0, 0, _a + _f + _i + _s);
+        _insert(id,         0, 1, _a + _g + _G + _n + _r + _u + _z);
+        _insert(ln,         2, M, _r + _s + _L + _P + _bfntTv);
+        _insert(login,      1, 1, _f + _h + _r);
+        _insert(logout,     0, 0, 0);
+        _insert(ls,         1, M, _a + _A + _B + _c + _C + _d + _f + _F + _g + _G + _h + _H + _i + _k + _l + _L + _m + _n + _N +
+            _o + _p + _q + _Q + _r + _R + _s + _S + _t + _u + _U + _v + _x + _1);
+        _insert(lsblk,      0, M, _a + _b + _f + _m + _n + _O + _p);
+        _insert(lslogins,   0, 1, _c + _e + _n + _r + _s + _u + _z);
+        _insert(lsof,       0, M, _l + _n + _o + _R + _s + _t);
+        _insert(man,        0, M, _a);
+        _insert(mapfile,    1, M, _d + _n + _s + _t + _u);
+        _insert(mkdir,      1, M, _m + _p + _v);
+        _insert(mount,      0, 3, _a + _c + _f + _T + _l + _n + _r + _v + _w + _N + _B + _M);
+        _insert(mv,         2, M, _u + _bfntTv);
+        _insert(namei,      1, M, _x + _m + _o + _l + _n + _v);
+        _insert(paste,      1, M, _s + _z);
+        _insert(ping,       0, M, _D + _n + _q + _U + _v);
+        _insert(ps,         0, 0, _a + _e + _f + _F);
+        _insert(pwd,        0, 0, _L + _P);
+        _insert(readlink,   1, M, _f + _e + _m + _n + _q + _s + _v + _z);
+        _insert(realpath,   1, M, _e + _m + _L + _P + _q + _s + _z);
+        _insert(rm,         1, M, _f + _r + _R + _d + _v);
+        _insert(rmdir,      1, M, _p + _v);
+        _insert(stat,       1, M, _L + _f + _t);
+        _insert(tail,       1, M, _F + _n + _q + _v + _z);
+        _insert(touch,      1, M, _a + _c + _m);
+        _insert(truncate,   1, M, _c + _o + _r + _s);
+        _insert(uname,      0, 0, _a + _s + _n + _r + _v + _m + _p + _i + _o);
+        _insert(wc,         1, M, _c + _m + _l + _L + _w);
+        _insert(whatis,     0, M, _d + _l + _v);
+        _insert(whoami,     0, 0, 0);
+        _commands = ["account", "basename", "cat", "cd", "chgrp", "chmod", "chown","cksum", "cmp", "column", "cp", "cut", "dd", "df", "dirname",
+             "du", "echo", "fallocate", "file", "findmnt", "fuser", "getent", "grep", "head", "help", "hostname", "id", "ln",
+             "login", "logout", "ls", "lsblk", "lslogins", "lsof", "man", "mapfile", "mkdir", "mount", "mv", "namei", "paste", "ping",
+             "ps", "pwd", "readlink", "realpath", "rm", "rmdir", "stat", "tail", "touch", "truncate", "uname", "wc", "whatis", "whoami"];
+    }
+
+    function _insert(uint8 index, uint8 min_args, uint16 max_args, uint options) private {
+        _command_info[index] = CmdInfoS(min_args, max_args, options);
+    }
+}
