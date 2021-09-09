@@ -33,6 +33,18 @@ all: compile
 
 install: dirs cc config
 
+TOOLS_VERSION:=0.49
+TOOLS_ARCHIVE:=tools_$(TOOLS_VERSION).tar.gz
+TOOLS_URL:=https\://github.com/tonlabs/TON-Solidity-Compiler/releases/download/$(TOOLS_VERSION)/$(TOOLS_ARCHIVE)
+TOOLS_BIN:=$(LIB) $(SOLC) $(LINKER) $(TOC)
+$(TOOLS_BIN):
+	mkdir -p $(BIN)
+	rm -f $(TOOLS_ARCHIVE)
+	wget $(TOOLS_URL)
+	tar -xzf $(TOOLS_ARCHIVE) -C $(BIN)
+
+tools: $(TOOLS_BIN)
+	$(foreach t,$(wordlist 2,4,$^),$t --version;)
 npid?=2
 dirs:
 	mkdir -p $(DIRS)
@@ -373,7 +385,7 @@ account_data: $p/hosts
 #$(STD)/request_mount: $(STD)/request_mount.args
 #	$(_call_block_device) request_mount $<
 
-tt: bin/xterm
+tty tt: bin/xterm
 	./$<
 bin/xterm: $(SRC)/xterm.c
 	gcc $< -o $@
