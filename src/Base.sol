@@ -1,5 +1,6 @@
-pragma ton-solidity >= 0.48.0;
+pragma ton-solidity >= 0.49.0;
 
+/* Base functions and definitions */
 abstract contract Base {
 
     uint16 constant SUPER_USER_GROUP = 0;
@@ -7,12 +8,16 @@ abstract contract Base {
     uint16 constant GUEST_USER_GROUP = 10000;
 
     uint16 constant SUPER_USER  = 0;  // uid 0
-    uint16 constant REG_USER    = 2000;
+    uint16 constant REG_USER    = 1000;
     uint16 constant GUEST_USER  = 10000;
 
     uint16 constant INODES = 10;
     uint16 constant ROOT_DIR = INODES + 1;
     uint16 constant USERS = 1000;
+
+    uint16 constant DEF_UMASK = 18;
+
+    string constant ROOT = "/";
 
     modifier accept {
         tvm.accept();
@@ -34,5 +39,6 @@ abstract contract Base {
         _init();
     }
 
+    /* Implemented by contracts to perform post-upgrade initialization */
     function _init() internal virtual;
 }

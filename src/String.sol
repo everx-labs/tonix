@@ -1,55 +1,47 @@
 pragma ton-solidity >= 0.49.0;
 
+/* String helpers */
 abstract contract String {
 
-    function _path(string s) internal pure returns (string res) {
-        uint16 p1 = 0;
-        uint16 len = uint16(s.byteLength());
-        uint16 p2 = len - 1;
-        while (s.substr(p1, 1) == " ")
-            p1++;
-        while (s.substr(p2, 1) == " ")
-            p2--;
-        if (p2 - p1 + 1 < len)
-            res = s.substr(p1, p2 - p1);
-        else
-            res = s;
-        p1 = 0;
-        len = uint16(res.byteLength());
-        if (res.substr(0, 1) == "/") {
-            while (res.substr(p1 + 1, 1) == "/")
-                p1++;
-        }
-        while (res.substr(p2, 1) == "/")
-            p2--;
-        if (p2 - p1 + 1 < len)
-            res = s.substr(p1, p2 - p1 + 1);
-    }
-
-    function _not_dir(string s0) internal pure returns (string) {
-        string s = _path(s0);
-        uint16 q = _strrchr(s, "/");
-        return q == 0 ? s : s.substr(q, s.byteLength() - q);
-    }
-
-    function _dir(string s0) internal pure returns (string) {
-        string s = _path(s0);
-        uint16 q = _strrchr(s, "/");
-        if (q == 0) return ".";
-        if (q == 1) return "/";
-        return s.substr(0, q - 1);
-    }
-
+    /* Returns the first occurrence of a character in a string */
     function _strchr(string s, string c) internal pure returns (uint16) {
         for (uint16 i = 0; i < s.byteLength(); i++)
             if (s.substr(i, 1) == c)
                 return i + 1;
     }
 
+    /* Returns the last occurrence of a character in a string */
     function _strrchr(string s, string c) internal pure returns (uint16) {
         for (uint16 i = uint16(s.byteLength()); i > 0; i--)
             if (s.substr(i - 1, 1) == c)
                 return i;
+    }
+
+    function _parse_to_symbol(string s, uint start, uint len, string sym) internal pure returns (string, uint pos) {
+        pos = start;
+        while (pos < len) {
+            if (s.substr(pos, 1) == sym)
+                return (s.substr(start, pos - start), pos);
+            pos++;
+        }
+        return (pos > start ? s.substr(start, pos - start) : "", pos);
+    }
+
+    /* Squeeze repeating occurences of "c" in "s" */
+    function _tr_squeeze(string s, string c) internal pure returns (string res) {
+        uint start = 0;
+        uint p = 0;
+        uint len = s.byteLength();
+        while (p < len) {
+            if (s.substr(p, 1) == c) {
+                res.append(s.substr(start, p - start + 1));
+                while (p < len && (s.substr(p, 1) == c))
+                    p++;
+                start = p;
+            }
+            p++;
+        }
+        res.append(s.substr(start, len - start));
     }
 
     function _split(string s, string delimiter) internal pure returns (string[] res) {
@@ -66,34 +58,33 @@ abstract contract String {
         res.push(s.substr(prev, cur - prev + 1));
     }
 
+    function _merge(string[] lines) internal pure returns (string text) {
+        for (string line: lines)
+            text.append(line);
+    }
+
     function _strtok(string text, string delimiter) internal pure returns (string[] res) {
         for (string line: _get_lines(text))
             for (string s: _split(line, delimiter))
                 res.push(s);
     }
 
-    function _element_at(uint16 line, uint16 column, string text, string delimiter) internal pure returns (string) {
+    function _element_at(uint16 line, uint16 column, string[] text, string delimiter) internal pure returns (string) {
         if (line > 0 && column > 0) {
-            string[] lines = _get_lines(text);
-            if (line <= lines.length) {
-                string[] records = _split(lines[line - 1], delimiter);
+            if (line <= text.length) {
+                string[] records = _split(text[line - 1], delimiter);
                 if (column <= records.length)
                     return records[column - 1];
             }
         }
     }
 
-    function _join_lines(string[] lines) internal pure returns (string text) {
-        for (string s: lines)
-            text.append(s + "\n");
-    }
-
-    function _join_fields(string[] fields) internal pure returns (string line) {
+    function _join_fields(string[] fields, string separator) internal pure returns (string line) {
         uint len = fields.length;
         if (len > 0) {
             line = fields[0];
             for (uint i = 1; i < len; i++)
-                line.append("\t" + fields[i]);
+                line.append(separator + fields[i]);
         }
     }
 
@@ -133,9 +124,9 @@ abstract contract String {
         }
     }
 
-    function _line_and_word_count(string text) internal pure returns (uint16 lc, uint16 wc, uint32 cc, uint16 mw) {
-        if (!text.empty()) {
-            string[] lines = _get_lines(text);
+    function _line_and_word_count(string[] text) internal pure returns (uint16 lc, uint16 wc, uint32 cc, uint16 mw) {
+        for (string part: text) {
+            string[] lines = _get_lines(part);
             lc = uint16(lines.length);
             for (uint16 i = 0; i < lc; i++) {
                 string line = lines[i];

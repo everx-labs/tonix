@@ -1,5 +1,6 @@
 pragma ton-solidity >= 0.49.0;
 
+/* Index node status definitions */
 abstract contract IStat {
 
     uint16 constant S_IXOTH = 1 << 0; //   others have execute permission
