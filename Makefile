@@ -341,13 +341,10 @@ dfs_%: $(STD)/%/boc $(BLD)/%.abi.json
 dimp_%: $(STD)/%/boc $(BLD)/%.abi.json
 	$(_rb) dump_imports {} | jq -r '.out'
 
-_print_status=$e $1 "\t";\
-	jq -j '."data(boc)"' <$(ACC)/$1.data | wc -m | tr -d '\n';\
-	$e "\t";\
-	jq -j '.balance' <$(ACC)/$1.data | cat - $(BIL) | bc | tr -d '\n';\
-	$e "\t";\
+_print_status=printf "%s\t" $1;\
+	jq -j '."data(boc)"' <$(ACC)/$1.data | wc -m | tr '\n' '\t';\
+	jq -j '.balance' <$(ACC)/$1.data | cat - $(BIL) | bc | tr '\n' '\t';\
 	jq -j '.last_paid' <$(ACC)/$1.data | $(date)
-#	jq -j '.last_paid' <$(STD)/accounts/$1.data | xargs -I{} date --date=@{} +"%b %d %T"
 $p/hosts: $p/names
 	jq -r '.[]' <$< >$@
 account_data: $p/hosts

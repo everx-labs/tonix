@@ -10,11 +10,11 @@ ifeq ($(UNAME_S),Darwin)
 	e:=/bin/echo -n
 	BASE64:=base64
 	date=xargs -I{} date -ur {} +"%b %d %T"
-	du -sh
+	du=du -sh
 endif
 
 # Tools directories
-BIN:=~/bin3
+BIN:=~/bin
 SOLC:=$(BIN)/solc
 LIB:=$(BIN)/stdlib_sol.tvm
 LINKER:=$(BIN)/tvm_linker
