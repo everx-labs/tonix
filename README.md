@@ -5,6 +5,7 @@ Pre-requisites
     make: GNU make 4.2.1 or newer
     TON Solidity compiler and tools: solc, stdlib_sol.tvm, tvm_linker, tonos-cli 0.49 or newer
     jq 1.6 or newer
+    wget (for "tools" target)
 
 Installation steps
 
