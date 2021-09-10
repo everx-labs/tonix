@@ -282,7 +282,7 @@ contract BlockDevice is SyncFS, ExportFS {
     /* File system initialization */
     function _make_fs() internal {
         _fs = _get_fs(1, "sysfs", ["dev", "etc", "home", "mnt", "proc", "sys", "usr"]);
-        _create_subdirs(ROOT_DIR + 3, ["boris", "guest"]);
+        _create_subdirs(ROOT_DIR + 3, ["boris", "guest", "ivan"]);
         _create_subdirs(ROOT_DIR + 6, ["dev"]);
         _create_subdirs(ROOT_DIR + 10, ["block", "char"]);
         _create_device(ROOT_DIR + 1, DeviceInfo(BLK_DEVICE, _dc++, "BlockDevice", 1024, 100, address(this)));
@@ -319,11 +319,14 @@ contract BlockDevice is SyncFS, ExportFS {
         _proc[SUPER_USER + 1] = ProcessInfo(SUPER_USER, SUPER_USER + 1, DEF_UMASK, ROOT);
         _proc[SUPER_USER + 2] = ProcessInfo(REG_USER, SUPER_USER + 2, DEF_UMASK, ROOT);
         _proc[SUPER_USER + 2].fd_table = _get_fd_table();
+        _proc[SUPER_USER + 3] = ProcessInfo(REG_USER + 1, SUPER_USER + 3, DEF_UMASK, ROOT);
+        _proc[SUPER_USER + 3].fd_table = _get_fd_table();
     }
 
     function _init_users() internal {
         _users[SUPER_USER] = UserInfo(SUPER_USER, SUPER_USER_GROUP, "root", "root", "/root");
-        _users[REG_USER] = UserInfo(REG_USER, REG_USER_GROUP, "boris", "boris", "/home/boris");
+        _users[REG_USER] = UserInfo(REG_USER, REG_USER_GROUP, "boris", "staff", "/home/boris");
+        _users[REG_USER + 1] = UserInfo(REG_USER + 1, REG_USER_GROUP, "ivan", "staff", "/home/ivan");
         _users[GUEST_USER] = UserInfo(GUEST_USER, GUEST_USER_GROUP, "guest", "guest", "/home/guest");
     }
 

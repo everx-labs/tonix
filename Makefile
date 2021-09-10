@@ -1,40 +1,43 @@
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables
 include Makefile.common
 
-STD:=std
-SES:=session
-DBG=debug
 # Contracts
 B:=BlockDevice
 D:=DataVolume
 R:=StatusReader
 I:=SessionManager
 C:=FileManager
+P:=PrintFormatted
 MAN_CMD:=ManualCommands
 MAN_SES:=ManualSession
 MAN_STAT:=ManualStatus
 MAN_AUX:=ManualUtility
 T:=TestFS
-P:=PrintFormatted
 INIT:=
 TA:=$D $R $B $I $C $(MAN_CMD) $(MAN_SES) $(MAN_STAT) $(MAN_AUX) $P
 RKEYS:=$(KEY)/k1.keys
 VAL0:=15
 TST:=tests
-
 VFS:=vfs
 PROC:=$(VFS)/proc
+STD:=std
+DBG:=debug
+ACC:=$(STD)/accounts
+
 pid:=2
 
-DIRS:=bin $(STD) $(VFS) $(PROC)
+DIRS:=bin $(STD) $(VFS) $(PROC) $(ACC) $(DBG)
+BIL:=$(STD)/billion
 
-PHONY += all genaddr init deploy balances compile clean brief
-all: compile
+PHONY += all install tools dirs cc caj trace tty tt genaddr init deploy balances compile clean
+all: cc
 
-install: dirs cc config
+install: dirs cc $(BIL)
+	echo Tonix has been installed successfully
+	$(TOC) config --url gql.custler.net --async_call=true
 
 TOOLS_VERSION:=0.49
-TOOLS_ARCHIVE:=tools_$(TOOLS_VERSION).tar.gz
+TOOLS_ARCHIVE:=tools_$(TOOLS_VERSION)_$(UNAME_S).tar.gz
 TOOLS_URL:=https\://github.com/tonlabs/TON-Solidity-Compiler/releases/download/$(TOOLS_VERSION)/$(TOOLS_ARCHIVE)
 TOOLS_BIN:=$(LIB) $(SOLC) $(LINKER) $(TOC)
 $(TOOLS_BIN):
@@ -54,8 +57,6 @@ dirs:
 	cp $p/../cwd $p/
 	mkdir -p $p/fd $p/fdinfo $p/map_files
 	mkdir -p $p/fd/0 $p/fd/1 $p/fd/2
-config:
-	$(TOC) config --url gql.custler.net --async_call=true
 
 #clean:
 #	for d in $(DIRS); do (cd "$$d" && rm -f *); done
@@ -63,9 +64,9 @@ config:
 DEPLOYED=$(patsubst %,$(BLD)/%.deployed,$(INIT))
 
 cc: $(patsubst %,$(BLD)/%.tvc,$(INIT) $(TA))
-	du -sb $^
+	$(du) $^
 caj: $(patsubst %,$(BLD)/%.abi.json,$(INIT) $(TA))
-	du -sb $^
+	$(du) $^
 deploy: $(DEPLOYED)
 	-cat $^
 $(BLD)/%.code $(BLD)/%.abi.json: $(SRC)/%.sol
@@ -95,7 +96,7 @@ p=$(PROC)/$(pid)
 _trace=echo $1 $2 >$(STD)/trace
 
 define t-addr
-$$(eval $1_a!=grep -w $1 etc/hosts | cut -f 1)
+$1_a=$$(shell grep -w $1 etc/hosts | cut -f 1)
 $$(eval $1_r0:=$(TOC) -j run $$($1_a) --abi $(BLD)/$1.abi.json)
 $$(eval $1_c0:=$(TOC) call $$($1_a) --abi $(BLD)/$1.abi.json)
 $1_r=$$($1_r0) $$(basename $$(@F)) $$< >$$@
@@ -140,8 +141,6 @@ endef
 _d=init upgrade
 $(foreach b,$(TA),$(foreach c,$(_d),$(eval $(call t-call,$b,$c))))
 
-PRS:=$(STD)/parsed
-
 _jq=jq '.$1' <$@ > $p/$1
 _jqr=jq -r '.$1' <$@ > $p/$1
 _jqq=jq $2 '$3 .$1' <$@ > $p/$1
@@ -166,7 +165,6 @@ g?=
 ru: $p/$g.out
 ca: $p/$g.res
 
-BIL:=$(STD)/billion
 $(BIL):
 	echo /1000000000 >$@
 $p/%.args:
@@ -343,47 +341,20 @@ dfs_%: $(STD)/%/boc $(BLD)/%.abi.json
 dimp_%: $(STD)/%/boc $(BLD)/%.abi.json
 	$(_rb) dump_imports {} | jq -r '.out'
 
-_print_status=echo -n $1 "\t";\
-	jq -j '."data(boc)"' <$(STD)/accounts/$1.data | wc -m | tr -d '\n';\
-	echo -n "\t";\
-	jq -j '.balance' <$(STD)/accounts/$1.data | cat - $(BIL) | bc | tr -d '\n';\
-	echo -n "\t";\
-	jq -j '.last_paid' <$(STD)/accounts/$1.data | xargs -I{} date --date=@{} +"%b %d %T"
+_print_status=$e $1 "\t";\
+	jq -j '."data(boc)"' <$(ACC)/$1.data | wc -m | tr -d '\n';\
+	$e "\t";\
+	jq -j '.balance' <$(ACC)/$1.data | cat - $(BIL) | bc | tr -d '\n';\
+	$e "\t";\
+	jq -j '.last_paid' <$(ACC)/$1.data | $(date)
+#	jq -j '.last_paid' <$(STD)/accounts/$1.data | xargs -I{} date --date=@{} +"%b %d %T"
 $p/hosts: $p/names
 	jq -r '.[]' <$< >$@
 account_data: $p/hosts
-	rm -f $(STD)/accounts/*
+	rm -f $(ACC)/*
 	$(eval hosts:=$(strip $(file <$(word 1,$^))))
-	$(foreach h,$(hosts),$(TOC) -j account `grep -w $h etc/hosts | cut -f 1` >$(STD)/accounts/$h.data;)
+	$(foreach h,$(hosts),$(TOC) -j account $($h_a) >$(ACC)/$h.data;)
 	$(foreach h,$(hosts),$(call _print_status,$h);)
-
-#_escape2=$(shell jq -Rs '.' <$1)
-#_call_block_device=$(TOC) call $($B_a) --abi $(BLD)/$B.abi.json
-#$(STD)/files: $(STD)/parse.out
-#	jq -r '.names[]' < $< >$@
-#$(STD)/open: $(STD)/files
-#	$(foreach f,$(file < $^),$(call _wtf,$f);)
-
-#$(STD)/dirs_to_open: $(STD)/parse.out
-#	jq -r '.names[]' < $< >$@
-#$(STD)/files_to_open: $(STD)/dirs_to_open
-#	mkdir -p $(STD)/ml/$(file <$^)
-#	$(eval dirs:=$(file <$^))
-#	echo DIRS $(dirs)
-#	$(eval files_in_dirs:=$(wildcard $(dirs)/*))
-#	echo $(files_in_dirs) >$@
-#$(STD)/carr: $(STD)/dirs_to_open $(STD)/files_to_open
-#	$(eval dirs:=$(file <$<))
-#	$(eval files_in_dirs:=$(file <$(word 2,$^)))
-#	echo DIRS $(dirs)
-#	echo $(files_in_dirs)
-#	$(foreach f,$(files_in_dirs),$(file >$(STD)/ml/$f.mld,$(file <$(STD)/ses.temp)$(comma)"path":"$(notdir $f)","text":$(shell jq -Rs '.' <$f)}))
-#$(STD)/mount_el: $(STD)/dirs_to_open $(STD)/carr $(STD)/files_to_open
-#	$(eval hop:=$(wildcard $(STD)/ml/$(file <$<)/*.mld))
-#	$(foreach f,$(hop),$(_call_block_device) write_to_file $f;)
-
-#$(STD)/request_mount: $(STD)/request_mount.args
-#	$(_call_block_device) request_mount $<
 
 tty tt: bin/xterm
 	./$<
