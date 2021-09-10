@@ -2,11 +2,15 @@
 UNAME_S:=$(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	e:=echo -n
-		BASE64:=base64 -w 0
+	BASE64:=base64 -w 0
+	date=xargs -I{} date --date=@{} +"%b %d %T"
+	du=du -sb
 endif
 ifeq ($(UNAME_S),Darwin)
 	e:=/bin/echo -n
 	BASE64:=base64
+	date=xargs -I{} date -ur {} +"%b %d %T"
+	du=du -sh
 endif
 
 # Tools directories
@@ -30,10 +34,6 @@ BLD:=build
 DAT:=data
 # Scripts used by the system to interact with the blockchain
 KEY:=~
-SYS:=system
-CCH:=$(SYS)/cache
-SMC:=smc
-FS:=fs
 
 # colored output
 red:=\033[0;31m
