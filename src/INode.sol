@@ -2,11 +2,46 @@ pragma ton-solidity >= 0.49.0;
 
 import "Base.sol";
 import "String.sol";
-import "IStat.sol";
 import "FSTypes.sol";
 
-/* Base contreact to work with index nodes */
-abstract contract INode is Base, String, IStat {
+/* Base contract to work with index nodes */
+abstract contract INode is Base, String {
+
+    uint16 constant S_IXOTH = 1 << 0;
+    uint16 constant S_IWOTH = 1 << 1;
+    uint16 constant S_IROTH = 1 << 2;
+    uint16 constant S_IRWXO = S_IROTH + S_IWOTH + S_IXOTH;
+
+    uint16 constant S_IXGRP = 1 << 3;
+    uint16 constant S_IWGRP = 1 << 4;
+    uint16 constant S_IRGRP = 1 << 5;
+    uint16 constant S_IRWXG = S_IRGRP + S_IWGRP + S_IXGRP;
+
+    uint16 constant S_IXUSR = 1 << 6;
+    uint16 constant S_IWUSR = 1 << 7;
+    uint16 constant S_IRUSR = 1 << 8;
+    uint16 constant S_IRWXU = S_IRUSR + S_IWUSR + S_IXUSR;
+
+    uint16 constant S_ISVTX = 1 << 9;  //   sticky bit
+    uint16 constant S_ISGID = 1 << 10; //   set-group-ID bit
+    uint16 constant S_ISUID = 1 << 11; //   set-user-ID bit
+
+    uint16 constant S_IFIFO = 1 << 12;
+    uint16 constant S_IFCHR = 1 << 13;
+    uint16 constant S_IFDIR = 1 << 14;
+    uint16 constant S_IFBLK = S_IFDIR + S_IFCHR;
+    uint16 constant S_IFREG = 1 << 15;
+    uint16 constant S_IFLNK = S_IFREG + S_IFCHR;
+    uint16 constant S_IFSOCK = S_IFREG + S_IFDIR;
+    uint16 constant S_IFMT  = 0xF000; //   bit mask for the file type bit field
+
+    uint16 constant DEF_REG_FILE_MODE   = S_IFREG + S_IRUSR + S_IWUSR + S_IRGRP + S_IROTH;
+    uint16 constant DEF_DIR_MODE        = S_IFDIR + S_IRWXU + S_IRGRP + S_IXGRP + S_IROTH + S_IXOTH;
+    uint16 constant DEF_SYMLINK_MODE    = S_IFLNK + S_IRWXU + S_IRWXG + S_IRWXO;
+    uint16 constant DEF_BLOCK_DEV_MODE  = S_IFBLK + S_IRUSR + S_IWUSR;
+    uint16 constant DEF_CHAR_DEV_MODE   = S_IFCHR + S_IRUSR + S_IWUSR;
+    uint16 constant DEF_FIFO_MODE       = S_IFIFO + S_IRUSR + S_IWUSR + S_IRGRP + S_IROTH;
+    uint16 constant DEF_SOCK_MODE       = S_IFSOCK + S_IRWXU + S_IRGRP + S_IXGRP + S_IROTH + S_IXOTH;
 
     uint8 constant FT_UNKNOWN   = 0;
     uint8 constant FT_REG_FILE  = 1;
@@ -47,23 +82,6 @@ abstract contract INode is Base, String, IStat {
                 if (line.substr(1, len) == s)
                     return i + 1;
         }
-    }
-
-    function _get_dir_contents(INodeS dir, bool skip_dots) internal pure returns (uint16[] inodes, string[] names, uint8[] types) {
-        for (string s: dir.text_data) {
-            if (s.empty())
-                continue;
-            (string file_name, uint16 inode, uint8 file_type) = _read_dir_entry(s);
-            if (skip_dots && (file_name == "." || file_name == ".."))
-                continue;
-            inodes.push(inode);
-            names.push(file_name);
-            types.push(file_type);
-        }
-    }
-
-    function _symlink_target(INodeS inode) internal pure returns (string, uint16, uint8) {
-        return _read_dir_entry(inode.text_data[0]);
     }
 
     /* Index node, file and directory entry types helpers */

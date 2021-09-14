@@ -28,6 +28,31 @@ contract PrintFormatted is Format, SyncFS, ImportFS {
 
     /* Format text data most likely obtained from a text file */
     function format_text(InputS input, string[][] texts, ArgS[] args) external pure returns (string out) {
+        return _format_text(input, texts, args);
+    }
+
+    /* Format text data most likely obtained from a text file */
+    function process_text_files(SessionS session, InputS input, ArgS[] args) external view returns (string out, string err) {
+        ErrS[] errors;
+
+        uint16 len = uint16(args.length);
+        string[][] texts;
+        for (uint16 i = 0; i < len; i++) {
+            (, , uint16 idx, , ) = args[i].unpack();
+
+            texts.push(_fs.inodes[idx].text_data);
+        }
+
+        out = _format_text(input, texts, args);
+        err = _print_errors(input.command, errors);
+    }
+
+    /* Print error messages */
+    function print_error_message(uint8 command, ErrS[] errors) external view returns (string err) {
+        return _print_errors(command, errors);
+    }
+
+    function _format_text(InputS input, string[][] texts, ArgS[] args) internal pure returns (string out) {
         (uint8 c, , uint flags) = input.unpack();
 
         if (c == paste) out = _paste(flags, texts);
@@ -42,12 +67,6 @@ contract PrintFormatted is Format, SyncFS, ImportFS {
             if (c == wc) out.append(_wc(flags, text, args));
         }
     }
-
-    /* Print error messages */
-    function print_error_message(uint8 command, ErrS[] errors) external view returns (string err) {
-        return _print_errors(command, errors);
-    }
-
     /* Text processing commands */
     function _cat(uint flags, string[] text) private pure returns (string out) {
         bool number_lines = (flags & _n) > 0;
@@ -86,9 +105,7 @@ contract PrintFormatted is Format, SyncFS, ImportFS {
 
     function _column(uint flags, string[] text, ArgS[] args) private pure returns (string out) {
         bool ignore_empty_lines = (flags & _e) == 0;
-//        bool merge_delimiters = (flags & _n) == 0;
         bool create_table = (flags & _t) > 0;
-//        bool columns_before_rows = (flags & _x) > 0;
         string delimiter = " ";
 
         if (!args.empty()) {
@@ -427,10 +444,10 @@ contract PrintFormatted is Format, SyncFS, ImportFS {
         if (!command_info.empty()) {
             name = command_info[0];
             if (len > 1) purpose = command_info[1];
-            if (len > 3) desc = _join_fields(_read_entry(command_info[3]), "\n");
-            if (len > 2) uses = _read_entry(command_info[2]);
+            if (len > 3) desc = _join_fields(_get_tsv(command_info[3]), "\n");
+            if (len > 2) uses = _get_tsv(command_info[2]);
             if (len > 4) option_names = command_info[4];
-            if (len > 5) option_descriptions = _read_entry(command_info[5]);
+            if (len > 5) option_descriptions = _get_tsv(command_info[5]);
         } else
             name = "failed to read command data\n";
     }

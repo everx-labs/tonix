@@ -26,7 +26,7 @@ ACC:=$(STD)/accounts
 
 pid:=2
 
-DIRS:=bin $(STD) $(VFS) $(PROC) $(ACC) $(DBG)
+DIRS:=bin $(STD) $(VFS) $(PROC) $(ACC) $(DBG) $(patsubst %,$(STD)/%,$(TA))
 BIL:=$(STD)/billion
 
 PHONY += all install tools dirs cc caj trace tty tt genaddr init deploy balances compile clean

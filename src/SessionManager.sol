@@ -36,12 +36,17 @@ contract SessionManager is SyncFS {
 
     /* Primary entry point */
     function parse(string i_login, string i_cwd, string s_input) external view returns (string out, string err, SessionS session,
-                    InputS input, uint16 action, uint16 ext_action, string source, string target, string[] names, address[] addresses, ErrS[] errors, ArgS[] arg_list, string cwd) {
+                    InputS input, uint16 action, uint16 ext_action, string source, string target, string[] names, address[] addresses, ErrS[] errors, ArgS[] arg_list, ArgS[] param_list, string cwd) {
         /* Validate session info: uid and wd */
         (uint16 uid, uint16 gid, string user_name, string group_name, ) = _query_user_data(i_login).unpack();
         uint16 pid = _get_process_id(uid);
-        uint16 wd = _resolve_abs_path(i_cwd);
-        cwd = wd > 0 ? i_cwd : ROOT;
+        uint16 wd = _resolve_absolute_path(i_cwd);
+        if (wd > INODES)
+            cwd = i_cwd;
+        else {
+            cwd = ROOT;
+            wd = ROOT_DIR;
+        }
         session = SessionS(pid, uid, gid, wd);
         /* Parse input line */
         (uint8 c, string cmds, string[] args, uint flags, string x_source, string x_target) = _parse_input(s_input);
@@ -93,12 +98,13 @@ contract SessionManager is SyncFS {
                 if (c == readlink) (out, errors) = _readlink(flags, args, wd);
                 if (c == realpath) (out, errors) = _realpath(flags, args, wd);
                 if (_op_format(c) || _op_stat(c) || _op_access(c) || _op_file(c) || c == readlink || c == realpath || c == cd) {
-                    for (string s: args) {
-                        if (arg_list.empty() && _op_access(c))
+                    for (uint16 i = 0; i < nargs; i++) {
+                        string s = args[i];
+                        if (_op_access(c) && i == 0)
                             continue;
                         ArgS arg = _dereference(deref_mode, s, session.wd);
                         arg_list.push(arg);
-                        (string path, uint8 ft, uint16 ino, , ) = arg.unpack();
+                        (string path, uint8 ft, uint16 ino,  , ) = arg.unpack();
                         if (ino > 0 && _fs.inodes.exists(ino)) {
                             if ((c == cat || c == paste || c == wc) && ft == FT_DIR)
                                 errors.push(ErrS(0, EISDIR, path));
@@ -158,14 +164,14 @@ contract SessionManager is SyncFS {
         if (((flags & _e + _P) > 0) && wd < INODES)
             es.push(ErrS(0, ENOENT, s));
         nwd = wd;
-        (uint16 di, uint8 ft) = _lookup_dir_entry(s, nwd);
+        (uint16 di, uint8 ft, , ) = _resolve_relative_path(s, nwd);
         if (di < INODES)
             es.push(ErrS(0, ENOENT, s));
         else if (ft != FT_DIR)
             es.push(ErrS(0, ENOTDIR, s));
         else if (es.empty()) {
             nwd = di;
-            cwd = _get_abs_path(nwd);
+            cwd = _get_absolute_path(nwd);
         }
     }
 
@@ -191,7 +197,7 @@ contract SessionManager is SyncFS {
 
     function _pwd(uint /*flags*/, uint16 wd) private view returns (string) {
 //        bool follow_symlinks = ((flags & _L) > 0) && ((flags & _P) == 0);
-        return _get_abs_path(wd);
+        return _get_absolute_path(wd);
     }
 
     function _hostname(uint flags) internal view returns (string out) {
@@ -221,7 +227,7 @@ contract SessionManager is SyncFS {
         uint16 mode = canon_existing ? 3 : canon_existing_dir ? 2 : canon_missing ? 1 : 0;
 
         for (string s_arg: s_args) {
-            (, uint8 ft, uint16 parent, ) = _lookup_dir_entry_plus(s_arg, wd);
+            (, uint8 ft, uint16 parent, ) = _resolve_relative_path(s_arg, wd);
             string path;
             bool exists;
             if (canon)
@@ -260,7 +266,7 @@ contract SessionManager is SyncFS {
             uint16 cur_dir;
             if (s_arg.substr(0, 1) == "/") {
                 path = s_arg;
-                cur_dir = _resolve_abs_path(arg_dir);
+                cur_dir = _resolve_absolute_path(arg_dir);
             } else {
                 path = _xpath(s_arg, wd);
                 cur_dir = wd;
@@ -290,8 +296,8 @@ contract SessionManager is SyncFS {
     function _dd(ArgS[] args, uint16 wd) private view returns (string[] names, ErrS[] errors) {
         for (ArgS arg: args) {
             (string dir_name, string file_name) = _dir(arg.path);
-            uint16 dir = dir_name == "." ? wd : _resolve_abs_path(dir_name);
-            (uint16 ino, ) = _lookup_dir_entry(file_name, dir);
+            uint16 dir = dir_name == "." ? wd : _resolve_absolute_path(dir_name);
+            (uint16 ino, ) = _fetch_dir_entry(file_name, dir);
             if (ino >= INODES)
                 errors.push(ErrS(0, EEXIST, arg.path));
             else
@@ -302,8 +308,8 @@ contract SessionManager is SyncFS {
     function _fallocate(ArgS[] args, uint16 wd) private view returns (string[] names, ErrS[] errors) {
         for (ArgS arg: args) {
             (string dir_name, string file_name) = _dir(arg.path);
-            uint16 dir = dir_name == "." ? wd : _resolve_abs_path(dir_name);
-            (uint16 ino, ) = _lookup_dir_entry(file_name, dir);
+            uint16 dir = dir_name == "." ? wd : _resolve_absolute_path(dir_name);
+            (uint16 ino, ) = _fetch_dir_entry(file_name, dir);
             if (ino >= INODES)
                 errors.push(ErrS(0, EEXIST, arg.path));
             else
@@ -351,7 +357,7 @@ contract SessionManager is SyncFS {
         } else {
             if (args.empty() && mount_all) {
                 for (string s: _get_file_contents("/etc/fstab")) {
-                    string[] fields = _read_entry(s);
+                    string[] fields = _get_tsv(s);
                     address source = _to_address(_lookup_pair_value(fields[0], _get_file_contents("/etc/hosts")));
                     string target = fields[1];
                     if (!dry_run) {
@@ -382,7 +388,7 @@ contract SessionManager is SyncFS {
             }
         else {
             for (string s: text) {
-                string[] fields = _read_entry(s);
+                string[] fields = _get_tsv(s);
                 names.push(fields[1]);
                 addresses.push(_to_address(fields[0]));
             }
@@ -400,7 +406,7 @@ contract SessionManager is SyncFS {
             }
         else {
             for (string s: text) {
-                string[] fields = _read_entry(s);
+                string[] fields = _get_tsv(s);
                 host_names.push(fields[1]);
                 addresses.push(_to_address(fields[0]));
             }
@@ -429,7 +435,7 @@ contract SessionManager is SyncFS {
 
         if (s_arg.substr(0, 1) == "/") {
             path = s_arg;
-            cur_dir = _resolve_abs_path(arg_dir);
+            cur_dir = _resolve_absolute_path(arg_dir);
         } else {
             path = _xpath(s_arg, wd);
             cur_dir = wd;
@@ -445,18 +451,18 @@ contract SessionManager is SyncFS {
         if (canon_mode == CANON_MISS || canon_mode == CANON_EXISTS)
             res = path;
         if (canon_mode == CANON_DIRS)
-            res = _xpath(arg_dir, _resolve_abs_path(arg_dir)) + "/" + arg_base;
+            res = _xpath(arg_dir, _resolve_absolute_path(arg_dir)) + "/" + arg_base;
     }
 
     function _dereference(uint16 mode, string s_arg, uint16 wd) internal view returns (ArgS arg_out) {
         bool expand_symlinks = (mode & EXPAND_SYMLINKS) > 0;
-        (uint16 ino, uint8 ft, uint16 parent, uint16 idx) = _lookup_dir_entry_plus(s_arg, wd);
+        (uint16 ino, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd);
         INodeS inode;
         if (ino > 0 && _fs.inodes.exists(ino))
             inode = _fs.inodes[ino];
         if (expand_symlinks && ft == FT_SYMLINK)
-            (s_arg, ino, ft) = _symlink_target(inode);
-        arg_out = ArgS(s_arg, ft, ino, parent, idx);
+            (s_arg, ino, ft) = _read_dir_entry(inode.text_data[0]);
+        arg_out = ArgS(s_arg, ft, ino, parent, dir_index);
     }
 
     /* Network helpers */

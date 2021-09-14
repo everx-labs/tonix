@@ -14,23 +14,24 @@ contract StatusReader is Format, SyncFS {
 
         /* File system status */
         if (_op_dev_stat(c))
-            out = _dev_stat(c, flags, args);  // 2.3
+            out = _dev_stat(c, flags, args);  // 3.5
         /* File tree status */
         if (_op_fs_status(c))
-            (out, errors) = _fs_status(c, flags, arg_list);
+            (out, errors) = _fs_status(c, flags, arg_list); // 6.6
 
-        if (!errors.empty()) action |= PRINT_ERRORS;
+        if (!errors.empty())
+            action |= PRINT_ERRORS;
     }
 
     function _fs_status(uint8 c, uint flags, ArgS[] arg_list) private view returns (string out, ErrS[] errors) {
         for (ArgS arg: arg_list) {
             (string s, , uint16 ino, , ) = arg.unpack();
             if (ino > 0 && _fs.inodes.exists(ino)) {
-                if (c == du) out.append(_du(flags, arg));    // 800
+                if (c == du) out.append(_du(flags, arg));    // 900
                 if (c == file) out.append(_file(flags, arg));// 500
-                if (c == ls) out.append(_ls(flags, arg));    // 1.3
-                if (c == namei) out.append(_namei(flags, arg));
-                if (c == stat) out.append(_stat(flags, arg));// 800
+                if (c == ls) out.append(_ls(flags, arg));    // 2.1
+                if (c == namei) out.append(_namei(flags, arg)); // 500
+                if (c == stat) out.append(_stat(flags, arg));// 1.8
                 out.append("\n");
             } else
                 errors.push(ErrS(0, ino, s));
@@ -47,7 +48,7 @@ contract StatusReader is Format, SyncFS {
     /********************** File system and device status query *************************/
     function _df(uint flags) private view returns (string out) {
         (, , , uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, uint16 block_size,
-        , , , ,, , ,) = _fs.sb.unpack();
+        , , , , , , , ) = _fs.sb.unpack();
 
         bool human_readable = (flags & _h) > 0;
         bool powers_of_1000 = (flags & _H) > 0;
@@ -110,7 +111,7 @@ contract StatusReader is Format, SyncFS {
         if (!search_mtab_only) {
             string[] lines = _get_file_contents("/etc/fstab");
             for (string line: lines) {
-                string[] fields = _read_entry(line);
+                string[] fields = _get_tsv(line);
                 table.push([fields[1], fields[0], fields[2], fields[3]]);
                 if (first_fs_only)
                     break;
@@ -119,7 +120,7 @@ contract StatusReader is Format, SyncFS {
         if (!search_fstab_only) {
             string[] lines = _get_file_contents("/etc/mtab");
             for (string line: lines) {
-                string[] fields = _read_entry(line);
+                string[] fields = _get_tsv(line);
                 table.push([fields[1], fields[0], fields[2], fields[3]]);
                 if (first_fs_only)
                     break;
@@ -131,54 +132,69 @@ contract StatusReader is Format, SyncFS {
     function _lsblk(uint flags, string[] args) private view returns (string out) {
         bool human_readable = (flags & _b) == 0;
         bool print_header = (flags & _n) == 0;
-        bool all_columns = (flags & _O) > 0;
-        bool fs_info = (flags & _f) > 0;
+        bool print_fs_info = (flags & _f) > 0;
+        bool print_permissions = (flags & _m) > 0;
+        bool print_device_info = !print_fs_info && !print_permissions;
         bool full_path = (flags & _p) > 0;
         string[][] table;
-        string[] header;
+
+        (uint16 dev_dir, uint8 dev_dir_ft) = _fetch_dir_entry("dev", ROOT_DIR);
+        if (dev_dir_ft != FT_DIR)
+            return "Error: could not open /dev\n";
 
         if (print_header) {
-            header = fs_info ? ["NAME", "FSTYPE", "LABEL", "UUID", "FSAVAIL", "FSUSE%", "MOUNTPOINT"] :
-                ["NAME", "MAJ:MIN", "RM", "SIZE", "RO", "TYPE", "MOUNTPOINT"];
-            table = [header];
+            if (print_device_info)
+                table = [["NAME", "MAJ:MIN", "SIZE", "RO", "TYPE", "MOUNTPOINT"]];
+            else if (print_fs_info)
+                table = [["NAME", "FSTYPE", "LABEL", "UUID", "FSAVAIL", "FSUSE%", "MOUNTPOINT"]];
+            else if (print_permissions)
+                table = [["NAME", "SIZE", "OWNER", "GROUP", "MODE"]];
         }
         if (args.empty())
             args = ["BlockDevice"];
 
-        uint16 block_size = _fs.sb.block_size;
-        uint16 block_count = _fs.sb.block_count;
+        (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size,
+        , , , , , , , ) = _fs.sb.unpack();
+
         for (string s: args) {
-            string[] lines = _get_file_contents("/dev/" + s);
-            if (!lines.empty()) {
-                string[] fields0 = _read_entry(lines[0]);
-                string name = (full_path ? "/dev/" : "") + fields0[2];
-                if (!all_columns) {
-                    string[] l;
-                    if (fs_info) {
-                        l = [name,
-                            " ",
-                            " ",
-                            " ",
-                            _scale(block_count * block_size, human_readable ? 1024 : 1),
-                            "0",
-                            "disk",
-                            ROOT];
-                    } else {
-                        l = [name,
-                            fields0[0],
-                            fields0[1],
-                            "0",
-                            _scale(block_count * block_size, human_readable ? 1024 : 1),
-                            "0",
-                            "disk",
-                            ROOT];
-                    }
-                    table.push(l);
+            (uint16 dev_file_index, uint8 dev_file_ft) = _fetch_dir_entry(s, dev_dir);
+            if (dev_file_ft == FT_BLKDEV || dev_file_ft == FT_CHRDEV) {
+                (uint16 mode, uint16 owner_id, , , , , , , string[] lines) = _fs.inodes[dev_file_index].unpack();
+                string[] fields0 = _get_tsv(lines[0]);
+                if (fields0.length < 4) {
+                    out.append("error reading data from " + s + "\n" + lines[0]);
+                    continue;
                 }
+                string name = (full_path ? "/dev/" : "") + fields0[2];
+                string[] l;
+                if (print_device_info)
+                    l = [name,
+                         format("{}:{}", fields0[0], fields0[1]),
+                         _scale(uint32(block_count) * block_size, human_readable ? 1024 : 1),
+                         "0",
+                         "disk",
+                         ROOT];
+                else if (print_fs_info)
+                    l = [name,
+                        " ",
+                        " ",
+                        " ",
+                        _scale(uint32(free_blocks) * block_size, human_readable ? 1024 : 1),
+                        format("{}%", uint32(block_count) * 100 / (block_count + free_blocks)),
+                        ROOT];
+                else if (print_permissions) {
+                    (, , string s_owner, string s_group, ) = _users[owner_id].unpack();
+                    l = [name,
+                        _scale(uint32(block_count) * block_size, human_readable ? 1024 : 1),
+                        s_owner,
+                        s_group,
+                        _permissions(mode)];
+                }
+                table.push(l);
             } else
                 out.append(s + ": not a block device\n");
         }
-        out.append(_format_table(table, " ", "\n", ALIGN_LEFT));
+        out.append(_format_table(table, " ", "\n", ALIGN_CENTER));
     }
 
     /* Does not really belong here */
@@ -189,8 +205,10 @@ contract StatusReader is Format, SyncFS {
         for ((uint16 pid, ProcessInfo proc): _proc) {
             (uint16 owner_id, uint16 self_id, , , string cwd) = proc.unpack();
             string[] line = [format("{}", owner_id), format("{}", pid)];
-            if (format_full || format_extra_full) line.push(format("{}", self_id));
-            if (format_extra_full) line.push(cwd);
+            if (format_full || format_extra_full)
+                line.push(format("{}", self_id));
+            if (format_extra_full)
+                line.push(cwd);
             table.push(line);
         }
         out.append(_format_table(table, " ", "\n", ALIGN_LEFT));
@@ -204,18 +222,18 @@ contract StatusReader is Format, SyncFS {
         bool human_readable = (flags & _h) > 0;
         bool produce_total = (flags & _c) > 0;
         bool summarize = (flags & _s) > 0;
+
         if (count_files && summarize)
             return "du: cannot both summarize and show all entries\n";
+        uint32 file_size = _fs.inodes[ino].file_size;
 
-        (uint32[] counts, string[] outs) = _count_any(flags, path, ino, ft);
+        (string[][] table, uint32 total) = ft == FT_DIR ? _count_dir(flags, path, ino) :
+            ([[_scale(file_size, human_readable ? 1024 : 1), path]], file_size);
 
-        if (produce_total) {
-            counts.push(counts[counts.length - 1]);
-            outs.push("total");
-        }
-        uint start = summarize ? counts.length - 1 : 0;
-        for (uint i = start; i < counts.length; i++)
-            out.append(_scale(counts[i], human_readable ? 1024 : 1) + "\t" + outs[i] + line_end);
+        if (produce_total)
+            table.push([format("{}", total), "total"]);
+
+        out = _format_table(table, "\t", line_end, ALIGN_LEFT);
     }
 
     function _file(uint flags, ArgS arg) private view returns (string out) {
@@ -227,24 +245,22 @@ contract StatusReader is Format, SyncFS {
             return "version 2.0\n";
 
         (string name, uint8 ft, uint16 id, , ) = arg.unpack();
-        INodeS inode = _fs.inodes[id];
+        (uint16 mode, , , uint32 file_size, , , , , string[] text_data) = _fs.inodes[id].unpack();
 
-        uint16 mode = inode.mode;
         if (!brief_mode)
             out = _if(name, add_null, "\x00") + _if(": ", !dont_pad, "\t");
         if (ft == FT_REG_FILE) {
-            uint32 fs = inode.file_size;
-            out = _if(out, fs == 0, "empty");
-            out = _if(out, fs == 1, "very short file (no magic)");
-            out = _if(out, fs > 1, "ASCII text");
+            out = _if(out, file_size == 0, "empty");
+            out = _if(out, file_size == 1, "very short file (no magic)");
+            out = _if(out, file_size > 1, "ASCII text");
         } else
             out.append(_file_type_description(mode));
         if (ft == FT_CHRDEV || ft == FT_BLKDEV) {
-            (string major, string minor) = _get_device_version(inode.text_data);
+            (string major, string minor) = _get_device_version(text_data);
             out.append(" (" + major + "/" + minor + ")");
         }
         if (ft == FT_SYMLINK && !follow_symlinks) {
-            (string target, , ) = _symlink_target(inode);
+            (string target, , ) = _read_dir_entry(text_data[0]);
             out.append(" to " + target);
         }
     }
@@ -252,79 +268,143 @@ contract StatusReader is Format, SyncFS {
     function _ls(uint f, ArgS arg) private view returns (string out) {
         (string s, uint8 ft, uint16 id, , ) = arg.unpack();
 
-//        bool recurse = (f & _R) > 0;
-//        if (recurse)
-//            return _ls_r(f, s, id, ft);
-        bool long = (f & _l + _n + _g + _o) > 0;    // any of -l, -n, -g, -o
-        bool skip_dots = (f & _a) == 0;
-        bool inode = (f & _i) > 0;
+        bool recurse = (f & _R) > 0;
+        bool long_format = (f & _l + _n + _g + _o) > 0;    // any of -l, -n, -g, -o
+        bool print_allocated_size = (f & _s) > 0;
+
+        // record separator: newline for long format or -1, comma for -m, tabulation otherwise (should be columns)
+        string sp = long_format || (f & _1) > 0 ? "\n" : (f & _m) > 0 ? ", " : "  ";
+        string[][] table;
+        ArgS[] sub_args;
+
+        mapping (uint => uint16) ds;
+        uint16 block_size = _fs.sb.block_size;
+        bool count_totals = long_format || print_allocated_size;
+        uint16 total_blocks;
+
+        INodeS inode = _fs.inodes[id];
+        if (ft == FT_REG_FILE || ft == FT_DIR && ((f & _d) > 0)) {
+            if (!_ls_should_skip(f, s))
+                table.push(_ls_populate_line(f, id, s, ft, block_size));
+        } else if (ft == FT_DIR) {
+            string[] text_data = inode.text_data;
+            uint len = text_data.length;
+
+            for (uint16 j = 1; j <= len; j++) {
+                (string sub_name, uint16 sub_index, uint8 sub_ft) = _read_dir_entry(text_data[j - 1]);
+                if (_ls_should_skip(f, sub_name) || sub_ft == FT_UNKNOWN)
+                    continue;
+                if (recurse && sub_ft == FT_DIR && j > 2) {
+                    sub_name = s + "/" + sub_name;
+                    ArgS sub_arg = ArgS(sub_name, sub_ft, sub_index, id, j);
+                    sub_args.push(sub_arg);
+                }
+                if (count_totals)
+                    total_blocks += uint16(_fs.inodes[sub_index].file_size / block_size) + 1;
+                ds[_ls_sort_rating(f, sub_name, sub_index, j)] = j;
+            }
+
+            optional(uint, uint16) p = ds.min();
+            while (p.hasValue()) {
+                (uint xk, uint16 j) = p.get();
+                if (j == 0 || j > len) {
+                    out.append(format("Error: invalid entry {}\n", j));
+                    continue;
+                }
+                (string name, uint16 i, uint8 ftt) = _read_dir_entry(text_data[j - 1]);
+                table.push(_ls_populate_line(f, i, name, ftt, block_size));
+                p = ds.next(xk);
+            }
+        }
+        out = _if(out, count_totals, format("total {}\n", total_blocks));
+        if (!table.empty())
+            out.append(_format_table(table, " ", sp, ALIGN_RIGHT));
+
+        for (ArgS sub_arg: sub_args)
+            out.append("\n" + sub_arg.path + ":\n" + _ls(f, sub_arg));
+    }
+
+    function _alpha_rating(string s, uint len) internal pure returns (uint rating) {
+        bytes bts = bytes(s);
+        uint lim = math.min(len, bts.length);
+        for (uint i = 0; i < lim; i++)
+            rating += uint(uint8(bts[i])) << ((len - i - 1) * 8);
+    }
+
+    function _ls_sort_rating(uint f, string name, uint16 id, uint16 dir_index) private view returns (uint rating) {
+        bool use_ctime = (f & _c) > 0;
+        bool largest_first = (f & _S) > 0;
+        bool directory_order = (f & _U + _f) > 0;
+        bool newest_first = (f & _t) > 0;
+        bool reverse_order = (f & _r) > 0;
+        uint rating_lo = directory_order ? dir_index : _alpha_rating(name, 8);
+        uint rating_hi;
+
+        INodeS inode = _fs.inodes[id];
+        if (newest_first)
+            rating_hi = use_ctime ? inode.modified_at : inode.last_modified;
+        else if (largest_first)
+            rating_hi = 0xFFFFFFFF - inode.file_size;
+        rating = (rating_hi << 64) + rating_lo;
+        if (reverse_order)
+            rating = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF - rating;
+    }
+
+    function _ls_should_skip(uint f, string name) private pure returns (bool) {
+        bool print_dot_starters = (f & _a + _f) > 0;
+        bool skip_dot_dots = (f & _A) > 0;
+        bool ignore_blackups = (f & _B) > 0;
+
+        uint len = name.byteLength();
+        if (len == 0 || (skip_dot_dots && (name == "." || name == "..")))
+            return true;
+        if ((name.substr(0, 1) == "." && !print_dot_starters) ||
+            (name.substr(len - 1, 1) == "~" && ignore_blackups))
+            return true;
+        return false;
+    }
+
+    function _ls_populate_line(uint f, uint16 index, string name, uint8 file_type, uint16 block_size) private view returns (string[] l) {
+        bool long_format = (f & _l + _n + _g + _o) > 0;    // any of -l, -n, -g, -o
+        bool print_index_node = (f & _i) > 0;
         bool no_owner = (f & _g) > 0;
         bool no_group = (f & _o) > 0;
         bool no_group_names = (f & _G) > 0;
-        bool num = (f & _n) > 0;
-        bool double_quotes = (f & _Q) > (f & _N); // -Q is set, -N is not
-        bool append_slash_to_dirs = (f & _p + _F) > 0;
+        bool numeric = (f & _n) > 0;
         bool human_readable = (f & _h) > 0;
-
+        bool print_allocated_size = (f & _s) > 0;
+        bool double_quotes = (f & _Q) > 0 && (f & _N) == 0; // -Q is set, -N is not
+        bool append_slash_to_dirs = (f & _p + _F) > 0;
         bool use_ctime = (f & _c) > 0;
 
-        // record separator: newline for long format or -1, comma for -m, tabulation otherwise (should be columns)
-        string sp = long || (f & _1) > 0 ? "\n" : (f & _m) > 0 ? ", " : "\t";
-        string[][] table;
-
-        mapping (uint => uint16) ds;
-        uint16[] inodes;
-        string[] names;
-        uint8[] types;
-        if (ft == FT_REG_FILE || ft == FT_DIR && ((f & _d) > 0)) {
-            inodes.push(id);
-            names.push(s);
-            types.push(ft);
-            ds[_ls_sort_rating(f, id, _fs.inodes[id], use_ctime)] = 0;
-        } else if (ft == FT_DIR) {
-            (inodes, names, types) = _get_dir_contents(_fs.inodes[id], skip_dots);
-            for (uint16 j = 0; j < inodes.length; j++)
-                ds[_ls_sort_rating(f, inodes[j], _fs.inodes[inodes[j]], use_ctime)] = j;
-        }
-        optional (uint, uint16) p = ds.min();
-
-        while (p.hasValue()) {
-            (uint xk, uint16 j) = p.get();
-            (uint16 i, string name, uint8 ftt) = (inodes[j], names[j], types[j]);
-            string[] l;
-            if (inode) l = [format("{}", i)];
-            if (long) {
-                (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 modified_at, uint32 last_modified, , ) = _fs.inodes[i].unpack();
-                l.push(_permissions(mode));
-                l.push(format("{}", n_links));
-                if (!num) {
-                    (, , string s_owner, string s_group, ) = _users[owner_id].unpack();
-                    if (!no_owner) l.push(s_owner);
-                    if (!no_group && !no_group_names) l.push(s_group);
-                } else {
-                    if (!no_owner) l.push(format("{}", owner_id));
-                    if (!no_group) l.push(format("{}", group_id));
-                }
-                l.push(_scale(file_size, human_readable ? 1024 : 1));
-                l.push(_ts(use_ctime ? modified_at : last_modified));
+        (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 modified_at, uint32 last_modified, , ) = _fs.inodes[index].unpack();
+        if (print_index_node)
+            l = [format("{}", index)];
+        if (print_allocated_size)
+            l.push(format("{}", uint16(file_size / block_size) + 1));
+        if (long_format) {
+            l.push(_permissions(mode));
+            l.push(format("{}", n_links));
+            if (numeric) {
+                if (!no_owner)
+                    l.push(format("{}", owner_id));
+                if (!no_group)
+                    l.push(format("{}", group_id));
+            } else {
+                (, , string s_owner, string s_group, ) = _users[owner_id].unpack();
+                if (!no_owner)
+                    l.push(s_owner);
+                if (!no_group && !no_group_names)
+                    l.push(s_group);
             }
-            if (append_slash_to_dirs && ftt == FT_DIR) name.append("/");
-            if (double_quotes) name = "\"" + name + "\"";
-            l.push(name);
-            table.push(l);
-            p = ds.next(xk);
+            l.push(_scale(file_size, human_readable ? 1024 : 1));
+            l.push(_ts(use_ctime ? modified_at : last_modified));
         }
-        out = _if(out, !table.empty(), _format_table(table, " ", sp, ALIGN_RIGHT));
-    }
-
-    function _ls_sort_rating(uint f, uint16 id, INodeS inode, bool use_ctime) private pure returns (uint rating) {
-       if ((f & _t) > 0)
-            rating = use_ctime ? inode.modified_at : inode.last_modified;
-        if ((f & _U + _f) > 0) rating = 0;
-        if ((f & _S) > 0) rating = 0xFFFFFFFF - inode.file_size;
-        rating = (rating << 32) + id;
-        if ((f & _r) > 0)
-            rating = 0xFFFFFFFFFFFFFFFF - rating;
+        if (double_quotes)
+            name = "\"" + name + "\"";
+        if (append_slash_to_dirs && file_type == FT_DIR)
+            name.append("/");
+        l.push(name);
     }
 
     function _namei(uint flags, ArgS arg) internal view returns (string out) {
@@ -359,11 +439,10 @@ contract StatusReader is Format, SyncFS {
         bool fs_info = (flags & _f) > 0;
 
         (uint8 device_type, uint16 device_n, , uint16 blk_size, ,) = _dev[0].unpack();
-        INodeS inode = _fs.inodes[id];
-        (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 modified_at, uint32 last_modified, , string[] text_data) = inode.unpack();
+        (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 modified_at, uint32 last_modified, , string[] text_data) = _fs.inodes[id].unpack();
         uint16 device_id = (uint16(device_type) << 8) + device_n;
         ( , , string s_owner, string s_group, ) = _users[owner_id].unpack();
-        (string major, string minor) = _is_char_dev(mode) || _is_block_dev(mode) ? _get_device_version(text_data) : ("0", "0");
+        (string major, string minor) = ft == FT_BLKDEV || ft == FT_CHRDEV  ? _get_device_version(text_data) : ("0", "0");
         uint16 n_blocks = uint16(file_size / blk_size);
 
         if (fs_info) {
@@ -379,56 +458,49 @@ contract StatusReader is Format, SyncFS {
                     name, file_size, n_blocks, mode, owner_id, group_id, device_id, id, n_links, major, minor, modified_at, last_modified, 0, blk_size));
             else {
                 if (ft == FT_SYMLINK) {
-                    (string tgt, , ) = _symlink_target(inode);
+                    (string tgt, , ) = _read_dir_entry(text_data[0]);
                     name.append(" -> " + tgt);
                 }
                 out.append(format("   File: {}\n   Size: {}\t\tBlocks: {}\tIO Block: {}\t", name, file_size, n_blocks, blk_size));
                 out.append(ft == FT_REG_FILE && file_size == 0 ? "regular empty file" : _file_type_description(mode));
                 out.append(format("\nDevice: {}h/{}d\tInode: {}\tLinks: {}", device_id, device_id, id, n_links));   // TODO: fix {}h
-                if (_is_char_dev(mode) || _is_block_dev(mode))
+                if (ft == FT_BLKDEV || ft == FT_CHRDEV)
                     out.append(format("\tDevice type: {},{}\n", major, minor));
                 out.append(format("\nAccess: ({}/{})  Uid: ({}/{})  Gid: ({}/{})\nModify: {}\nChange: {}\n Birth: -\n",
-                    mode, _permissions(mode), owner_id, s_owner, group_id, s_group, _ts(modified_at), _ts(last_modified)));
+                    mode & 0x01FF, _permissions(mode), owner_id, s_owner, group_id, s_group, _ts(modified_at), _ts(last_modified)));
             }
         }
     }
 
     /* File tree walk helpers (du) */
-    function _count_dir(uint flags, string dir_name, uint16 ino) private view returns (uint32[] counts, string[] outs) {
-        uint32 cnt;
+    function _count_dir(uint flags, string dir_name, uint16 ino) private view returns (string[][] lines, uint32 total) {
         bool count_files = (flags & _a) > 0;
         bool include_subdirs = (flags & _S) == 0;
+        bool human_readable = (flags & _h) > 0;
 
-        (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_fs.inodes[ino], true);
-        for (uint j = 0; j < inodes.length; j++) {
-            (uint32[] cnts, string[] nms) = _count_any(flags, dir_name + "/" + names[j], inodes[j], types[j]);
-            for (uint i = 0; i < cnts.length; i++) {
-                if (types[j] == FT_REG_FILE) {
-                    if (count_files) {
-                        counts.push(cnts[i]);
-                        outs.push(nms[i]);
-                    } else
-                        cnt += cnts[i];
-                }
-                if (types[j] == FT_DIR) {
-                    counts.push(cnts[i]);
-                    outs.push(nms[i]);
-                    if (include_subdirs)
-                        cnt += cnts[i];
-                }
+        INodeS inode = _fs.inodes[ino];
+        string[] text_data = inode.text_data;
+        uint len = text_data.length;
+
+        for (uint16 j = 3; j <= len; j++) {
+            (string sub_name, uint16 sub_index, uint8 sub_ft) = _read_dir_entry(text_data[j - 1]);
+            sub_name = dir_name + "/" + sub_name;
+            if (sub_ft == FT_DIR) {
+                (string[][] sub_lines, uint32 sub_total) = _count_dir(flags, sub_name, sub_index);
+                for (string[] sub_line: sub_lines)
+                    lines.push(sub_line);
+                if (include_subdirs)
+                    total += sub_total;
+            }
+            else {
+                uint32 file_size = _fs.inodes[sub_index].file_size;
+                total += file_size;
+                if (count_files)
+                    lines.push([_scale(file_size, human_readable ? 1024 : 1), sub_name]);
             }
         }
-        counts.push(_fs.inodes[ino].file_size + cnt);
-        outs.push(dir_name);
-    }
-
-    function _count_any(uint flags, string dir_name, uint16 ino, uint8 ft) private view returns (uint32[] counts, string[] outs) {
-        if (ft == FT_REG_FILE) {
-            counts.push(_fs.inodes[ino].file_size);
-            outs.push(dir_name);
-        }
-        if (ft == FT_DIR)
-            return _count_dir(flags, dir_name, ino);
+        total += inode.file_size;
+        lines.push([_scale(total, human_readable ? 1024 : 1), dir_name]);
     }
 
     /* File size display helpers */

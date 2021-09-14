@@ -82,17 +82,7 @@ contract BlockDevice is SyncFS, ExportFS {
 
     /* Read blocks of textual data fron the files specified by index */
     function read_indices(ArgS[] args) external view returns (string[][] texts) {
-        for (ArgS arg: args) {
-            uint16 idx = arg.idx;
-            FileMapS file = _file_table[idx];
-            if ((file.storage_type & STG_PRIMARY) > 0) {
-                string text;
-                for (uint16 i = 0; i < file.count; i++)
-                    text.append(_blocks[file.start + i]);
-                texts.push([text]);
-            } else if (!_fs.inodes[idx].text_data.empty())
-                texts.push(_fs.inodes[idx].text_data);
-        }
+        return _read_indices(args);
     }
 
     /* next expected write for a file opened by the process */
@@ -111,6 +101,20 @@ contract BlockDevice is SyncFS, ExportFS {
         if (_fs.inodes[parent].n_links < 2)
             delete _fs.inodes[parent];
         _update_inodes_set([parent, victim]);
+    }
+
+    function _read_indices(ArgS[] args) internal view returns (string[][] texts) {
+        for (ArgS arg: args) {
+            uint16 idx = arg.idx;
+            FileMapS file = _file_table[idx];
+            if ((file.storage_type & STG_PRIMARY) > 0) {
+                string text;
+                for (uint16 i = 0; i < file.count; i++)
+                    text.append(_blocks[file.start + i]);
+                texts.push([text]);
+            } else
+                texts.push(_fs.inodes[idx].text_data);
+        }
     }
 
     function _change_attributes(SessionS session, uint16 pino, uint8 ft, ArgS[] args) internal {
@@ -284,7 +288,7 @@ contract BlockDevice is SyncFS, ExportFS {
         _fs = _get_fs(1, "sysfs", ["dev", "etc", "home", "mnt", "proc", "sys", "usr"]);
         _create_subdirs(ROOT_DIR + 3, ["boris", "guest", "ivan"]);
         _create_subdirs(ROOT_DIR + 6, ["dev"]);
-        _create_subdirs(ROOT_DIR + 10, ["block", "char"]);
+        _create_subdirs(ROOT_DIR + 11, ["block", "char"]);
         _create_device(ROOT_DIR + 1, DeviceInfo(BLK_DEVICE, _dc++, "BlockDevice", 1024, 100, address(this)));
         _blocks.push(_write_sb());
     }

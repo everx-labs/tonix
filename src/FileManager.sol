@@ -94,12 +94,12 @@ contract FileManager is SyncFS {
         if (!recursive || ft != FT_DIR)
             return (indices, paths, errors);
 
-        (uint16[] inodes, string[] names, uint8[] types) = _get_dir_contents(_fs.inodes[ino], true);
+        string[] text_data = _fs.inodes[ino].text_data;
+        uint len = text_data.length;
 
-        for (uint16 j = 0; j < inodes.length; j++) {
-            if (names[j] == "." || names[j] == "..")
-                continue;
-            (uint16[] sub_indices, string[] sub_paths, ErrS[] sub_errors) = _process_access_op(c, flags, val, inodes[j], types[j]);
+        for (uint16 j = 3; j <= len; j++) {
+            (, uint16 sub_index, uint8 sub_ft) = _read_dir_entry(text_data[j - 1]);
+            (uint16[] sub_indices, string[] sub_paths, ErrS[] sub_errors) = _process_access_op(c, flags, val, sub_index, sub_ft);
             for (uint16 i: sub_indices)
                 indices.push(i);
             for (string s: sub_paths)
@@ -121,9 +121,9 @@ contract FileManager is SyncFS {
         ArgS[] args_create;
         ArgS[] args_update;
         for (ArgS arg: arg_list) {
-            (string path, , uint16 idx, uint16 i_parent, ) = arg.unpack();
+            (string path, , , uint16 i_parent, uint16 dir_index) = arg.unpack();
             (, string s) = _dir(path);
-            if (idx == ENOENT) {
+            if (dir_index == 0) {
                 arg.path = s;
                 arg.ft = md ? FT_DIR : FT_REG_FILE;
                 args_create.push(arg);

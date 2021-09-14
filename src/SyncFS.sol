@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.49.0;
 
 import "Commands.sol";
-import "Map.sol";
 import "Device.sol";
 import "Path.sol";
 
@@ -39,7 +38,7 @@ struct SessionS {
 }
 
 /* Common functions and definitions for file system handling and synchronization */
-abstract contract SyncFS is Device, Commands, Map, Path {
+abstract contract SyncFS is Device, Commands, Path {
 
     uint8 constant IO_WR_COPY       = 1;
     uint8 constant IO_ALLOCATE      = 2;
@@ -86,7 +85,7 @@ abstract contract SyncFS is Device, Commands, Map, Path {
     function _get_login_info() internal view returns (mapping (uint16 => UserInfo) login_info) {
         string[] etc_passwd_contents = _get_file_contents("/etc/passwd");
         for (string s: etc_passwd_contents) {
-            string[] fields = _read_entry(s);
+            string[] fields = _get_tsv(s);
             string user_name = fields[0];
             (uint res, bool success) = stoi(fields[1]);
             uint16 uid = success ? uint16(res) : GUEST_USER;
@@ -98,31 +97,24 @@ abstract contract SyncFS is Device, Commands, Map, Path {
         }
     }
 
-    function _get_abs_path(uint16 dir) internal view returns (string) {
+    function _get_absolute_path(uint16 dir) internal view returns (string) {
         if (dir == ROOT_DIR)
             return ROOT;
         (uint16 parent, uint8 ft) = _fetch_dir_entry("..", dir);
+        if (ft != FT_DIR)
+            return "Failed to get absolute path: not a directory";
 
-        if (ft != FT_DIR || parent < INODES)
-            return "Failed to get absolute path";
-        string dir_name;
-        for (string s: _fs.inodes[parent].text_data) {
-            (string file_name, uint16 file_inode, ) = _read_dir_entry(s);
-            if (dir == file_inode)
-                dir_name = file_name;
-        }
-
-        return (parent == ROOT_DIR ? "" : _get_abs_path(parent)) + "/" + dir_name;
+        return (parent == ROOT_DIR ? "" : _get_absolute_path(parent)) + "/" + _fs.inodes[dir].file_name;
     }
 
-    function _resolve_abs_path(string dir_name) internal view returns (uint16) {
+    function _resolve_absolute_path(string dir_name) internal view returns (uint16) {
         (string dir, string not_dir) = _dir(dir_name);
 
         if (dir == ROOT) {
-            (uint16 ino, ) = _lookup_dir_entry(not_dir, ROOT_DIR);
+            (uint16 ino, ) = _fetch_dir_entry(not_dir, ROOT_DIR);
             return ino;
         }
-        (uint16 ino, ) = _lookup_dir_entry(not_dir, _resolve_abs_path(dir));
+        (uint16 ino, ) = _fetch_dir_entry(not_dir, _resolve_absolute_path(dir));
         return ino;
     }
 
@@ -134,7 +126,7 @@ abstract contract SyncFS is Device, Commands, Map, Path {
         uint len = s_arg.byteLength();
         if (len > 0 && s_arg.substr(0, 1) == "/")
             return s_arg;
-        string cwd = _get_abs_path(wd);
+        string cwd = _get_absolute_path(wd);
         if (len == 0 || s_arg == ".")
             return cwd;
         if (len > 1 && s_arg.substr(0, 2) == "./")
@@ -152,13 +144,9 @@ abstract contract SyncFS is Device, Commands, Map, Path {
 
     function _get_file_contents(string path) internal view returns (string[]) {
         (string dir, string not_dir) = _dir(path);
-        (uint16 inode, uint8 ft) = _lookup_dir_entry(not_dir, _resolve_abs_path(dir));
-        if (inode >= INODES && ft == FT_REG_FILE)
+        (uint16 inode, ) = _fetch_dir_entry(not_dir, _resolve_absolute_path(dir));
+        if (inode >= INODES)
             return _fs.inodes[inode].text_data;
-    }
-
-    function _lookup_dir_entry(string name, uint16 dir) internal view returns (uint16 inode, uint8 file_type) {
-        (inode, file_type, , ) = _lookup_dir_entry_plus(name, dir);
     }
 
     function _dir_index(string name, uint16 dir) internal view returns (uint16) {
@@ -166,44 +154,41 @@ abstract contract SyncFS is Device, Commands, Map, Path {
     }
 
     /* Looks for a file name in the directory entry */
-    function _fetch_dir_entry(string name, uint16 dir) internal view returns (uint16, uint8) {
-        string[] text = _fs.inodes[dir].text_data;
-        uint16 idx = _match_line(name, text);
-        if (idx > 0) {
-            (, uint16 inode, uint8 ft) = _read_dir_entry(text[idx - 1]);
-            return (inode, ft);
-        }
-        return (ENOENT, FT_UNKNOWN);
+    function _fetch_dir_entry(string name, uint16 dir) internal view returns (uint16 ino, uint8 ft) {
+        INodeS inode = _fs.inodes[dir];
+        if ((inode.mode & S_IFMT) != S_IFDIR)
+            return (ENOTDIR, FT_UNKNOWN);
+        string[] text_data = inode.text_data;
+        uint16 dir_index = _match_line(name, text_data);
+        if (dir_index == 0)
+            return (ENOENT, FT_UNKNOWN);
+        (, ino, ft) = _read_dir_entry(text_data[dir_index - 1]);
     }
 
-    function _lookup_dir_entry_plus(string name, uint16 dir) internal view returns
+    function _resolve_relative_path(string name, uint16 dir) internal view returns
             (uint16 inode, uint8 file_type, uint16 parent, uint16 dir_index) {
         if (name == "/")
             return (ROOT_DIR, FT_DIR, ROOT_DIR, 1);
         string path_start = name.substr(0, 1);
-        uint16 dir_start = path_start == "/" ? ROOT_DIR : dir;
+        uint16 cur_dir = path_start == "/" ? ROOT_DIR : dir;
 
         (string dir_path, string base_name) = _dir(name);
         string[] parts = _disassemble_path(dir_path);
         uint len = parts.length;
-        uint16 cur_dir = dir_start;
 
         for (uint i = len - 1; i > 0; i--) {
-            (uint16 ino, uint8 ft, , uint16 idx) = _lookup_dir_entry_plus(parts[i - 1], cur_dir);
-            if (ino < INODES)
-                return (ino, ft, cur_dir, idx);
+            (uint16 ino, uint8 ft, , uint16 dir_idx) = _resolve_relative_path(parts[i - 1], cur_dir);
+            if (dir_idx == 0)
+                return (ino, ft, cur_dir, dir_idx);
             if (ft == FT_DIR)
                 cur_dir = ino;
             else
                 break;
         }
-        dir = cur_dir;
-
-        parent = dir;
+        parent = cur_dir;
         dir_index = _dir_index(base_name, parent);
         if (dir_index > 0)
             (, inode, file_type) = _read_dir_entry(_fs.inodes[parent].text_data[dir_index - 1]);
-//        (inode, file_type, parent, dir_index) = _fetch_dir_entry(base_name, dir);
     }
 
      function _file_type_sign_and_description(uint16 index) internal view returns (string, string) {

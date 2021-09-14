@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.49.0;
 
-import "Map.sol";
+import "String.sol";
 
 /* Table formatting routines */
-abstract contract Format is Map {
+abstract contract Format is String {
 
     uint8 constant ALIGN_NONE   = 0;
     uint8 constant ALIGN_RIGHT  = 1;
