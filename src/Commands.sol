@@ -9,58 +9,80 @@ abstract contract Commands is Base {
     uint8 constant basename = 2;
     uint8 constant cat      = 3;
     uint8 constant cd       = 4;
-    uint8 constant chgrp    = 5;
-    uint8 constant chmod    = 6;
-    uint8 constant chown    = 7;
-    uint8 constant cksum    = 8;
-    uint8 constant cmp      = 9;
-    uint8 constant column   = 10;
-    uint8 constant cp       = 11;
-    uint8 constant cut      = 12;
-    uint8 constant dd       = 13;
-    uint8 constant df       = 14;
-    uint8 constant dirname  = 15;
-    uint8 constant du       = 16;
-    uint8 constant echo     = 17;
-    uint8 constant fallocate = 18;
-    uint8 constant file     = 19;
-    uint8 constant findmnt  = 20;
-    uint8 constant fuser    = 21;
-    uint8 constant getent   = 22;
-    uint8 constant grep     = 23;
-    uint8 constant head     = 24;
-    uint8 constant help     = 25;
-    uint8 constant hostname = 26;
-    uint8 constant id       = 27;
-    uint8 constant ln       = 28;
-    uint8 constant login    = 29;
-    uint8 constant logout   = 30;
-    uint8 constant ls       = 31;
-    uint8 constant lsblk    = 32;
-    uint8 constant lslogins = 33;
-    uint8 constant lsof     = 34;
-    uint8 constant man      = 35;
-    uint8 constant mapfile  = 36;
-    uint8 constant mkdir    = 37;
-    uint8 constant mount    = 38;
-    uint8 constant mv       = 39;
-    uint8 constant namei    = 40;
-    uint8 constant paste    = 41;
-    uint8 constant ping     = 42;
-    uint8 constant ps       = 43;
-    uint8 constant pwd      = 44;
-    uint8 constant readlink = 45;
-    uint8 constant realpath = 46;
-    uint8 constant rm       = 47;
-    uint8 constant rmdir    = 48;
-    uint8 constant stat     = 49;
-    uint8 constant tail     = 50;
-    uint8 constant touch    = 51;
-    uint8 constant truncate = 52;
-    uint8 constant uname    = 53;
-    uint8 constant wc       = 54;
-    uint8 constant whatis   = 55;
-    uint8 constant whoami   = 56;
+    uint8 constant chfn     = 5;
+    uint8 constant chgrp    = 6;
+    uint8 constant chmod    = 7;
+    uint8 constant chown    = 8;
+    uint8 constant cksum    = 9;
+    uint8 constant cmp      = 10;
+    uint8 constant column   = 11;
+    uint8 constant cp       = 12;
+    uint8 constant cut      = 13;
+    uint8 constant dd       = 14;
+    uint8 constant df       = 15;
+    uint8 constant dirname  = 16;
+    uint8 constant du       = 17;
+    uint8 constant echo     = 18;
+    uint8 constant fallocate = 19;
+    uint8 constant file     = 20;
+    uint8 constant findmnt  = 21;
+    uint8 constant finger   = 22;
+    uint8 constant fuser    = 23;
+    uint8 constant getent   = 24;
+    uint8 constant groupadd = 25;
+    uint8 constant groupdel = 26;
+    uint8 constant groupmod = 27;
+    uint8 constant gpasswd  = 28;
+    uint8 constant grep     = 29;
+    uint8 constant head     = 30;
+    uint8 constant help     = 31;
+    uint8 constant hostname = 32;
+    uint8 constant id       = 33;
+    uint8 constant ln       = 34;
+    uint8 constant last     = 35;
+    uint8 constant login    = 36;
+    uint8 constant logout   = 37;
+    uint8 constant losetup  = 38;
+    uint8 constant look     = 39;
+    uint8 constant ls       = 40;
+    uint8 constant lsblk    = 41;
+    uint8 constant lslogins = 42;
+    uint8 constant lsof     = 43;
+    uint8 constant man      = 44;
+    uint8 constant mapfile  = 45;
+    uint8 constant mkdir    = 46;
+    uint8 constant mknod    = 47;
+    uint8 constant mount    = 48;
+    uint8 constant mv       = 49;
+    uint8 constant namei    = 50;
+    uint8 constant newgrp   = 51;
+    uint8 constant paste    = 52;
+    uint8 constant pathchk  = 53;
+    uint8 constant ping     = 54;
+    uint8 constant ps       = 55;
+    uint8 constant pwd      = 56;
+    uint8 constant readlink = 57;
+    uint8 constant realpath = 58;
+    uint8 constant rm       = 59;
+    uint8 constant rmdir    = 60;
+    uint8 constant script   = 61;
+    uint8 constant stat     = 62;
+    uint8 constant tail     = 63;
+    uint8 constant tar      = 64;
+    uint8 constant touch    = 65;
+    uint8 constant truncate = 66;
+    uint8 constant udevadm  = 67;
+    uint8 constant umount   = 68;
+    uint8 constant uname    = 69;
+    uint8 constant useradd  = 70;
+    uint8 constant userdel  = 71;
+    uint8 constant usermod  = 72;
+    uint8 constant utmpdump = 73;
+    uint8 constant wc       = 74;
+    uint8 constant whatis   = 75;
+    uint8 constant whereis  = 76;
+    uint8 constant who      = 77;
+    uint8 constant whoami   = 78;
     uint8 constant CMD_NAME_LAST = whoami;
     uint8 constant CMD_UNKNOWN = 255;
 
@@ -77,7 +99,8 @@ abstract contract Commands is Base {
     uint16 constant IO_EVENT        = 128;
     uint16 constant READ_INDEX      = 256;
     uint16 constant CHECK_STATUS    = 512;
-    uint16 constant OPEN_DIR        = 2048;
+    uint16 constant DEVICE_STATUS   = 1024;
+    uint16 constant UPDATE_DEVICES  = 2048;
     uint16 constant CHANGE_DIR      = 4096;
     uint16 constant PIPE_OUT_TO_FILE = 8192;
     uint16 constant MOUNT_FS        = 16384;
@@ -149,15 +172,15 @@ abstract contract Commands is Base {
     uint constant _z = 1 << 122;
 
     function _is_pure(uint8 c) internal pure returns (bool) {
-        return c == basename || c == dirname || c == echo || c == uname;
+        return c == basename || c == dirname || c == echo || c == pathchk || c == uname;
     }
 
     function _op_stat(uint8 c) internal pure returns (bool) {
-        return c == cksum || c == du || c == file || c == ls || c == stat || c == namei;
+        return c == cksum || c == du || c == file || c == ls || c == namei || c == stat;
     }
 
     function _op_format(uint8 c) internal pure returns (bool) {
-        return c == cat || c == column || c == cut || c == grep || c == paste || c == wc || c == mapfile || c == head || c == tail;
+        return c == cat || c == column || c == cut || c == grep || c == head || c == mapfile || c == paste || c == tail || c == wc;
     }
 
     function _op_fs_status(uint8 c) internal pure returns (bool) {
@@ -165,7 +188,11 @@ abstract contract Commands is Base {
     }
 
     function _op_dev_stat(uint8 c) internal pure returns (bool) {
-        return c == df || c == findmnt || c == lsblk || c == ps;
+        return c == df || c == findmnt || c == lsblk || c == ps || c == utmpdump;
+    }
+
+    function _op_dev_admin(uint8 c) internal pure returns (bool) {
+        return c == losetup || c == mknod || c == mount || c == udevadm || c == umount;
     }
 
     function _op_access(uint8 c) internal pure returns (bool) {
@@ -173,19 +200,23 @@ abstract contract Commands is Base {
     }
 
     function _op_file(uint8 c) internal pure returns (bool) {
-        return c == cp || c == cmp || c == ln || c == mkdir || c == mv || c == rm || c == rmdir || c == touch || c == fallocate || c == truncate;
+        return c == cp || c == cmp || c == fallocate || c == ln || c == mkdir || c == mv || c == rm || c == rmdir || c == tar || c == touch || c == truncate;
     }
 
     function _op_session(uint8 c) internal pure returns (bool) {
-        return c == cd || c == id || c == pwd || c == whoami;
+        return c == cd || c == id || c == login || c == logout || c == last || c == pwd || c == script || c == who || c == whoami;
     }
 
     function _op_network(uint8 c) internal pure returns (bool) {
         return c == account || c == mount || c == ping;
     }
 
+    function _op_user_admin(uint8 c) internal pure returns (bool) {
+        return c == gpasswd || c == groupadd || c == groupdel || c == groupmod || c == useradd || c == userdel || c == usermod;
+    }
+
     function _reads_file_fixed(uint8 c) internal pure returns (bool) {
-        return c == help || c == man || c == whatis || c == lslogins;
+        return c == help || c == lslogins || c == man || c == whatis || c == whereis;
     }
 
 }

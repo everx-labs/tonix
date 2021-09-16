@@ -59,4 +59,46 @@ abstract contract Format is String {
                     max_widths[j] = fields[j].byteLength();
         }
     }
+
+    /* File size display helpers */
+    function _scale(uint32 n, uint32 factor) internal pure returns (string) {
+        if (n < factor || factor == 1)
+            return format("{}", n);
+        (uint d, uint m) = math.divmod(n, factor);
+        return d > 10 ? format("{}K", d) : format("{}.{}K", d, m / 100);
+    }
+
+    /* Time display helpers */
+    function _to_date(uint32 t) internal pure returns (string month, uint32 day, uint32 hour, uint32 minute, uint32 second) {
+        uint32 Aug_1st = 1627776000; // Aug 1st
+        uint32 Sep_1st = 1630454400; // Aug 1st
+        bool past_Aug = t >= Sep_1st;
+        if (t >= Aug_1st) {
+            month = past_Aug ? "Sep" : "Aug";
+            uint32 t0 = t - (past_Aug ? Sep_1st : Aug_1st);
+            day = t0 / 86400 + 1;
+            uint32 t1 = t0 % 86400;
+            hour = t1 / 3600;
+            uint32 t2 = t1 % 3600;
+            minute = t2 / 60;
+            second = t2 % 60;
+        }
+    }
+
+    function _ts(uint32 t) internal pure returns (string) {
+        (string month, uint32 day, uint32 hour, uint32 minute, uint32 second) = _to_date(t);
+        return format("{} {} {:02}:{:02}:{:02}", month, day, hour, minute, second);
+    }
+
+    /* Network helpers */
+    function _to_address(string s_addr) internal pure returns (address addr) {
+        uint len = s_addr.byteLength();
+        if (len > 60) {
+            string s_hex = "0x" + s_addr.substr(2, len - 2);
+            (uint u_addr, bool success) = stoi(s_hex);
+            if (success)
+                return address.makeAddrStd(0, u_addr);
+        }
+    }
+
 }

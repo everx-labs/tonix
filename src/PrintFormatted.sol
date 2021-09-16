@@ -3,8 +3,9 @@ pragma ton-solidity >= 0.49.0;
 import "Format.sol";
 import "SyncFS.sol";
 import "ImportFS.sol";
+import "CacheFS.sol";
 
-contract PrintFormatted is Format, SyncFS, ImportFS {
+contract PrintFormatted is Format, SyncFS, ImportFS, CacheFS {
 
     /* Process commands which do not require intrinsic knowledge about the file system */
     function process_command(SessionS session, InputS input) external view returns (string out, string err) {
@@ -480,11 +481,11 @@ contract PrintFormatted is Format, SyncFS, ImportFS {
     function _init() internal override accept {
         _sync_fs_cache();
         address data_volume = address.makeAddrStd(0, 0x439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb);
-        ExportFS(data_volume).rpc_mountd_exports{value: 0.5 ton}();
-        ExportFS(data_volume).rpc_mountd_exports{value: 0.3 ton}();
-        ExportFS(address.makeAddrStd(0, 0x4b937783725628153f2fa320f25a7dd1d68acf948e38ea5a0c5f7f3857db8981)).rpc_mountd_exports{value: 1 ton}();
-        ExportFS(address.makeAddrStd(0, 0x41d95cddc9ca3c082932130c208deec90382f5b7c0036c8d84ac3567e8b82420)).rpc_mountd_exports{value: 1 ton}();
-        ExportFS(address.makeAddrStd(0, 0x41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e)).rpc_mountd_exports{value: 1 ton}();
-        ExportFS(address.makeAddrStd(0, 0x4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421)).rpc_mountd_exports{value: 1 ton}();
+        IExportFS(data_volume).rpc_mountd_exports{value: 0.5 ton}();
+        IExportFS(data_volume).rpc_mountd_exports{value: 0.3 ton}();
+        IExportFS(address.makeAddrStd(0, 0x4b937783725628153f2fa320f25a7dd1d68acf948e38ea5a0c5f7f3857db8981)).rpc_mountd_exports{value: 1 ton}();
+        IExportFS(address.makeAddrStd(0, 0x41d95cddc9ca3c082932130c208deec90382f5b7c0036c8d84ac3567e8b82420)).rpc_mountd_exports{value: 1 ton}();
+        IExportFS(address.makeAddrStd(0, 0x41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e)).rpc_mountd_exports{value: 1 ton}();
+        IExportFS(address.makeAddrStd(0, 0x4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421)).rpc_mountd_exports{value: 1 ton}();
     }
 }

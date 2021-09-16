@@ -1,8 +1,9 @@
 pragma ton-solidity >= 0.49.0;
 
 import "SyncFS.sol";
+import "CacheFS.sol";
 
-contract FileManager is SyncFS {
+contract FileManager is SyncFS, CacheFS {
 
     /* Common file operations */
     function file_op(SessionS session, InputS input, ArgS[] arg_list) external view returns (string out, IOEventS[] ios, uint16 action, ErrS[] errors) {

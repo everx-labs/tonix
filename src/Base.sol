@@ -17,6 +17,13 @@ abstract contract Base {
 
     uint16 constant DEF_UMASK = 18;
 
+    uint16 constant DEF_BLOCK_SIZE = 1024;
+    uint16 constant DEF_BIN_BLOCK_SIZE = 4096;
+    uint16 constant MAX_MOUNT_COUNT = 1024;
+    uint16 constant DEF_INODE_SIZE = 128;
+    uint16 constant MAX_BLOCKS = 400;
+    uint16 constant MAX_INODES = 600;
+
     string constant ROOT = "/";
 
     modifier accept {

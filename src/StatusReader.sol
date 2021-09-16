@@ -2,216 +2,33 @@ pragma ton-solidity >= 0.49.0;
 
 import "SyncFS.sol";
 import "Format.sol";
+import "CacheFS.sol";
 
-contract StatusReader is Format, SyncFS {
+contract StatusReader is Format, SyncFS, CacheFS {
 
     /* Query file tree and file system status */
     function fstat(SessionS session, InputS input, ArgS[] arg_list) external view returns (string out, uint16 action, ErrS[] errors) {
-        (uint8 c, string[] args, uint flags) = input.unpack();
+        (uint8 c, , uint flags) = input.unpack();
         uint16 pid = session.pid;
         pid = pid;
         if (c == cksum) out = _dump_fs(1, _fs); // 250
 
-        /* File system status */
-        if (_op_dev_stat(c))
-            out = _dev_stat(c, flags, args);  // 3.5
         /* File tree status */
-        if (_op_fs_status(c))
-            (out, errors) = _fs_status(c, flags, arg_list); // 6.6
-
-        if (!errors.empty())
-            action |= PRINT_ERRORS;
-    }
-
-    function _fs_status(uint8 c, uint flags, ArgS[] arg_list) private view returns (string out, ErrS[] errors) {
         for (ArgS arg: arg_list) {
-            (string s, , uint16 ino, , ) = arg.unpack();
-            if (ino > 0 && _fs.inodes.exists(ino)) {
+//            (string s, , uint16 ino, , ) = arg.unpack();
+//            if (ino > 0 && _fs.inodes.exists(ino)) {
                 if (c == du) out.append(_du(flags, arg));    // 900
                 if (c == file) out.append(_file(flags, arg));// 500
                 if (c == ls) out.append(_ls(flags, arg));    // 2.1
                 if (c == namei) out.append(_namei(flags, arg)); // 500
                 if (c == stat) out.append(_stat(flags, arg));// 1.8
                 out.append("\n");
-            } else
-                errors.push(ErrS(0, ino, s));
+//            } else
+//                errors.push(ErrS(0, ino, s));
         }
-    }
 
-    function _dev_stat(uint8 c, uint flags, string[] args) private view returns (string out) {
-        if (c == df) out.append(_df(flags));      // 600
-        if (c == findmnt) out.append(_findmnt(flags, args));// 500
-        if (c == lsblk) out.append(_lsblk(flags, args));// 800
-        if (c == ps) out.append(_ps(flags));
-    }
-
-    /********************** File system and device status query *************************/
-    function _df(uint flags) private view returns (string out) {
-        (, , , uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, uint16 block_size,
-        , , , , , , , ) = _fs.sb.unpack();
-
-        bool human_readable = (flags & _h) > 0;
-        bool powers_of_1000 = (flags & _H) > 0;
-        bool list_inodes = (flags & _i) > 0;
-        bool block_1k = (flags & _k) > 0;
-        bool posix_output = (flags & _P) > 0;
-
-        string fs_name = "/dev/" + _dev[0].name;
-        uint32 total = uint32(block_count + free_blocks);
-        uint32 factor = 1;
-        string[] header;
-        string[] row0;
-
-        if (list_inodes) {
-            header = ["Filesystem", "Inodes", "IUsed", "IFree", "IUse%", "Mounted on"];
-            row0 = [fs_name,
-                    format("{}", inode_count + free_inodes),
-                    format("{}", inode_count),
-                    format("{}", free_inodes),
-                    format("{}%", uint32(inode_count) * 100 / (inode_count + free_inodes)),
-                    "/"];
-        } else {
-            if (human_readable) {
-                header = ["Filesystem", "Size", "Used", "Avail", "Use%", "Mounted on"];
-                factor = 1024;
-            } else if (posix_output) {
-                header = ["Filesystem", "1024-blocks", "Used", "Available", "Capacity%", "Mounted on"];
-                factor = 1024;
-            } else {
-                header = ["Filesystem", "1K-blocks", "Used", "Available", "Use%", "Mounted on"];
-                if (block_1k)
-                    factor = 1;
-            }
-            if (powers_of_1000)
-                factor = 1000;
-
-            row0 = [fs_name,
-                    format("{}", _scale(total * block_size / factor, factor)),
-                    format("{}", _scale(uint32(block_count) * block_size / factor, factor)),
-                    format("{}", _scale(uint32(free_blocks) * block_size / factor, factor)),
-                    format("{}%", uint32(block_count) * 100 / total),
-                    "/"];
-        }
-        out.append(_format_table([header, row0], " ", "\n", ALIGN_RIGHT));
-    }
-
-    function _findmnt(uint flags, string[] /*args*/) private view returns (string out) {
-        bool search_fstab_only = (flags & _s) > 0;
-        bool search_mtab_only = (flags & _m) > 0;
-        bool like_df = (flags & _D) > 0;
-        bool first_fs_only = (flags & _f) > 0;
-        bool no_headings = (flags & _n) > 0;
-
-        string[][] table;
-
-        string[] header = no_headings ? [""] : like_df ? ["SOURCE", "SIZE", "USED", "AVAIL", "USE%", "TARGET"] : ["TARGET", "SOURCE", "FSTYPE", "OPTIONS"];
-        if (!no_headings)
-            table = [header];
-
-        if (!search_mtab_only) {
-            string[] lines = _get_file_contents("/etc/fstab");
-            for (string line: lines) {
-                string[] fields = _get_tsv(line);
-                table.push([fields[1], fields[0], fields[2], fields[3]]);
-                if (first_fs_only)
-                    break;
-            }
-        }
-        if (!search_fstab_only) {
-            string[] lines = _get_file_contents("/etc/mtab");
-            for (string line: lines) {
-                string[] fields = _get_tsv(line);
-                table.push([fields[1], fields[0], fields[2], fields[3]]);
-                if (first_fs_only)
-                    break;
-            }
-        }
-        out.append(_format_table(table, " ", "\n", ALIGN_LEFT));
-    }
-
-    function _lsblk(uint flags, string[] args) private view returns (string out) {
-        bool human_readable = (flags & _b) == 0;
-        bool print_header = (flags & _n) == 0;
-        bool print_fs_info = (flags & _f) > 0;
-        bool print_permissions = (flags & _m) > 0;
-        bool print_device_info = !print_fs_info && !print_permissions;
-        bool full_path = (flags & _p) > 0;
-        string[][] table;
-
-        (uint16 dev_dir, uint8 dev_dir_ft) = _fetch_dir_entry("dev", ROOT_DIR);
-        if (dev_dir_ft != FT_DIR)
-            return "Error: could not open /dev\n";
-
-        if (print_header) {
-            if (print_device_info)
-                table = [["NAME", "MAJ:MIN", "SIZE", "RO", "TYPE", "MOUNTPOINT"]];
-            else if (print_fs_info)
-                table = [["NAME", "FSTYPE", "LABEL", "UUID", "FSAVAIL", "FSUSE%", "MOUNTPOINT"]];
-            else if (print_permissions)
-                table = [["NAME", "SIZE", "OWNER", "GROUP", "MODE"]];
-        }
-        if (args.empty())
-            args = ["BlockDevice"];
-
-        (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size,
-        , , , , , , , ) = _fs.sb.unpack();
-
-        for (string s: args) {
-            (uint16 dev_file_index, uint8 dev_file_ft) = _fetch_dir_entry(s, dev_dir);
-            if (dev_file_ft == FT_BLKDEV || dev_file_ft == FT_CHRDEV) {
-                (uint16 mode, uint16 owner_id, , , , , , , string[] lines) = _fs.inodes[dev_file_index].unpack();
-                string[] fields0 = _get_tsv(lines[0]);
-                if (fields0.length < 4) {
-                    out.append("error reading data from " + s + "\n" + lines[0]);
-                    continue;
-                }
-                string name = (full_path ? "/dev/" : "") + fields0[2];
-                string[] l;
-                if (print_device_info)
-                    l = [name,
-                         format("{}:{}", fields0[0], fields0[1]),
-                         _scale(uint32(block_count) * block_size, human_readable ? 1024 : 1),
-                         "0",
-                         "disk",
-                         ROOT];
-                else if (print_fs_info)
-                    l = [name,
-                        " ",
-                        " ",
-                        " ",
-                        _scale(uint32(free_blocks) * block_size, human_readable ? 1024 : 1),
-                        format("{}%", uint32(block_count) * 100 / (block_count + free_blocks)),
-                        ROOT];
-                else if (print_permissions) {
-                    (, , string s_owner, string s_group, ) = _users[owner_id].unpack();
-                    l = [name,
-                        _scale(uint32(block_count) * block_size, human_readable ? 1024 : 1),
-                        s_owner,
-                        s_group,
-                        _permissions(mode)];
-                }
-                table.push(l);
-            } else
-                out.append(s + ": not a block device\n");
-        }
-        out.append(_format_table(table, " ", "\n", ALIGN_CENTER));
-    }
-
-    /* Does not really belong here */
-    function _ps(uint flags) internal view returns (string out) {
-        bool format_full = (flags & _f) > 0;
-        bool format_extra_full = (flags & _F) > 0;
-        string[][] table = [format_extra_full ? ["UID", "PID", "PPID", "CWD"] : format_full ? ["UID", "PID", "PPID"] : ["UID", "PID"]];
-        for ((uint16 pid, ProcessInfo proc): _proc) {
-            (uint16 owner_id, uint16 self_id, , , string cwd) = proc.unpack();
-            string[] line = [format("{}", owner_id), format("{}", pid)];
-            if (format_full || format_extra_full)
-                line.push(format("{}", self_id));
-            if (format_extra_full)
-                line.push(cwd);
-            table.push(line);
-        }
-        out.append(_format_table(table, " ", "\n", ALIGN_LEFT));
+        if (!errors.empty())
+            action |= PRINT_ERRORS;
     }
 
     /* File tree status commands */
@@ -438,7 +255,7 @@ contract StatusReader is Format, SyncFS {
         bool terse = (flags & _t) > 0;
         bool fs_info = (flags & _f) > 0;
 
-        (uint8 device_type, uint16 device_n, , uint16 blk_size, ,) = _dev[0].unpack();
+        (uint8 device_type, uint16 device_n, , uint16 blk_size, ,) = _source_device.unpack();
         (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 modified_at, uint32 last_modified, , string[] text_data) = _fs.inodes[id].unpack();
         uint16 device_id = (uint16(device_type) << 8) + device_n;
         ( , , string s_owner, string s_group, ) = _users[owner_id].unpack();
@@ -501,36 +318,6 @@ contract StatusReader is Format, SyncFS {
         }
         total += inode.file_size;
         lines.push([_scale(total, human_readable ? 1024 : 1), dir_name]);
-    }
-
-    /* File size display helpers */
-    function _scale(uint32 n, uint32 factor) private pure returns (string) {
-        if (n < factor || factor == 1)
-            return format("{}", n);
-        (uint d, uint m) = math.divmod(n, factor);
-        return d > 10 ? format("{}K", d) : format("{}.{}K", d, m / 100);
-    }
-
-    /* Time display helpers */
-    function _to_date(uint32 t) internal pure returns (string month, uint32 day, uint32 hour, uint32 minute, uint32 second) {
-        uint32 Aug_1st = 1627776000; // Aug 1st
-        uint32 Sep_1st = 1630454400; // Aug 1st
-        bool past_Aug = t >= Sep_1st;
-        if (t >= Aug_1st) {
-            month = past_Aug ? "Sep" : "Aug";
-            uint32 t0 = t - (past_Aug ? Sep_1st : Aug_1st);
-            day = t0 / 86400 + 1;
-            uint32 t1 = t0 % 86400;
-            hour = t1 / 3600;
-            uint32 t2 = t1 % 3600;
-            minute = t2 / 60;
-            second = t2 % 60;
-        }
-    }
-
-    function _ts(uint32 t) internal pure returns (string) {
-        (string month, uint32 day, uint32 hour, uint32 minute, uint32 second) = _to_date(t);
-        return format("{} {} {:02}:{:02}:{:02}", month, day, hour, minute, second);
     }
 
     /* Init routine */

@@ -6,8 +6,8 @@ import "ExportFS.sol";
 contract DataVolume is ExportFS {
 
     function _init() internal override accept {
-        _fs = _get_fs(1, "exportfs", ["etc", "errors"]);
-        _create_device(ROOT_DIR, DeviceInfo(BLK_DEVICE, _dc++, "DataVolume", 1024, 100, address(this)));
+        _export_fs = _get_fs(1, "exportfs", ["etc", "errors"]);
+        _create_device(ROOT_DIR, DeviceInfo(1, 1, "DataVolume", 1024, 100, address(this)));
 
         /* Imported by an error printer */
         INodeS[] error_files = _files(
@@ -33,10 +33,12 @@ contract DataVolume is ExportFS {
     function init2() external accept {
         /* Inported to /etc by a block device system */
         INodeS[] etc_files = _files(["command_list", "exports", "fs_types", "mtab", "group", "hostname", "hosts", "magic", "motd", "passwd"], [
-            ["account", "basename", "cat", "cd", "chgrp", "chmod", "chown","cksum", "cmp", "column", "cp", "cut", "dd", "df", "dirname",
-             "du", "echo", "fallocate", "file", "findmnt", "fuser", "getent", "grep", "head", "help", "hostname", "id", "ln",
-             "login", "logout", "ls", "lsblk", "lslogins", "lsof", "man", "mapfile", "mkdir", "mount", "mv", "namei", "paste", "ping",
-             "ps", "pwd", "readlink", "realpath", "rm", "rmdir", "stat", "tail", "touch", "truncate", "uname", "wc", "whatis", "whoami"],
+            ["account", "basename", "cat", "cd", "chfn", "chgrp", "chmod", "chown","cksum", "cmp", "column", "cp", "cut", "dd", "df", "dirname",
+             "du", "echo", "fallocate", "file", "findmnt", "finger", "fuser", "getent", "gpasswd", "grep", "groupadd", "groupdel", "groupmod",
+             "head", "help", "hostname", "id", "ln", "last", "login", "logout", "look", "losetup", "ls", "lsblk", "lslogins", "lsof", "man",
+             "mapfile", "mkdir", "mknod", "mount", "mv", "namei", "newgrp", "paste", "pathchk", "ping", "ps", "pwd", "readlink", "realpath",
+             "rm", "rmdir", "script", "stat", "tail", "tar", "touch", "truncate", "udevadm", "umount", "uname", "useradd", "userdel", "usermod",
+             "utmpdump", "wc", "whatis", "whereis", "who", "whoami"],
             ["SessionManager/usr/share/errors\t/usr/share/commands",
              "StatusReader\t/",
              "FileManager\t/"],
@@ -65,7 +67,8 @@ contract DataVolume is ExportFS {
              "0:41d95cddc9ca3c082932130c208deec90382f5b7c0036c8d84ac3567e8b82420\tManualStatus",
              "0:48a04e9fc99be89ddfe4eb1f7303ee417ebae174514b5e11c072834259250eec\tPrintFormatted",
              "0:41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e\tManualSession",
-             "0:4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421\tManualUtility"],
+             "0:4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421\tManualUtility",
+             "0:430dd570de5398dbc2319979f5ba4aa99d5254e5382d3c344b985733d141617b\tDeviceManager"],
             ["11"],
             ["Welcome to Tonix.",
              "Type \"help\" to get a list of commands.",

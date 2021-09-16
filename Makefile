@@ -8,13 +8,14 @@ R:=StatusReader
 I:=SessionManager
 C:=FileManager
 P:=PrintFormatted
+DM:=DeviceManager
 MAN_CMD:=ManualCommands
 MAN_SES:=ManualSession
 MAN_STAT:=ManualStatus
 MAN_AUX:=ManualUtility
 T:=TestFS
 INIT:=
-TA:=$D $R $B $I $C $(MAN_CMD) $(MAN_SES) $(MAN_STAT) $(MAN_AUX) $P
+TA:=$D $R $B $I $C $(MAN_CMD) $(MAN_SES) $(MAN_STAT) $(MAN_AUX) $P $(DM)
 RKEYS:=$(KEY)/k1.keys
 VAL0:=15
 TST:=tests
@@ -192,6 +193,11 @@ $p/update_nodes.args: $p/session $p/ios
 $p/update_nodes.res: $p/update_nodes.args
 	$($B_c)
 
+$p/dev_admin.args: $p/session $p/ios
+	jq -s '{session: .[0], ios: .[1]}' $^ >$@
+$p/dev_admin.res: $p/dev_admin.args
+	$($(DM)_c)
+
 write_all: $p/session $p/source
 	$(eval files:=$(file <$(word 2,$^)))
 	$(foreach f,$(files),$(file >$p/fd/$f.args,{"session":$(file <$(word 1,$^))$(comma)"path":"$(notdir $f)","text":$(shell jq -Rs '.' <$f)}))
@@ -212,6 +218,19 @@ $p/fstat.args: $p/session $p/input $p/arg_list
 $p/fstat.out: $p/fstat.args
 	$($R_r)
 	$(call _jqa,)
+
+$p/dev_stat.args: $p/session $p/input $p/arg_list
+	jq -s '{session: .[0], input: .[1], arg_list: .[2]}' $^ >$@
+$p/dev_stat.out: $p/dev_stat.args
+	$($(DM)_r)
+	$(call _jqa,)
+
+$p/account_info.args: $p/input
+	jq -s '{input: .[0]}' $^ >$@
+$p/account_info.out: $p/account_info.args
+	$($(DM)_r)
+	$(call _jqa,host_names addresses)
+
 $p/file_op.args: $p/session $p/input $p/arg_list
 	jq -s '{session: .[0], input: .[1], arg_list: .[2]}' $^ >$@
 $p/file_op.out: $p/file_op.args
@@ -313,20 +332,20 @@ d_$1: $$(patsubst %,$(STD)/$1/%.out,$$(pv_$1))
 	echo $$^
 endef
 
-pv_Dev=_dev _proc
-pv_Export=$(pv_Dev) _sb_exports
+pv_Dev=_proc _users
+pv_Export=_sb_exports
 pv_Import=$(pv_Dev)
 pv_$C=$(pv_Dev)
-pv_$T=$(pv_Dev) _ffs
 pv_$R=$(pv_Dev)
 pv_$I=$(pv_Dev) _command_info
-pv_$B=$(pv_Dev) _cdata _file_table _blocks _fd_table
+pv_$B=$(pv_Dev) _cdata _file_table _blocks _fd_table _dev
 pv_$D=$(pv_Export)
 pv_$P=$(pv_Import)
 pv_$(MAN_CMD)=$(pv_Export)
 pv_$(MAN_SES)=$(pv_Export)
 pv_$(MAN_STAT)=$(pv_Export)
 pv_$(MAN_AUX)=$(pv_Export)
+pv_$(DM)=$(pv_Export) _dev
 
 $(foreach c,$(TA),$(eval $(call t-dump,$c)))
 
@@ -345,12 +364,13 @@ _print_status=printf "%s\t" $1;\
 	jq -j '."data(boc)"' <$(ACC)/$1.data | wc -m | tr '\n' '\t';\
 	jq -j '.balance' <$(ACC)/$1.data | cat - $(BIL) | bc | tr '\n' '\t';\
 	jq -j '.last_paid' <$(ACC)/$1.data | $(date)
-$p/hosts: $p/names
+$p/hosts: $p/host_names
 	jq -r '.[]' <$< >$@
 account_data: $p/hosts
 	rm -f $(ACC)/*
 	$(eval hosts:=$(strip $(file <$(word 1,$^))))
 	$(foreach h,$(hosts),$(TOC) -j account $($h_a) >$(ACC)/$h.data;)
+	printf "Account\t\tSize\tBalance\tLast modified\n"
 	$(foreach h,$(hosts),$(call _print_status,$h);)
 
 tty tt: bin/xterm
@@ -380,4 +400,4 @@ FORCE:
 .PHONY: $(PHONY)
 
 V?=
-$(V).SILENT:
+#$(V).SILENT:

@@ -1,8 +1,10 @@
 pragma ton-solidity >= 0.49.0;
 pragma ignoreIntOverflow;
 import "SyncFS.sol";
+import "CacheFS.sol";
+import "Format.sol";
 
-contract SessionManager is SyncFS {
+contract SessionManager is SyncFS, CacheFS, Format {
 
     uint16 constant CANON_NONE  = 0;
     uint16 constant CANON_MISS  = 1;
@@ -41,6 +43,8 @@ contract SessionManager is SyncFS {
         (uint16 uid, uint16 gid, string user_name, string group_name, ) = _query_user_data(i_login).unpack();
         uint16 pid = _get_process_id(uid);
         uint16 wd = _resolve_absolute_path(i_cwd);
+        param_list = param_list;
+        addresses = addresses;
         if (wd > INODES)
             cwd = i_cwd;
         else {
@@ -126,8 +130,6 @@ contract SessionManager is SyncFS {
                         ext_action |= EXT_CHANGE_DIR;
                     }
                 }
-                if (_op_network(c))
-                    (out, names, addresses, ext_action) = _network_op(c, flags, args);
                 if (c == fallocate) {
                     (names, errors) = _fallocate(arg_list, wd);
                     if (!names.empty())
@@ -152,9 +154,12 @@ contract SessionManager is SyncFS {
         if (!errors.empty())
             action |= PRINT_ERRORS;
         else {
-            if (_op_stat(c) || _op_dev_stat(c)) action |= PRINT_STATUS;
+            if (_op_stat(c)) action |= PRINT_STATUS;
+            if (_op_dev_stat(c)) action |= DEVICE_STATUS;
+            if (_op_dev_admin(c)) action |= UPDATE_DEVICES;
             if (_op_file(c) || _op_access(c)) action |= FILE_OP;
             if (_is_pure(c) || _reads_file_fixed(c)) action |= PROCESS_COMMAND;
+            if (c == account) ext_action |= EXT_ACCOUNT;
             if (_op_format(c)) action |= READ_INDEX;
         }
     }
@@ -317,102 +322,6 @@ contract SessionManager is SyncFS {
         }
     }
 
-    /* Network commands */
-    function _network_op(uint8 c, uint flags, string[] args) private view returns (string out, string[] names, address[] addresses, uint16 ext_action) {
-        if (c == mount) {
-            (out, names, addresses) = _mount(flags, args);
-            if (!addresses.empty())
-                ext_action |= EXT_MOUNT_FS;
-            else if (!names.empty())
-                ext_action |= EXT_OPEN_DIR;
-        }
-        if (c == ping) {
-//            (names, addresses) = _ping(flags, args);
-            if (!addresses.empty())
-                ext_action |= EXT_ACCOUNT;
-        }
-        if (c == account) {
-            (names, addresses) = _account(flags, args);
-            if (!addresses.empty())
-                ext_action |= EXT_ACCOUNT;
-        }
-    }
-
-    function _mount(uint flags, string[] args) private view returns (string out, string[] names, address[] addresses) {
-        bool mount_all = (flags & _a) > 0;
-//        bool canonicalize_paths = (flags & _c) == 0;
-        bool dry_run = (flags & _f) > 0;
-//        bool show_labels = (flags & _l) > 0;
-//        bool no_mtab = (flags & _n) > 0;
-//        bool verbose = (flags & _v) > 0;
-//        bool read_write = (flags & _w) > 0;
-//        bool alt_fstab = (flags & _T) > 0;
-//        bool read_only = (flags & _r) > 0;
-        bool another_namespace = (flags & _N) > 0;
-//        bool bind_subtree = (flags & _B) > 0;
-//        bool move_subtree = (flags & _M) > 0;
-
-        if (another_namespace) {
-            names.push(args[0]);
-        } else {
-            if (args.empty() && mount_all) {
-                for (string s: _get_file_contents("/etc/fstab")) {
-                    string[] fields = _get_tsv(s);
-                    address source = _to_address(_lookup_pair_value(fields[0], _get_file_contents("/etc/hosts")));
-                    string target = fields[1];
-                    if (!dry_run) {
-                        names.push(target);
-                        addresses.push(source);
-                    } else
-                        out.append(format("{}\t{}\n", target, source));
-                }
-            } else {
-                for (string s: args) {
-                    names.push(_match_value_at_index(1, s, 2, _get_file_contents("/etc/fstab")));
-                    addresses.push(_to_address(_lookup_pair_value(s, _get_file_contents("/etc/hosts"))));
-                }
-            }
-        }
-    }
-
-    function _ping(uint flags, string[] args) private view returns (string[] names, address[] addresses) {
-        string[] text = _get_file_contents("/etc/hosts");
-        if (!args.empty())
-            for (string s: args) {
-                if ((flags & _d) == 0) {
-                    if ((flags & _D) > 0)
-                        s = format("[{}] ", now) + s;
-                    names.push(s);
-                    addresses.push(_to_address(_lookup_pair_value(s, text)));
-                }
-            }
-        else {
-            for (string s: text) {
-                string[] fields = _get_tsv(s);
-                names.push(fields[1]);
-                addresses.push(_to_address(fields[0]));
-            }
-        }
-    }
-
-    function _account(uint flags, string[] args) private view returns (string[] host_names, address[] addresses) {
-        string[] text = _get_file_contents("/etc/hosts");
-        if (!args.empty())
-            for (string s: args) {
-                if ((flags & _d) == 0) {
-                    host_names.push(s);
-                    addresses.push(_to_address(_lookup_pair_value(s, text)));
-                }
-            }
-        else {
-            for (string s: text) {
-                string[] fields = _get_tsv(s);
-                host_names.push(fields[1]);
-                addresses.push(_to_address(fields[0]));
-            }
-        }
-    }
-
     /* Path utilities helpers */
     function _abs_path_walk_up(uint16 dir) internal view returns (string path) {
         uint16 cur_dir = dir;
@@ -463,17 +372,6 @@ contract SessionManager is SyncFS {
         if (expand_symlinks && ft == FT_SYMLINK)
             (s_arg, ino, ft) = _read_dir_entry(inode.text_data[0]);
         arg_out = ArgS(s_arg, ft, ino, parent, dir_index);
-    }
-
-    /* Network helpers */
-    function _to_address(string s_addr) private pure returns (address addr) {
-        uint len = s_addr.byteLength();
-        if (len > 60) {
-            string s_hex = "0x" + s_addr.substr(2, len - 2);
-            (uint u_addr, bool success) = stoi(s_hex);
-            if (success)
-                return address.makeAddrStd(0, u_addr);
-        }
     }
 
     /* Session helpers */
@@ -606,10 +504,12 @@ contract SessionManager is SyncFS {
         _insert(wc,         1, M, _c + _m + _l + _L + _w);
         _insert(whatis,     0, M, _d + _l + _v);
         _insert(whoami,     0, 0, 0);
-        _commands = ["account", "basename", "cat", "cd", "chgrp", "chmod", "chown","cksum", "cmp", "column", "cp", "cut", "dd", "df", "dirname",
-             "du", "echo", "fallocate", "file", "findmnt", "fuser", "getent", "grep", "head", "help", "hostname", "id", "ln",
-             "login", "logout", "ls", "lsblk", "lslogins", "lsof", "man", "mapfile", "mkdir", "mount", "mv", "namei", "paste", "ping",
-             "ps", "pwd", "readlink", "realpath", "rm", "rmdir", "stat", "tail", "touch", "truncate", "uname", "wc", "whatis", "whoami"];
+        _commands = ["account", "basename", "cat", "cd", "chfn", "chgrp", "chmod", "chown","cksum", "cmp", "column", "cp", "cut", "dd", "df", "dirname",
+             "du", "echo", "fallocate", "file", "findmnt", "finger", "fuser", "getent", "gpasswd", "grep", "groupadd", "groupdel", "groupmod",
+             "head", "help", "hostname", "id", "ln", "last", "login", "logout", "look", "losetup", "ls", "lsblk", "lslogins", "lsof", "man",
+             "mapfile", "mkdir", "mknod", "mount", "mv", "namei", "newgrp", "paste", "pathchk", "ping", "ps", "pwd", "readlink", "realpath",
+             "rm", "rmdir", "script", "stat", "tail", "tar", "touch", "truncate", "udevadm", "umount", "uname", "useradd", "userdel", "usermod",
+             "utmpdump", "wc", "whatis", "whereis", "who", "whoami"];
     }
 
     function _insert(uint8 index, uint8 min_args, uint16 max_args, uint options) private {

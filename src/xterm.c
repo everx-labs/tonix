@@ -13,7 +13,8 @@ unsigned const PRINT_ERRORS     = 64;
 unsigned const IO_EVENT         = 128;
 unsigned const READ_INDEX       = 256;
 unsigned const CHECK_STATUS     = 512;
-unsigned const OPEN_DIR         = 2048;
+unsigned const DEVICE_STATUS    = 1024;
+unsigned const UPDATE_DEVICES   = 2048;
 unsigned const CHANGE_DIR       = 4096;
 unsigned const PIPE_OUT_TO_FILE = 8192;
 unsigned const MOUNT_FS         = 16384;
@@ -129,22 +130,20 @@ int _prompt(char *s) {
         system("make ca g=update_nodes");
     }
 
-    if (ext_action & EXT_ACCOUNT)
+    if (ext_action & EXT_ACCOUNT) {
+        system("make ru g=account_info");
+        system("make account_data");
+    }
+
+    if (action & DEVICE_STATUS)
+        system("make ru g=dev_stat");
+
+    if (action & UPDATE_DEVICES) {
+//        system("make ru g=dev_admin");
+        system("make ru g=account_info");
         system("make account_data");
 
-    /*if (action & MOUNT_FS) {
-        system("jq -r '.addresses[]' < std/parse.out >std/addresses");
-        system("jq 'del(.std,.action,.input,.redirect)' < std/parse.out > std/request_mount.args");
-        system("make std/request_mount");
     }
-    if (action & OPEN_DIR) {
-        system("rm -f std/dirs_to_open std/files_to_open");
-        system("make std/dirs_to_open");
-        system("make std/files_to_open");
-        system("make std/carr");
-        system("make std/mount_el");
-    }*/
-
     if (action & PRINT_STATUS) {
         system("make ru g=fstat");
         fp = fopen("vfs/proc/2/action", "rt");

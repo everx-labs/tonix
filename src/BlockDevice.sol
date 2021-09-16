@@ -1,10 +1,11 @@
 pragma ton-solidity >= 0.49.0;
 
-import "ExportFS.sol";
 import "SyncFS.sol";
-
+import "Base.sol";
+import "ICache.sol";
+import "ImportFS.sol";
 /* Generic block device hosting a generic file system */
-contract BlockDevice is SyncFS, ExportFS {
+contract BlockDevice is Base, SyncFS, ImportFS, ISourceFS {
 
     uint16 constant STG_NONE    = 0;
     uint16 constant STG_PRIMARY = 1;
@@ -15,7 +16,9 @@ contract BlockDevice is SyncFS, ExportFS {
     uint16 constant STG_TMP     = 32;
     uint16 constant STG_RO      = 64;
 
-    address[4] _readers;
+    address[5] _readers;
+
+    DeviceInfo[] public _dev;
 
     mapping (uint16 => FileMapS) public _file_table;
     string[] public _blocks;
@@ -55,8 +58,11 @@ contract BlockDevice is SyncFS, ExportFS {
             inode.text_data.push(text);
         }
 
-        _add_reg_files(wd, [inode]);
-        uint16 i_start = _fs.ic;
+//        _add_reg_files(wd, [inode]);
+        uint16 i_start = _fs.ic++;
+        _fs.inodes[i_start] = inode;
+        _append_dir_entry(wd, i_start, inode.file_name, FT_REG_FILE);
+
         _file_table[i_start] = FileMapS(storage_type, b_start, b_count);
         _update_inodes_set([wd, i_start]);
     }
@@ -101,6 +107,41 @@ contract BlockDevice is SyncFS, ExportFS {
         if (_fs.inodes[parent].n_links < 2)
             delete _fs.inodes[parent];
         _update_inodes_set([parent, victim]);
+    }
+
+    function _create_subdirs(uint16 pino, string[] files) internal {
+        uint16 len = uint16(files.length);
+        uint16 counter = _fs.ic;
+        for (uint16 i = 0; i < len; i++) {
+            _fs.inodes[counter + i] = _get_dir_node(counter + i, pino, SUPER_USER, SUPER_USER_GROUP, files[i]);
+            _append_dir_entry(pino, counter + i, files[i], FT_DIR);
+        }
+        _claim_inodes(len);
+    }
+
+    function _create_character_devices(uint16 parent, string[] names, address[] addresses) internal {
+        uint16 counter = _fs.ic;
+        uint8 dev_counter = _dc;
+        uint16 len = uint16(names.length);
+        for (uint8 i = 0; i < len; i++) {
+            DeviceInfo dev = DeviceInfo(FT_CHRDEV, dev_counter + i, names[i], 0, 0, addresses[i]);
+            _dev.push(dev);
+            INodeS inode = _get_character_device_node(dev);
+            _fs.inodes[counter + i] = inode;
+            _append_dir_entry(parent, counter + i, dev.name, FT_CHRDEV);
+        }
+        _dc += uint8(len);
+        _claim_inodes(len);
+    }
+
+    function _create_device(uint16 parent, DeviceInfo dev) internal {
+        uint16 counter = _fs.ic++;
+        _dev.push(dev);
+        uint8 ft = dev.major_id;
+        INodeS inode = ft == FT_BLKDEV ? _get_block_device_node(dev) : _get_character_device_node(dev);
+        _fs.inodes[counter] = inode;
+        _fs.inodes[parent] = _add_dir_entry(_fs.inodes[parent], counter, dev.name, FT_BLKDEV);
+//        _append_dir_entry(parent, counter, dev.name, FT_BLKDEV);
     }
 
     function _read_indices(ArgS[] args) internal view returns (string[][] texts) {
@@ -308,7 +349,7 @@ contract BlockDevice is SyncFS, ExportFS {
     }
 
     function _mount_exports() internal pure {
-        ExportFS(address.makeAddrStd(0, 0x439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb)).
+        IExportFS(address.makeAddrStd(0, 0x439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb)).
             rpc_mountd{value: 0.5 ton}(2, ROOT_DIR + 2);
     }
 
@@ -338,17 +379,19 @@ contract BlockDevice is SyncFS, ExportFS {
     }
 
     function _init_readers() internal {
-        address[4] readers = [
+        address[5] readers = [
             address.makeAddrStd(0, 0x47169541fd28e7688079c4319a8de3b358ce13d87e25bbd3eaded12ae9b09f40),
             address.makeAddrStd(0, 0x44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9),
             address.makeAddrStd(0, 0x48a04e9fc99be89ddfe4eb1f7303ee417ebae174514b5e11c072834259250eec),
-            address.makeAddrStd(0, 0x4be68a2f14b949f1388f8e5dce3bbee14d35518abd8efcc93919bbb921218f8d)];
+            address.makeAddrStd(0, 0x4be68a2f14b949f1388f8e5dce3bbee14d35518abd8efcc93919bbb921218f8d),
+            address.makeAddrStd(0, 0x430dd570de5398dbc2319979f5ba4aa99d5254e5382d3c344b985733d141617b)];
 
-        _create_character_devices(ROOT_DIR + 1, ["FileManager", "StatusReader", "PrintFormatted", "SessionManager"], readers);
+        _create_character_devices(ROOT_DIR + 1, ["FileManager", "StatusReader", "PrintFormatted", "SessionManager", "DeviceManager"], readers);
 
-        for (address addr: readers)
-            Device(addr).flush_fs_cache{value: 0.02 ton}();
+//        for (address addr: readers)
+//            Device(addr).flush_fs_cache{value: 0.02 ton}();
         _readers = readers;
+        _update_inodes(_fs.inodes);
     }
 
     function init() external accept {
@@ -364,9 +407,15 @@ contract BlockDevice is SyncFS, ExportFS {
         _create_config_files();
     }
 
+    /* Fully Update a file system information on a file system cache device */
+    function query_fs_cache() external override view accept {
+        uint64 val = uint64(_fs.sb.inode_count) * 0.01 ton + 0.1 ton;
+        ICacheFS(msg.sender).update_fs_cache{value: val, flag: 1}(_fs.sb, _dev[0], _proc, _users, _fs.inodes);
+    }
+
     function _update_inodes(mapping (uint16 => INodeS) inn) internal view {
         for (address addr: _readers)
-            Device(addr).update_fs_cache{value: 0.1 ton, flag: 1}(_fs.sb, _dev, _mnt, _proc, _users, inn);
+            ICacheFS(addr).update_fs_cache{value: 0.1 ton, flag: 1}(_fs.sb, _dev[0], _proc, _users, inn);
     }
 
     function _update_inodes_set(uint16[] inodes) internal view {
