@@ -3,45 +3,45 @@ pragma ton-solidity >= 0.49.0;
 import "Device.sol";
 import "ICache.sol";
 
-/*abstract contract ExportFS is Device {
-    function rpc_mountd_exports() external view {}
-}*/
-
 /* Base contract for the file system importing devices */
-abstract contract ImportFS is Device {
+abstract contract ImportFS is IImportFS, Device {
 
-    Mount[] _imports;
-
-    /* Mount a file system separately from the primary file system */
-    function mount_fs_as_import(string path, uint16 options, SuperBlock sb, DeviceInfo dev, mapping (uint16 => INodeS) inodes, uint16 target) external accept {
-        FileSystem fs = FileSystem("Mounted " + sb.file_system_OS_type, TMPFS, sb, ROOT_DIR + 1);
-        fs.inodes = inodes;
-        _imports.push(Mount(fs, dev, path, options, target));
-        _fs.inodes[target] = _add_dir_entry(_fs.inodes[target], sb.first_inode, sb.file_system_OS_type, FT_SYMLINK);
-    }
+//    Mount[] _imports;
+    FileSystem _import_fs;
 
     /* Mount a set of index nodes to the specified mount point of the primary file system */
-    function mount_dir(uint16 pino, INodeS[] inodes) external accept {
-        uint16 len = uint16(inodes.length);
-        uint16 counter = _fs.ic;
-        INodeS parent = _fs.inodes[pino];
-        for (uint16 i = 0; i < len; i++) {
+    function mount_dir_as_import(uint16 mount_point_index, INodeS[] inodes) external override accept {
+        uint16 n_files = uint16(inodes.length);
+        uint16 counter = _import_fs.ic;
+        INodeS mount_point = _import_fs.inodes[mount_point_index];
+        for (uint16 i = 0; i < n_files; i++) {
             INodeS inode = inodes[i];
-            _fs.inodes[counter + i] = inode;
-            parent = _add_dir_entry(parent, counter + i, inode.file_name, _mode_to_file_type(inode.mode));
-//            _append_dir_entry(pino, counter + i, inodes[i].file_name, FT_REG_FILE);
+            _import_fs.inodes[counter + i] = inode;
+            mount_point = _add_dir_entry(mount_point, counter + i, inode.file_name, _mode_to_file_type(inode.mode));
         }
-        _claim_inodes(len);
+        _import_fs.inodes[mount_point_index] = mount_point;
+        _import_fs.ic += n_files;
+//        _claim_inodes(n_files);
+//        _dir_mounted(mount_point_index, n_files);
     }
 
     /* Print a debugging infomation about the imported file ssytems */
     function dump_imports() external view returns (string out) {
+        /*out.append(">>> MOUNTS <<<\n");
         for (Mount m: _imports)
             for (( , INodeS inode): m.fs.inodes) {
                 out.append("=== " + inode.file_name + " ===\n");
                 for (string s: inode.text_data)
                     out.append(s + "\n");
-            }
+            }*/
+
+        out.append(">>> IMPORT_FS <<<\n");
+        for (( , INodeS inode): _import_fs.inodes) {
+            out.append("=== " + inode.file_name + " ===\n");
+            for (string s: inode.text_data)
+                out.append(s + "\n");
+        }
+
     }
 
 }

@@ -396,11 +396,19 @@ contract PrintFormatted is Format, SyncFS, ImportFS, CacheFS {
 
     /* Imports helpers */
     function _get_imported_file_contents(string path, string file_name) internal view returns (string[] text) {
-        for (Mount m: _imports)
+        uint16 dir_index = _resolve_absolute_path(path);
+        (uint16 file_index, uint8 ft) = _fetch_dir_entry(file_name, dir_index);
+        if (ft > FT_UNKNOWN)
+            return _fs.inodes[file_index].text_data;
+        /*for (Mount m: _imports)
             if (m.fs.sb.file_system_OS_type == path)
                 for (( , INodeS inode): m.fs.inodes)
                     if (inode.file_name == file_name)
-                        return inode.text_data;
+                        return inode.text_data;*/
+        for (( , INodeS inode): _import_fs.inodes) {
+            if (inode.file_name == file_name)
+                return inode.text_data;
+        }
     }
 
     function _fetch_element(uint16 index, string path, string file_name) internal view returns (string) {
@@ -440,7 +448,7 @@ contract PrintFormatted is Format, SyncFS, ImportFS, CacheFS {
 
     function _get_command_info(string s) private view returns (string name, string purpose, string desc, string[] uses,
                 string option_names, string[] option_descriptions) {
-        string[] command_info = _get_imported_file_contents("commands", s);
+        string[] command_info = _get_imported_file_contents("/bin", s);
         uint16 len = uint16(command_info.length);
         if (!command_info.empty()) {
             name = command_info[0];
@@ -455,12 +463,12 @@ contract PrintFormatted is Format, SyncFS, ImportFS, CacheFS {
 
     /* Print error helpers */
     function _print_errors(uint8 command, ErrS[] errors) internal view returns (string err) {
-        string command_name = _fetch_element(command, "etc", "command_list");
+        string command_name = _fetch_element(command, "/etc", "command_list");
         string command_specific_reason = _command_specific_reason(command);
         for (ErrS error: errors) {
             (uint8 reason, uint16 explanation, string arg) = error.unpack();
-            string s_reason = reason > 0 ? _fetch_element(reason, "errors", "reasons") : command_specific_reason;
-            string s_explanation = _fetch_element(explanation, "errors", "status");
+            string s_reason = reason > 0 ? _fetch_element(reason, "/usr", "reasons") : command_specific_reason;
+            string s_explanation = _fetch_element(explanation, "/usr", "status");
             err = command_name + ": " + s_reason + _quote(arg);
             if (explanation > 0)
                 err.append(s_explanation.empty() ? format("\n Failed expl. lookup r {} e {}\n", reason, explanation) : ": " + s_explanation);
@@ -481,11 +489,16 @@ contract PrintFormatted is Format, SyncFS, ImportFS, CacheFS {
     function _init() internal override accept {
         _sync_fs_cache();
         address data_volume = address.makeAddrStd(0, 0x439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb);
-        IExportFS(data_volume).rpc_mountd_exports{value: 0.5 ton}();
+//        IExportFS(data_volume).rpc_mountd_exports{value: 0.5 ton}();
         IExportFS(data_volume).rpc_mountd_exports{value: 0.3 ton}();
         IExportFS(address.makeAddrStd(0, 0x4b937783725628153f2fa320f25a7dd1d68acf948e38ea5a0c5f7f3857db8981)).rpc_mountd_exports{value: 1 ton}();
         IExportFS(address.makeAddrStd(0, 0x41d95cddc9ca3c082932130c208deec90382f5b7c0036c8d84ac3567e8b82420)).rpc_mountd_exports{value: 1 ton}();
         IExportFS(address.makeAddrStd(0, 0x41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e)).rpc_mountd_exports{value: 1 ton}();
         IExportFS(address.makeAddrStd(0, 0x4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421)).rpc_mountd_exports{value: 1 ton}();
     }
+
+    function _dir_mounted(uint16 mount_point_index, uint16 n_files) internal override {
+        n_files = mount_point_index;
+    }
+
 }

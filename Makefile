@@ -193,8 +193,8 @@ $p/update_nodes.args: $p/session $p/ios
 $p/update_nodes.res: $p/update_nodes.args
 	$($B_c)
 
-$p/dev_admin.args: $p/session $p/ios
-	jq -s '{session: .[0], ios: .[1]}' $^ >$@
+$p/dev_admin.args: $p/session $p/input $p/arg_list
+	jq -s '{session: .[0], input: .[1], arg_list: .[2]}' $^ >$@
 $p/dev_admin.res: $p/dev_admin.args
 	$($(DM)_c)
 
@@ -338,14 +338,14 @@ pv_Import=$(pv_Dev)
 pv_$C=$(pv_Dev)
 pv_$R=$(pv_Dev)
 pv_$I=$(pv_Dev) _command_info
-pv_$B=$(pv_Dev) _cdata _file_table _blocks _fd_table _dev
+pv_$B=$(pv_Dev) _file_table _blocks _fd_table _dev
 pv_$D=$(pv_Export)
 pv_$P=$(pv_Import)
 pv_$(MAN_CMD)=$(pv_Export)
 pv_$(MAN_SES)=$(pv_Export)
 pv_$(MAN_STAT)=$(pv_Export)
 pv_$(MAN_AUX)=$(pv_Export)
-pv_$(DM)=$(pv_Export) _dev
+pv_$(DM)=$(pv_Export) _devices _boot_mounts _static_mounts _current_mounts
 
 $(foreach c,$(TA),$(eval $(call t-dump,$c)))
 
@@ -356,6 +356,8 @@ d3_%: $(STD)/%/boc $(BLD)/%.abi.json
 l?=1
 dfs_%: $(STD)/%/boc $(BLD)/%.abi.json
 	$(_rb) dump_fs '{"level":"$l"}' | jq -r '.value0'
+defs_%: $(STD)/%/boc $(BLD)/%.abi.json
+	$(_rb) dump_export_fs '{"level":"$l"}' | jq -r '.value0'
 
 dimp_%: $(STD)/%/boc $(BLD)/%.abi.json
 	$(_rb) dump_imports {} | jq -r '.out'

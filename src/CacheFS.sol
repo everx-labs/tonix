@@ -7,6 +7,7 @@ import "ICache.sol";
 abstract contract CacheFS is ICacheFS, Device {
 
     DeviceInfo _source_device;
+
     /* Store the file system cache information provided by a host device */
     function update_fs_cache(SuperBlock sb, DeviceInfo device, mapping (uint16 => ProcessInfo) processes, mapping (uint16 => UserInfo) users,
                             mapping (uint16 => INodeS) inodes) external override accept {
@@ -19,9 +20,13 @@ abstract contract CacheFS is ICacheFS, Device {
         _fs.sb = sb;
     }
 
+    /* Print an internal debugging information about the file system state */
+    function dump_fs(uint8 level) external view returns (string) {
+        return _dump_fs(level, _fs);
+    }
+
     function _sync_fs_cache() internal {
         delete _fs;
-//        delete _mnt;
         address bdev = address.makeAddrStd(0, 0x41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5);
         ISourceFS(bdev).query_fs_cache();
     }

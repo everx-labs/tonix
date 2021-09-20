@@ -5,37 +5,34 @@ import "Manual.sol";
 /* File system status commands manual */
 contract ManualStatus is Manual {
 
-    function _manual_name() internal pure override returns (string) {
-        return "ManualStatus";
-    }
-
     function _init1() internal override accept {
-//        INodeS[] files = _files(["df", "du", "findmnt", "fuser"], [
-        _add_page("df", "report file system disk space usage", "[OPTION]... [FILE]...", "displays the amount of disk space available on the file system containing each file name argument.", "ahHiklP",
-             1, M, ["include pseudo, duplicate, inaccessible file systems",
-            "print sizes in powers of 1024 (e.g., 1023M)",
-            "print sizes in powers of 1000 (e.g., 1.1G)",
+        _add_page("df", "report file system disk space usage", "[OPTION]... [FILE]...", "displays the amount of disk space available on the file system containing each file name argument.",
+            "ahHiklP", 1, M, [
+            "include pseudo, duplicate, inaccessible file systems",
+            "print sizes in powers of 1024 (e.g., 1023K)",
+            "print sizes in powers of 1000 (e.g., 1.1K)",
             "list inode information instead of block usage",
             "block size = 1K",
             "limit listing to local file systems",
             "use the POSIX output format"]);
-        _add_page("du", "estimate disk usage", "[OPTION]... [FILE]...", "Summarize disk usage of the set of FILEs, recursively for directories.", "abcDhkLlmPSsx0",
-            1, M, ["write counts for all files, not just directories",
+        _add_page("du", "estimate disk usage", "[OPTION]... [FILE]...", "Summarize disk usage of the set of FILEs, recursively for directories.",
+            "abcDhkLlPSsx0", 1, M, [
+            "write counts for all files, not just directories",
             "block size = 1 byte",
             "produce a grand total",
             "dereference only symlinks that are listed on the command line",
-            "print sizes in human readable format (e.g., 1K 234M 2G)",
+            "print sizes in human readable format (e.g., 12K 1M)",
             "block size = 1K",
             "dereference all symbolic links",
             "count sizes many times if hard linked",
-            "block size = 1M",
             "don't follow any symbolic links (this is the default)",
             "for directories do not include size of subdirectories",
             "display only a total for each argument",
             "skip directories on different file systems",
             "end each output line with NUL, not newline"]);
-        _add_page("findmnt", "find a filesystem", "[options]\t[options] device|mountpoint[options] [device...]", "list all mounted filesystems or search for a filesystem.", "smkAbDfnu",
-             0, M, ["search in static table of filesystems",
+        _add_page("findmnt", "find a filesystem", "[options]\t[options] device|mountpoint[options] [device...]", "list all mounted filesystems or search for a filesystem.",
+            "smkAbDfnu", 0, M, [
+            "search in static table of filesystems",
             "search in table of mounted filesystems",
             "search in kernel table of mounted filesystems (default)",
             "disable all built-in filters, print all filesystems",
@@ -45,21 +42,18 @@ contract ManualStatus is Manual {
             "don't print column headings",
             "don't truncate text in columns"]);
         _add_page("fuser", "identify processes using files or sockets", "[-almsuv]", "displays the PIDs of processes using the specified files or file systems.",
-            "almsuv", 0, 1, ["display unused files too",
+            "almsuv", 0, 1, [
+            "display unused files too",
             "list available signal names",
             "show all processes using the named filesystems or block device",
             "silent operation",
             "display user IDs",
             "verbose output"]);
-//            ]);
-//        _add_reg_files(ROOT_DIR + 1, files);
     }
 
     function init2() external override accept {
-//        _add_export_file(FT_REG_FILE, "ls",
-//        INodeS[] files = _files(["ls"], [
-        _add_page("ls", "list directory contents", "[OPTION]... [FILE]...", "List information about the FILE (the current directory by default).", "aABcCdfFgGhHikLlmnNopqQrRsStuUvxX1",
-             1, M, [
+        _add_page("ls", "list directory contents", "[OPTION]... [FILE]...", "List information about the FILE (the current directory by default).",
+            "aABcCdfFgGhHikLlmnNopqQrRsStuUvxX1", 1, M, [
             "do not ignore entries starting with .",
             "do not list implied . and ..",
             "do not list implied entries ending with ~",
@@ -94,13 +88,12 @@ contract ManualStatus is Manual {
             "list entries by lines instead of by columns",
             "sort alphabetically by entry extension",
             "list one file per line. Avoid \'\\n\' with -q or -b"]);
-//        _add_reg_files(ROOT_DIR + 1, files);
     }
 
     function init3() external override accept {
-//        INodeS[] files = _files(["lsblk", "lsof", "ps", "stat"], [
-        _add_page("lsblk", "list block devices", "[options] [device...]", "List information about all available or the specified block devices.", "abfmnOp",
-            0, M, ["print all devices",
+        _add_page("lsblk", "list block devices", "[options] [device...]", "List information about all available or the specified block devices.",
+            "abfmnOp", 0, M, [
+            "print all devices",
             "print SIZE in bytes rather than in human readable format",
             "output info about filesystems",
             "output info about permissions",
@@ -108,22 +101,23 @@ contract ManualStatus is Manual {
             "output all columns",
             "print complete device path"]);
         _add_page("lsof", "list open files", "[-lnoRst]", "",
-            "lnoRst", 0, M, ["list UID numbers",
+            "lnoRst", 0, M, [
+            "list UID numbers",
             "no host names",
             "list file offset",
             "list paRent PID",
             "list file size",
             "terse listing"]);
         _add_page("ps", "report a snapshot of the current processes", "[options]", "displays information about a selection of the active processes.",
-            "aefF", 0, 0, ["Select all processes except session leaders",
-             "select all processes",
-             "do full-format listing",
-             "extra full format"]);
-        _add_page("stat", "display file or file system status", "[OPTION]... FILE...", "Display file or file system status.", "Lft",
-            1, M, ["follow links",
+            "efF", 0, 0, [
+            "select all processes",
+            "do full-format listing",
+            "extra full format"]);
+        _add_page("stat", "display file or file system status", "[OPTION]... FILE...", "Display file or file system status.",
+            "Lft", 1, M, [
+            "follow links",
             "display file system status instead of file status",
             "print the information in terse form"]);
-//        _add_reg_files(ROOT_DIR + 1, files);
         _sb_exports[0].inode_count = _export_fs.ic - _sb_exports[0].first_inode;
     }
 }

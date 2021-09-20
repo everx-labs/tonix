@@ -139,9 +139,9 @@ int _prompt(char *s) {
         system("make ru g=dev_stat");
 
     if (action & UPDATE_DEVICES) {
-//        system("make ru g=dev_admin");
-        system("make ru g=account_info");
-        system("make account_data");
+        system("make ca g=dev_admin");
+//        system("make ru g=account_info");
+//        system("make account_data");
 
     }
     if (action & PRINT_STATUS) {

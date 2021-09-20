@@ -449,7 +449,7 @@ contract SessionManager is SyncFS, CacheFS, Format {
         uint _bfntTv = _b + _f + _n + _t + _T + _v;
         _insert(account,    0, M, _d);
         _insert(basename,   1, M, _a + _s + _z);
-        _insert(cat,        1, M, _b + _e + _E + _n + _s + _t + _T + _u + _v);
+        _insert(cat,        1, M, _A + _b + _e + _E + _n + _s + _t + _T + _u + _v);
         _insert(cd,         1, 1, _L + _P + _e);
         _insert(chgrp,      2, M, _c + _f + _v + _h + _RHLP);
         _insert(chmod,      2, M, _c + _f + _v + _R);
