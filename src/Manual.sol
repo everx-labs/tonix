@@ -18,11 +18,13 @@ abstract contract Manual is ExportFS {
 
     function _init() internal override {
         _export_fs = _get_fs(1, "exportfs", ["commands"]);
-        _sb_exports.push(_get_export_sb(_export_fs.ic, 0, "commands"));
 
         _init1();
         this.init2();
         this.init3();
     }
 
+    function _write_export_sb() internal {
+        _sb_exports.push(_get_export_sb(ROOT_DIR + 2, _export_fs.ic - ROOT_DIR - 2, "Manual"));
+    }
 }

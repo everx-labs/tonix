@@ -7,14 +7,13 @@ import "CacheFS.sol";
 contract StatusReader is Format, SyncFS, CacheFS {
 
     /* Query file tree and file system status */
-    function fstat(SessionS session, InputS input, ArgS[] arg_list) external view returns (string out, uint16 action, ErrS[] errors) {
+    function fstat(Session session, InputS input, Arg[] arg_list) external view returns (string out) {
         (uint8 c, , uint flags) = input.unpack();
         uint16 pid = session.pid;
         pid = pid;
-        if (c == cksum) out = _dump_fs(1, _fs); // 250
 
         /* File tree status */
-        for (ArgS arg: arg_list) {
+        for (Arg arg: arg_list) {
             if (c == du) out.append(_du(flags, arg));    // 900
             if (c == file) out.append(_file(flags, arg));// 500
             if (c == ls) out.append(_ls(flags, arg));    // 2.1
@@ -22,13 +21,10 @@ contract StatusReader is Format, SyncFS, CacheFS {
             if (c == stat) out.append(_stat(flags, arg));// 1.8
             out.append("\n");
         }
-
-        if (!errors.empty())
-            action |= PRINT_ERRORS;
     }
 
     /* File tree status commands */
-    function _du(uint flags, ArgS arg) private view returns (string out) {
+    function _du(uint flags, Arg arg) private view returns (string out) {
         (string path, uint8 ft, uint16 ino, , ) = arg.unpack();
         string line_end = (flags & _0) > 0 ? "\x00" : "\n";
         bool count_files = (flags & _a) > 0;
@@ -49,7 +45,8 @@ contract StatusReader is Format, SyncFS, CacheFS {
         out = _format_table(table, "\t", line_end, ALIGN_LEFT);
     }
 
-    function _file(uint flags, ArgS arg) private view returns (string out) {
+    /* file */
+    function _file(uint flags, Arg arg) private view returns (string out) {
         bool brief_mode = (flags & _b) > 0;
         bool dont_pad = (flags & _N) > 0;
         bool add_null = (flags & _0) > 0;
@@ -78,7 +75,8 @@ contract StatusReader is Format, SyncFS, CacheFS {
         }
     }
 
-    function _ls(uint f, ArgS arg) private view returns (string out) {
+    /* ls */
+    function _ls(uint f, Arg arg) private view returns (string out) {
         (string s, uint8 ft, uint16 index, , ) = arg.unpack();
 
         bool recurse = (f & _R) > 0;
@@ -88,14 +86,14 @@ contract StatusReader is Format, SyncFS, CacheFS {
         // record separator: newline for long format or -1, comma for -m, tabulation otherwise (should be columns)
         string sp = long_format || (f & _1) > 0 ? "\n" : (f & _m) > 0 ? ", " : "  ";
         string[][] table;
-        ArgS[] sub_args;
+        Arg[] sub_args;
 
         mapping (uint => uint16) ds;
         uint16 block_size = _fs.sb.block_size;
         bool count_totals = long_format || print_allocated_size;
         uint16 total_blocks;
 
-        INodeS inode = _fs.inodes[index];
+        Inode inode = _fs.inodes[index];
         if (ft == FT_REG_FILE || ft == FT_DIR && ((f & _d) > 0)) {
             if (!_ls_should_skip(f, s))
                 table.push(_ls_populate_line(f, index, s, ft, block_size));
@@ -107,11 +105,8 @@ contract StatusReader is Format, SyncFS, CacheFS {
                 (string sub_name, uint16 sub_index, uint8 sub_ft) = _read_dir_entry(text_data[j - 1]);
                 if (_ls_should_skip(f, sub_name) || sub_ft == FT_UNKNOWN)
                     continue;
-                if (recurse && sub_ft == FT_DIR && j > 2) {
-                    sub_name = s + "/" + sub_name;
-                    ArgS sub_arg = ArgS(sub_name, sub_ft, sub_index, index, j);
-                    sub_args.push(sub_arg);
-                }
+                if (recurse && sub_ft == FT_DIR && j > 2)
+                    sub_args.push(Arg(s + "/" + sub_name, sub_ft, sub_index, index, j));
                 if (count_totals)
                     total_blocks += uint16(_fs.inodes[sub_index].file_size / block_size) + 1;
                 ds[_ls_sort_rating(f, sub_name, sub_index, j)] = j;
@@ -133,10 +128,11 @@ contract StatusReader is Format, SyncFS, CacheFS {
         if (!table.empty())
             out.append(_format_table(table, " ", sp, ALIGN_RIGHT));
 
-        for (ArgS sub_arg: sub_args)
+        for (Arg sub_arg: sub_args)
             out.append("\n" + sub_arg.path + ":\n" + _ls(f, sub_arg));
     }
 
+    /* Assigns a rating to a string to sort alphabetically */
     function _alpha_rating(string s, uint len) internal pure returns (uint rating) {
         bytes bts = bytes(s);
         uint lim = math.min(len, bts.length);
@@ -144,6 +140,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
             rating += uint(uint8(bts[i])) << ((len - i - 1) * 8);
     }
 
+    /* Compute a rating to sort entries according to the specified settings */
     function _ls_sort_rating(uint f, string name, uint16 index, uint16 dir_index) private view returns (uint rating) {
         bool use_ctime = (f & _c) > 0;
         bool largest_first = (f & _S) > 0;
@@ -153,7 +150,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
         uint rating_lo = directory_order ? dir_index : _alpha_rating(name, 8);
         uint rating_hi;
 
-        INodeS inode = _fs.inodes[index];
+        Inode inode = _fs.inodes[index];
         if (newest_first)
             rating_hi = use_ctime ? inode.modified_at : inode.last_modified;
         else if (largest_first)
@@ -163,6 +160,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
             rating = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF - rating;
     }
 
+    /* Decides whether ls should skip this entry with the set of flags */
     function _ls_should_skip(uint f, string name) private pure returns (bool) {
         bool print_dot_starters = (f & _a + _f) > 0;
         bool skip_dot_dots = (f & _A) > 0;
@@ -177,6 +175,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
         return false;
     }
 
+    /* Supply values for the entry */
     function _ls_populate_line(uint f, uint16 index, string name, uint8 file_type, uint16 block_size) private view returns (string[] l) {
         bool long_format = (f & _l + _n + _g + _o) > 0;    // any of -l, -n, -g, -o
         bool print_index_node = (f & _i) > 0;
@@ -204,7 +203,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
                 if (!no_group)
                     l.push(format("{}", group_id));
             } else {
-                (, , string s_owner, string s_group, ) = _users[owner_id].unpack();
+                (, string s_owner, string s_group) = _users[owner_id].unpack();
                 if (!no_owner)
                     l.push(s_owner);
                 if (!no_group && !no_group_names)
@@ -220,18 +219,15 @@ contract StatusReader is Format, SyncFS, CacheFS {
         l.push(name);
     }
 
-    function _namei(uint flags, ArgS arg) internal view returns (string out) {
+    /* namei */
+    function _namei(uint flags, Arg arg) internal view returns (string out) {
         (string path, , , uint16 parent, ) = arg.unpack();
-//        bool mountpoints = (flags & _x) > 0;
         bool modes = (flags & _m + _l) > 0;
         bool owners = (flags & _o + _l) > 0;
-//        bool nosymlinks = (flags & _n) > 0;
-//        bool vertical = (flags & _v + _l) > 0;
 
         string[] etc_passwd_contents;
-        if (owners) {
+        if (owners)
             etc_passwd_contents = _get_file_contents("/etc/passwd");
-        }
 
         out.append("f: " + path + "\n");
         string[] parts = _disassemble_path(path);
@@ -240,13 +236,14 @@ contract StatusReader is Format, SyncFS, CacheFS {
         for (uint i = len; i > 0; i--) {
             (uint16 ino, uint8 ft) = _fetch_dir_entry(parts[i - 1], cur_dir);
             (uint16 mode, uint16 owner_id, , , , , , , ) = _fs.inodes[ino].unpack();
-            (, , string s_owner, string s_group, ) = _users[owner_id].unpack();
+            (, string s_owner, string s_group) = _users[owner_id].unpack();
             out.append(" " + (modes ? _permissions(mode) : _file_type_sign(ft)) + " " + (owners ? s_owner + " "  + s_group + " " : "") + parts[i - 1] + "\n");
             cur_dir = ino;
         }
     }
 
-    function _stat(uint flags, ArgS arg) private view returns (string out) {
+    /* stat */
+    function _stat(uint flags, Arg arg) private view returns (string out) {
         (string name, uint8 ft, uint16 index, , ) = arg.unpack();
         bool terse = (flags & _t) > 0;
         bool fs_info = (flags & _f) > 0;
@@ -254,7 +251,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
         (uint8 device_type, uint16 device_n, , uint16 blk_size, ,) = _source_device.unpack();
         (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, uint32 modified_at, uint32 last_modified, , string[] text_data) = _fs.inodes[index].unpack();
         uint16 device_id = (uint16(device_type) << 8) + device_n;
-        ( , , string s_owner, string s_group, ) = _users[owner_id].unpack();
+        ( , string s_owner, string s_group) = _users[owner_id].unpack();
         (string major, string minor) = ft == FT_BLKDEV || ft == FT_CHRDEV  ? _get_device_version(text_data) : ("0", "0");
         uint16 n_blocks = uint16(file_size / blk_size);
 
@@ -291,7 +288,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
         bool include_subdirs = (flags & _S) == 0;
         bool human_readable = (flags & _h) > 0;
 
-        INodeS inode = _fs.inodes[ino];
+        Inode inode = _fs.inodes[ino];
         string[] text_data = inode.text_data;
         uint len = text_data.length;
 

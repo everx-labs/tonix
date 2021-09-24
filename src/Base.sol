@@ -1,5 +1,48 @@
 pragma ton-solidity >= 0.49.0;
 
+struct Session {
+    uint16 pid;
+    uint16 uid;
+    uint16 gid;
+    uint16 wd;
+}
+
+struct Arg {
+    string path;
+    uint8 ft;
+    uint16 idx;
+    uint16 parent;
+    uint16 dir_index;
+}
+
+struct Err {
+    uint8 reason;
+    uint16 explanation;
+    string arg;
+}
+
+struct InputS {
+    uint8 command;
+    string[] args;
+    uint flags;
+}
+
+struct IOEvent {
+    uint8 iotype;
+    uint16 parent;
+    Arg[] args;
+}
+
+struct UserEvent {
+    uint8 uetype;
+    uint16 user_id;
+    uint16 group_id;
+    uint16 options;
+    string user_name;
+    string group_name;
+    uint16[] values;
+}
+
 /* Base functions and definitions */
 abstract contract Base {
 
@@ -25,6 +68,20 @@ abstract contract Base {
     uint16 constant MAX_INODES = 600;
 
     string constant ROOT = "/";
+
+    uint8 constant IO_WR_COPY       = 1;
+    uint8 constant IO_ALLOCATE      = 2;
+    uint8 constant IO_TRUNCATE      = 3;
+    uint8 constant IO_MKFILE        = 4;
+    uint8 constant IO_MKDIR         = 5;
+    uint8 constant IO_HARDLINK      = 6;
+    uint8 constant IO_SYMLINK       = 7;
+    uint8 constant IO_UNLINK        = 8;
+    uint8 constant IO_CHATTR        = 9;
+    uint8 constant IO_ACCESS        = 10;
+    uint8 constant IO_PERMISSION    = 11;
+    uint8 constant IO_UPDATE_TIME   = 12;
+    uint8 constant IO_UPDATE_TEXT_DATA = 13;
 
     modifier accept {
         tvm.accept();

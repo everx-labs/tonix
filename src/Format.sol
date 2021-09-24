@@ -20,7 +20,7 @@ abstract contract Format is String {
         uint n_rows = lines.length;
         for (uint i = 0; i < n_rows; i++) {
             string[] fields = lines[i];
-            out.append(_pad(fields[0], max_widths[0], ALIGN_LEFT));
+            out.append(_pad(fields[0], max_widths[0], align == ALIGN_NONE ? ALIGN_NONE : ALIGN_LEFT));
             uint len = fields.length;
             for (uint j = 1; j < len; j++)
                 out.append(delimiter + _pad(fields[j], max_widths[j], (j == len - 1) ? ALIGN_LEFT : align));
@@ -29,7 +29,7 @@ abstract contract Format is String {
     }
 
     function _spaces(uint n) internal pure returns (string) {
-        string space_field = "                                                                                            ";
+        string space_field = "                                                                                     ";
         return space_field.substr(0, n);
     }
 

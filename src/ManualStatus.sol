@@ -108,6 +108,12 @@ contract ManualStatus is Manual {
             "list paRent PID",
             "list file size",
             "terse listing"]);
+        _add_page("mountpoint", "see if a directory or file is a mountpoint", "[-d|-q] directory | file\t-x device",
+            "Checks whether the given directory or file is mentioned in the /proc/self/mountinfo file.",
+            "dqx", 1, 1, [
+            "quiet mode - don't print anything",
+            "print maj:min device number of the filesystem",
+            "print maj:min device number of the block device"]);
         _add_page("ps", "report a snapshot of the current processes", "[options]", "displays information about a selection of the active processes.",
             "efF", 0, 0, [
             "select all processes",
@@ -118,6 +124,6 @@ contract ManualStatus is Manual {
             "follow links",
             "display file system status instead of file status",
             "print the information in terse form"]);
-        _sb_exports[0].inode_count = _export_fs.ic - _sb_exports[0].first_inode;
+        _write_export_sb();
     }
 }

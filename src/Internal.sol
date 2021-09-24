@@ -3,7 +3,7 @@ pragma ton-solidity >= 0.49.0;
 import "Base.sol";
 import "String.sol";
 
-struct INodeS {
+struct Inode {
     uint16 mode;
     uint16 owner_id;
     uint16 group_id;
@@ -39,7 +39,7 @@ struct FileSystem {
     uint8 fs_type;
     SuperBlock sb;
     uint16 ic;
-    mapping (uint16 => INodeS) inodes;
+    mapping (uint16 => Inode) inodes;
 }
 
 struct Mount {
@@ -93,15 +93,18 @@ struct ProcessInfo {
 }
 
 struct UserInfo {
-    uint16 uid;
     uint16 gid;
     string user_name;
     string primary_group;
-    string home_directory;
+}
+
+struct GroupInfo {
+    string group_name;
+    bool is_system;
 }
 
 /* Base contract to work with index nodes */
-abstract contract INode is Base, String {
+abstract contract Internal is Base, String {
 
     uint16 constant S_IXOTH = 1 << 0;
     uint16 constant S_IWOTH = 1 << 1;
@@ -149,9 +152,30 @@ abstract contract INode is Base, String {
     uint8 constant FT_SYMLINK   = 7;
     uint8 constant FT_LAST      = FT_SYMLINK;
 
+    uint16 constant MOUNT_NONE          = 0;
+    uint16 constant MOUNT_DIR           = 1;
+    uint16 constant MOUNT_OVERLAY       = 4;
+    uint16 constant QUERY_FS_CACHE      = 5;
+
+    uint8 constant UA_ADD_USER          = 1;
+    uint8 constant UA_ADD_GROUP         = 2;
+    uint8 constant UA_DELETE_USER       = 3;
+    uint8 constant UA_DELETE_GROUP      = 4;
+    uint8 constant UA_UPDATE_USER       = 5;
+    uint8 constant UA_UPDATE_GROUP      = 6;
+    uint8 constant UA_RENAME_GROUP      = 7;
+    uint8 constant UA_CHANGE_GROUP_ID   = 8;
+
+    uint16 constant UAO_SYSTEM              = 16;
+    uint16 constant UAO_CREATE_HOME_DIR     = 32;
+    uint16 constant UAO_CREATE_USER_GROUP   = 64;
+    uint16 constant UAO_ADD_SUPP_GROUPS     = 128;
+    uint16 constant UAO_REMOVE_HOME_DIR     = 1024;
+    uint16 constant UAO_REMOVE_EMPTY_GROUPS = 2048;
+
     /* File system helpers */
     function _dump_fs(uint8 level, FileSystem fs) internal pure returns (string out) {
-        for ((uint16 i, INodeS ino): fs.inodes) {
+        for ((uint16 i, Inode ino): fs.inodes) {
             (uint16 mode, uint16 owner_id, uint16 group_id, uint32 file_size, uint16 n_links, , , string file_name, string[] text_data) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} SZ {} NL {}\n", i, file_name, mode, owner_id, group_id, file_size, n_links));
             if (level > 0 && ((mode & S_IFMT) == S_IFDIR || (mode & S_IFMT) == S_IFLNK) || level > 1)
@@ -164,7 +188,7 @@ abstract contract INode is Base, String {
         SuperBlock sb = SuperBlock(true, true, fs_uuid, 0, 0, MAX_INODES, MAX_BLOCKS, DEF_BLOCK_SIZE, now, now, now, 0, MAX_MOUNT_COUNT, 1, INODES + 1, DEF_INODE_SIZE);
 
         fs = FileSystem(fs_uuid, fs_type, sb, ROOT_DIR + 1);
-        INodeS root_dir = _get_dir_node(ROOT_DIR, ROOT_DIR, SUPER_USER, SUPER_USER_GROUP, "");
+        Inode root_dir = _get_dir_node(ROOT_DIR, ROOT_DIR, SUPER_USER, SUPER_USER_GROUP, "");
 
         uint16 n_subdirs = uint16(root_subdirs.length);
 
@@ -175,7 +199,6 @@ abstract contract INode is Base, String {
             string dir_entry = _dir_entry_line(index, sub_dir_name, FT_DIR);
             root_dir.text_data.push(dir_entry);
             root_dir.file_size += dir_entry.byteLength();
-//            root_dir = _add_dir_entry(root_dir, ROOT_DIR + 1 + i, sub_dir_name, FT_DIR);
         }
         root_dir.n_links += n_subdirs;
         fs.inodes[ROOT_DIR] = root_dir;
@@ -194,7 +217,7 @@ abstract contract INode is Base, String {
     }
 
     /* Directory entry helpers */
-    function _add_dir_entry(INodeS dir, uint16 ino, string file_name, uint8 file_type) internal pure returns (INodeS) {
+    function _add_dir_entry(Inode dir, uint16 ino, string file_name, uint8 file_type) internal pure returns (Inode) {
         string dirent = _dir_entry_line(ino, file_name, file_type);
         dir.text_data.push(dirent);
         dir.file_size += uint32(dirent.byteLength());
@@ -202,9 +225,9 @@ abstract contract INode is Base, String {
         return dir;
     }
 
-    function _add_dir_entry_fs(FileSystem fs, uint16 dir_index, uint16 ino, string file_name, uint8 file_type) internal pure returns (INodeS) {
+    function _add_dir_entry_fs(FileSystem fs, uint16 dir_index, uint16 ino, string file_name, uint8 file_type) internal pure returns (Inode) {
         string dirent = _dir_entry_line(ino, file_name, file_type);
-        INodeS dir = fs.inodes[dir_index];
+        Inode dir = fs.inodes[dir_index];
         dir.text_data.push(dirent);
         dir.file_size += uint32(dirent.byteLength());
         dir.n_links++;
@@ -222,16 +245,6 @@ abstract contract INode is Base, String {
 
     function _dir_entry_line(uint16 inode, string file_name, uint8 file_type) internal pure returns (string) {
         return _file_type_sign(file_type) + file_name + format("\t{}", inode);
-    }
-
-    function _match_line(string s, string[] dir) internal pure returns (uint16 idx) {
-        uint len = s.byteLength();
-        for (uint16 i = 0; i < dir.length; i++) {
-            string line = dir[i];
-            if (line.byteLength() > len)
-                if (line.substr(1, len) == s)
-                    return i + 1;
-        }
     }
 
     /* Index node, file and directory entry types helpers */
@@ -314,28 +327,28 @@ abstract contract INode is Base, String {
         if (file_type == FT_SOCK) return DEF_SOCK_MODE;
     }
 
-    function _get_any_node(uint8 ft, uint16 owner, uint16 group, string file_name, string[] text_data) internal pure returns (INodeS) {
+    function _get_any_node(uint8 ft, uint16 owner, uint16 group, string file_name, string[] text_data) internal pure returns (Inode) {
         if (ft > FT_UNKNOWN && ft <= FT_LAST) {
             uint file_size;
             for (string s: text_data)
                 file_size += s.byteLength();
-            return INodeS(_get_def_mode(ft), owner, group, uint32(file_size), ft == FT_DIR ? 2 : 1, now, now, file_name, text_data);
+            return Inode(_get_def_mode(ft), owner, group, uint32(file_size), ft == FT_DIR ? 2 : 1, now, now, file_name, text_data);
         }
     }
 
     /* Getting an index node of a particular type */
-    function _get_file_node(uint16 owner, uint16 group, string file_name, string[] text_data) internal pure returns (INodeS) {
+    function _get_file_node(uint16 owner, uint16 group, string file_name, string[] text_data) internal pure returns (Inode) {
         uint file_size;
         for (string s: text_data)
             file_size += s.byteLength();
-        return INodeS(DEF_REG_FILE_MODE, owner, group, uint32(file_size), 1, now, now, file_name, text_data);
+        return Inode(DEF_REG_FILE_MODE, owner, group, uint32(file_size), 1, now, now, file_name, text_data);
     }
 
-    function _get_dir_node(uint16 this_dir, uint16 parent_dir, uint16 owner, uint16 group, string dir_name) internal pure returns (INodeS) {
-        return INodeS(DEF_DIR_MODE, owner, group, 13, 2, now, now, dir_name, [format("d.\t{}", this_dir), format("d..\t{}", parent_dir)]);
+    function _get_dir_node(uint16 this_dir, uint16 parent_dir, uint16 owner, uint16 group, string dir_name) internal pure returns (Inode) {
+        return Inode(DEF_DIR_MODE, owner, group, 13, 2, now, now, dir_name, [format("d.\t{}", this_dir), format("d..\t{}", parent_dir)]);
     }
 
-    function _get_symlink_node(uint16 owner, uint16 group, string file_name, string target_dirent) internal pure returns (INodeS) {
-        return INodeS(DEF_SYMLINK_MODE, owner, group, uint32(target_dirent.byteLength()), 1, now, now, file_name, [target_dirent]);
+    function _get_symlink_node(uint16 owner, uint16 group, string file_name, string target_dirent) internal pure returns (Inode) {
+        return Inode(DEF_SYMLINK_MODE, owner, group, uint32(target_dirent.byteLength()), 1, now, now, file_name, [target_dirent]);
     }
 }

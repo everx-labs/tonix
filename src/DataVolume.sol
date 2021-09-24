@@ -27,7 +27,9 @@ contract DataVolume is ExportFS {
             "missing file operand",
             "missing destination file operand after",
             "invalid group",
-            "missing filename", "invalid mode", "invalid owner",
+            "missing filename",
+            "invalid mode",
+            "invalid owner",
             "cannot touch",
             "cannot create regular file",
             "too many arguments",
@@ -36,6 +38,7 @@ contract DataVolume is ExportFS {
             "failed to access",
             "-r not specified; omitting directory",
             "cannot overwrite directory with non-directory",
+            "command not found",
             "options -l and -s are incompatible",
             "target",
             "failed to create symbolic link",
@@ -43,7 +46,8 @@ contract DataVolume is ExportFS {
             "cannot make both hard and symbolic links",
             "hard link not allowed for directory",
             "mutually exclusive arguments: -c -n -r -z",
-            "failed to locate login data"]);
+            "failed to locate login data",
+            "not a block device"]);
         _add_data_file("status", [
             "No such file or directory",
             "File exists",
@@ -74,11 +78,12 @@ contract DataVolume is ExportFS {
     function init2() external accept {
         /* Exported to /etc */
         _add_data_file("command_list", [
-            "account", "basename", "cat", "cd", "chfn", "chgrp", "chmod", "chown","cksum", "cmp", "column", "cp", "cut", "dd", "df", "dirname",
-            "du", "echo", "fallocate", "file", "findmnt", "finger", "fuser", "getent", "gpasswd", "grep", "groupadd", "groupdel", "groupmod",
-            "head", "help", "hostname", "id", "ln", "last", "login", "logout", "look", "losetup", "ls", "lsblk", "lslogins", "lsof", "man",
-            "mapfile", "mkdir", "mknod", "mount", "mv", "namei", "newgrp", "paste", "pathchk", "ping", "ps", "pwd", "readlink", "realpath",
-            "rm", "rmdir", "script", "stat", "tail", "tar", "touch", "truncate", "udevadm", "umount", "uname", "useradd", "userdel", "usermod",
+            "account", "basename", "blkdiscard", "cat", "cd", "chfn", "chgrp", "chmod", "chown","cksum", "cmp", "colrm", "column", "cp", "cut",
+            "dd", "df", "dirname", "du", "echo", "env", "expand", "fallocate", "file", "findfs", "findmnt", "finger", "fsck", "fstrim", "fuser",
+            "getent", "getopt", "gpasswd", "grep", "groupadd", "groupdel", "groupmod", "head", "help", "hostname", "id", "last", "ln", "login",
+            "logout", "look", "losetup", "ls", "lsblk", "lslogins", "lsof", "man", "mapfile", "mkdir", "mkfs", "mknod", "more", "mount", "mountpoint",
+            "mv", "namei", "newgrp", "paste", "pathchk", "ping", "ps", "pwd", "readlink", "realpath", "reboot", "rename", "rev", "rm", "rmdir",
+            "script", "stat", "tail", "tar", "touch", "tr", "truncate", "udevadm", "umount", "uname", "unexpand", "useradd", "userdel", "usermod",
             "utmpdump", "wc", "whatis", "whereis", "who", "whoami"]);
         _add_data_file("exports", [
             "BlockDevice\t/\t0\t1",
@@ -126,7 +131,9 @@ contract DataVolume is ExportFS {
             "0:48a04e9fc99be89ddfe4eb1f7303ee417ebae174514b5e11c072834259250eec\tPrintFormatted",
             "0:41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e\tManualSession",
             "0:4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421\tManualUtility",
-            "0:430dd570de5398dbc2319979f5ba4aa99d5254e5382d3c344b985733d141617b\tDeviceManager"]);
+            "0:430dd570de5398dbc2319979f5ba4aa99d5254e5382d3c344b985733d141617b\tDeviceManager",
+            "0:4a7cd37ce66473c7b383a245891502e5d05c626a69ca764165e2c7d6edd9e317\tAccessManager",
+            "0:650627a3165cea5c12558aaf9d38f791a33660792d41136e1a6dba48549ce89b\tManualAdmin"]);
         _add_data_file("magic", [
             "11"]);
         _add_data_file("motd", [

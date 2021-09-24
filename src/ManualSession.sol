@@ -95,6 +95,6 @@ contract ManualSession is Manual {
             "print the operating system"]);
         _add_page("whoami", "print effective userid", "[OPTION]...", "Print the user name associated with the current effective user ID. Same as id -un.",
             "", 0, 0, [""]);
-        _sb_exports[0].inode_count = _export_fs.ic - _sb_exports[0].first_inode;
+        _write_export_sb();
     }
 }

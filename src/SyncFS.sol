@@ -1,89 +1,19 @@
 pragma ton-solidity >= 0.49.0;
 
+import "Internal.sol";
 import "Commands.sol";
-import "Device.sol";
-import "Path.sol";
-
-struct ArgS {
-    string path;
-    uint8 ft;
-    uint16 idx;
-    uint16 parent;
-    uint16 dir_index;
-}
-
-struct ErrS {
-    uint8 reason;
-    uint16 explanation;
-    string arg;
-}
-
-struct InputS {
-    uint8 command;
-    string[] args;
-    uint flags;
-}
-
-struct IOEventS {
-    uint8 iotype;
-    uint16 parent;
-    ArgS[] args;
-}
-
-struct SessionS {
-    uint16 pid;
-    uint16 uid;
-    uint16 gid;
-    uint16 wd;
-}
 
 /* Common functions and definitions for file system handling and synchronization */
-abstract contract SyncFS is Device, Commands, Path {
+abstract contract SyncFS is Internal, Commands {
 
-    uint8 constant IO_WR_COPY       = 1;
-    uint8 constant IO_ALLOCATE      = 2;
-    uint8 constant IO_TRUNCATE      = 3;
-    uint8 constant IO_MKFILE        = 4;
-    uint8 constant IO_MKDIR         = 5;
-    uint8 constant IO_HARDLINK      = 6;
-    uint8 constant IO_SYMLINK       = 7;
-    uint8 constant IO_UNLINK        = 8;
-    uint8 constant IO_CHATTR        = 9;
-    uint8 constant IO_ACCESS        = 10;
-    uint8 constant IO_PERMISSION    = 11;
-    uint8 constant IO_UPDATE_TIME   = 12;
+    FileSystem _fs;
+    mapping (uint16 => ProcessInfo) public _proc;
+    mapping (uint16 => UserInfo) public _users;
+    mapping (uint16 => GroupInfo) public _groups;
 
-    uint8 constant ENOENT   = 1; // "No such file or directory" A component of pathname does not exist or is a dangling symbolic link; pathname is an empty string and AT_EMPTY_PATH was not specified in flags.
-    uint8 constant EEXIST   = 2; // "File exists"
-    uint8 constant ENOTDIR  = 3; //  "Not a directory" A component of the path prefix of pathname is not a directory.
-    uint8 constant EISDIR   = 4; //"Is a directory"
-    uint8 constant EACCES   = 5; // "Permission denied" Search permission is denied for one of the directories in the path prefix of pathname.  (See also path_resolution(7).)
-    uint8 constant ENOTEMPTY = 6; // "Directory not empty"
-    uint8 constant EPERM    = 7; // "Not owner"
-    uint8 constant EINVAL   = 8; //"Invalid argument"
-    uint8 constant EROFS    = 9; //"Read-only file system"
-    uint8 constant EFAULT   = 10; //Bad address.
-    uint8 constant EBADF    = 11; // "Bad file number" fd is not a valid open file descriptor.
-    uint8 constant EBUSY    = 12; // "Device busy"
-    uint8 constant ENOSYS   = 13; // "Operation not applicable"
-    uint8 constant ENAMETOOLONG = 14; // pathname is too long.
-
-    uint8 constant ERR_MSG              = 0;
-    uint8 constant invalid_mode         = 15;
-    uint8 constant invalid_owner        = 16;
-    uint8 constant omitting_directory   = 23;
-    uint8 constant cant_overwrite_dir   = 24;
-    uint8 constant options_l_s_incompat = 26;
-    uint8 constant ln_target            = 27;
-    uint8 constant failed_symlink       = 28;
-    uint8 constant failed_hardlink      = 29;
-    uint8 constant hard_or_symlink      = 30;
-    uint8 constant no_hardlink_on_dir   = 31;
-    uint8 constant mutually_exclusive_options = 32;
-    uint8 constant login_data_not_found = 33;
-
-    function _get_login_info() internal view returns (mapping (uint16 => UserInfo) login_info) {
+    function _get_login_info() internal view returns (bool /*found*/, mapping (uint16 => UserInfo) login_info) {
         string[] etc_passwd_contents = _get_file_contents("/etc/passwd");
+
         for (string s: etc_passwd_contents) {
             string[] fields = _get_tsv(s);
             string user_name = fields[0];
@@ -92,8 +22,7 @@ abstract contract SyncFS is Device, Commands, Path {
             (res, success) = stoi(fields[2]);
             uint16 gid = success ? uint16(res) : GUEST_USER_GROUP;
             string primary_group = fields.length > 2 ? fields[3] : "guest";
-            string home_directory = fields[4];
-            login_info[uid] = UserInfo(uid, gid, user_name, primary_group, home_directory);
+            login_info[uid] = UserInfo(gid, user_name, primary_group);
         }
     }
 
@@ -107,7 +36,13 @@ abstract contract SyncFS is Device, Commands, Path {
         return (parent == ROOT_DIR ? "" : _get_absolute_path(parent)) + "/" + _fs.inodes[dir].file_name;
     }
 
-    function _resolve_absolute_path(string dir_name) internal view returns (uint16) {
+    function _resolve_absolute_path(string path) internal view returns (uint16) {
+        if (path == ROOT)
+            return ROOT_DIR;
+        (string dir, string not_dir) = _dir(path);
+        return _fetch_file_index(not_dir, _resolve_absolute_path(dir));
+    }
+    /*function _resolve_absolute_path(string dir_name) internal view returns (uint16) {
         (string dir, string not_dir) = _dir(dir_name);
 
         if (dir == ROOT) {
@@ -116,7 +51,7 @@ abstract contract SyncFS is Device, Commands, Path {
         }
         (uint16 ino, ) = _fetch_dir_entry(not_dir, _resolve_absolute_path(dir));
         return ino;
-    }
+    }*/
 
     function _xpath(string s_arg, uint16 wd) internal view returns (string res) {
         return _strip_path(_xpath0(s_arg, wd));
@@ -143,26 +78,60 @@ abstract contract SyncFS is Device, Commands, Path {
     }
 
     function _get_file_contents(string path) internal view returns (string[]) {
+        /*(string dir, string not_dir) = _dir(path);
+        (uint16 index, uint8 ft) = _fetch_dir_entry(not_dir, _resolve_absolute_path(dir));
+        if (ft > FT_UNKNOWN)
+            return _fs.inodes[index].text_data;*/
+        uint16 index = _get_file_index(path);
+        if (index > INODES && _fs.inodes.exists(index))
+            return _fs.inodes[index].text_data;
+    }
+
+    function _get_file_index(string path) internal view returns (uint16) {
+        if (path.empty())
+            return ENOENT;
+        if (path == ROOT)
+            return ROOT_DIR;
         (string dir, string not_dir) = _dir(path);
-        (uint16 inode, ) = _fetch_dir_entry(not_dir, _resolve_absolute_path(dir));
-        if (inode >= INODES)
-            return _fs.inodes[inode].text_data;
+        return _fetch_file_index(not_dir, _resolve_absolute_path(dir));
+//        (uint16 index, uint8 ft) = _fetch_dir_entry(not_dir, _resolve_absolute_path(dir));
+//        return ft > FT_UNKNOWN ? index : ENOENT;
     }
 
     function _dir_index(string name, uint16 dir) internal view returns (uint16) {
-        return _match_line(name, _fs.inodes[dir].text_data);
+        string[] dir_text = _fs.inodes[dir].text_data;
+        uint len = name.byteLength();
+        for (uint16 i = 0; i < dir_text.length; i++) {
+            string line = dir_text[i];
+            if (line.byteLength() > len && line.substr(1, len) == name)
+                return i + 1;
+        }
     }
 
-    /* Looks for a file name in the directory entry */
+    /* Looks for a file name in the directory entry. Return file index and file type */
     function _fetch_dir_entry(string name, uint16 dir) internal view returns (uint16 ino, uint8 ft) {
-        INodeS inode = _fs.inodes[dir];
+        if (!_fs.inodes.exists(dir))
+            return (ENOTDIR, FT_UNKNOWN);
+        Inode inode = _fs.inodes[dir];
         if ((inode.mode & S_IFMT) != S_IFDIR)
             return (ENOTDIR, FT_UNKNOWN);
-        string[] text_data = inode.text_data;
-        uint16 dir_index = _match_line(name, text_data);
+        uint16 dir_index = _dir_index(name, dir);
         if (dir_index == 0)
             return (ENOENT, FT_UNKNOWN);
-        (, ino, ft) = _read_dir_entry(text_data[dir_index - 1]);
+        (, ino, ft) = _read_dir_entry(inode.text_data[dir_index - 1]);
+    }
+
+    /* Looks for a file name in the directory entry. Returns file index */
+    function _fetch_file_index(string name, uint16 dir) internal view returns (uint16 ino) {
+        if (!_fs.inodes.exists(dir))
+            return ENOTDIR;
+        Inode inode = _fs.inodes[dir];
+        if ((inode.mode & S_IFMT) != S_IFDIR)
+            return ENOTDIR;
+        uint16 dir_index = _dir_index(name, dir);
+        if (dir_index == 0)
+            return ENOENT;
+        (, ino, ) = _read_dir_entry(inode.text_data[dir_index - 1]);
     }
 
     function _resolve_relative_path(string name, uint16 dir) internal view returns

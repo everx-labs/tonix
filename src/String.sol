@@ -4,17 +4,30 @@ pragma ton-solidity >= 0.49.0;
 abstract contract String {
 
     /* Returns the first occurrence of a character in a string */
-    function _strchr(string s, string c) internal pure returns (uint16) {
-        for (uint16 i = 0; i < s.byteLength(); i++)
-            if (s.substr(i, 1) == c)
-                return i + 1;
+    function _strchr(string text, string symbol) internal pure returns (uint16) {
+        for (uint i = 0; i < text.byteLength(); i++)
+            if (text.substr(i, 1) == symbol)
+                return uint16(i + 1);
     }
 
     /* Returns the last occurrence of a character in a string */
-    function _strrchr(string s, string c) internal pure returns (uint16) {
-        for (uint16 i = uint16(s.byteLength()); i > 0; i--)
-            if (s.substr(i - 1, 1) == c)
-                return i;
+    function _strrchr(string text, string symbol) internal pure returns (uint16) {
+        for (uint i = text.byteLength(); i > 0; i--)
+            if (text.substr(i - 1, 1) == symbol)
+                return uint16(i);
+    }
+
+    function _strstr(string text, string pattern) internal pure returns (uint16) {
+        uint text_len = text.byteLength();
+        uint pattern_len = pattern.byteLength();
+        for (uint i = 0; i <= text_len - pattern_len; i++)
+            if (text.substr(i, pattern_len) == pattern)
+                return uint16(i + 1);
+    }
+
+    function _translate(string text, string pattern, string symbols) internal pure returns (string out) {
+        uint16 p = _strstr(text, pattern);
+        return p > 0 ? text.substr(0, p - 1) + symbols + _translate(text.substr(p - 1 + pattern.byteLength()), pattern, symbols) : text;
     }
 
     function _parse_to_symbol(string s, uint start, uint len, string sym) internal pure returns (string, uint pos) {
@@ -27,35 +40,35 @@ abstract contract String {
         return (pos > start ? s.substr(start, pos - start) : "", pos);
     }
 
-    /* Squeeze repeating occurences of "c" in "s" */
-    function _tr_squeeze(string s, string c) internal pure returns (string res) {
+    /* Squeeze repeating occurences of "symbol" in "text" */
+    function _tr_squeeze(string text, string symbol) internal pure returns (string res) {
         uint start = 0;
         uint p = 0;
-        uint len = s.byteLength();
+        uint len = text.byteLength();
         while (p < len) {
-            if (s.substr(p, 1) == c) {
-                res.append(s.substr(start, p - start + 1));
-                while (p < len && (s.substr(p, 1) == c))
+            if (text.substr(p, 1) == symbol) {
+                res.append(text.substr(start, p - start + 1));
+                while (p < len && (text.substr(p, 1) == symbol))
                     p++;
                 start = p;
             }
             p++;
         }
-        res.append(s.substr(start, len - start));
+        res.append(text.substr(start, len - start));
     }
 
-    function _split(string s, string delimiter) internal pure returns (string[] res) {
-        uint16 len = uint16(s.byteLength());
-        uint16 prev = 0;
-        uint16 cur = 0;
+    function _split(string text, string delimiter) internal pure returns (string[] res) {
+        uint len = text.byteLength();
+        uint prev = 0;
+        uint cur = 0;
         while (cur < len - 1) {
-            if (s.substr(cur, 1) == delimiter) {
-                res.push(s.substr(prev, cur - prev));
+            if (text.substr(cur, 1) == delimiter) {
+                res.push(text.substr(prev, cur - prev));
                 prev = cur + 1;
             }
             cur++;
         }
-        res.push(s.substr(prev, cur - prev + 1));
+        res.push(text.substr(prev, cur - prev + 1));
     }
 
     function _merge(string[] lines) internal pure returns (string text) {
@@ -170,6 +183,42 @@ abstract contract String {
                 if (fields[key_index - 1] == key)
                     return fields[value_index - 1];
             }
+    }
+
+    /* Path utilities */
+    function _disassemble_path(string path) internal pure returns (string[] parts) {
+        string dir_path;
+        while (path.byteLength() > 1) {
+            (string dir, string not_dir) = _dir(path);
+            dir_path = dir;
+            parts.push(not_dir);
+            path = dir_path;
+        }
+        parts.push(path);
+    }
+
+    function _strip_path(string path) internal pure returns (string res) {
+        res = _tr_squeeze(path, "/");
+        uint len = res.byteLength();
+        if (len > 0) {
+            uint16 p = _strrchr(res, "/");
+            if (p == len)
+                res = res.substr(0, len - 1);
+        }
+    }
+
+    function _dir(string path) internal pure returns (string dir, string not_dir) {
+        if (path.empty())
+            return (".", "");
+        if (path == "/")
+            return ("/", "/");
+        uint16 q = _strrchr(path, "/");
+        if (q == 0)
+            return (".", path);
+        uint len = path.byteLength();
+        if (q == 1)
+            return ("/", path.substr(1, len - 1));
+        return (path.substr(0, q - 1), path.substr(q, len - q));
     }
 
 }

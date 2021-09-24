@@ -107,6 +107,6 @@ contract ManualCommands is Manual {
             "treat SIZE as number of IO blocks instead of bytes",
             "base size on RFILE",
             "set or adjust the file size by SIZE bytes"]);
-        _sb_exports[0].inode_count = _export_fs.ic - _sb_exports[0].first_inode;
+        _write_export_sb();
     }
 }
