@@ -2,6 +2,7 @@ MAKEFLAGS += --no-builtin-rules --warn-undefined-variables
 include Makefile.common
 
 # Contracts
+A:=AccessManager
 B:=BlockDevice
 D:=DataVolume
 R:=StatusReader
@@ -13,9 +14,10 @@ MAN_CMD:=ManualCommands
 MAN_SES:=ManualSession
 MAN_STAT:=ManualStatus
 MAN_AUX:=ManualUtility
+MAN_UA:=ManualAdmin
 T:=TestFS
 INIT:=
-TA:=$D $R $B $I $C $(MAN_CMD) $(MAN_SES) $(MAN_STAT) $(MAN_AUX) $P $(DM)
+TA:=$A $D $R $B $I $C $(MAN_CMD) $(MAN_SES) $(MAN_STAT) $(MAN_AUX) $(MAN_UA) $P $(DM)
 RKEYS:=$(KEY)/k1.keys
 VAL0:=15
 TST:=tests
@@ -142,13 +144,16 @@ endef
 _d=init upgrade
 $(foreach b,$(TA),$(foreach c,$(_d),$(eval $(call t-call,$b,$c))))
 
-_jq=jq '.$1' <$@ > $p/$1
-_jqr=jq -r '.$1' <$@ > $p/$1
-_jqq=jq $2 '$3 .$1' <$@ > $p/$1
+_jq=jq '.$1' <$@ >$p/$1
+_jqr=jq -r '.$1' <$@ >$p/$1
+_jqq=jq $2 '$3 .$1' <$@ >$p/$1
 
 _jqa=$(foreach f,$1,$(call _jq,$f);) $(_p); $(_e)
+#_jqa=$(foreach f,$1,$(call _jq,$f);) $(_p)
 _jqra=$(foreach f,$1,$(call _jqr,$f);)
-_p=jq -j 'select(.out != null) .out' <$@ | tee $p/fd/1/out;jq -j 'select(.err != null) .err' <$@ | tee $p/fd/2/err
+#_p=jq -j 'select(.out != null) .out' <$@ | tee $p/fd/1/out;jq -j 'select(.err != null) .err' <$@ | tee $p/fd/2/err
+#_p=jq -j 'select(.out != null) .out' <$@ | tee $p/fd/1/out
+_p=jq -j 'select(.out != null) .out' <$@
 #_a=jq -r 'select(.action != null) .action' <$@ >$p/action
 _jqsnn=$(call _jqq,$1,,select(.$1 != null))
 _e=$(call _jqsnn,errors)
@@ -177,14 +182,19 @@ $p/parse.args: $p/login $p/cwd $(STD)/s_input
 	jq -sR '. | split("\n") | {i_login: .[0], i_cwd: .[1], s_input: .[2]}' $^ >$@
 $p/parse.out: $p/parse.args
 	$($I_r)
-	$(call _jqa,session input target names addresses arg_list input.command)
-	$(call _jqra,cwd source action ext_action)
+	$(call _jqa,session input arg_list input.command)
+	$(call _jqra,cwd action ext_action)
+
+$p/source: $p/parse.out
+	jq -r '.source' <$^ >$@
+$p/target: $p/parse.out
+	jq '.target' <$^ >$@
 
 $p/print_error_message.args: $p/input.command $p/errors
 	jq -s '{command: .[0], errors: .[1]}' $^ >$@
 $p/print_error_message.out: $p/print_error_message.args
 	$($P_r)
-	$(call _jqa,)
+	jq -j '.err' <$@
 $p/read.out: $p/read.args
 	$($B_r)
 	$(call _jqa,)
@@ -192,6 +202,10 @@ $p/update_nodes.args: $p/session $p/ios
 	jq -s '{session: .[0], ios: .[1]}' $^ >$@
 $p/update_nodes.res: $p/update_nodes.args
 	$($B_c)
+$p/update_users.args: $p/session $p/ue
+	jq -s '{session: .[0], ues: [.[1]]}' $^ >$@
+$p/update_users.res: $p/update_users.args
+	$($A_c)
 
 $p/dev_admin.args: $p/session $p/input $p/arg_list
 	jq -s '{session: .[0], input: .[1], arg_list: .[2]}' $^ >$@
@@ -206,9 +220,7 @@ write_all: $p/session $p/source
 copy_in: $p/source
 	cp $(file <$<) $p/fd/0/
 
-$(STD)/text_in: $p/source
-	jq -Rs '.' $^ >$@
-$p/write_to_file.args: $p/session $p/target $(STD)/text_in
+$p/write_to_file.args: $p/session $p/target $p/text_in
 	jq -s '{session: .[0], path: .[1], text: .[2]}' $^ >$@
 $p/write_to_file.res: $p/write_to_file.args
 	$($B_c)
@@ -217,7 +229,7 @@ $p/fstat.args: $p/session $p/input $p/arg_list
 	jq -s '{session: .[0], input: .[1], arg_list: .[2]}' $^ >$@
 $p/fstat.out: $p/fstat.args
 	$($R_r)
-	$(call _jqa,)
+	jq -j '.out' <$@
 
 $p/dev_stat.args: $p/session $p/input $p/arg_list
 	jq -s '{session: .[0], input: .[1], arg_list: .[2]}' $^ >$@
@@ -237,21 +249,34 @@ $p/file_op.out: $p/file_op.args
 	$($C_r)
 	$(call _jqa,ios)
 	$(call _jqra,action)
+$p/user_admin_op.args: $p/session $p/input
+	jq -s '{session: .[0], input: .[1]}' $^ >$@
+$p/user_admin_op.out: $p/user_admin_op.args
+	$($A_r)
+	$(call _jqa,ue)
+	$(call _jqra,action)
+$p/user_stats_op.args: $p/session $p/input
+	jq -s '{session: .[0], input: .[1]}' $^ >$@
+$p/user_stats_op.out: $p/user_stats_op.args
+	$($A_r)
+	$(call _jqra,action)
+	jq -j '.out' <$@
 $p/process_command.args: $p/session $p/input
 	jq -s '{session: .[0], input: .[1]}' $^ >$@
 $p/process_command.out: $p/process_command.args
 	$($P_r)
-	$(call _jqa,out err)
+	jq -j '.out' <$@
+	jq -j 'select(.err != null) .err' <$@
 $p/format_text.args: $p/input $p/texts $p/arg_list
 	jq -s '{input: .[0], texts: .[1], args: .[2]}' $^ >$@
 $p/format_text.out: $p/format_text.args
 	$($P_r)
-	$(call _jqa,out)
+	jq -j '.out' <$@
 $p/read_indices.args: $p/arg_list
 	jq -s '{args: .[0]}' $^ >$@
 $p/read_indices.out: $p/read_indices.args
 	$($B_r)
-	$(call _jqa,texts)
+	jq '.texts' <$@ >$p/texts
 
 $p/process_file_list.args: $p/session $p/input $p/dd_names_j $p/dd_indices_j
 	jq -s '{session: .[0], input: .[1], names: .[2], indices: .[3]}' $^ >$@
@@ -335,6 +360,7 @@ endef
 pv_Dev=_proc _users
 pv_Export=_sb_exports
 pv_Import=$(pv_Dev)
+pv_$A=$(pv_Export) _users _groups _group_members _user_groups _login_defs_bool _login_defs_uint16 _login_defs_string _env_bool _env_uint16 _env_string
 pv_$C=$(pv_Dev)
 pv_$R=$(pv_Dev)
 pv_$I=$(pv_Dev) _command_info
@@ -345,6 +371,7 @@ pv_$(MAN_CMD)=$(pv_Export)
 pv_$(MAN_SES)=$(pv_Export)
 pv_$(MAN_STAT)=$(pv_Export)
 pv_$(MAN_AUX)=$(pv_Export)
+pv_$(MAN_UA)=$(pv_Export)
 pv_$(DM)=$(pv_Export) _devices _boot_mounts _static_mounts _current_mounts
 
 $(foreach c,$(TA),$(eval $(call t-dump,$c)))
@@ -402,4 +429,4 @@ FORCE:
 .PHONY: $(PHONY)
 
 V?=
-#$(V).SILENT:
+$(V).SILENT:
