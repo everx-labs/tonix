@@ -2,23 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-unsigned const NO_ACTION        = 0;
-unsigned const PRINT_STATUS     = 1;
-unsigned const FILE_OP          = 2;
-unsigned const WRITE_FILES      = 4;
-unsigned const UPDATE_NODES     = 8;
-unsigned const PROCESS_COMMAND  = 16;
-unsigned const FORMAT_TEXT      = 32;
-unsigned const PRINT_ERRORS     = 64;
-unsigned const IO_EVENT         = 128;
-unsigned const READ_INDEX       = 256;
-unsigned const CHECK_STATUS     = 512;
-unsigned const DEVICE_STATUS    = 1024;
-unsigned const UPDATE_DEVICES   = 2048;
-unsigned const CHANGE_DIR       = 4096;
-unsigned const PIPE_OUT_TO_FILE = 8192;
-unsigned const MOUNT_FS         = 16384;
-unsigned const OPEN_FILE        = 32768;
+unsigned const ACT_NO_ACTION        = 0;
+unsigned const ACT_PRINT_STATUS     = 1;
+unsigned const ACT_FILE_OP          = 2;
+unsigned const ACT_WRITE_FILES      = 3;
+unsigned const ACT_PROCESS_COMMAND  = 4;
+unsigned const ACT_FORMAT_TEXT      = 5;
+unsigned const ACT_DEVICE_STATUS    = 6;
+unsigned const ACT_READ_INDEX       = 7;
+unsigned const ACT_USER_ADMIN_OP    = 8;
+unsigned const ACT_USER_STATS_OP    = 9;
+unsigned const ACT_UPDATE_NODES     = 16;
+unsigned const ACT_UPDATE_DEVICES   = 32;
+unsigned const ACT_UPDATE_USERS     = 64;
+unsigned const ACT_PIPE_OUT_TO_FILE = 512;
+unsigned const ACT_PRINT_ERRORS     = 1024;
+unsigned const ACT_IO_EVENT         = 2048;
+unsigned const ACT_UA_EVENT         = 4096;
 
 unsigned const EXT_NO_ACTION    = 0;
 unsigned const EXT_READ_IN      = 1;
@@ -77,17 +77,6 @@ int _prompt(char *s) {
         printf("Bye.\n");
         exit(0);
     }
-    if (!(strcmp(cmds, "x"))) {
-        char *c, *o;
-        if (x > 0) {
-            c = args[0];
-            if (!(strcmp(c, "db")))
-                system("make d_BlockDevice");
-            if (!(strcmp(c, "dc")))
-                system("make d_CommandProcessor");
-        }
-        return 0;
-    }
     if (!(strcmp(cmds, "sh"))) {
         char buffer[200];
         sprintf(buffer, "%s", &s2[strlen(cmds) + 1]);
@@ -112,15 +101,29 @@ int _prompt(char *s) {
     fscanf(fp, "%u", &ext_action);
     fclose(fp);
 
-    if (action & PRINT_ERRORS) {
+    if (action & ACT_PRINT_ERRORS) {
         system("make ru g=print_error_message");
         return 0;
     }
 
-    if (action & READ_INDEX) {
+    unsigned action_primary = action & 0x0F;
+
+    if (action_primary == ACT_PRINT_STATUS)
+        system("make ru g=fstat");
+    if (action_primary == ACT_FILE_OP)
+        system("make ru g=file_op");
+    if (action_primary == ACT_PROCESS_COMMAND)
+        system("make ru g=process_command");
+    if (action_primary == ACT_DEVICE_STATUS)
+        system("make ru g=dev_stat");
+    if (action_primary == ACT_READ_INDEX) {
         system("make ru g=read_indices");
         system("make ru g=format_text");
     }
+    if (action_primary == ACT_USER_ADMIN_OP)
+        system("make ru g=user_admin_op");
+    if (action_primary == ACT_USER_STATS_OP)
+        system("make ru g=user_stats_op");
 
     if (ext_action & EXT_OPEN_FILE) {
         system("make copy_in");
@@ -135,47 +138,26 @@ int _prompt(char *s) {
         system("make account_data");
     }
 
-    if (action & DEVICE_STATUS)
-        system("make ru g=dev_stat");
+    fp = fopen("vfs/proc/2/action", "rt");
+    fscanf(fp, "%u", &action2);
+    fclose(fp);
 
-    if (action & UPDATE_DEVICES) {
-        system("make ca g=dev_admin");
-//        system("make ru g=account_info");
-//        system("make account_data");
-
-    }
-    if (action & PRINT_STATUS) {
-        system("make ru g=fstat");
-        fp = fopen("vfs/proc/2/action", "rt");
-        fscanf(fp, "%u", &action2);
-        fclose(fp);
-        if (action2 & PRINT_ERRORS)
-            system("make ru g=print_error_message");
-    }
-
-    if (action & PROCESS_COMMAND)
-        system("make ru g=process_command");
-    else if (action & FILE_OP) {
-        system("make ru g=file_op");
-        fp = fopen("vfs/proc/2/action", "rt");
-        fscanf(fp, "%u", &action3);
-        fclose(fp);
-    }
-
-    if (action3 & PRINT_ERRORS)
+    if (action2 & ACT_PRINT_ERRORS) {
         system("make ru g=print_error_message");
+        return 0;
+    }
 
-    if (action & PIPE_OUT_TO_FILE) {
-        system("make std/text_in");
+    if (action2 & ACT_UPDATE_DEVICES)
+        system("make ca g=dev_admin");
+    if (action2 & ACT_PIPE_OUT_TO_FILE)
         system("make ca g=write_to_file");
-    }
-
-    if (ext_action & EXT_WRITE_FILES) {
-        system("make write_all");
-    }
-
-    if (action3 & UPDATE_NODES)
+    if (action2 & ACT_UPDATE_NODES)
         system("make ca g=update_nodes");
+    if (action2 & ACT_UPDATE_USERS)
+        system("make ca g=update_users");
+
+    if (ext_action & EXT_WRITE_FILES)
+        system("make write_all");
 
     // !!! jq '.u | del(.std) | .[] | select (length > 0)' < get.out !!!
     return 0;
@@ -199,20 +181,6 @@ int main(int argc, char **argv) {
     }
 
     printf("Logged in as: %s\n", login);
-
-    /*size_t cwdsize = 32;
-    cwd = (char *)malloc(cwdsize);
-    FILE *cfp = fopen("vfs/proc/2/cwd", "rt");
-    if (!cfp) {
-        cfp = fopen("vfs/proc/2/cwd", "wt");
-        fwrite("/", 1, 1, cfp);
-        fclose(cfp);
-    } else {
-        fscanf(cfp, "%s", cwd);
-        fclose(cfp);
-    }
-
-    printf("Working dir: %s\n", cwd);*/
 
     setbuf(stdout, NULL);
     system("cat etc/motd");

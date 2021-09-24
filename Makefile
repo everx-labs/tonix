@@ -1,4 +1,4 @@
-MAKEFLAGS += --no-builtin-rules --warn-undefined-variables
+MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
 include Makefile.common
 
 # Contracts
@@ -39,8 +39,10 @@ install: dirs cc $(BIL)
 	echo Tonix has been installed successfully
 	$(TOC) config --url gql.custler.net --async_call=true
 
-TOOLS_VERSION:=0.49
-TOOLS_ARCHIVE:=tools_$(TOOLS_VERSION)_$(UNAME_S).tar.gz
+TOOLS_MAJOR_VERSION:=0.50
+TOOLS_MINOR_VERSION:=0
+TOOLS_VERSION:=$(TOOLS_MAJOR_VERSION).$(TOOLS_MINOR_VERSION)
+TOOLS_ARCHIVE:=tools_$(TOOLS_MAJOR_VERSION)_$(UNAME_S).tar.gz
 TOOLS_URL:=https\://github.com/tonlabs/TON-Solidity-Compiler/releases/download/$(TOOLS_VERSION)/$(TOOLS_ARCHIVE)
 TOOLS_BIN:=$(LIB) $(SOLC) $(LINKER) $(TOC)
 $(TOOLS_BIN):
