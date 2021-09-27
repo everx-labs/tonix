@@ -57,6 +57,9 @@ contract PagesCommands is Pages {
             "copy only when the SOURCE file is newer than the destination file or when the destination file is missing",
             "explain what is being done",
             "stay on this file system"]);
+        _add_page("dd", "convert and copy a file", "[OPERAND]...",
+            "Copy a file, converting and formatting according to the operands.",
+            "", 0, M, [""]);
         _add_page("fallocate", "preallocate or deallocate space to a file", "[-z] -l length [-n] filename\t-d [-l length] filename\t-x -l length filename",
             "Manipulate the allocated disk space for a file, either to deallocate or preallocate it.",
             "dlnvxz", 1, 1, [
@@ -111,6 +114,34 @@ contract PagesCommands is Pages {
             "pv", 1, M, [
             "remove DIRECTORY and its ancestors; e.g., 'rmdir -p a/b/c' is similar to 'rmdir a/b/c a/b a'",
             "output a diagnostic for every directory processed"]);
+       _add_page("rename", "rename files", "from to file...",
+            "Rename the specified files by replacing the first occurrence of from in their name by to.",
+            "v0nfdm", 1, M, [
+            "print names of files successfully renamed",
+            "use \\0 as record separator",
+            "no action: print names of files to be renamed, but don't rename",
+            "over write: allow existing files to be over-written",
+            "do not rename directory: only rename filename component of path",
+            "manual: print manual page"]);
+        _add_page("tar", "an archiving utility", "{A|c|d|r|t|u|x}[GnSkUWOmpsMBiajJzZhPlRvwo] [ARG...]",
+            "An archiving program designed to store multiple files in a single file (an archive), and to manipulate such archives.",
+            "AcdrtuxkUWOmpRvo", 1, M, [
+            "append tar files to an archive",
+            "create a new archive",
+            "find differences between archive and file system",
+            "append files to the end of an archive",
+            "list the contents of an archive",
+            "only append files newer than copy in archive",
+            "extract files from an archive",
+            "don't replace existing files when extracting, treat them as errors",
+            "remove each file prior to extracting over it",
+            "attempt to verify the archive after writing it",
+            "extract files to standard output",
+            "don't extract file modified time",
+            "extract information about file permissions (default for superuser)",
+            "show block number within archive with each message",
+            "verbosely list files processed",
+            "when creating, same as --old-archive; when extracting, same as --no-same-owner"]);
         _add_page("touch", "change file timestamps", "[OPTION]... FILE...",
             "Update the modification time of each FILE to the current time. A FILE argument that does not exist is created empty, unless -c is supplied.",
             "cm", 1, M, [

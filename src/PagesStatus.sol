@@ -130,6 +130,27 @@ contract PagesStatus is Pages {
             "select all processes",
             "do full-format listing",
             "extra full format"]);
+        _add_page("readlink", "print resolved symbolic links or canonical file names", "[OPTION]... FILE...",
+            "Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
+            "femnqsvz", 1, M, [
+            "all but the last component must exist",
+            "all components must exist",
+            "without requirements on components existence",
+            "do not output the trailing delimiter",
+            "quiet",
+            "suppress most error messages (on by default)",
+            "report error messages",
+            "end each output line with NUL, not newline"]);
+        _add_page("realpath", "print the resolved path", "[OPTION]... FILE...",
+            "Print the resolved absolute file name; all but the last component must exist.",
+            "emLPqsz", 1, M, [
+            "all components of the path must exist",
+            "no path components need exist or be a directory",
+            "resolve '..' components before symlinks",
+            "resolve symlinks as encountered (default)",
+            "suppress most error messages",
+            "don't expand symlinks",
+            "end each output line with NUL, not newline"]);
         _add_page("stat", "display file or file system status", "[OPTION]... FILE...",
             "Display file or file system status.",
             "Lft", 1, M, [

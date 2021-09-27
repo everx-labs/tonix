@@ -58,14 +58,14 @@ contract PagesUtility is Pages {
             "Echo the STRING(s) to standard output.",
             "n", 0, M, [
             "do not output the trailing newline"]);
-    }
-
-    function init2() external override view accept {
         _add_page("expand", "convert tabs to spaces", "[OPTION]... [FILE]...",
             "Convert tabs in each FILE to spaces, writing to standard output.",
             "it", 1, M, [
             "do not convert tabs after non blanks",
             "have tabs N characters apart, not 8"]);
+    }
+
+    function init2() external override view accept {
         _add_page("file", "determine file type", "[OPTION...] [FILE...]",
             "Determine type of FILE.",
             "bELhNv0", 1, M, [
@@ -79,6 +79,14 @@ contract PagesUtility is Pages {
         _add_page("getent", "get entries from Name Service Switch libraries", "[option]... database key...",
             "Displays entries from databases supported by the Name Service Switch libraries, which are configured in /etc/nss‐witch.conf.  If one or more key arguments are provided, then only the entries that match the supplied keys will be displayed. Otherwise, if no key is provided, all entries will be displayed",
             "", 1, 2, [""]);
+        _add_page("getopt", "parse command options", "optstring parameters",
+            "Break up (parse) options in command lines for easy parsing by shell procedures.",
+            "oqQTu", 1, M, [
+            "the short options to be recognized",
+            "disable error reporting by getopt(3)",
+            "no normal output",
+            "test for getopt(1) version",
+            "do not quote the output"]);
         _add_page("grep", "print lines that match patterns", "[OPTION...] PATTERNS [FILE...]",
             "Searches for PATTERNS in each FILE and prints each line that matches a pattern.",
             "vx", 2, M, [
@@ -135,27 +143,11 @@ contract PagesUtility is Pages {
             "sz", 1, M, [
             "paste one file at a time instead of in parallel",
             "line delimiter is NUL, not newline"]);
-        _add_page("readlink", "print resolved symbolic links or canonical file names", "[OPTION]... FILE...",
-            "Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
-            "femnqsvz", 1, M, [
-            "all but the last component must exist",
-            "all components must exist",
-            "without requirements on components existence",
-            "do not output the trailing delimiter",
-            "quiet",
-            "suppress most error messages (on by default)",
-            "report error messages",
-            "end each output line with NUL, not newline"]);
-        _add_page("realpath", "print the resolved path", "[OPTION]... FILE...",
-            "Print the resolved absolute file name; all but the last component must exist.",
-            "emLPqsz", 1, M, [
-            "all components of the path must exist",
-            "no path components need exist or be a directory",
-            "resolve '..' components before symlinks",
-            "resolve symlinks as encountered (default)",
-            "suppress most error messages",
-            "don't expand symlinks",
-            "end each output line with NUL, not newline"]);
+        _add_page("pathchk", "check whether file names are valid or portable", "[OPTION]... NAME...",
+            "Diagnose invalid or unportable file names.",
+            "pP", 1, M, [
+            "check for most POSIX systems",
+            "check for empty names and leading \"-\""]);
         _add_page("rev", "reverse lines characterwise", "[option] [file...]",
             "Copies the specified files to standard output, reversing the order of characters in every line.",
             "", 1, M, [""]);

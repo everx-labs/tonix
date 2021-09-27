@@ -16,9 +16,12 @@ contract PagesSession is Pages {
             "force symbolic links to be followed",
             "use the physical directory structure without following symbolic links",
             "with -P, and if the current working directory is invalid, signal error"]);
-        _add_page("dd", "convert and copy a file", "[OPERAND]...",
-            "Copy a file, converting and formatting according to the operands.",
-            "", 0, M, [""]);
+        _add_page("env", "run a program in a modified environment", "[OPTION]... [COMMAND [ARG]...]",
+            "Run COMMAND in the environment.",
+            "i0v", 1, M, [
+            "start with an empty environment",
+            "end each output line with NUL, not newline",
+            "print verbose information for each processing step"]);
         _add_page("finger", "user information lookup program", "[-lms] [user ...]",
             "Displays information about the system users.",
             "lms", 1, M, [
@@ -100,6 +103,14 @@ contract PagesSession is Pages {
             "LP", 0, 0, [
             "use PWD from environment, even if it contains symlinks",
             "avoid all symlinks"]);
+        _add_page("script", "make typescript of terminal session", "[options] [file]",
+            "Makes a typescript of everything displayed on your terminal.",
+            "afoqt", 1, M, [
+            "append the output",
+            "run flush after each write",
+            "terminate if output files exceed size",
+            "be quiet"
+            "output timing data to stderr or to FILE"]);
         _add_page("uname", "print system information", "[OPTION]...",
             "Print certain system information. With no OPTION, same as -s.",
             "asnrvmpio", 0, 0, ["print all information, in the following order, except omit -p and -i if unknown:",
