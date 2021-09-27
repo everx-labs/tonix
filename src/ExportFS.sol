@@ -27,6 +27,16 @@ abstract contract ExportFS is Internal, Commands, IExportFS {
         }
     }
 
+    function query_export_node(string s_export, string s_file_name) external override accept {
+        for (SuperBlock sb: _sb_exports)
+            if (sb.file_system_OS_type == s_export)
+                for (uint16 i = 0; i < sb.inode_count; i++)
+                    if (_export_fs.inodes[sb.first_inode + i].file_name == s_file_name) {
+                        IImport(msg.sender).update_node{value: 0.02 ton, flag: 1}(_export_fs.inodes[sb.first_inode + i]);
+                        break;
+                    }
+    }
+
     /* Print an internal debugging information about the exported file system state */
     function dump_export_fs(uint8 level) external view returns (string) {
         return _dump_fs(level, _export_fs);

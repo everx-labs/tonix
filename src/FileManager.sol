@@ -296,12 +296,12 @@ contract FileManager is SyncFS, CacheFS {
         string[] t2 = _fs.inodes[arg_list[1].idx].text_data;
         string file_name_1 = arg_list[0].path;
         string file_name_2 = arg_list[1].path;
-        for (uint16 i = 0; i < t1.length; i++) {
+        for (uint i = 0; i < t1.length; i++) {
             string line1 = t1[i];
             string line2 = t2[i];
             bytes b1 = bytes(line1);
             bytes b2 = bytes(line2);
-            for (uint16 j = 0; j < line1.byteLength(); j++) {
+            for (uint j = 0; j < line1.byteLength(); j++) {
                 uint8 u1 = uint8(b1[j]);
                 uint8 u2 = uint8(b2[j]);
                 if (u1 != u2) {

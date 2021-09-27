@@ -103,6 +103,19 @@ struct GroupInfo {
     bool is_system;
 }
 
+struct Login {
+    uint16 user_id;
+    uint16 tty_id;
+    uint16 process_id;
+    uint32 login_time;
+}
+
+struct TTY {
+    uint8 device_id;
+    uint16 user_id;
+    uint16 login_id;
+}
+
 /* Base contract to work with index nodes */
 abstract contract Internal is Base, String {
 
@@ -173,6 +186,10 @@ abstract contract Internal is Base, String {
     uint16 constant UAO_REMOVE_HOME_DIR     = 1024;
     uint16 constant UAO_REMOVE_EMPTY_GROUPS = 2048;
 
+    uint8 constant AE_LOGIN         = 1;
+    uint8 constant AE_LOGOUT        = 2;
+    uint8 constant AE_SHUTDOWN      = 3;
+
     /* File system helpers */
     function _dump_fs(uint8 level, FileSystem fs) internal pure returns (string out) {
         for ((uint16 i, Inode ino): fs.inodes) {
@@ -185,35 +202,25 @@ abstract contract Internal is Base, String {
     }
 
     function _get_fs(uint8 fs_type, string fs_uuid, string[] root_subdirs) internal pure returns (FileSystem fs) {
-        SuperBlock sb = SuperBlock(true, true, fs_uuid, 0, 0, MAX_INODES, MAX_BLOCKS, DEF_BLOCK_SIZE, now, now, now, 0, MAX_MOUNT_COUNT, 1, INODES + 1, DEF_INODE_SIZE);
+        uint16 n = uint16(root_subdirs.length) + 1;
 
-        fs = FileSystem(fs_uuid, fs_type, sb, ROOT_DIR + 1);
+        SuperBlock sb = SuperBlock(
+            true, true, fs_uuid, n, n, MAX_INODES - n, MAX_BLOCKS - n, DEF_BLOCK_SIZE,
+            now, now, now, 0, MAX_MOUNT_COUNT, 1, INODES + 1, DEF_INODE_SIZE);
+
+        fs = FileSystem(fs_uuid, fs_type, sb, ROOT_DIR + n);
         Inode root_dir = _get_dir_node(ROOT_DIR, ROOT_DIR, SUPER_USER, SUPER_USER_GROUP, "");
 
-        uint16 n_subdirs = uint16(root_subdirs.length);
-
-        for (uint16 i = 0; i < n_subdirs; i++) {
+        for (uint i = 0; i < n - 1; i++) {
             string sub_dir_name = root_subdirs[i];
-            uint16 index = ROOT_DIR + i + 1;
+            uint16 index = uint16(ROOT_DIR + i + 1);
             fs.inodes[index] = _get_dir_node(index, ROOT_DIR, SUPER_USER, SUPER_USER_GROUP, sub_dir_name);
             string dir_entry = _dir_entry_line(index, sub_dir_name, FT_DIR);
             root_dir.text_data.push(dir_entry);
             root_dir.file_size += dir_entry.byteLength();
         }
-        root_dir.n_links += n_subdirs;
+        root_dir.n_links += n - 1;
         fs.inodes[ROOT_DIR] = root_dir;
-        fs.sb = _claim_sb_inodes(sb, n_subdirs + 1);
-        fs.ic += n_subdirs;
-    }
-
-    function _claim_sb_inodes(SuperBlock sb_in, uint16 n) internal pure returns (SuperBlock sb) {
-        sb = sb_in;
-        sb.inode_count += n;
-        sb.block_count += n;
-        sb.free_blocks -= n;
-        sb.free_inodes -= n;
-        sb.last_write_time = now;
-        sb.lifetime_writes++;
     }
 
     /* Directory entry helpers */
@@ -225,26 +232,17 @@ abstract contract Internal is Base, String {
         return dir;
     }
 
-    function _add_dir_entry_fs(FileSystem fs, uint16 dir_index, uint16 ino, string file_name, uint8 file_type) internal pure returns (Inode) {
-        string dirent = _dir_entry_line(ino, file_name, file_type);
-        Inode dir = fs.inodes[dir_index];
-        dir.text_data.push(dirent);
-        dir.file_size += uint32(dirent.byteLength());
-        dir.n_links++;
-        return dir;
-    }
-
     function _read_dir_entry(string s) internal pure returns (string file_name, uint16 inode, uint8 file_type) {
         file_type = _file_type(s.substr(0, 1));
-        uint16 p = _strchr(s, "\t");
+        uint p = _strchr(s, "\t");
         file_name = s.substr(1, p - 2);
         (uint inode_n, bool success) = stoi(s.substr(p, s.byteLength() - p));
         if (success)
             inode = uint16(inode_n);
     }
 
-    function _dir_entry_line(uint16 inode, string file_name, uint8 file_type) internal pure returns (string) {
-        return _file_type_sign(file_type) + file_name + format("\t{}", inode);
+    function _dir_entry_line(uint16 index, string file_name, uint8 file_type) internal pure returns (string) {
+        return _file_type_sign(file_type) + file_name + format("\t{}", index);
     }
 
     /* Index node, file and directory entry types helpers */
@@ -345,10 +343,12 @@ abstract contract Internal is Base, String {
     }
 
     function _get_dir_node(uint16 this_dir, uint16 parent_dir, uint16 owner, uint16 group, string dir_name) internal pure returns (Inode) {
-        return Inode(DEF_DIR_MODE, owner, group, 13, 2, now, now, dir_name, [format("d.\t{}", this_dir), format("d..\t{}", parent_dir)]);
+//        return Inode(DEF_DIR_MODE, owner, group, 13, 2, now, now, dir_name, [format("d.\t{}", this_dir), format("d..\t{}", parent_dir)]);
+        return _get_any_node(FT_DIR, owner, group, dir_name, [format("d.\t{}", this_dir), format("d..\t{}", parent_dir)]);
     }
 
     function _get_symlink_node(uint16 owner, uint16 group, string file_name, string target_dirent) internal pure returns (Inode) {
-        return Inode(DEF_SYMLINK_MODE, owner, group, uint32(target_dirent.byteLength()), 1, now, now, file_name, [target_dirent]);
+//        return Inode(DEF_SYMLINK_MODE, owner, group, uint32(target_dirent.byteLength()), 1, now, now, file_name, [target_dirent]);
+        return _get_any_node(FT_SYMLINK, owner, group, file_name, [target_dirent]);
     }
 }

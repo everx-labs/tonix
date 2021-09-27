@@ -12,9 +12,13 @@ unsigned const ACT_DEVICE_STATUS    = 6;
 unsigned const ACT_READ_INDEX       = 7;
 unsigned const ACT_USER_ADMIN_OP    = 8;
 unsigned const ACT_USER_STATS_OP    = 9;
+unsigned const ACT_USER_ACCESS_OP   = 10;
+unsigned const ACT_READ_PAGE        = 11;
+
 unsigned const ACT_UPDATE_NODES     = 16;
 unsigned const ACT_UPDATE_DEVICES   = 32;
 unsigned const ACT_UPDATE_USERS     = 64;
+unsigned const ACT_UPDATE_LOGINS    = 128;
 unsigned const ACT_PIPE_OUT_TO_FILE = 512;
 unsigned const ACT_PRINT_ERRORS     = 1024;
 unsigned const ACT_IO_EVENT         = 2048;
@@ -124,6 +128,10 @@ int _prompt(char *s) {
         system("make ru g=user_admin_op");
     if (action_primary == ACT_USER_STATS_OP)
         system("make ru g=user_stats_op");
+    if (action_primary == ACT_USER_ACCESS_OP)
+        system("make ru g=user_access_op");
+    if (action_primary == ACT_READ_PAGE)
+        system("make ru g=read_page");
 
     if (ext_action & EXT_OPEN_FILE) {
         system("make copy_in");
@@ -155,6 +163,8 @@ int _prompt(char *s) {
         system("make ca g=update_nodes");
     if (action2 & ACT_UPDATE_USERS)
         system("make ca g=update_users");
+    if (action2 & ACT_UPDATE_USERS)
+        system("make ca g=update_logins");
 
     if (ext_action & EXT_WRITE_FILES)
         system("make write_all");

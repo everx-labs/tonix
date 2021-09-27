@@ -99,11 +99,7 @@ contract DataVolume is ExportFS {
             "/etc\tDataVolume\t1\t3\t2",
             "/usr\tDataVolume\t1\t8\t1",
             "/sys/dev/block\tDeviceManager\t1\t13\t1",
-            "/sys/dev/char\tDeviceManager\t1\t14\t2",
-            "/bin\tManualCommands\t1\t1\t1",
-            "/bin\tManualStatus\t1\t1\t1",
-            "/bin\tManualSession\t1\t1\t1",
-            "/bin\tManualUtility\t1\t1\t1"]);
+            "/sys/dev/char\tDeviceManager\t1\t14\t2"]);
         _add_data_file("fs_types", [
             "?unknown",
             "-regular file",
@@ -126,13 +122,21 @@ contract DataVolume is ExportFS {
             "0:439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb\tDataVolume",
             "0:41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5\tBlockDevice",
             "0:4be68a2f14b949f1388f8e5dce3bbee14d35518abd8efcc93919bbb921218f8d\tSessionManager",
-            "0:4b937783725628153f2fa320f25a7dd1d68acf948e38ea5a0c5f7f3857db8981\tManualCommands",
-            "0:41d95cddc9ca3c082932130c208deec90382f5b7c0036c8d84ac3567e8b82420\tManualStatus",
             "0:48a04e9fc99be89ddfe4eb1f7303ee417ebae174514b5e11c072834259250eec\tPrintFormatted",
-            "0:41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e\tManualSession",
-            "0:4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421\tManualUtility",
             "0:430dd570de5398dbc2319979f5ba4aa99d5254e5382d3c344b985733d141617b\tDeviceManager",
             "0:4a7cd37ce66473c7b383a245891502e5d05c626a69ca764165e2c7d6edd9e317\tAccessManager",
+            "0:cc59225a037b56f2cc325c9ced611994e160c4485537fe01ab3787e5d92ddac3\tManualPages",
+            "0:9bc7fdbdadc754e31918f29c22af4a949787e22e84052d94c05e23e9d6e74099\tPagesStatus",
+            "0:5838d84e0998f90b98c6a8fa7e6727b9dc7fb7a1f686631bf929206d33a4fd30\tPagesCommands",
+            "0:9fb67eacdcb4ef94f9c5c67787778a413328904fe7a3513fd921ee9881114632\tPagesSession",
+            "0:379d5fffd72aa80b00e3f3dd73f0f748eeac311b5992de9b3cd3115b97cbb525\tPagesUtility",
+            "0:694d24fe1aa0464859d21ce58a62875b80e16f6c36595f363e8b86b603bde7d4\tPagesAdmin",
+            "0:9f1e5499529a00aad0990d2f7dd7d1bfd23e2d0939d4e739e2659dc27313819a\tStaticBackup"]);
+        _add_data_file("legacy_hosts", [
+            "0:4b937783725628153f2fa320f25a7dd1d68acf948e38ea5a0c5f7f3857db8981\tManualCommands",
+            "0:41d95cddc9ca3c082932130c208deec90382f5b7c0036c8d84ac3567e8b82420\tManualStatus",
+            "0:41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e\tManualSession",
+            "0:4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421\tManualUtility",
             "0:650627a3165cea5c12558aaf9d38f791a33660792d41136e1a6dba48549ce89b\tManualAdmin"]);
         _add_data_file("magic", [
             "11"]);

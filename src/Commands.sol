@@ -114,10 +114,13 @@ abstract contract Commands is Base {
     uint16 constant ACT_READ_INDEX      = 7;
     uint16 constant ACT_USER_ADMIN_OP   = 8;
     uint16 constant ACT_USER_STATS_OP   = 9;
+    uint16 constant ACT_USER_ACCESS_OP  = 10;
+    uint16 constant ACT_READ_PAGE       = 11;
 
     uint16 constant ACT_UPDATE_NODES    = 16;
     uint16 constant ACT_UPDATE_DEVICES  = 32;
     uint16 constant ACT_UPDATE_USERS    = 64;
+    uint16 constant ACT_UPDATE_LOGINS   = 128;
 
     uint16 constant ACT_PIPE_OUT_TO_FILE = 512;
 
@@ -263,6 +266,10 @@ abstract contract Commands is Base {
         return c == cd || c == id || c == login || c == logout || c == last || c == pwd || c == script || c == who || c == whoami;
     }
 
+    function _op_user_access(uint8 c) internal pure returns (bool) {
+        return c == login || c == logout;
+    }
+
     function _op_network(uint8 c) internal pure returns (bool) {
         return c == account || c == mount || c == ping;
     }
@@ -272,7 +279,7 @@ abstract contract Commands is Base {
     }
 
     function _op_user_stats(uint8 c) internal pure returns (bool) {
-        return c == lslogins;
+        return c == finger || c == last || c == lslogins || c == utmpdump || c == who;
     }
 
     function _reads_file_fixed(uint8 c) internal pure returns (bool) {

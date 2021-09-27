@@ -11,8 +11,27 @@ abstract contract Format is String {
     uint8 constant ALIGN_CENTER = 3;
 
     struct Column {
-        uint16 width;
+        bool is_visible;
+        uint width;
         uint8 align;
+    }
+
+    function _format_table_ext(Column[] cf, string[][] lines, string delimiter, string line_delimiter) internal pure returns (string out) {
+        uint[] max_widths = _max_table_row_widths(lines);
+        uint n_columns = cf.length;
+        uint n_rows = lines.length;
+        for (uint i = 0; i < n_columns; i++)
+            cf[i].width = math.min(cf[i ].width, max_widths[i]);
+        for (uint i = 0; i < n_rows; i++) {
+            string[] fields = lines[i];
+            uint len = fields.length;
+            for (uint j = 0; j < len; j++) {
+                (bool is_visible, uint width, uint8 align) = cf[j].unpack();
+                if (is_visible)
+                    out.append((j > 0 ? delimiter :"") + _pad(fields[j], width, align));
+            }
+            out.append(line_delimiter);
+        }
     }
 
     function _format_table(string[][] lines, string delimiter, string line_delimiter, uint8 align) internal pure returns (string out) {
@@ -29,7 +48,7 @@ abstract contract Format is String {
     }
 
     function _spaces(uint n) internal pure returns (string) {
-        string space_field = "                                                                                     ";
+        string space_field = "                                                                          ";
         return space_field.substr(0, n);
     }
 
@@ -49,14 +68,16 @@ abstract contract Format is String {
     }
 
     function _max_table_row_widths(string[][] rows) internal pure returns (uint[] max_widths) {
-        string[] fields0 = rows[0];
-        for (uint i = 0; i < fields0.length; i++)
-            max_widths.push(fields0[i].byteLength());
-        for (uint i = 1; i < rows.length; i++) {
+        string[] header = rows[0];
+        uint header_len = header.length;
+        for (uint i = 0; i < header_len; i++)
+            max_widths.push(header[i].byteLength());
+        uint n_rows = rows.length;
+        for (uint i = 1; i < n_rows; i++) {
             string[] fields = rows[i];
-            for (uint j = 0; j < fields.length; j++)
-                if (fields[j].byteLength() > max_widths[j])
-                    max_widths[j] = fields[j].byteLength();
+            uint n_fields = fields.length;
+            for (uint j = 0; j < n_fields; j++)
+                max_widths[j] = math.max(max_widths[j], fields[j].byteLength());
         }
     }
 
@@ -69,7 +90,7 @@ abstract contract Format is String {
     }
 
     /* Time display helpers */
-    function _to_date(uint32 t) internal pure returns (string month, uint32 day, uint32 hour, uint32 minute, uint32 second) {
+    /*function _to_date(uint32 t) internal pure returns (string month, uint32 day, uint32 hour, uint32 minute, uint32 second) {
         uint32 Aug_1st = 1627776000; // Aug 1st
         uint32 Sep_1st = 1630454400; // Aug 1st
         bool past_Aug = t >= Sep_1st;
@@ -87,6 +108,26 @@ abstract contract Format is String {
 
     function _ts(uint32 t) internal pure returns (string) {
         (string month, uint32 day, uint32 hour, uint32 minute, uint32 second) = _to_date(t);
+        return format("{} {} {:02}:{:02}:{:02}", month, day, hour, minute, second);
+    }*/
+    function _to_date(uint t) internal pure returns (string month, uint day, uint hour, uint minute, uint second) {
+        uint Aug_1st = 1627776000; // Aug 1st
+        uint Sep_1st = 1630454400; // Aug 1st
+        bool past_Aug = t >= Sep_1st;
+        if (t >= Aug_1st) {
+            month = past_Aug ? "Sep" : "Aug";
+            uint t0 = t - (past_Aug ? Sep_1st : Aug_1st);
+            day = t0 / 86400 + 1;
+            uint t1 = t0 % 86400;
+            hour = t1 / 3600;
+            uint t2 = t1 % 3600;
+            minute = t2 / 60;
+            second = t2 % 60;
+        }
+    }
+
+    function _ts(uint t) internal pure returns (string) {
+        (string month, uint day, uint hour, uint minute, uint second) = _to_date(t);
         return format("{} {} {:02}:{:02}:{:02}", month, day, hour, minute, second);
     }
 

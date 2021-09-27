@@ -9,15 +9,16 @@ R:=StatusReader
 I:=SessionManager
 C:=FileManager
 P:=PrintFormatted
+M:=ManualPages
 DM:=DeviceManager
-MAN_CMD:=ManualCommands
-MAN_SES:=ManualSession
-MAN_STAT:=ManualStatus
-MAN_AUX:=ManualUtility
-MAN_UA:=ManualAdmin
-T:=TestFS
+STB:=StaticBackup
+PG_CMD:=PagesCommands
+PG_SES:=PagesSession
+PG_STAT:=PagesStatus
+PG_AUX:=PagesUtility
+PG_UA:=PagesAdmin
 INIT:=
-TA:=$A $D $R $B $I $C $(MAN_CMD) $(MAN_SES) $(MAN_STAT) $(MAN_AUX) $(MAN_UA) $P $(DM)
+TA:=$A $D $R $B $I $C $M $P $(DM) $(PG_STAT) $(PG_CMD) $(PG_SES) $(PG_AUX) $(PG_UA) $(STB)
 RKEYS:=$(KEY)/k1.keys
 VAL0:=15
 TST:=tests
@@ -53,6 +54,7 @@ $(TOOLS_BIN):
 
 tools: $(TOOLS_BIN)
 	$(foreach t,$(wordlist 2,4,$^),$t --version;)
+
 npid?=2
 dirs:
 	mkdir -p $(DIRS)
@@ -208,6 +210,10 @@ $p/update_users.args: $p/session $p/ue
 	jq -s '{session: .[0], ues: [.[1]]}' $^ >$@
 $p/update_users.res: $p/update_users.args
 	$($A_c)
+$p/update_logins.args: $p/session $p/le
+	jq -s '{session: .[0], ues: [.[1]]}' $^ >$@
+$p/update_logins.res: $p/update_logins.args
+	$($A_c)
 
 $p/dev_admin.args: $p/session $p/input $p/arg_list
 	jq -s '{session: .[0], input: .[1], arg_list: .[2]}' $^ >$@
@@ -263,12 +269,23 @@ $p/user_stats_op.out: $p/user_stats_op.args
 	$($A_r)
 	$(call _jqra,action)
 	jq -j '.out' <$@
-$p/process_command.args: $p/session $p/input
+$p/user_access_op.args: $p/session $p/input
 	jq -s '{session: .[0], input: .[1]}' $^ >$@
+$p/user_access_op.out: $p/user_access_op.args
+	$($A_r)
+	$(call _jqa,le)
+	$(call _jqra,action)
+	jq -j '.out' <$@
+$p/process_command.args: $p/input
+	jq -s '{input: .[0]}' $^ >$@
 $p/process_command.out: $p/process_command.args
 	$($P_r)
 	jq -j '.out' <$@
-	jq -j 'select(.err != null) .err' <$@
+$p/read_page.args: $p/input
+	jq -s '{input: .[0]}' $^ >$@
+$p/read_page.out: $p/read_page.args
+	$($M_r)
+	jq -j '.out' <$@
 $p/format_text.args: $p/input $p/texts $p/arg_list
 	jq -s '{input: .[0], texts: .[1], args: .[2]}' $^ >$@
 $p/format_text.out: $p/format_text.args
@@ -365,15 +382,17 @@ pv_Import=$(pv_Dev)
 pv_$A=$(pv_Export) _users _groups _group_members _user_groups _login_defs_bool _login_defs_uint16 _login_defs_string _env_bool _env_uint16 _env_string
 pv_$C=$(pv_Dev)
 pv_$R=$(pv_Dev)
-pv_$I=$(pv_Dev) _command_info
+pv_$I=$(pv_Dev) _command_info _command_names
 pv_$B=$(pv_Dev) _file_table _blocks _fd_table _dev
 pv_$D=$(pv_Export)
 pv_$P=$(pv_Import)
-pv_$(MAN_CMD)=$(pv_Export)
-pv_$(MAN_SES)=$(pv_Export)
-pv_$(MAN_STAT)=$(pv_Export)
-pv_$(MAN_AUX)=$(pv_Export)
-pv_$(MAN_UA)=$(pv_Export)
+pv_$M=_command_info _command_names
+pv_$(STB)=_command_info _command_names
+pv_$(PG_CMD)=
+pv_$(PG_SES)=
+pv_$(PG_STAT)=
+pv_$(PG_AUX)=
+pv_$(PG_UA)=
 pv_$(DM)=$(pv_Export) _devices _boot_mounts _static_mounts _current_mounts
 
 $(foreach c,$(TA),$(eval $(call t-dump,$c)))

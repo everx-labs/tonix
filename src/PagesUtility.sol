@@ -1,11 +1,11 @@
 pragma ton-solidity >= 0.49.0;
 
-import "Manual.sol";
+import "Pages.sol";
 
 /* Utility commands manual */
-contract ManualUtility is Manual {
+contract PagesUtility is Pages {
 
-    function _init1() internal override accept {
+    function _init1() internal override view accept {
         _add_page("basename", "strip directory and suffix from filenames", "NAME",
             "Print NAME with any leading directory components removed.",
             "asz", 1, M, [
@@ -14,7 +14,7 @@ contract ManualUtility is Manual {
             "end each output line with NUL, not newline"]);
         _add_page("cat", "concatenate files and print on the standard output", "[OPTION]... [FILE]...",
             "Concatenate FILE(s) to standard output.",
-            "AbeEnstTv", 1, M, [
+            "AbeEnstTuv", 1, M, [
             "equivalent to -vET",
             "number nonempty output lines, overrides -n",
             "equivalent to -vE",
@@ -23,6 +23,7 @@ contract ManualUtility is Manual {
             "suppress repeated empty output lines",
             "equivalent to -vT",
             "display TAB characters as ^I",
+            "(ignored)",
             "use ^ and M- notation, except for LFD and TAB"]);
         _add_page("cksum", "checksum and count the bytes in a file", "[FILE]...",
             "Print CRC checksum and byte counts of each FILE.",
@@ -59,7 +60,7 @@ contract ManualUtility is Manual {
             "do not output the trailing newline"]);
     }
 
-    function init2() external override accept {
+    function init2() external override view accept {
         _add_page("expand", "convert tabs to spaces", "[OPTION]... [FILE]...",
             "Convert tabs in each FILE to spaces, writing to standard output.",
             "it", 1, M, [
@@ -98,7 +99,7 @@ contract ManualUtility is Manual {
             "output only a short usage synopsis for each topic"]);
         _add_page("look", "display lines beginning with a given string", "[-bdf] [-t termchar] string [file ...]",
             "Displays any lines in file which contain string as a prefix.",
-            "bdft", 1, M, [
+            "bdft", 1, 3, [
             "use a binary search on the given word list",
             "dictionary character set and order, i.e., only alphanumeric characters are compared",
             "ignore the case of alphabetic characters",
@@ -128,7 +129,7 @@ contract ManualUtility is Manual {
             "vertical align of modes and owners"]);
     }
 
-    function init3() external override accept {
+    function init3() external override view accept {
         _add_page("paste", "merge lines of files", "[OPTION]... [FILE]...",
             "Write lines consisting of the sequentially corresponding lines from each FILE, separated by TABs, to standard output.",
             "sz", 1, M, [
@@ -136,11 +137,12 @@ contract ManualUtility is Manual {
             "line delimiter is NUL, not newline"]);
         _add_page("readlink", "print resolved symbolic links or canonical file names", "[OPTION]... FILE...",
             "Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
-            "femnqvz", 1, M, [
+            "femnqsvz", 1, M, [
             "all but the last component must exist",
             "all components must exist",
             "without requirements on components existence",
             "do not output the trailing delimiter",
+            "quiet",
             "suppress most error messages (on by default)",
             "report error messages",
             "end each output line with NUL, not newline"]);
@@ -166,7 +168,7 @@ contract ManualUtility is Manual {
             "line delimiter is NUL, not newline"]);
         _add_page("tr", "translate or delete characters", "[OPTION]... SET1 [SET2]",
             "Translate, squeeze, and/or delete characters from standard input, writing to standard output.",
-            "ds", 1, 2, [
+            "ds", 1, M, [
             "delete characters in SET1, do not translate",
             "replace each sequence of a repeated character that is listed in the last specified SET, with a single occurrence of that character"]);
         _add_page("unexpand", "convert spaces to tabs", "[OPTION]... [FILE]...",
@@ -188,6 +190,5 @@ contract ManualUtility is Manual {
             "emit debugging messages",
             "do not trim output to terminal width",
             "print verbose warning messages"]);
-        _write_export_sb();
     }
 }

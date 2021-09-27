@@ -4,29 +4,29 @@ pragma ton-solidity >= 0.49.0;
 abstract contract String {
 
     /* Returns the first occurrence of a character in a string */
-    function _strchr(string text, string symbol) internal pure returns (uint16) {
+    function _strchr(string text, string symbol) internal pure returns (uint) {
         for (uint i = 0; i < text.byteLength(); i++)
             if (text.substr(i, 1) == symbol)
-                return uint16(i + 1);
+                return i + 1;
     }
 
     /* Returns the last occurrence of a character in a string */
-    function _strrchr(string text, string symbol) internal pure returns (uint16) {
+    function _strrchr(string text, string symbol) internal pure returns (uint) {
         for (uint i = text.byteLength(); i > 0; i--)
             if (text.substr(i - 1, 1) == symbol)
-                return uint16(i);
+                return i;
     }
 
-    function _strstr(string text, string pattern) internal pure returns (uint16) {
+    function _strstr(string text, string pattern) internal pure returns (uint) {
         uint text_len = text.byteLength();
         uint pattern_len = pattern.byteLength();
         for (uint i = 0; i <= text_len - pattern_len; i++)
             if (text.substr(i, pattern_len) == pattern)
-                return uint16(i + 1);
+                return i + 1;
     }
 
     function _translate(string text, string pattern, string symbols) internal pure returns (string out) {
-        uint16 p = _strstr(text, pattern);
+        uint p = _strstr(text, pattern);
         return p > 0 ? text.substr(0, p - 1) + symbols + _translate(text.substr(p - 1 + pattern.byteLength()), pattern, symbols) : text;
     }
 
@@ -42,13 +42,13 @@ abstract contract String {
 
     /* Squeeze repeating occurences of "symbol" in "text" */
     function _tr_squeeze(string text, string symbol) internal pure returns (string res) {
-        uint start = 0;
-        uint p = 0;
+        uint start;
+        uint p;
         uint len = text.byteLength();
         while (p < len) {
             if (text.substr(p, 1) == symbol) {
                 res.append(text.substr(start, p - start + 1));
-                while (p < len && (text.substr(p, 1) == symbol))
+                while (p < len && text.substr(p, 1) == symbol)
                     p++;
                 start = p;
             }
@@ -59,8 +59,8 @@ abstract contract String {
 
     function _split(string text, string delimiter) internal pure returns (string[] res) {
         uint len = text.byteLength();
-        uint prev = 0;
-        uint cur = 0;
+        uint prev;
+        uint cur;
         while (cur < len - 1) {
             if (text.substr(cur, 1) == delimiter) {
                 res.push(text.substr(prev, cur - prev));
@@ -74,12 +74,6 @@ abstract contract String {
     function _merge(string[] lines) internal pure returns (string text) {
         for (string line: lines)
             text.append(line);
-    }
-
-    function _strtok(string text, string delimiter) internal pure returns (string[] res) {
-        for (string line: _get_lines(text))
-            for (string s: _split(line, delimiter))
-                res.push(s);
     }
 
     function _element_at(uint16 line, uint16 column, string[] text, string delimiter) internal pure returns (string) {
@@ -109,52 +103,16 @@ abstract contract String {
         return " \'" + s + "\' ";
     }
 
-    function _get_lines(string text) internal pure returns (string[] lines) {
-        if (!text.empty()) {
-            uint16 l = _strchr(text, "\n");
-            if (l == 0)
-                lines.push(text);
-            else {
-                lines.push(text.substr(0, l - 1));
-                string[] tail = _get_lines(text.substr(l, text.byteLength() - l));
-                for (string s: tail)
-                    lines.push(s);
-            }
-        }
-    }
-
-    function _get_words(string line) internal pure returns (string[] words) {
-        if (!line.empty()) {
-            uint16 l = _strchr(line, "\n");
-            if (l == 0)
-                words.push(line);
-            else {
-                words.push(line.substr(0, l - 1));
-                string[] tail = _get_words(line.substr(l, line.byteLength() - l));
-                for (string s: tail)
-                    words.push(s);
-            }
-        }
-    }
-
-    function _line_and_word_count(string[] text) internal pure returns (uint16 lc, uint16 wc, uint32 cc, uint16 mw) {
-        for (string part: text) {
-            string[] lines = _get_lines(part);
-            lc = uint16(lines.length);
-            for (uint16 i = 0; i < lc; i++) {
-                string line = lines[i];
-                uint16 len = uint16(line.byteLength());
-                cc += len;
-                wc += _word_count(line);
-                if (len > mw) mw = len;
-            }
-        }
-    }
-
-    function _word_count(string text) internal pure returns (uint16) {
-        if (!text.empty()) {
-            uint16 l = _strchr(text, " ");
-            return l == 0 ? 1 : _word_count(text.substr(l, text.byteLength() - l)) + 1;
+    function _line_and_word_count(string[] text) internal pure returns (uint line_count, uint word_count, uint char_count, uint max_width, uint max_words_per_line) {
+        for (string line: text) {
+            uint line_len = line.byteLength();
+            string[] words = _split(line, " ");
+            uint n_words = words.length;
+            char_count += line_len;
+            word_count += n_words;
+            max_width = math.max(max_width, line_len);
+            max_words_per_line = math.max(max_words_per_line, n_words);
+            line_count++;
         }
     }
 
@@ -166,7 +124,7 @@ abstract contract String {
 
     function _lookup_pair_value(string name, string[] text) internal pure returns (string) {
         for (string s: text) {
-            uint16 p = _strchr(s, "\t");
+            uint p = _strchr(s, "\t");
             string key = s.substr(0, p - 1);
             string value = s.substr(p, uint16(s.byteLength()) - p);
             if (key == name)
@@ -185,7 +143,9 @@ abstract contract String {
             }
     }
 
-    /* Path utilities */
+    /********** Path utilities ************/
+
+    /* Disassemples a pathname into components */
     function _disassemble_path(string path) internal pure returns (string[] parts) {
         string dir_path;
         while (path.byteLength() > 1) {
@@ -197,28 +157,35 @@ abstract contract String {
         parts.push(path);
     }
 
+    /* strips extra heading and trailing slashes from a pathname */
     function _strip_path(string path) internal pure returns (string res) {
         res = _tr_squeeze(path, "/");
         uint len = res.byteLength();
-        if (len > 0) {
-            uint16 p = _strrchr(res, "/");
-            if (p == len)
-                res = res.substr(0, len - 1);
-        }
+        if (len > 0 && _strrchr(res, "/") == len)
+            res = res.substr(0, len - 1);
     }
 
+    /* Separates a pathname to directory-part and not-a-directory path */
     function _dir(string path) internal pure returns (string dir, string not_dir) {
         if (path.empty())
             return (".", "");
         if (path == "/")
             return ("/", "/");
-        uint16 q = _strrchr(path, "/");
+        uint q = _strrchr(path, "/");
         if (q == 0)
             return (".", path);
         uint len = path.byteLength();
         if (q == 1)
             return ("/", path.substr(1, len - 1));
         return (path.substr(0, q - 1), path.substr(q, len - q));
+    }
+
+    /* Assigns a rating to a string to sort alphabetically */
+    function _alpha_rating(string s, uint len) internal pure returns (uint rating) {
+        bytes bts = bytes(s);
+        uint lim = math.min(len, bts.length);
+        for (uint i = 0; i < lim; i++)
+            rating += uint(uint8(bts[i])) << ((len - i - 1) * 8);
     }
 
 }

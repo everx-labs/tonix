@@ -7,23 +7,14 @@ import "CacheFS.sol";
 contract PrintFormatted is Format, SyncFS, CacheFS {
 
     /* Process commands which do not require intrinsic knowledge about the file system */
-    function process_command(Session session, InputS input) external view returns (string out, string err) {
+    function process_command(InputS input) external pure returns (string out) {
         (uint8 c, string[] args, uint flags) = input.unpack();
-        Err[] errors;
-        session.wd = session.wd;
 
         /* "pure" commands */
-        if (c == basename) out = _basename(args, flags);
+        if (c == basename) out = _basename(flags, args);
         if (c == dirname) out = _dirname(args);
         if (c == echo) out = _echo(flags, args);
         if (c == uname) out = _uname(flags);
-
-        /* informational commands */
-        if (c == help) out = _help(args);
-        if (c == man) out = _man(args);
-        if (c == whatis) out = _whatis(args);
-
-        err = _print_errors(c, errors);
     }
 
     /* Format text data most likely obtained from a text file */
@@ -39,7 +30,6 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
         string[][] texts;
         for (uint i = 0; i < len; i++) {
             (, , uint16 idx, , ) = args[i].unpack();
-
             texts.push(_fs.inodes[idx].text_data);
         }
         session.wd = session.wd;
@@ -56,6 +46,8 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
         (uint8 c, string[] s_args, uint flags) = input.unpack();
 
         if (c == paste) out = _paste(flags, texts);
+        if (c == wc) out = _wc(flags, texts, args);
+
         uint n_texts = texts.length;
         string[] params;
 
@@ -73,12 +65,10 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
             if (c == grep) out.append(_grep(flags, text, params));
             if (c == head) out.append(_head(flags, text, args[i], params));
             if (c == look) out.append(_look(flags, text, params));
-//            if (c == more) out.append(_more(flags, text, args)); // Belongs to terminal
             if (c == rev) out.append(_rev(text));
             if (c == tail) out.append(_tail(flags, text, args[i], params));
             if (c == tr) out.append(_tr(flags, text, params));
             if (c == unexpand) out.append(_unexpand(flags, text, params));
-            if (c == wc) out.append(_wc(flags, text, args[i]));
             out.append("\n");
         }
     }
@@ -149,19 +139,33 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
         bool use_delimiter = (flags & _s) > 0;
 
         string delimiter = use_delimiter && !params.empty() ? params[0] : " ";
-
         string[][] table;
+
+        (, , , uint max_width, uint max_words_per_line) = _line_and_word_count(text);
+        uint max_columns = create_table ? max_words_per_line : (140 / max_width + 1);
+        string[] cur_line;
+        uint cur_columns;
 
         for (string s: text) {
             if (s.empty() && !ignore_empty_lines)
                 continue;
-            if (create_table)
-                table.push(_split(s, " "));
-            else
-                out.append(s + "\n");
+            if (create_table) {
+                cur_line = _split(s, " ");
+                cur_columns = cur_line.length;
+                for (uint i = 0; i < max_columns - cur_columns; i++)
+                    cur_line.push(" ");
+                table.push(cur_line);
+            } else {
+                cur_line.push(s);
+                cur_columns++;
+                if (cur_columns == max_columns) {
+                    cur_columns = 0;
+                    table.push(cur_line);
+                    delete cur_line;
+                }
+            }
         }
-        if (create_table)
-            out.append(_format_table(table, delimiter, "\n", ALIGN_LEFT));
+        out = _format_table(table, delimiter, "\n", ALIGN_LEFT);
     }
 
     function _cut(uint flags, string[] text, string[] params) private pure returns (string out) {
@@ -199,7 +203,6 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
         bool invert_match = (flags & _v) > 0;
         bool match_lines = (flags & _x) > 0;
 
-//        string pattern = args[0].path;
         string pattern = params[0];
 
         uint p_len = pattern.byteLength();
@@ -273,8 +276,8 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
     function _rev(string[] text) private pure returns (string out) {
         for (string line: text) {
             uint line_len = line.byteLength();
-            for (uint i = line_len - 1; i > 0; i--)
-                out.append(line.substr(i, 1));
+            for (uint i = line_len; i > 0; i--)
+                out.append(line.substr(i - 1, 1));
             out.append("\n");
         }
     }
@@ -360,7 +363,7 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
         string pattern = !params.empty() ? params[0] : "";
         string term_char = use_term_char && params.length > 1 ? params[1] : "\n";
 
-        uint16 p = _strchr(pattern, term_char);
+        uint p = _strchr(pattern, term_char);
         if (p > 0)
             pattern = pattern.substr(0, p - 1);
 
@@ -407,12 +410,21 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
         }
     }
 
-    function _wc(uint flags, string[] text, Arg arg) private pure returns (string out) {
-        bool print_bytes = true;
-        bool print_chars = false;
+    function _wc(uint flags, string[][] texts, Arg[] args) private pure returns (string out) {
         bool print_lines = true;
-        bool print_max_width = false;
         bool print_words = true;
+        bool print_chars = true;
+        bool print_bytes = false;
+        bool print_max_width = false;
+
+        uint total_lines;
+        uint total_words;
+        uint total_chars;
+        uint total_bytes;
+        uint overall_max_width;
+
+        uint n_texts = texts.length;
+        bool count_totals = n_texts > 1;
 
         if (flags > 0) {
             print_bytes = (flags & _c) > 0;
@@ -422,54 +434,53 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
             print_words = (flags & _w) > 0;
         }
 
-        string file_name = arg.path;
-        uint16 file_size = arg.dir_index;
+        string[][] table;
 
-        (uint16 lc, uint16 wc, uint32 cc, uint16 mw) = _line_and_word_count(text);
+        Column[] columns_format = [
+            Column(print_lines, 4, ALIGN_LEFT),
+            Column(print_words, 5, ALIGN_RIGHT),
+            Column(print_chars, 6, ALIGN_RIGHT),
+            Column(print_bytes, 6, ALIGN_RIGHT),
+            Column(print_max_width, 4, ALIGN_RIGHT),
+            Column(true, 32, ALIGN_LEFT)];
 
-        out = _if("", print_lines, format("  {} ", lc));
-        out = _if(out, print_words, format(" {} ", wc));
-        out = _if(out, print_bytes, format(" {} ", file_size));
-        out = _if(out, print_chars, format(" {} ", cc));
-        out = _if(out, print_max_width, format(" {} ", mw));
-        out.append(file_name);
-    }
+        for (uint i = 0; i < n_texts; i++) {
+            string[] text = texts[i];
+            if (text.empty())
+                continue;
+            (uint line_count, uint word_count, uint char_count, uint max_width, ) = _line_and_word_count(text);
 
-    /* Informational commands */
-    function _help(string[] args) private view returns (string out) {
-        if (args.empty())
-            return "Commands: " + _join_fields(_get_file_contents("/etc/command_list"), " ") + "\n";
-
-        for (string s: args) {
-            if (!_is_command_info_available(s)) {
-                out.append("help: no help topics match" + _quote(s) + "\nTry" + _quote("help help") + "or" + _quote("man -k " + s) + "or" + _quote("info " + s) + "\n");
-                break;
+            if (count_totals) {
+                total_lines += line_count;
+                total_words += word_count;
+                total_chars += char_count;
+                total_bytes += char_count;
+                if (overall_max_width < max_width)
+                    overall_max_width = max_width;
             }
-            out.append(_get_help_text(s));
+
+            table.push([
+                format("{}", line_count),
+                format("{}", word_count),
+                format("{}", char_count),
+                format("{}", char_count),
+                format("{}", max_width),
+                args[i].path]);
         }
-    }
-
-    function _man(string[] args) private view returns (string out) {
-        for (string s: args)
-            out.append(_is_command_info_available(s) ? _get_man_text(s) : "No manual entry for " + s + "\n");
-    }
-
-    function _whatis(string[] args) private view returns (string out) {
-        if (args.empty())
-            return "whatis what?\n";
-
-        for (string s: args) {
-            if (_is_command_info_available(s)) {
-                (string name, string purpose, , , , ) = _get_command_info(s);
-                out.append(name + " (1)\t\t\t - " + purpose + "\n");
-            } else
-                out.append(s + ": nothing appropriate.\n");
-        }
+        if (count_totals)
+            table.push([
+                format("{}", total_lines),
+                format("{}", total_words),
+                format("{}", total_chars),
+                format("{}", total_bytes),
+                format("{}", overall_max_width),
+                "total"]);
+        out = _format_table_ext(columns_format, table, " ", "\n");
     }
 
     /* "Pure" commands */
-    function _basename(string[] args, uint flags) private pure returns (string out) {
-        bool multiple_args = (flags & _a) > 0; // -a
+    function _basename(uint flags, string[] args) private pure returns (string out) {
+        bool multiple_args = (flags & _a) > 0;
         string line_terminator = ((flags & _z) > 0) ? "\x00" : "\n";
 
         if (multiple_args)
@@ -506,61 +517,13 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
         if ((flags & _p) > 0) out.append("TON ");
     }
 
-    /* Imports helpers */
-    function _get_imported_file_contents(string path, string file_name) internal view returns (string[] text) {
-        uint16 dir_index = _resolve_absolute_path(path);
-        (uint16 file_index, uint8 ft) = _fetch_dir_entry(file_name, dir_index);
-        if (ft > FT_UNKNOWN)
-            return _fs.inodes[file_index].text_data;
-        return ["Failed to read file " + file_name + " at path " + path + "\n"];
-    }
-
     function _fetch_element(uint16 index, string path, string file_name) internal view returns (string) {
         if (index > 0) {
-            string[] text = _get_imported_file_contents(path, file_name);
+            uint16 dir_index = _resolve_absolute_path(path);
+            (uint16 file_index, uint8 ft) = _fetch_dir_entry(file_name, dir_index);
+            string[] text = ft > FT_UNKNOWN ? _fs.inodes[file_index].text_data : ["Failed to read file " + file_name + " at path " + path + "\n"];
             return text.length > 1 ? text[index - 1] : _element_at(1, index, text, "\t");
         }
-    }
-
-    /* Informational commands helpers */
-    function _get_man_text(string s) private view returns (string) {
-        (string name, string purpose, string description, string[] uses, string option_names, string[] option_descriptions) = _get_command_info(s);
-        string usage;
-        for (string u: uses)
-            usage.append("\t" + name + " " + u + "\n");
-        string options;
-        for (uint i = 0; i < option_descriptions.length; i++)
-            options.append("\t" + "-" + option_names.substr(i, 1) + "\t" + option_descriptions[i] + "\n");
-        options.append("\t" + "--help\tdisplay this help and exit\n\t--version\n\t\toutput version information and exit\n");
-
-        return name + "(1)\t\t\t\t\tUser Commands\n\nNAME\n\t" + name + " - " + purpose + "\n\nSYNOPSIS\n" + usage +
-            "\nDESCRIPTION\n\t" + description + "\n\n" + options;
-    }
-
-    function _get_help_text(string command) private view returns (string) {
-        (string name, , string description, string[] uses, string option_names, string[] option_descriptions) = _get_command_info(command);
-        string usage;
-        for (string u: uses)
-            usage.append("\t" + name + " " + u + "\n");
-        string options = "\n";
-        for (uint i = 0; i < option_descriptions.length; i++)
-            options.append("  -" + option_names.substr(i, 1) + "\t\t" + option_descriptions[i] + "\n");
-        options.append("  --help\tdisplay this help and exit\n  --version\toutput version information and exit\n");
-
-        return "Usage: " + usage + description + options;
-    }
-
-    function _is_command_info_available(string command_name) private view returns (bool) {
-        uint16 bin_dir_index = _get_file_index("/bin");
-        (uint16 command_index, uint8 ft) = _fetch_dir_entry(command_name, bin_dir_index);
-        return ft > FT_UNKNOWN && _fs.inodes.exists(command_index);
-    }
-
-    function _get_command_info(string command) private view returns (string name, string purpose, string desc, string[] uses,
-                string option_names, string[] option_descriptions) {
-        string[] command_info = _get_imported_file_contents("/bin", command);
-        return (command_info[0], command_info[1], _join_fields(_get_tsv(command_info[3]), "\n"),
-            _get_tsv(command_info[2]), command_info[4], _get_tsv(command_info[5]));
     }
 
     /* Print error helpers */
@@ -579,12 +542,14 @@ contract PrintFormatted is Format, SyncFS, CacheFS {
     }
 
     function _command_specific_reason(uint8 c) internal pure returns (string) {
-        if (c == file) return "cannot open";
+        if (c == file || c == rev) return "cannot open";
+        if (c == head || c == tail) return "cannot open for reading";
         if (c == ln) return "failed to access";
         if (c == stat || c == cp || c == mv) return "cannot stat";
         if (c == du || c == ls || _op_access(c)) return "cannot access";
         if (c == rm) return "cannot remove";
         if (c == rmdir) return "failed to remove";
+        if (_op_format(c)) return "";
     }
 
     /* Initialization routine */
