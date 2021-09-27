@@ -4,11 +4,16 @@ import "Internal.sol";
 
 interface IExportFS {
     function rpc_mountd(uint16 export_id, uint16 mount_point) external;
+    function query_export_node(string export_volume, string file_name) external;
 }
 
 interface ICacheFS {
     function flush_fs_cache() external;
     function update_fs_cache(SuperBlock sb, DeviceInfo device, mapping (uint16 => ProcessInfo) processes, mapping (uint16 => UserInfo) users, mapping (uint16 => GroupInfo) groups, mapping (uint16 => Inode) inodes) external;
+}
+
+interface IImport {
+    function update_node(Inode inode) external;
 }
 
 interface ISourceFS {

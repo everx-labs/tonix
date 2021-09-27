@@ -1,11 +1,11 @@
 pragma ton-solidity >= 0.49.0;
 
-import "Manual.sol";
+import "Pages.sol";
 
 /* Utility commands manual */
-contract ManualUtility is Manual {
+contract PagesUtility is Pages {
 
-    function _init1() internal override accept {
+    function _init1() internal override view accept {
         _add_page("basename", "strip directory and suffix from filenames", "NAME",
             "Print NAME with any leading directory components removed.",
             "asz", 1, M, [
@@ -14,7 +14,7 @@ contract ManualUtility is Manual {
             "end each output line with NUL, not newline"]);
         _add_page("cat", "concatenate files and print on the standard output", "[OPTION]... [FILE]...",
             "Concatenate FILE(s) to standard output.",
-            "AbeEnstTv", 1, M, [
+            "AbeEnstTuv", 1, M, [
             "equivalent to -vET",
             "number nonempty output lines, overrides -n",
             "equivalent to -vE",
@@ -23,6 +23,7 @@ contract ManualUtility is Manual {
             "suppress repeated empty output lines",
             "equivalent to -vT",
             "display TAB characters as ^I",
+            "(ignored)",
             "use ^ and M- notation, except for LFD and TAB"]);
         _add_page("cksum", "checksum and count the bytes in a file", "[FILE]...",
             "Print CRC checksum and byte counts of each FILE.",
@@ -57,14 +58,14 @@ contract ManualUtility is Manual {
             "Echo the STRING(s) to standard output.",
             "n", 0, M, [
             "do not output the trailing newline"]);
-    }
-
-    function init2() external override accept {
         _add_page("expand", "convert tabs to spaces", "[OPTION]... [FILE]...",
             "Convert tabs in each FILE to spaces, writing to standard output.",
             "it", 1, M, [
             "do not convert tabs after non blanks",
             "have tabs N characters apart, not 8"]);
+    }
+
+    function init2() external override view accept {
         _add_page("file", "determine file type", "[OPTION...] [FILE...]",
             "Determine type of FILE.",
             "bELhNv0", 1, M, [
@@ -78,6 +79,14 @@ contract ManualUtility is Manual {
         _add_page("getent", "get entries from Name Service Switch libraries", "[option]... database key...",
             "Displays entries from databases supported by the Name Service Switch libraries, which are configured in /etc/nss‐witch.conf.  If one or more key arguments are provided, then only the entries that match the supplied keys will be displayed. Otherwise, if no key is provided, all entries will be displayed",
             "", 1, 2, [""]);
+        _add_page("getopt", "parse command options", "optstring parameters",
+            "Break up (parse) options in command lines for easy parsing by shell procedures.",
+            "oqQTu", 1, M, [
+            "the short options to be recognized",
+            "disable error reporting by getopt(3)",
+            "no normal output",
+            "test for getopt(1) version",
+            "do not quote the output"]);
         _add_page("grep", "print lines that match patterns", "[OPTION...] PATTERNS [FILE...]",
             "Searches for PATTERNS in each FILE and prints each line that matches a pattern.",
             "vx", 2, M, [
@@ -98,7 +107,7 @@ contract ManualUtility is Manual {
             "output only a short usage synopsis for each topic"]);
         _add_page("look", "display lines beginning with a given string", "[-bdf] [-t termchar] string [file ...]",
             "Displays any lines in file which contain string as a prefix.",
-            "bdft", 1, M, [
+            "bdft", 1, 3, [
             "use a binary search on the given word list",
             "dictionary character set and order, i.e., only alphanumeric characters are compared",
             "ignore the case of alphabetic characters",
@@ -128,32 +137,17 @@ contract ManualUtility is Manual {
             "vertical align of modes and owners"]);
     }
 
-    function init3() external override accept {
+    function init3() external override view accept {
         _add_page("paste", "merge lines of files", "[OPTION]... [FILE]...",
             "Write lines consisting of the sequentially corresponding lines from each FILE, separated by TABs, to standard output.",
             "sz", 1, M, [
             "paste one file at a time instead of in parallel",
             "line delimiter is NUL, not newline"]);
-        _add_page("readlink", "print resolved symbolic links or canonical file names", "[OPTION]... FILE...",
-            "Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
-            "femnqvz", 1, M, [
-            "all but the last component must exist",
-            "all components must exist",
-            "without requirements on components existence",
-            "do not output the trailing delimiter",
-            "suppress most error messages (on by default)",
-            "report error messages",
-            "end each output line with NUL, not newline"]);
-        _add_page("realpath", "print the resolved path", "[OPTION]... FILE...",
-            "Print the resolved absolute file name; all but the last component must exist.",
-            "emLPqsz", 1, M, [
-            "all components of the path must exist",
-            "no path components need exist or be a directory",
-            "resolve '..' components before symlinks",
-            "resolve symlinks as encountered (default)",
-            "suppress most error messages",
-            "don't expand symlinks",
-            "end each output line with NUL, not newline"]);
+        _add_page("pathchk", "check whether file names are valid or portable", "[OPTION]... NAME...",
+            "Diagnose invalid or unportable file names.",
+            "pP", 1, M, [
+            "check for most POSIX systems",
+            "check for empty names and leading \"-\""]);
         _add_page("rev", "reverse lines characterwise", "[option] [file...]",
             "Copies the specified files to standard output, reversing the order of characters in every line.",
             "", 1, M, [""]);
@@ -166,7 +160,7 @@ contract ManualUtility is Manual {
             "line delimiter is NUL, not newline"]);
         _add_page("tr", "translate or delete characters", "[OPTION]... SET1 [SET2]",
             "Translate, squeeze, and/or delete characters from standard input, writing to standard output.",
-            "ds", 1, 2, [
+            "ds", 1, M, [
             "delete characters in SET1, do not translate",
             "replace each sequence of a repeated character that is listed in the last specified SET, with a single occurrence of that character"]);
         _add_page("unexpand", "convert spaces to tabs", "[OPTION]... [FILE]...",
@@ -188,6 +182,5 @@ contract ManualUtility is Manual {
             "emit debugging messages",
             "do not trim output to terminal width",
             "print verbose warning messages"]);
-        _write_export_sb();
     }
 }

@@ -167,7 +167,7 @@ contract DeviceManager is Format, SyncFS, ExportFS, CacheFS {
     }
     /********************** File system and device status query *************************/
     function _df(uint flags) private view returns (string out) {
-        (, , , uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, uint16 block_size,
+        (, , , uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, ,
         , , , , , , , ) = _fs.sb.unpack();
 
         bool human_readable = (flags & _h) > 0;
@@ -176,73 +176,124 @@ contract DeviceManager is Format, SyncFS, ExportFS, CacheFS {
         bool block_1k = (flags & _k) > 0;
         bool posix_output = (flags & _P) > 0;
 
-        string fs_name = "/dev/" + _devices[0].name;
-        uint32 total = uint32(block_count + free_blocks);
-        uint32 factor = 1;
-        string[] header;
-        string[] row0;
+        string fs_name = _devices[0].name;
+        Column[] columns_format = [
+            Column(true, 20, ALIGN_LEFT),
+            Column(true, 11, ALIGN_RIGHT),
+            Column(true, 6, ALIGN_RIGHT),
+            Column(true, 9, ALIGN_RIGHT),
+            Column(true, 9, ALIGN_RIGHT),
+            Column(true, 15, ALIGN_LEFT)];
+
+        string s_units;
+        string s_used;
+        string s_avl;
+        string s_p_used;
+        uint u_used = list_inodes ? inode_count : block_count;
+        uint u_avl = list_inodes ? free_inodes : free_blocks;
+        uint u_units = u_used + u_avl;
+        uint u_p_used = u_used * 100 / u_units;
 
         if (list_inodes) {
-            header = ["Filesystem", "Inodes", "IUsed", "IFree", "IUse%", "Mounted on"];
-            row0 = [fs_name,
-                    format("{}", inode_count + free_inodes),
-                    format("{}", inode_count),
-                    format("{}", free_inodes),
-                    format("{}%", uint32(inode_count) * 100 / (inode_count + free_inodes)),
-                    "/"];
+            s_units = "Inodes";
+            s_used = "IUsed";
+            s_avl = "IFree";
+            s_p_used = "IUse%";
+        } else if (human_readable || block_1k) {
+            s_units = "Size";
+            s_used = "Used";
+            s_avl = "Avail";
+            s_p_used = "Use%";
+        } else if (posix_output || powers_of_1000) {
+            s_units = "1024-blocks";
+            s_used = "Used";
+            s_avl = "Available";
+            s_p_used = "Capacity%";
         } else {
-            if (human_readable) {
-                header = ["Filesystem", "Size", "Used", "Avail", "Use%", "Mounted on"];
-                factor = 1024;
-            } else if (posix_output) {
-                header = ["Filesystem", "1024-blocks", "Used", "Available", "Capacity%", "Mounted on"];
-                factor = 1024;
-            } else {
-                header = ["Filesystem", "1K-blocks", "Used", "Available", "Use%", "Mounted on"];
-                if (block_1k)
-                    factor = 1;
-            }
-            if (powers_of_1000)
-                factor = 1000;
-
-            row0 = [fs_name,
-                    format("{}", _scale(total * block_size / factor, factor)),
-                    format("{}", _scale(uint32(block_count) * block_size / factor, factor)),
-                    format("{}", _scale(uint32(free_blocks) * block_size / factor, factor)),
-                    format("{}%", uint32(block_count) * 100 / total),
-                    "/"];
+            s_units = "1K-blocks";
+            s_used = "Used";
+            s_avl = "Available";
+            s_p_used = "Use%";
         }
-        out.append(_format_table([header, row0], " ", "\n", ALIGN_RIGHT));
+
+        string[] header = ["Filesystem", s_units, s_used, s_avl, s_p_used, "Mounted on"];
+        string[] row0 = [
+                fs_name,
+                format("{}", u_units),
+                format("{}", u_used),
+                format("{}", u_avl),
+                format("{}%", u_p_used),
+                "/"];
+
+        out = _format_table_ext(columns_format, [header, row0], " ", "\n");
     }
 
     function _findmnt(uint flags, string[] /*args*/) private view returns (string out) {
-        bool search_fstab_only = (flags & _s) > 0;
-//        bool search_mtab_only = (flags & _m) > 0;
-//        bool search_kernel = (flags & _k) > 0;
+        bool flag_fstab_only = (flags & _s) > 0;
+        bool flag_mtab_only = (flags & _m) > 0;
+        bool flag_kernel = (flags & _k) > 0;
         bool like_df = (flags & _D) > 0;
         bool first_fs_only = (flags & _f) > 0;
         bool no_headings = (flags & _n) > 0;
+        bool no_truncate = (flags & _u) > 0;
+        bool all_columns = (flags & _o) > 0;
+
+        bool df_style = like_df || all_columns;
+        bool non_df_style = !like_df || all_columns;
+
+        MountInfo[] mnt_list = flag_fstab_only ? _static_mounts : _current_mounts;
+
+        if (!flag_mtab_only || flag_kernel)
+            for (MountInfo mnt: _static_mounts)
+                for (MountInfo m: _current_mounts) {
+                    if (!_compare_mount_info(m, mnt))
+                        mnt_list.push(mnt);
+                }
 
         string[][] table;
 
-        string[] header = no_headings ? [""] : like_df ? ["SOURCE", "SIZE", "USED", "AVAIL", "USE%", "TARGET"] : ["TARGET", "SOURCE", "FSTYPE", "OPTIONS"];
-        if (!no_headings)
-            table = [header];
+        uint target_path_width = no_truncate ? 70 : 30;
+        uint source_width = no_truncate ? 70 : 20;
 
-        if (search_fstab_only) {
-            for (MountInfo mnt: _static_mounts) {
-                (uint8 source_dev_id, uint16 source_export_id, , string target_path, uint16 options) = mnt.unpack();
-                table.push([target_path, _devices[source_dev_id - 1].name, format("{}", source_export_id), format("{}", options)]);
-            }
-        } else {
-            for (MountInfo mnt: _current_mounts) {
-                (uint8 source_dev_id, uint16 source_export_id, , string target_path, uint16 options) = mnt.unpack();
-                table.push([target_path, _devices[source_dev_id - 1].name, format("{}", source_export_id), format("{}", options)]);
-                if (first_fs_only)
-                    break;
-            }
+        Column[] columns_format = [
+            Column(non_df_style, target_path_width, ALIGN_LEFT),
+            Column(true, source_width, ALIGN_LEFT),
+            Column(true, 6, ALIGN_LEFT),
+            Column(non_df_style, target_path_width, ALIGN_LEFT),
+            Column(df_style, 6, ALIGN_RIGHT),
+            Column(df_style, 6, ALIGN_RIGHT),
+            Column(df_style, 6, ALIGN_RIGHT),
+            Column(df_style, 4, ALIGN_RIGHT),
+            Column(df_style, target_path_width, ALIGN_LEFT)];
+
+        if (!no_headings)
+            table = [["TARGET", "SOURCE", "FSTYPE", "OPTIONS", "SIZE", "USED", "AVAIL", "USE%", "TARGET"]];
+
+        (, , , , uint16 block_count, , uint16 free_blocks, ,
+        , , , , , , , ) = _fs.sb.unpack();
+
+        uint u_used = block_count;
+        uint u_avl = free_blocks;
+        uint u_units = u_used + u_avl;
+        uint u_p_used = u_used * 100 / u_units;
+
+        for (MountInfo mnt: mnt_list) {
+            (uint8 source_dev_id, uint16 source_export_id, , string target_path, uint16 options) = mnt.unpack();
+            table.push([
+                target_path,
+                _devices[source_dev_id - 1].name,
+                format("{}", source_export_id),
+                format("{}", options),
+                format("{}", u_units),
+                format("{}", u_used),
+                format("{}", u_avl),
+                format("{}%", u_p_used),
+                target_path]);
+            if (first_fs_only)
+                break;
         }
-        out.append(_format_table(table, " ", "\n", ALIGN_LEFT));
+
+        out = _format_table_ext(columns_format, table, " ", "\n");
     }
 
     function _mountpoint(uint flags, string[] args, Arg[] arg_list) private view returns (string out, Err[] errors) {
@@ -282,7 +333,20 @@ contract DeviceManager is Format, SyncFS, ExportFS, CacheFS {
         bool print_permissions = (flags & _m) > 0;
         bool print_device_info = !print_fs_info && !print_permissions;
         bool full_path = (flags & _p) > 0;
+
         string[][] table;
+        Column[] columns_format = [
+            Column(true, 15, ALIGN_LEFT), // Name
+            Column(print_device_info, 7, ALIGN_CENTER),
+            Column(print_device_info || print_permissions, 7, ALIGN_CENTER),
+            Column(print_device_info, 2, ALIGN_CENTER),
+            Column(print_device_info, 4, ALIGN_CENTER),
+            Column(print_fs_info, 8, ALIGN_CENTER),
+            Column(print_fs_info, 6, ALIGN_CENTER),
+            Column(print_device_info || print_fs_info, 10, ALIGN_LEFT),
+            Column(print_permissions, 5, ALIGN_CENTER),
+            Column(print_permissions, 5, ALIGN_CENTER),
+            Column(print_permissions, 10, ALIGN_LEFT)];
 
         uint16 dev_dir = _resolve_absolute_path("/sys/dev");
         (uint16 block_dev_dir, uint8 block_dev_dir_ft) = _fetch_dir_entry("block", dev_dir);
@@ -290,9 +354,8 @@ contract DeviceManager is Format, SyncFS, ExportFS, CacheFS {
         if (block_dev_dir_ft != FT_DIR || char_dev_dir_ft != FT_DIR)
             return ("Error: could not open /sys/dev/\n", errors);
 
-        string[] header = print_device_info ? ["NAME", "MAJ:MIN", "SIZE", "RM", "TYPE", "MOUNTPOINT"] :
-                            print_fs_info ? ["NAME", "FSTYPE", "LABEL", "UUID", "FSAVAIL", "FSUSE%", "MOUNTPOINT"] :
-                                print_permissions ? ["NAME", "SIZE", "OWNER", "GROUP", "MODE"] : [""];
+        string[] header = ["NAME", "MAJ:MIN", "SIZE", "RM", "TYPE", "FSAVAIL", "FSUSE%", "MOUNTPOINT", "OWNER", "GROUP", "MODE"];
+
         if (print_header)
             table = [header];
         if (args.empty()) {
@@ -311,65 +374,62 @@ contract DeviceManager is Format, SyncFS, ExportFS, CacheFS {
             if (dev_file_ft == FT_BLKDEV || dev_file_ft == FT_CHRDEV) {
                 (uint16 mode, uint16 owner_id, , , , , , , string[] lines) = _fs.inodes[dev_file_index].unpack();
                 string[] fields0 = _get_tsv(lines[0]);
-                if (fields0.length < 4) {
+                if (fields0.length < 4)
                     continue;
-                }
                 string name = (full_path ? "/dev/" : "") + fields0[2];
                 string mount_path = dev_file_ft == FT_BLKDEV ? ROOT : "";
-                string[] l;
-                if (print_device_info)
-                    l = [name,
-                         format("{}:{}", fields0[0], fields0[1]),
-                         _scale(uint32(block_count) * block_size, human_readable ? 1024 : 1),
-                         "0",
-                         "disk",
-                         mount_path];
-                else if (print_fs_info)
-                    l = [name,
-                        " ",
-                        " ",
-                        " ",
-                        _scale(uint32(free_blocks) * block_size, human_readable ? 1024 : 1),
-                        format("{}%", uint32(block_count) * 100 / (block_count + free_blocks)),
-                        mount_path];
-                else if (print_permissions) {
-                    (, string s_owner, string s_group) = _users[owner_id].unpack();
-                    l = [name,
-                        _scale(uint32(block_count) * block_size, human_readable ? 1024 : 1),
-                        s_owner,
-                        s_group,
-                        _permissions(mode)];
-                }
-                table.push(l);
+                (, string s_owner, string s_group) = _users[owner_id].unpack();
+                table.push([
+                    name,
+                    format("{}:{}", fields0[0], fields0[1]),
+                    _scale(uint32(block_count) * block_size, human_readable ? 1024 : 1),
+                    "0",
+                    "disk",
+                    _scale(uint32(free_blocks) * block_size, human_readable ? 1024 : 1),
+                    format("{}%", uint32(block_count) * 100 / (block_count + free_blocks)),
+                    mount_path,
+                    s_owner,
+                    s_group,
+                    _permissions(mode)]);
             } else
                 errors.push(Err(not_a_block_device, 0, s));
         }
-        out.append(_format_table(table, " ", "\n", ALIGN_CENTER));
+        out = _format_table_ext(columns_format, table, " ", "\n");
     }
 
     /* Does not really belong here */
     function _ps(uint flags) internal view returns (string out) {
         bool format_full = (flags & _f) > 0;
         bool format_extra_full = (flags & _F) > 0;
-        string[][] table = [format_extra_full ? ["UID", "PID", "PPID", "CWD"] : format_full ? ["UID", "PID", "PPID"] : ["UID", "PID"]];
+        string[][] table = [["UID", "PID", "PPID", "CWD"]];
+        Column[] columns_format = [
+            Column(true, 5, ALIGN_LEFT), // Name
+            Column(true, 5, ALIGN_LEFT),
+            Column(format_full || format_extra_full, 7, ALIGN_CENTER),
+            Column(format_extra_full, 32, ALIGN_LEFT)];
+
         for ((uint16 pid, ProcessInfo proc): _proc) {
             (uint16 owner_id, uint16 self_id, , , string cwd) = proc.unpack();
-            string[] line = [format("{}", owner_id), format("{}", pid)];
-            if (format_full || format_extra_full)
-                line.push(format("{}", self_id));
-            if (format_extra_full)
-                line.push(cwd);
-            table.push(line);
+            table.push([
+                format("{}", owner_id),
+                format("{}", pid),
+                format("{}", self_id),
+                cwd]);
         }
-        out.append(_format_table(table, " ", "\n", ALIGN_LEFT));
+        out = _format_table_ext(columns_format, table, " ", "\n");
     }
 
     /* mount helpers */
+    function _compare_mount_info(MountInfo mnt_1, MountInfo mnt_2) internal pure returns (bool) {
+        (uint8 source_dev_id_1, uint16 source_export_id_1, uint16 target_mount_point_1, , ) = mnt_1.unpack();
+        (uint8 source_dev_id_2, uint16 source_export_id_2, uint16 target_mount_point_2, , ) = mnt_2.unpack();
+        return (source_dev_id_1 == source_dev_id_2 && source_export_id_1 == source_export_id_2 && target_mount_point_1 == target_mount_point_2);
+    }
+
     function _try_mount(MountInfo mnt) internal view returns (bool) {
         (uint8 source_dev_id, uint16 source_export_id, uint16 target_mount_point, , uint16 options) = mnt.unpack();
         for (MountInfo m: _current_mounts) {
-            (uint8 cur_source_dev_id, uint16 cur_source_export_id, uint16 cur_target_mount_point, ,) = m.unpack();
-            if (cur_source_dev_id == source_dev_id && cur_source_export_id == source_export_id && cur_target_mount_point == target_mount_point)
+            if (_compare_mount_info(m, mnt))
                 return false;
         }
         address source_address;
@@ -386,14 +446,11 @@ contract DeviceManager is Format, SyncFS, ExportFS, CacheFS {
     }
 
     function _try_unmount(MountInfo mnt) internal returns (bool) {
-        (uint8 source_dev_id, uint16 source_export_id, uint16 target_mount_point, , ) = mnt.unpack();
-        for (uint16 i = 0; i < _current_mounts.length; i++) {
-            (uint8 cur_source_dev_id, uint16 cur_source_export_id, uint16 cur_target_mount_point, ,) = _current_mounts[i].unpack();
-            if (cur_source_dev_id == source_dev_id && cur_source_export_id == source_export_id && cur_target_mount_point == target_mount_point) {
+        for (uint16 i = 0; i < _current_mounts.length; i++)
+            if (_compare_mount_info(_current_mounts[i], mnt)) {
                 _current_mounts[i] = MountInfo(0, 0, 0, "", MOUNT_NONE);
                 return true;
             }
-        }
         return false;
     }
 
@@ -436,45 +493,47 @@ contract DeviceManager is Format, SyncFS, ExportFS, CacheFS {
             MountInfo(2, 2, 3, "/etc", MOUNT_DIR),
             MountInfo(3, 1, 13, "/sys/dev/block", MOUNT_DIR),
             MountInfo(3, 2, 14, "/sys/dev/char", MOUNT_DIR),
-            MountInfo(2, 1, 8, "/usr", MOUNT_DIR),
-            MountInfo(5, 1, 1, "/bin", MOUNT_DIR),
-            MountInfo(6, 1, 1, "/bin", MOUNT_DIR),
+            MountInfo(2, 1, 8, "/usr", MOUNT_DIR)
+            /*MountInfo(6, 1, 1, "/bin", MOUNT_DIR),
             MountInfo(7, 1, 1, "/bin", MOUNT_DIR),
             MountInfo(8, 1, 1, "/bin", MOUNT_DIR),
-            MountInfo(9, 1, 1, "/bin", MOUNT_DIR)];
+            MountInfo(9, 1, 1, "/bin", MOUNT_DIR),
+            MountInfo(10, 1, 1, "/bin", MOUNT_DIR)*/];
         this.init2();
     }
 
     function init2() external accept {
         _add_device_files(FT_BLKDEV,
-            ["BlockDevice", "DataVolume", "DeviceManager", "AccessManager"], [
+            ["BlockDevice", "DataVolume", "DeviceManager", "AccessManager", "ManualPages", "StaticBackup"], [
             0x41e30674f62ca6b5859e2941488957af5e01c71b886ddd57458aec47315490d5,
             0x439f4e7f5eedbe2348632124e0e6b08a30b10fc2d45951365f4a9388fc79c3fb,
             0x430dd570de5398dbc2319979f5ba4aa99d5254e5382d3c344b985733d141617b,
-            0x4a7cd37ce66473c7b383a245891502e5d05c626a69ca764165e2c7d6edd9e317]);
+            0x4a7cd37ce66473c7b383a245891502e5d05c626a69ca764165e2c7d6edd9e317,
+            0xcc59225a037b56f2cc325c9ced611994e160c4485537fe01ab3787e5d92ddac3,
+            0x9f1e5499529a00aad0990d2f7dd7d1bfd23e2d0939d4e739e2659dc27313819a]);
         this.init3(); //450
     }
 
     function init3() external accept {
-        _add_device_files(FT_BLKDEV,
-            ["ManualCommands", "ManualStatus", "ManualSession", "ManualUtility", "ManualAdmin"], [
-            0x4b937783725628153f2fa320f25a7dd1d68acf948e38ea5a0c5f7f3857db8981,
-            0x41d95cddc9ca3c082932130c208deec90382f5b7c0036c8d84ac3567e8b82420,
-            0x41e37889496dce38efdeb5764cf088287171d72c523c370b37bb6b3621d1f93e,
-            0x4e5561b275d060ff0d0919ccc7e485d08c8e1fe9abd92af6cdf19ebfb2dd5421,
-            0x650627a3165cea5c12558aaf9d38f791a33660792d41136e1a6dba48549ce89b]);
-        this.init4();   // 600
-    }
-
-    function init4() external accept {
-        _sb_exports.push(_get_export_sb(ROOT_DIR + 3, 9, "block"));
+        _sb_exports.push(_get_export_sb(ROOT_DIR + 3, 6, "block"));
         _add_device_files(FT_CHRDEV,
             ["FileManager", "StatusReader", "PrintFormatted", "SessionManager"], [
             0x47169541fd28e7688079c4319a8de3b358ce13d87e25bbd3eaded12ae9b09f40,
             0x44981ddf8d0d7d593598e44b754482c5792f0d49d8416ebfeb24834bf26a77d9,
             0x48a04e9fc99be89ddfe4eb1f7303ee417ebae174514b5e11c072834259250eec,
             0x4be68a2f14b949f1388f8e5dce3bbee14d35518abd8efcc93919bbb921218f8d]);
-        _sb_exports.push(_get_export_sb(ROOT_DIR + 3 + 9, 4, "char"));
+        this.init4();   // 600
+    }
+
+    function init4() external accept {
+        _add_device_files(FT_CHRDEV,
+            ["PagesStatus", "PagesCommands", "PagesSession", "PagesUtility", "PagesAdmin"], [
+            0x9bc7fdbdadc754e31918f29c22af4a949787e22e84052d94c05e23e9d6e74099,
+            0x5838d84e0998f90b98c6a8fa7e6727b9dc7fb7a1f686631bf929206d33a4fd30,
+            0x9fb67eacdcb4ef94f9c5c67787778a413328904fe7a3513fd921ee9881114632,
+            0x379d5fffd72aa80b00e3f3dd73f0f748eeac311b5992de9b3cd3115b97cbb525,
+            0x694d24fe1aa0464859d21ce58a62875b80e16f6c36595f363e8b86b603bde7d4]);
+        _sb_exports.push(_get_export_sb(ROOT_DIR + 3 + 6, 9, "char"));
 
         _sync_fs_cache();
     }

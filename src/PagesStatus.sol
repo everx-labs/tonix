@@ -1,36 +1,42 @@
 pragma ton-solidity >= 0.49.0;
 
-import "Manual.sol";
+import "Pages.sol";
 
 /* File system status commands manual */
-contract ManualStatus is Manual {
+contract PagesStatus is Pages {
 
-    function _init1() internal override accept {
-        _add_page("df", "report file system disk space usage", "[OPTION]... [FILE]...", "displays the amount of disk space available on the file system containing each file name argument.",
-            "ahHiklP", 1, M, [
+    function _init1() internal view override accept {
+        _add_page("df", "report file system disk space usage", "[OPTION]... [FILE]...",
+            "Displays the amount of disk space available on the file system containing each file name argument.",
+            "ahHiklPv", 1, M, [
             "include pseudo, duplicate, inaccessible file systems",
             "print sizes in powers of 1024 (e.g., 1023K)",
             "print sizes in powers of 1000 (e.g., 1.1K)",
             "list inode information instead of block usage",
             "block size = 1K",
             "limit listing to local file systems",
-            "use the POSIX output format"]);
-        _add_page("du", "estimate disk usage", "[OPTION]... [FILE]...", "Summarize disk usage of the set of FILEs, recursively for directories.",
-            "abcDhkLlPSsx0", 1, M, [
+            "use the POSIX output format",
+            "(ignored)"]);
+        _add_page("du", "estimate disk usage", "[OPTION]... [FILE]...",
+            "Summarize disk usage of the set of FILEs, recursively for directories.",
+            "abcDhHkLlmPSsx0", 1, M, [
             "write counts for all files, not just directories",
             "block size = 1 byte",
             "produce a grand total",
             "dereference only symlinks that are listed on the command line",
             "print sizes in human readable format (e.g., 12K 1M)",
+            "equivalent to -D",
             "block size = 1K",
             "dereference all symbolic links",
             "count sizes many times if hard linked",
+            "block size = 1M",
             "don't follow any symbolic links (this is the default)",
             "for directories do not include size of subdirectories",
             "display only a total for each argument",
             "skip directories on different file systems",
             "end each output line with NUL, not newline"]);
-        _add_page("findmnt", "find a filesystem", "[options]\t[options] device|mountpoint[options] [device...]", "list all mounted filesystems or search for a filesystem.",
+        _add_page("findmnt", "find a filesystem", "[options]\t[options] device|mountpoint[options] [device...]",
+            "List all mounted filesystems or search for a filesystem.",
             "smkAbDfnu", 0, M, [
             "search in static table of filesystems",
             "search in table of mounted filesystems",
@@ -41,7 +47,8 @@ contract ManualStatus is Manual {
             "print the first found filesystem only",
             "don't print column headings",
             "don't truncate text in columns"]);
-        _add_page("fuser", "identify processes using files or sockets", "[-almsuv]", "displays the PIDs of processes using the specified files or file systems.",
+        _add_page("fuser", "identify processes using files or sockets", "[-almsuv]",
+            "Displays the PIDs of processes using the specified files or file systems.",
             "almsuv", 0, 1, [
             "display unused files too",
             "list available signal names",
@@ -51,8 +58,9 @@ contract ManualStatus is Manual {
             "verbose output"]);
     }
 
-    function init2() external override accept {
-        _add_page("ls", "list directory contents", "[OPTION]... [FILE]...", "List information about the FILE (the current directory by default).",
+    function init2() external view override accept {
+        _add_page("ls", "list directory contents", "[OPTION]... [FILE]...",
+            "List information about the FILE (the current directory by default).",
             "aABcCdfFgGhHikLlmnNopqQrRsStuUvxX1", 1, M, [
             "do not ignore entries starting with .",
             "do not list implied . and ..",
@@ -90,8 +98,9 @@ contract ManualStatus is Manual {
             "list one file per line. Avoid \'\\n\' with -q or -b"]);
     }
 
-    function init3() external override accept {
-        _add_page("lsblk", "list block devices", "[options] [device...]", "List information about all available or the specified block devices.",
+    function init3() external view override accept {
+        _add_page("lsblk", "list block devices", "[options] [device...]",
+            "List information about all available or the specified block devices.",
             "abfmnOp", 0, M, [
             "print all devices",
             "print SIZE in bytes rather than in human readable format",
@@ -100,7 +109,8 @@ contract ManualStatus is Manual {
             "don't print headings",
             "output all columns",
             "print complete device path"]);
-        _add_page("lsof", "list open files", "[-lnoRst]", "",
+        _add_page("lsof", "list open files", "[-lnoRst]",
+            "Output file information about files opened by processes.",
             "lnoRst", 0, M, [
             "list UID numbers",
             "no host names",
@@ -114,16 +124,38 @@ contract ManualStatus is Manual {
             "quiet mode - don't print anything",
             "print maj:min device number of the filesystem",
             "print maj:min device number of the block device"]);
-        _add_page("ps", "report a snapshot of the current processes", "[options]", "displays information about a selection of the active processes.",
+        _add_page("ps", "report a snapshot of the current processes", "[options]",
+            "Displays information about a selection of the active processes.",
             "efF", 0, 0, [
             "select all processes",
             "do full-format listing",
             "extra full format"]);
-        _add_page("stat", "display file or file system status", "[OPTION]... FILE...", "Display file or file system status.",
+        _add_page("readlink", "print resolved symbolic links or canonical file names", "[OPTION]... FILE...",
+            "Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
+            "femnqsvz", 1, M, [
+            "all but the last component must exist",
+            "all components must exist",
+            "without requirements on components existence",
+            "do not output the trailing delimiter",
+            "quiet",
+            "suppress most error messages (on by default)",
+            "report error messages",
+            "end each output line with NUL, not newline"]);
+        _add_page("realpath", "print the resolved path", "[OPTION]... FILE...",
+            "Print the resolved absolute file name; all but the last component must exist.",
+            "emLPqsz", 1, M, [
+            "all components of the path must exist",
+            "no path components need exist or be a directory",
+            "resolve '..' components before symlinks",
+            "resolve symlinks as encountered (default)",
+            "suppress most error messages",
+            "don't expand symlinks",
+            "end each output line with NUL, not newline"]);
+        _add_page("stat", "display file or file system status", "[OPTION]... FILE...",
+            "Display file or file system status.",
             "Lft", 1, M, [
             "follow links",
             "display file system status instead of file status",
             "print the information in terse form"]);
-        _write_export_sb();
     }
 }

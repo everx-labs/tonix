@@ -132,14 +132,6 @@ contract StatusReader is Format, SyncFS, CacheFS {
             out.append("\n" + sub_arg.path + ":\n" + _ls(f, sub_arg));
     }
 
-    /* Assigns a rating to a string to sort alphabetically */
-    function _alpha_rating(string s, uint len) internal pure returns (uint rating) {
-        bytes bts = bytes(s);
-        uint lim = math.min(len, bts.length);
-        for (uint i = 0; i < lim; i++)
-            rating += uint(uint8(bts[i])) << ((len - i - 1) * 8);
-    }
-
     /* Compute a rating to sort entries according to the specified settings */
     function _ls_sort_rating(uint f, string name, uint16 index, uint16 dir_index) private view returns (uint rating) {
         bool use_ctime = (f & _c) > 0;
@@ -253,7 +245,7 @@ contract StatusReader is Format, SyncFS, CacheFS {
         uint16 device_id = (uint16(device_type) << 8) + device_n;
         ( , string s_owner, string s_group) = _users[owner_id].unpack();
         (string major, string minor) = ft == FT_BLKDEV || ft == FT_CHRDEV  ? _get_device_version(text_data) : ("0", "0");
-        uint16 n_blocks = uint16(file_size / blk_size);
+        uint16 n_blocks = uint16(file_size / blk_size) + 1;
 
         if (fs_info) {
             SuperBlock sb = _fs.sb;

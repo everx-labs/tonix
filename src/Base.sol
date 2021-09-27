@@ -43,6 +43,13 @@ struct UserEvent {
     uint16[] values;
 }
 
+struct LoginEvent {
+    uint8 letype;
+    uint16 user_id;
+    uint16 tty_id;
+    uint32 timestamp;
+}
+
 /* Base functions and definitions */
 abstract contract Base {
 
@@ -83,6 +90,8 @@ abstract contract Base {
     uint8 constant IO_UPDATE_TIME   = 12;
     uint8 constant IO_UPDATE_TEXT_DATA = 13;
 
+    uint32 public _last_boot_time;
+
     modifier accept {
         tvm.accept();
         _;
@@ -100,6 +109,7 @@ abstract contract Base {
 
     function onCodeUpgrade() internal {
         tvm.resetStorage();
+        _last_boot_time = now;
         _init();
     }
 
