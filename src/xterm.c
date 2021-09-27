@@ -163,7 +163,7 @@ int _prompt(char *s) {
         system("make ca g=update_nodes");
     if (action2 & ACT_UPDATE_USERS)
         system("make ca g=update_users");
-    if (action2 & ACT_UPDATE_USERS)
+    if (action2 & ACT_UPDATE_LOGINS)
         system("make ca g=update_logins");
 
     if (ext_action & EXT_WRITE_FILES)

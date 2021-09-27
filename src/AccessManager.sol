@@ -129,10 +129,16 @@ contract AccessManager is Internal, Commands, ExportFS, Format, IUserTables {
 
     function user_access_op(Session session, InputS input) external view returns (string out, LoginEvent le, Err[] errors, uint16 action) {
         (uint8 c, string[] args, uint flags) = input.unpack();
+        (, uint16 uid, , ) = session.unpack();
+        string login_name = !args.empty() ? args[0] : "";
+        UserInfo ui;
+        if (_users.exists(uid))
+            ui = _users[uid];
+        else
+            errors.push(Err(login_data_not_found, 0, login_name));
 
-        session.pid = session.pid;
-        if (c == login) (le, errors) = _login(flags, session, args);
-        if (c == logout) (le, errors) = _logout(session);
+        if (c == login) (le, errors) = _login(flags, session, args, ui);
+        if (c == logout) (le, errors) = _logout(session, ui);
 
         out = out;
         if (!errors.empty())
@@ -141,12 +147,33 @@ contract AccessManager is Internal, Commands, ExportFS, Format, IUserTables {
             action = ACT_UPDATE_LOGINS;
     }
 
-    function _login(uint flags, Session session, string[] args) private view returns (LoginEvent le, Err[] errs) {
-        le = LoginEvent(AE_LOGIN, session.uid, session.pid, now);
+    function _login(uint flags, Session session, string[] args, UserInfo ui) private view returns (LoginEvent le, Err[] errs) {
+        bool force = (flags & _f) > 0;
+        bool use_hostname = (flags & _h) > 0;
+        bool autologin = (flags & _r) > 0;
+        string user_name;
+        string host_name;
+        if (!args.empty()) {
+            user_name = args[0];
+            if (args.length > 1 && use_hostname)
+                host_name = args[1];
+        }
+
+        (uint16 ui_gid, string ui_user_name, string ui_primary_group) = ui.unpack();
+        (, , uint16 s_gid, ) = session.unpack();
+        if (!force && !autologin && (ui_user_name != user_name || _groups[s_gid].group_name != ui_primary_group || ui_gid != s_gid))
+            errs.push(Err(EINVAL, 0, ui_primary_group));
+        else
+            le = LoginEvent(AE_LOGIN, session.uid, session.pid, now);
     }
 
-    function _logout(Session session) private view returns (LoginEvent le, Err[] errs) {
-        le = LoginEvent(AE_LOGOUT, session.uid, session.pid, now);
+    function _logout(Session session, UserInfo ui) private view returns (LoginEvent le, Err[] errs) {
+        (uint16 ui_gid, , string ui_primary_group) = ui.unpack();
+        (, , uint16 s_gid, ) = session.unpack();
+        if (_groups[s_gid].group_name != ui_primary_group || ui_gid != s_gid)
+            errs.push(Err(EINVAL, 0, ui_primary_group));
+        else
+            le = LoginEvent(AE_LOGOUT, session.uid, session.pid, now);
     }
 
     function user_stats_op(Session session, InputS input) external view returns (string out, Err[] errors, uint16 action) {
@@ -458,18 +485,31 @@ contract AccessManager is Internal, Commands, ExportFS, Format, IUserTables {
             Column(true, 30, ALIGN_LEFT),
             Column(true, 30, ALIGN_LEFT)];
 
+        mapping (uint16 => uint32) log_ts;
         for (LoginEvent le: _wtmp) {
             (uint8 letype, uint16 user_id, uint16 tty_id, uint32 timestamp) = le.unpack();
+            string ui_user_name = _users[user_id].user_name;
+            if (letype == AE_LOGIN)
+                log_ts[tty_id] = timestamp;
+            if (letype == AE_LOGOUT) {
+                uint32 login_ts = log_ts[tty_id];
+                table.push([
+                    ui_user_name,
+                    format("{}", tty_id),
+                    _ts(login_ts),
+                    _ts(timestamp)]);
+            }
             if (letype != AE_SHUTDOWN || shutdown_entries)
                 table.push([
-                    format("{}", letype),
-                    format("{}", user_id),
+                    ui_user_name,
                     format("{}", tty_id),
+                    format("{}", user_id),
                     _ts(timestamp)]);
         }
 
-        out = _format_table_ext(columns_format, table, " ", "\n");
-        out.append("wtmp begins Mon Mar 22 23:44:55 2021");
+        if (!table.empty())
+            out = _format_table_ext(columns_format, table, " ", "\n");
+        out.append("wtmp begins Mon Mar 22 23:44:55 2021\n");
     }
 
     function _lslogins(uint flags, string[] args, Session session) internal view returns (string out, Err[] errors) {
@@ -526,17 +566,26 @@ contract AccessManager is Internal, Commands, ExportFS, Format, IUserTables {
     function _utmpdump(uint flags) internal view returns (string out) {
         bool write_back = (flags & _r) > 0;
 //        bool write_to_file = (flags & _o) > 0;
+        string[][] table;
+        Column[] columns_format = [
+            Column(true, 5, ALIGN_LEFT),
+            Column(true, 7, ALIGN_LEFT),
+            Column(true, 7, ALIGN_LEFT),
+            Column(!write_back, 5, ALIGN_LEFT),
+            Column(true, 30, ALIGN_LEFT)];
 
         if (write_back)
             for (LoginEvent le: _wtmp) {
                 (uint8 letype, uint16 user_id, uint16 tty_id, uint32 timestamp) = le.unpack();
-                out.append(format("{} {} {} {}\n", letype, user_id, tty_id, _ts(timestamp)));
+                table.push([format("{}", letype), format("{}", user_id), format("{}", tty_id), _ts(timestamp)]);
             }
         else
             for ((uint16 l_id, Login l): _utmp) {
                 (uint16 user_id, uint16 tty_id, uint16 process_id, uint32 login_time) = l.unpack();
-                out.append(format("{} {} {} {} {}\n", l_id, user_id, tty_id, process_id, _ts(login_time)));
+                table.push([format("{}", l_id), format("{}", user_id), format("{}", tty_id), format("{}", process_id), _ts(login_time)]);
             }
+        if (!table.empty())
+            out = _format_table_ext(columns_format, table, " ", "\n");
     }
 
     function _who(uint flags) internal view returns (string out) {
@@ -544,27 +593,50 @@ contract AccessManager is Internal, Commands, ExportFS, Format, IUserTables {
         bool last_boot_time = (flags & _b) > 0;
 //        bool dead_processes = (flags & _d) > 0;
         bool print_headings = (flags & _H) > 0;
-//        bool system_login_proc = (flags & _l) > 0;
-        bool init_spawned_proc = (flags & _p) > 0;
-//        bool all_logged_on = (flags & _q) > 0;
-//        bool default_format = (flags & _s) > 0;
+        bool system_login_proc = (flags & _l) > 0;
+//        bool init_spawned_proc = (flags & _p) > 0;
+        bool all_logged_on = (flags & _q) > 0;
+        bool default_format = (flags & _s) > 0;
   //      bool last_clock_change = (flags & _t) > 0;
-//        bool user_message_status = (flags & _T + _w) > 0;
-//        bool users_logged_in = (flags & _u) > 0;
+        bool user_message_status = (flags & _T + _w) > 0;
+        bool users_logged_in = (flags & _u) > 0;
+
+        if (all_logged_on) {
+            uint count;
+            for ((, Login l): _utmp) {
+                uint16 user_id = l.user_id;
+                if (system_login_proc && user_id > _login_defs_uint16[SYS_UID_MAX])
+                    continue;
+                out.append(_users[user_id].user_name + "\t");
+                count++;
+            }
+            out.append(format("\n# users = {}\n", count));
+            return out;
+        }
 
         string[][] table;
         if (print_headings)
-            table = [["NAME", "LINE", "TIME", "PID"]];
+            table = [["NAME", "S", "LINE", "TIME", "PID"]];
 
         if (last_boot_time)
-            table.push(["reboot", "~", _ts(_last_boot_time), "1"]);
+            table.push(["reboot", " ", "~", _ts(_last_boot_time), "1"]);
         Column[] columns_format = [
             Column(true, 15, ALIGN_LEFT), // Name
+            Column(user_message_status, 1, ALIGN_LEFT),
             Column(true, 7, ALIGN_LEFT),
             Column(true, 30, ALIGN_LEFT),
-            Column(init_spawned_proc, 5, ALIGN_LEFT)];
+            Column(!default_format || users_logged_in, 5, ALIGN_RIGHT)];
+        for ((, Login l): _utmp) {
+            (uint16 user_id, uint16 tty_id, uint16 process_id, uint32 login_time) = l.unpack();
+            if (system_login_proc && user_id > _login_defs_uint16[SYS_UID_MAX])
+                continue;
+            (, string ui_user_name, ) = _users[user_id].unpack();
+            table.push([ui_user_name, "+", format("{}", tty_id), _ts(login_time), format("{}", process_id)]);
+        }
 
-        out = _format_table_ext(columns_format, table, " ", "\n");
+
+        if (!table.empty())
+            out = _format_table_ext(columns_format, table, " ", "\n");
     }
 
     function _init() internal override {

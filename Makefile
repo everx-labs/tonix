@@ -211,7 +211,7 @@ $p/update_users.args: $p/session $p/ue
 $p/update_users.res: $p/update_users.args
 	$($A_c)
 $p/update_logins.args: $p/session $p/le
-	jq -s '{session: .[0], ues: [.[1]]}' $^ >$@
+	jq -s '{session: .[0], le: .[1]}' $^ >$@
 $p/update_logins.res: $p/update_logins.args
 	$($A_c)
 
@@ -379,7 +379,7 @@ endef
 pv_Dev=_proc _users
 pv_Export=_sb_exports
 pv_Import=$(pv_Dev)
-pv_$A=$(pv_Export) _users _groups _group_members _user_groups _login_defs_bool _login_defs_uint16 _login_defs_string _env_bool _env_uint16 _env_string
+pv_$A=$(pv_Export) _users _groups _group_members _user_groups _login_defs_bool _login_defs_uint16 _login_defs_string _env_bool _env_uint16 _env_string _utmp _wtmp _ttys
 pv_$C=$(pv_Dev)
 pv_$R=$(pv_Dev)
 pv_$I=$(pv_Dev) _command_info _command_names
