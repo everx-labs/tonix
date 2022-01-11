@@ -1,7 +1,6 @@
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
 include Makefile.common
 include shell/Makefile
-#include utils/Makefile
 include boot/Makefile
 
 # Contracts
@@ -45,10 +44,10 @@ all: cc
 
 dirs:
 	mkdir -p $(DIRS)
-	echo / > $(PROC)/cwd
+#	echo / > $(PROC)/cwd
 
-install: dirs cc
-	$(TOC) config --url gql.custler.net
+install: dirs cc hosts
+	@$(TOC) config --url gql.custler.net
 
 cc: $(patsubst %,$(BLD)/%.cs,$(BUILTINS))
 	@true
@@ -78,12 +77,9 @@ $(BLD)/%.ress: $(BLD)/%.cs
 ss: $(patsubst %,$(BLD)/%.ress,$(BUILTINS))
 	echo $^
 
-update_shell_model: $(patsubst %,$(BLD)/$I_update_model_%.ress,$(filter-out $(shell $($I_r) _images {} | jq -r '._images[].name'),$(shell cat etc/model.shell)))
-	echo $^
-s1: update_shell_model
 etc/hosts.shell:
 	$($I_r) etc_hosts {} | jq -j '.out' | sed 's/ *$$//' >$@
-s3:
+hosts:
 	rm -f etc/hosts.shell
 	make etc/hosts.shell
 
@@ -93,7 +89,6 @@ bhf: $(patsubst %,$(USH)/%.help,$(HELP_TOPICS))
 	jq 'add' $^ >$(USH)/builtin_help
 
 cmp: $(patsubst %,$(USH)/%.man,$(UTILS))
-#cmp: $(patsubst %,$(USH)/%.man,man getent cat cut)
 	echo $^
 	rm -f $(USH)/man_pages
 	jq 'add' $^ >$(USH)/man_pages
@@ -113,12 +108,12 @@ $(USH)/builtin_help: $(patsubst %,$(USH)/%.help,$(HELP_TOPICS))
 $(USH)/man_pages: $(patsubst %,$(USH)/%.man,$(UTILS))
 	jq 'add' $^ >$@
 
-t: tx bocs
+tty tt: tx bocs
 	./$<
-tty tt: bin/xterm
-	./$<
-mc: bin/mc
-	./$<
+#tty tt: bin/xterm
+#	./$<
+#mc: bin/mc
+#	./$<
 bin/xterm: $(SRC)/xterm.c
 	gcc $< -lreadline -o $@
 bin/mc: $(SRC)/mc.c

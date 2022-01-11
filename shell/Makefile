@@ -16,12 +16,10 @@ HELP_TOPICS:=help declare type builtin pwd read hash command export readonly ali
 BUILTINS:=$(HELP_TOPICS) $(UTILS)
 
 INIT:=$(PRIME)
-#INIT:=$I
 
 user?=root
 
 BOOTDIR:=
-#VFS:=../vfs
 VFS:=vfs
 BIN:=$(VFS)/bin
 DEV:=$(VFS)/dev
@@ -36,7 +34,6 @@ HOM:=$(VFS)/home/$(user)
 HS:=$(HOM)/.sh_history
 TBIN:=$(TMP)/bin
 TSBIN:=$(TMP)/sbin
-#TSH:=$(TMP)/sh
 TSH:=$(TMP)/tosh
 
 DIRS:=bin $(VFS) $(PROC) $(DEV)
@@ -48,9 +45,6 @@ BLD:=build
 
 ccs: $(patsubst %,$(BLD)/%.cs,$(BUILTINS))
 	@true
-
-#install: $(patsubst %,$(BLD)/%.cs,$(BUILTINS)) $(patsubst %,$(BLD)/%.abi.json,$(BUILTINS))
-#	cp $^ ../$(BLD)
 
 $(BLD)/%.tvc: $(SRC)/%.sol
 	$(SOLC) $< -o $(BLD)
@@ -82,7 +76,6 @@ $(TSBIN)/acc/%.boc: etc/hosts.shell
 	$(TOC) account $(aa) -b $@
 
 hb:
-	$($I_r) etc_hosts {} | jq -j '.out'
 	$($I_r) models {} | jq -j '.out'
 
 # SH processing start
@@ -90,38 +83,7 @@ hb:
 bocs: $(patsubst %,$(TSBIN)/%.boc,$(BUILTINS))
 	@true
 
-SCR:=$(TSH)/script
-
-$(TSH)/tosh_read_profile.out: $(ETC)/profile $(BLD)/tosh.abi.json bocs
-	$(UBIN)/tosh read_profile $<
-
 prof: $(TSH)/tosh_read_profile.out
-	@true
-
-$(TSH)/builtin_main.out: $(TMP)/i_input $(BLD)/builtin.abi.json bocs
-	$(UBIN)/builtin main $<
-
-$(TSH)/tosh_exec_command.out: $(TSH)/tosh_interpret_command.out
-	$(UBIN)/tosh exec_command
-
-$(TSH)/stdout: $(SCR)
-	chmod +x $(SCR);./$(SCR);
-#	jq -r '.env[23]' $<
-
-#$(TSH)/tosh_read_command.out: $(TSH)/script_b
-$(TSH)/tosh_main.out: $(TSH)/script_b
-#	$(UBIN)/builtin builtin_exec read $<
-	chmod +x $<;./$<;
-
-#$(TSH)/script: $(TSH)/tosh_read_command.out
-#$(TSH)/script: $(TSH)/tosh_read_command.out
-$(TSH)/script: $(TSH)/tosh_main.out
-#	jq -r '.env[21]' $< >$@
-	jq -r '.env[26]' $< >$@
-$(TSH)/script_b: $(TSH)/builtin_main.out
-	jq -r '.env[21]' $< >$@
-
-SH: $(TSH)/stdout
 	@true
 
 tosh: bocs
