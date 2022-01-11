@@ -311,12 +311,6 @@ abstract contract Shell is Internal, arguments {
         return cur_value.empty() ? page + " " + new_record : _translate(page, _encode_item(name, cur_value), new_record);
     }
 
-    function _set_value(Var v, string value, string[] e) internal pure returns (string[] env) {
-        env = e;
-        uint16 page_index = v.context;
-        env[page_index] = _set_item_value(v.name, value, e[page_index]);
-    }
-
     function _set_var(string attrs, string token, string pg) internal pure returns (string page) {
         (string name, string value) = _strsplit(token, "=");
         string cur_record = _get_pool_record(name, pg);
@@ -328,7 +322,7 @@ abstract contract Shell is Internal, arguments {
             new_record = _pool_str(_meld_attr_set(attrs, cur_attrs), name, new_value);
             page = _translate(pg, cur_record, new_record);
         } else
-            page = pg + new_record;
+            page = pg + new_record + "\n";
     }
 
     function _set_add(string token, string context) internal pure returns (string) {

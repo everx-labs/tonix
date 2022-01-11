@@ -1,11 +1,11 @@
-#set -x
+set -x
 #echo $# $0 $1 $2 $3
 fn=$1
 shift
 param=$1
 
 case $fn in
-    b_exec|builtin_read_fs|builtin_help|exec|ustat|read_fs|read_fs_to_env)
+    b_exec|builtin_read_fs|builtin_help|exec|ustat|read_fs_to_env)
         util=$param;;
     read_local)
         util=$param;
@@ -33,9 +33,6 @@ boc=vfs/tmp/sbin/$util.boc
 
 args() {
    case $fn in
-        read_fs)
-            jq '{env_in: .env, job_in: .jobs[]}' vfs/tmp/tosh/tosh_process_input.out >vfs/tmp/tosh/shell_in;
-            jq -s 'add' vfs/tmp/tosh/shell_in vfs/tmp/fs;;
         builtin_read_fs)
             jq '{e: .}' vfs/tmp/tosh/env3_out >vfs/tmp/tosh/shell_in;
             jq -s 'add' vfs/tmp/tosh/shell_in vfs/tmp/fs;;
@@ -45,7 +42,8 @@ args() {
             jq '{e: .}' vfs/tmp/tosh/env3_out >vfs/tmp/tosh/shell_in;
             jq -s 'add' vfs/tmp/tosh/shell_in vfs/tmp/fs;;
         on_exec)
-            jq '{e: ., ec: "0"}' vfs/tmp/tosh/env3_out >vfs/tmp/tosh/shell_in;
+#            jq '{e: ., ec: "0"}' vfs/tmp/tosh/env3_out >vfs/tmp/tosh/shell_in;
+            jq '{e: .}' vfs/tmp/tosh/env3_out >vfs/tmp/tosh/shell_in;
             jq -s 'add' vfs/tmp/tosh/shell_in vfs/tmp/tosh/post_exec;;
         on_b_exec)
             jq '{e: .}' vfs/tmp/tosh/env3_out >vfs/tmp/tosh/shell_in;
@@ -100,10 +98,8 @@ filter() {
             chmod +x vfs/tmp/tosh/script;;
         read_local)
            cp $1 vfs/tmp/tosh/post_b_exec;;
-         read_fs)
-            jq -r '.job | if has("ec") and .ec != "0" then false else true end' $1;;
         builtin_read_fs|ustat)
-            cp $1 vfs/tmp/tosh/post_exec;;
+            cp $1 vfs/tmp/tosh/post_b_exec;;
         display_man_page|exec)
             cp $1 vfs/tmp/tosh/post_exec;;
         display_help|b_exec)
@@ -112,12 +108,18 @@ filter() {
             jq -r 'if has("env") then .env else empty end' $1 >vfs/tmp/tosh/env3_t;
             if [ -s vfs/tmp/tosh/env3_t ]; then
                 cp vfs/tmp/tosh/env3_t vfs/tmp/tosh/env3_out;
-            fi;;
+            fi;
+            jq -rj '.env[1]' $1 >vfs/tmp/tosh/stdout;
+            jq -rj '.env[2]' $1 >vfs/tmp/tosh/stderr;
+            ;;
         on_b_exec)
             jq -r 'if has("env") then .env else empty end' $1 >vfs/tmp/tosh/env3_t;
             if [ -s vfs/tmp/tosh/env3_t ]; then
                 cp vfs/tmp/tosh/env3_t vfs/tmp/tosh/env3_out;
-            fi;;
+            fi;
+            jq -rj '.env[1]' $1 >vfs/tmp/tosh/stdout;
+            jq -rj '.env[2]' $1 >vfs/tmp/tosh/stderr;
+            ;;
         uadm|induce)
             if [ -s vfs/tmp/tosh/cmd_errors ]; then
                 echo User admin command execution error!;

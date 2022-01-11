@@ -5,7 +5,6 @@ import "Shell.sol";
 contract cd is Shell {
 
     function builtin_read_fs(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Write[] wr) {
-//    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
         (string[] params, , ) = _get_args(e[IS_ARGS]);
         uint16 page_index = IS_POOL;
         string page = e[page_index];
@@ -17,9 +16,9 @@ contract cd is Shell {
         string dbg;
         out = "";
 
-        if (params.empty())
-            params.push("~");
-        string arg = params[0];
+//        if (params.empty())
+//            params.push("~");
+        string arg = params.empty() ? home_dir : params[0];
 
         uint16 wd = _resolve_absolute_path(cur_dir, inodes, data);
 

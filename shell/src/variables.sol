@@ -218,7 +218,7 @@ struct Var {
             var_value.append(_wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : W_DQUOTE));
         return is_function ?
             (name + " () " + _wrap(value, W_FUNCTION)) :
-            s_attrs + " " + _wrap(name, W_SQUARE) + var_value + "\n";
+            s_attrs + " " + _wrap(name, W_SQUARE) + var_value;
     }
 
     function _get_pool_record(string name, string pool) internal pure returns (string) {
@@ -236,7 +236,7 @@ struct Var {
         bool is_function = _strchr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=" + value;
         return is_function ?
-            (name + " ()" + _wrap(_indent(_translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
+            (name + " ()" + _wrap(_indent(_translate(_unwrap(value), ";", "\n"), 4, "\n"), W_FUNCTION)) :
             "declare " + attrs + " " + name + var_value + "\n";
     }
 
@@ -305,7 +305,7 @@ struct Var {
         else if (to == W_HASHMAP)
             return ("( ", " )");
         else if (to == W_FUNCTION)
-            return ("\n", "\n");
+            return ("", "\n");
     }
 
     function _wrap(string s, uint16 to) internal pure returns (string res) {
@@ -330,7 +330,7 @@ struct Var {
         else if (to == W_HASHMAP)
             return "( " + s + " )";
         else if (to == W_FUNCTION)
-            return "\n" + s + "\n";
+            return "\n{\n" + s + "\n}\n";
     }
 
     function _unwrap(string s) internal pure returns (string) {

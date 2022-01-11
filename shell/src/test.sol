@@ -5,7 +5,7 @@ import "Shell.sol";
 contract test is Shell {
 
     function builtin_read_fs(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Write[] wr) {
-        (, , string argv) = _get_args(e[IS_ARGS]);
+//        (, , string argv) = _get_args(e[IS_ARGS]);
         string s_args = _val("@", e[IS_TOSH_VAR]);
 //        string s_args = argv;
         string dbg;
@@ -18,10 +18,9 @@ contract test is Shell {
             else if (_strchr("ovR", op) > 0)
                 res = _eval_option(op, arg_1, e);
         }
-//        env[IS_SPECIAL_VAR] = _assign("", "?=" + (res ? "0" : "1"), e[IS_SPECIAL_VAR]);
         wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
-//        env[IS_STDERR].append(dbg);
-//        uint16 ec = res ? 0 : 1;
+        out = "";
+        ec = res ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _eval_option(string op, string name, string[] e) internal pure returns (bool res) {
@@ -77,11 +76,14 @@ contract test is Shell {
 
     function _eval_file_unary(string op, string path, string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
 //        string cached_wd = _lookup_value("shell_vars", "PWD", env);
-        string cached_wd = _value_of("PWD", e[IS_VARIABLE]);
-        uint16 pwd_index = _resolve_absolute_path(cached_wd, inodes, data);
-        if (pwd_index > INODES) {
+        (uint16 index, uint8 file_type, , ) = _resolve_relative_path(path, ROOT_DIR, inodes, data);
+//        string cached_wd = _value_of("PWD", e[IS_VARIABLE]);
+//        string cached_wd = _val("PWD", e[IS_POOL]);
+//        uint16 pwd_index = _resolve_absolute_path(cached_wd, inodes, data);
+//        if (pwd_index > INODES) {
+//        if (file_index >= ROOT_DIR) {
 //            string abs_path = _get_absolute_path(pwd_index, inodes, data);
-            (uint16 index, uint8 file_type, ) = _lookup_dir_ext(inodes[pwd_index], data[pwd_index], path);
+//            (uint16 index, uint8 file_type, ) = _lookup_dir_ext(inodes[pwd_index], data[pwd_index], path);
 
             if (file_type == FT_UNKNOWN)
                 return false;
@@ -97,7 +99,7 @@ contract test is Shell {
 
             if (_strchr("rwxOG", op) > 0)
                 return _can_access(op, mode, owner_id, group_id);
-        }
+//        }
         return false;
     }
 
@@ -112,27 +114,6 @@ contract test is Shell {
             arg_2 = fields[n_fields - 3];
 
         op = !arg_op.empty() && arg_op.substr(0, 1) == "-" ? arg_op.substr(1) : arg_op;
-    }
-
-    function read_fs(Job job_in, mapping (uint => ItemHashMap) env_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (Job job, mapping (uint => ItemHashMap) env) {
-        job = job_in;
-        env = env_in;
-        (, , , , , , , , , , string s_args, , , , , , , , ) = job_in.unpack();
-//            bool res = _eval(s_args, env_in, inodes, data);
-        (string arg_1, string op, string arg_2) = _parse_test_args(s_args);
-        bool res;
-        if (arg_2.empty()) {
-//            if (_strchr("aesbcdfhLpSgukrwxOGN", op) > 0)
-///                res = _eval_file_unary(op, arg_1, env, inodes, data);
-//            else if (_strchr("ovR", op) > 0)
-//                res = _eval_option(op, arg_1, env);
-        }
-        uint16 ec = res ? 0 : 1;
-
-//            (uint16 ec, string out, mapping (uint => ItemHashMap) env_x, string s_action) = _test(args, short_options, env_in);
-        job.ec = ec;
-//            job.stdout.append(out);
-//            job.s_action = s_action;
     }
 
     /*function _test(string[] args, string short_options, mapping (uint => ItemHashMap) env_in) internal pure returns (uint16 ec, string out, mapping (uint => ItemHashMap) env, string s_action) {

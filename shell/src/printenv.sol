@@ -14,21 +14,23 @@ contract printenv is Utility {
         if (params.empty()) {
             (string[] lines, ) = _split(pool, "\n");
             for (string line: lines) {
-                (string attrs, ) = _strsplit(line, " ");
-                if (_match_attr_set(s_attrs, attrs))
-                    out.append(_print_reusable(line) + delimiter);
+                (string attrs, string stmt) = _strsplit(line, " ");
+                if (_match_attr_set(s_attrs, attrs)) {
+                    (string name, string value) = _item_value(stmt);
+                    out.append(name + "=" + value + delimiter);
+                }
             }
         }
         for (string p: params) {
-            (string name, string value) = _strsplit(p, "=");
-            string cur_record = _get_pool_record(name, pool);
+            string cur_record = _get_pool_record(p, pool);
             if (!cur_record.empty()) {
-                (string cur_attrs, ) = _strsplit(cur_record, " ");
-                if (_match_attr_set(s_attrs, cur_attrs))
-                    out.append(_print_reusable(cur_record) + delimiter);
+                (string attrs, string stmt) = _strsplit(cur_record, " ");
+                if (_match_attr_set(s_attrs, attrs)) {
+                    (string name, string value) = _item_value(stmt);
+                    out.append(name + "=" + value + delimiter);
+                }
             } else {
-//                ec = EXECUTE_FAILURE;
-                ec = 1;
+                ec = EXECUTE_FAILURE;
                 err.append("Environment variable " + p + " not found\n");
             }
         }
@@ -47,8 +49,8 @@ contract printenv is Utility {
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
 "printenv",
-"print all or part of environment",
 "[OPTION]... [VARIABLE]...",
+"print all or part of environment",
 "Print the values of the specified environment VARIABLE(s).  If no VARIABLE is specified, print name and value pairs for them all.",
 "-0      end each output line with NUL, not newline",
 "",

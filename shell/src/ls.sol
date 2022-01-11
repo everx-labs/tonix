@@ -6,23 +6,26 @@ import "../lib/libuadm.sol";
 contract ls is Utility, libuadm {
 
     function exec(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        ec = EXECUTE_SUCCESS;
         (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
         for (string arg: params) {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_ls(flags, Arg(arg, ft, index, parent, dir_index), inodes, data) + "\n");
-            else
+            else {
                 err.append("Failed to resolve relative path for" + arg + "\n");
+                ec = EXECUTE_FAILURE;
+            }
         }
     }
 
     function _ls_sort_rating(string f, Inode inode, string name, uint16 dir_idx) private pure returns (uint rating) {
-        bool use_ctime = _flag_set("c", f);
+        (bool use_ctime, bool largest_first, bool unsorted, bool no_sort, bool newest_first, bool reverse_order, , ) = _flag_values("cSUftr", f);
+        bool directory_order = unsorted || no_sort;
+        /*bool use_ctime = _flag_set("c", f);
         bool largest_first = _flag_set("S", f);
         bool directory_order = _flag_set("U", f) || _flag_set("f", f);
         bool newest_first = _flag_set("t", f);
-        bool reverse_order = _flag_set("r", f);
+        bool reverse_order = _flag_set("r", f);*/
         uint rating_lo = directory_order ? dir_idx : _alpha_rating(name, 8);
         uint rating_hi;
 
@@ -107,13 +110,10 @@ contract ls is Utility, libuadm {
 
     function _list_dir(string f, Arg arg, Inode inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Arg[] sub_args) {
         (string s, uint8 ft, uint16 index, , ) = arg.unpack();
-
-        bool recurse = _flag_set("R", f);
-        bool long_format = _flag_set("l", f) || _flag_set("n", f) || _flag_set("g", f) || _flag_set("o", f);
-        bool print_allocated_size = _flag_set("s", f);
-
-        // record separator: newline for long format or -1, comma for -m, tabulation otherwise (should be columns)
-        string sp = long_format || _flag_set("1", f) ? "\n" : _flag_set("n", f) ? ", " : "  ";
+        (bool recurse, bool long_fmt, bool numeric, bool group_only, bool owner_only, bool print_allocated_size,
+            bool delim_newline, bool delim_comma) = _flag_values("Rlngos1m", f);
+        bool long_format = long_fmt || numeric || group_only || owner_only;
+        string sp = long_format || delim_newline ? "\n" : delim_comma ? ", " : "  ";
         string[][] table;
 
         mapping (uint => uint16) ds;

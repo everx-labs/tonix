@@ -7,11 +7,10 @@ contract echo is Shell {
     function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] /*wr*/) {
         (string[] args, string flags, ) = _get_args(e[IS_ARGS]);
         bool no_trailing_newline = _flag_set("n", flags);
-        string res = _join_fields(args, " ");
+        out = _join_fields(args, " ");
         if (!no_trailing_newline)
-            res.append("\n");
-        ec = 0;
-        out = res;
+            out.append("\n");
+        ec = EXECUTE_SUCCESS;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

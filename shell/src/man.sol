@@ -5,12 +5,6 @@ import "Utility.sol";
 /* Base contract for the devices exporting command manuals */
 contract man is Utility {
 
-    function exec(Session /*session*/, InputS input) external pure returns (string out) {
-        (, string[] args, ) = input.unpack();
-//        for (string s: args)
-//            out.append(_is_command_page_available(s) ? _get_man_text(0, s) : "No manual entry for " + s + "\n");
-    }
-
     function _get_man_file(string arg, CommandHelp[] help_files) internal pure returns (uint8 ec, CommandHelp help_file) {
         ec = EXECUTE_FAILURE;
         for (CommandHelp bh: help_files)
@@ -21,14 +15,13 @@ contract man is Utility {
     function display_man_page(CommandHelp[] help_files, string[] e) external pure returns (uint8 ec, string out, string err) {
         (string[] params, string flags, string argv) = _get_args(e[IS_ARGS]);
         string dbg = argv;
-        uint8 command_format = 1;// = _get_help_format(flags);
+        uint8 command_format = 1;
 
-//        if (params.empty())
-//            out.append(_print_help_msg(help_files));
-
+        if (params.empty())
+            out.append("What manual page do you want?\nFor example, try 'man man'.");
         for (string arg: params) {
             (uint8 t_ec, CommandHelp help_file) = _get_man_file(arg, help_files);
-            if (t_ec == 0)
+            if (t_ec == EXECUTE_SUCCESS)
                 out.append(_get_man_text(command_format, help_file));
             else {
                 ec = t_ec;
@@ -36,9 +29,11 @@ contract man is Utility {
             }
         }
     }
+
     /* Informational commands helpers */
     function _get_man_text(uint8 command_format, CommandHelp help_file) private pure returns (string) {
         (string name, string synopsis, string purpose, string description, string options, string notes, string author, string bugs, string see_also, string version) = help_file.unpack();
+        options.append("--help\tdisplay this help and exit\n--version\n\t\toutput version information and exit");
 
         /*if (command_format < COMMAND_FORMAT_DESCRIPTION)
             return "";
@@ -53,10 +48,11 @@ contract man is Utility {
                 _format_list("SYNOPSIS", name + " " + synopsis, 4, "\n"),
                 _format_list("DESCRIPTION", description, 4, "\n"),
                 _format_list("OPTIONS", options, 4, "\n"),
+                _format_list("", notes, 4, "\n"),
                 _format_list("AUTHOR", author, 4, "\n"),
                 _format_list("REPORTING BUGS", bugs, 4, "\n"),
                 _format_list("SEE ALSO", see_also, 4, "\n"),
-                _format_list("Version ", version, 0, "\n")], "\n");
+                _format_list("Version ", version, 0, " ")], "\n");
     }
 
 //        for (string u: uses)
@@ -115,19 +111,4 @@ contract man is Utility {
 "apropos, whatis",
 "0.01");
     }
-    /*
-    function _command_help() internal override pure returns (CommandHelp) {
-        return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
-"",
-"Written by Boris",
-"",
-"",
-"0.01");
-    }
-    */
 }

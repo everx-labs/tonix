@@ -37,7 +37,6 @@ contract type_ is Shell, compspec {
             else if (t == "alias")
                 value = terse ? "alias" : (arg + " is aliased to `" + _val(arg, _get_map_value("TOSH_ALIASES", e[IS_POOL])) + "\'");
             else if (t == "function") {
-//                value = terse ? "function" : (arg + " is a function\n" + _function_body(arg, e[IS_POOL]));
                 value = terse ? "function" : (arg + " is a function\n" + _print_reusable(_get_pool_record(arg, e[IS_POOL])));
             } else if (t == "builtin")
                 value = terse ? "builtin" : (arg + " is a shell builtin");
@@ -47,11 +46,12 @@ contract type_ is Shell, compspec {
                     value = terse ? "file" : (arg + " is hashed (" + path + "/" + arg + ")");
                 else
                     value = terse ? "file" : (arg + " is " + _get_array_name(arg, e[IS_BINPATH]) + "/" + arg);
-            } else
+            } else {
                 value = "-tosh: type: " + arg + ": not found";
+                ec = EXECUTE_FAILURE;
+            }
             out.append(value + "\n");
         }
-        ec = 0;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

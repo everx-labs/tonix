@@ -32,8 +32,8 @@ contract read is Shell {
     uint8 constant TOKEN_LIST       = 6;
 
     function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        string s_input = _trim_spaces(e[IS_BLTN_IN]);
-        (, string[] params, string flags, string argv) = _get_builtin_args(e);
+        string s_input = _trim_spaces(e[IS_STDIN]);
+        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
 
         bool assign_to_array = _flag_set("a", flags);
         bool use_delimiter = _flag_set("d", flags);
@@ -44,8 +44,6 @@ contract read is Shell {
 
         uint16 page_index = IS_POOL;
         string page = e[page_index];
-//        string vals = page;
-//        string err;
 
         if (assign_to_array) {
             string array_name = "REPLY";

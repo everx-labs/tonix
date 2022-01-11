@@ -5,14 +5,16 @@ import "compspec.sol";
 
 contract eilish is Shell, compspec {
 
-    function on_b_exec(string ec, string out, Write[] delta, string[] e) external pure returns (string[] env) {
+    function on_b_exec(uint8 ec, string out, Write[] delta, string[] e) external pure returns (string[] env) {
         env = e;
-        string dbg = ec;
+        string dbg;
 
         env[IS_STDOUT].append(out);
-//        string exec_line = e[IS_PIPELINE];
+        string exec_line = e[IS_PIPELINE];
 //        dbg.append("Executed " + exec_line + " with status " + ec + "\n");
 //        uint len = e.length;
+        if (ec > EXECUTE_SUCCESS)
+            dbg.append("Executed " + exec_line + " with status " + format("{}", ec) + "\n");
 
         for (Write d: delta) {
             (uint16 fd, string text, uint16 mode) = d.unpack();
@@ -22,20 +24,19 @@ contract eilish is Shell, compspec {
                 else
                     env[fd] = text;
             if (fd != IS_STDOUT && fd != IS_STDERR)
-                dbg.append(format("page {} changes {} to {}\n", fd, e[fd], text));
+                dbg.append(format("page {} changes from\n===\n{}\n===\n to \n===\n{}\n===\n", fd, e[fd], text));
         }
         env[IS_STDERR].append(dbg);
     }
 
-
-    function on_exec(string ec, string out, string[] e) external pure returns (string[] env) {
+    function on_exec(uint8 ec, string out, string[] e) external pure returns (string[] env) {
         env = e;
-        string dbg = ec;
+        string dbg;
 
         env[IS_STDOUT].append(out);
         string exec_line = e[IS_PIPELINE];
-        dbg.append("Executed " + exec_line + " with status " + ec + "\n");
-//        uint len = e.length;
+        if (ec > EXECUTE_SUCCESS)
+            dbg.append("Executed " + exec_line + " with status " + format("{}", ec) + "\n");
 
         env[IS_STDERR].append(dbg);
     }
@@ -126,10 +127,7 @@ contract eilish is Shell, compspec {
         /* Resolve execution commands */
         string comp_specs_page = e[IS_COMP_SPEC];
         string fn_name = _get_array_name(cmd, comp_specs_page);
-//        Var f_var = _var_ext(fn_name, pool);
-//        string f_body = f_var.value;
         string f_body = _function_body(fn_name, pool);
-        dbg.append(f_body);
 
         string exec_queue;
         string exec_cmd;
@@ -241,10 +239,13 @@ contract eilish is Shell, compspec {
                     o = token.substr(2); // long option
 //                    long_opts.push(o);
                 } else {
-                    o = token.substr(1); // short option(s)
-//                    short_opts.append(o);
-                    if (t_len > 2)      // short option sequence has no value
+                    // short option(s)
+                    o = token.substr(1);
+                    if (t_len > 2) {     // short option sequence has no value
+                        for (uint j = 1; j < t_len; j++)
+                            s_flags.append(token.substr(j, 1));
                         continue;
+                    }
                 }
                 uint p = _strchr(opt_string, o); // _strstr() for long options ?
                 if (p > 0) {
