@@ -81,11 +81,11 @@ contract newgrp is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
+"newgrp",
+"[-] [group]",
+"log in to a new group",
+"Change the current group ID during a login session.",
 "",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
 "",
 "Written by Boris",
 "",

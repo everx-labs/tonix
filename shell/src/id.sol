@@ -74,11 +74,17 @@ contract id is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"id",
+"[OPTION]... [USER]",
+"print real and effective user and group IDs",
+"Print user and group information for the specified USER, or (when USER omitted) for the current user.",
+"-a      ignore, for compatibility with other versions\n\
+-g      print only the effective group ID\n\
+-G      print all group IDs\n\
+-n      print a name instead of a number, for -ugG\n\
+-r      print the real ID instead of the effective ID, with -ugG\n\
+-u      print only the effective user ID\n\
+-z      delimit entries with NUL characters, not whitespace",
 "",
 "Written by Boris",
 "",

@@ -58,11 +58,12 @@ contract utmpdump is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"utmpdump",
+"[options] [filename]",
+"dump UTMP and WTMP files in raw format",
+"Dump UTMP and WTMP files in raw format, so they can be examined.",
+"-r      write back dumped data into utmp file\n\
+-o      write to file instead of standard output",
 "",
 "Written by Boris",
 "",

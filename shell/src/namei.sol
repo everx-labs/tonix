@@ -56,11 +56,16 @@ contract namei is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"namei",
+"[options] pathname...",
+"follow a pathname until a terminal point is found",
+"Interprets its arguments as pathnames to any type of Unix file (symlinks, files, directories, and so forth). namei then follows each pathname until an endpoint is found (a file, a directory, a device node, etc). If it finds a symbolic link, it shows the link, and starts following it, indenting the output to show the context.",
+"-x      show mount point directories with a 'D'\n\
+-m      show the mode bits of each file\n\
+-o      show owner and group name of each file\n\
+-l      use a long listing format (-m -o -v)\n\
+-n      don't follow symlinks\n\
+-v      vertical align of modes and owners",
 "",
 "Written by Boris",
 "",

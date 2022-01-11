@@ -22,11 +22,13 @@ contract env is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"env",
+"[OPTION]... [COMMAND [ARG]...]",
+"run a program in a modified environment",
+"Run COMMAND in the environment.",
+"-i      start with an empty environment\n\
+-0      end each output line with NUL, not newline\n\
+-v      print verbose information for each processing step",
 "",
 "Written by Boris",
 "",

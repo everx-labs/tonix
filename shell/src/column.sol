@@ -65,11 +65,14 @@ contract column is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"column",
+"[-entx] [-c columns] [-s sep] [file ...]",
+"columnate lists",
+"The column utility formats its input into multiple columns. Rows are filled before columns. Input is taken from file operands, or, by default, from the standard input. Empty lines are ignored unless the -e option is used.",
+"-t      determine the number of columns the input contains and create a table. Columns are delimited with whitespace by default\n\
+-x      fill columns before filling rows\n\
+-n      disables merging multiple adjacent delimiters into a single delimiter when using the -t option\n\
+-e      do not ignore empty lines",
 "",
 "Written by Boris",
 "",

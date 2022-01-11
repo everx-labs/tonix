@@ -67,11 +67,12 @@ contract rmdir is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"rmdir",
+"[OPTION]... DIRECTORY...",
+"remove empty directories",
+"Remove the DIRECTORY(ies), if they are empty.",
+"-p      remove DIRECTORY and its ancestors; e.g., 'rmdir -p a/b/c' is similar to 'rmdir a/b/c a/b a'\n\
+-v      output a diagnostic for every directory processed",
 "",
 "Written by Boris",
 "",

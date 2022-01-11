@@ -36,11 +36,11 @@ contract rev is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
+"rev",
+"[option] [file...]",
+"reverse lines characterwise",
+"Copies the specified files to standard output, reversing the order of characters in every line.",
 "",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
 "",
 "Written by Boris",
 "",

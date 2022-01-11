@@ -34,11 +34,13 @@ contract finger is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"finger",
+"[-lms] [user ...]",
+"user information lookup program",
+"Displays information about the system users.",
+"-l      produces a multi-line format displaying all of the information described for the -s option as well as the user's home directory\n\
+-m      prevent matching of user names\n\
+-s      displays the user's login name, write status and login time",
 "",
 "Written by Boris",
 "",

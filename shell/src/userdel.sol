@@ -105,11 +105,12 @@ contract userdel is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"userdel",
+"[options] LOGIN",
+"delete a user account and related files",
+"A low level utility for removing users.",
+"-f      force removal of files, even if not owned by user\n\
+-r      remove the user's home directory",
 "",
 "Written by Boris",
 "",

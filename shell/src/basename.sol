@@ -34,11 +34,13 @@ contract basename is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"basename",
+"NAME",
+"strip directory and suffix from filenames",
+"Print NAME with any leading directory components removed.",
+"-a      support multiple arguments and treat each as a NAME\n\
+-s      remove a trailing SUFFIX; implies -a\n\
+-z      end each output line with NUL, not newline",
 "",
 "Written by Boris",
 "",

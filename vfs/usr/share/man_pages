@@ -1,9 +1,9 @@
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "ls",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "list directory contents",
+  "description": "List information about the FILE (the current directory by default).",
+  "options": "-a      do not ignore entries starting with .\n-A      do not list implied . and ..\n-B      do not list implied entries ending with ~\n-c      with -lt: sort by, and show, ctime; with -l: show ctime and sort by name, otherwise: sort by ctime, newest first\n-C      list entries by columns\n-d      list directories themselves, not their contents\n-f      do not sort, enable -aU\n-F      append indicator (one of */=>@|) to entries\n-g      like -l, but do not list owner\n-G      in a long listing, don't print group names\n-h      with -l and -s, print sizes like 1K 234M 2G etc.\n-H      follow symbolic links listed on the command line\n-i      print the index number of each file\n-k      default to 1024-byte blocks for disk usage; used only with -s and per directory totals\n-L      for a symbolic link, show information for the file the link references rather than for the link itself\n-l      use a long listing format\n-m      fill width with a comma separated list of entries\n-n      like -l, but list numeric user and group IDs\n-N      print entry names without quoting\n-o      like -l, but do not list group information\n-p      append / indicator to directories\n-q      print ? instead of nongraphic characters\n-Q      enclose entry names in double quotes\n-r      reverse order while sorting\n-R      list subdirectories recursively\n-s      print the allocated size of each file, in blocks\n-S      sort by file size, largest first\n-t      sort by modification time, newest first\n-u      with -lt: sort by, and show, access time; with -l: show access time and sort by name; otherwise: sort by access time, newest first\n-U      do not sort; list entries in directory order\n-v      natural sort of (version) numbers within text\n-x      list entries by lines instead of by columns\n-X      sort alphabetically by entry extension\n-1      list one file per line. Avoid '\\n' with -q or -b",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -23,11 +23,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "file",
+  "synopsis": "[OPTION...] [FILE...]",
+  "purpose": "determine file type",
+  "description": "Determine type of FILE.",
+  "options": "-b      do not prepend filenames to output lines\n-E      on filesystem errors, issue an error message and exit\n-L      follow symlinks (default if POSIXLY_CORRECT is set)\n-h      don't follow symlinks (default if POSIXLY_CORRECT is not set) (default)\n-N      do not pad output\n-v      print the version of the program and exit\n-0      terminate filenames with ASCII NUL",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -35,11 +35,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "stat",
+  "synopsis": "[OPTION]... FILE...",
+  "purpose": "display file or file system status",
+  "description": "Display file or file system status.",
+  "options": "-L      follow links\n-f      display file system status instead of file status\n-t      print the information in terse form",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -47,11 +47,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "namei",
+  "synopsis": "[options] pathname...",
+  "purpose": "follow a pathname until a terminal point is found",
+  "description": "Interprets its arguments as pathnames to any type of Unix file (symlinks, files, directories, and so forth). namei then follows each pathname until an endpoint is found (a file, a directory, a device node, etc). If it finds a symbolic link, it shows the link, and starts following it, indenting the output to show the context.",
+  "options": "-x      show mount point directories with a 'D'\n-m      show the mode bits of each file\n-o      show owner and group name of each file\n-l      use a long listing format (-m -o -v)\n-n      don't follow symlinks\n-v      vertical align of modes and owners",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -71,11 +71,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "colrm",
+  "synopsis": "[start [stop]]",
+  "purpose": "remove columns from a file",
+  "description": "Removes selected columns from the lines of a file. A column is defined as a single character in a line. Output is written to the standard output.",
+  "options": "",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -83,11 +83,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "column",
+  "synopsis": "[-entx] [-c columns] [-s sep] [file ...]",
+  "purpose": "columnate lists",
+  "description": "The column utility formats its input into multiple columns. Rows are filled before columns. Input is taken from file operands, or, by default, from the standard input. Empty lines are ignored unless the -e option is used.",
+  "options": "-t      determine the number of columns the input contains and create a table. Columns are delimited with whitespace by default\n-x      fill columns before filling rows\n-n      disables merging multiple adjacent delimiters into a single delimiter when using the -t option\n-e      do not ignore empty lines",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -107,11 +107,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "expand",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "convert tabs to spaces",
+  "description": "Convert tabs in each FILE to spaces, writing to standard output.",
+  "options": "-i     do not convert tabs after non blanks\n-t      have tabs N characters apart, not 8",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -119,11 +119,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "grep",
+  "synopsis": "[OPTION...] PATTERNS [FILE...]",
+  "purpose": "print lines that match patterns",
+  "description": "Searches for PATTERNS in each FILE and prints each line that matches a pattern.",
+  "options": "-v      invert the sense of matching, to select non-matching lines\n-x      select only those matches that exactly match the whole line",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -131,11 +131,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "head",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "output the first part of files",
+  "description": "Print the first 10 lines of each FILE to standard output. With more than one FILE, precede each with a header giving the file name.",
+  "options": "-n      print the first NUM lines instead of the first 10;  with the leading '-', print all but the last  NUM lines of each file\n-q      never print headers giving file names\n-v      always print headers giving file names\n-z      line delimiter is NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -143,11 +143,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "look",
+  "synopsis": "[-bdf] [-t termchar] string [file ...]",
+  "purpose": "display lines beginning with a given string",
+  "description": "Displays any lines in file which contain string as a prefix.",
+  "options": "-b      use a binary search on the given word list\n-d      dictionary character set and order, i.e., only alphanumeric characters are compared\n-f      ignore the case of alphabetic characters\n-t      specify a string termination character, i.e., only the characters in string up to and including the first occurrence of termchar are compared",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -155,11 +155,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "rev",
+  "synopsis": "[option] [file...]",
+  "purpose": "reverse lines characterwise",
+  "description": "Copies the specified files to standard output, reversing the order of characters in every line.",
+  "options": "",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -167,11 +167,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "tail",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "output the last part of files",
+  "description": "Print the last 10 lines of each FILE to standard output. With more than one FILE, precede each with a header giving the file name.",
+  "options": "-n      output the last NUM lines, instead of the last 10;  or use -n +NUM to output starting with line NUM\n-q      never output headers giving file names\n-v      always output headers giving file names\n-z      line delimiter is NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -179,11 +179,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "tr",
+  "synopsis": "[OPTION]... SET1 [SET2]",
+  "purpose": "translate or delete characters",
+  "description": "Translate, squeeze, and/or delete characters from standard input, writing to standard output.",
+  "options": "-d      delete characters in SET1, do not translate\n-s      replace each sequence of a repeated character that is listed in the last specified SET, with a single occurrence of that character",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -191,11 +191,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "unexpand",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "convert spaces to tabs",
+  "description": "Convert blanks in each FILE to tabs, writing to standard output.",
+  "options": "-a      convert all blanks, instead of just initial blanks\n-t      have tabs N characters apart instead of 8 (enables -a)",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -203,11 +203,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "paste",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "merge lines of files",
+  "description": "Write lines consisting of the sequentially corresponding lines from each FILE, separated by TABs, to standard output.",
+  "options": "-s      paste one file at a time instead of in parallel\n-z      line delimiter is NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -215,11 +215,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "wc",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "print newline, word, and byte counts for each file",
+  "description": "Print newline, word, and byte counts for each FILE, and a total line if more than one FILE is specified. A word is a non-zero-length sequence of characters delimited by white space.",
+  "options": "-c      print the byte counts\n-m      print the character counts\n-l      print the newline counts\n-L      print the maximum display width\n-w      print the word counts",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -227,11 +227,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "readlink",
+  "synopsis": "[OPTION]... FILE...",
+  "purpose": "print resolved symbolic links or canonical file names",
+  "description": "Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
+  "options": "-f      all but the last component must exist\n-e      all components must exist\n-m      without requirements on components existence\n-n      do not output the trailing delimiter\n-q      quiet\n-s      suppress most error messages (on by default)\n-v      report error message\n-z      end each output line with NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -239,11 +239,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "realpath",
+  "synopsis": "[OPTION]... FILE...",
+  "purpose": "print the resolved path",
+  "description": "Print the resolved absolute file name; all but the last component must exist.",
+  "options": "-e      all components of the path must exist\n-m      no path components need exist or be a directory\n-L      resolve '..' components before symlinks\n-P      resolve symlinks as encountered (default)\n-q      suppress most error messages\n-s      don't expand symlinks\n-z      end each output line with NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -251,11 +251,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "env",
+  "synopsis": "[OPTION]... [COMMAND [ARG]...]",
+  "purpose": "run a program in a modified environment",
+  "description": "Run COMMAND in the environment.",
+  "options": "-i      start with an empty environment\n-0      end each output line with NUL, not newline\n-v      print verbose information for each processing step",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -275,11 +275,311 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "whatis",
+  "synopsis": "[-dlv] name ...",
+  "purpose": "display one-line manual page descriptions",
+  "description": "Searches the manual page names and displays the manual page descriptions of any name matched.",
+  "options": "-d      emit debugging messages\n-l      do not trim output to terminal width\n-v      print verbose warning messages",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "mkfs",
+  "synopsis": "[options] [fs-options] device [size]",
+  "purpose": "build a Tonix filesystem",
+  "description": "Used to build a Tonix filesystem on a device. The device argument is either the device name, or a regular file that shall contain the filesystem. The size argument is the number of blocks to be used for the filesystem.",
+  "options": "-V     produce verbose output, including all filesystem-specific commands that are executed",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "mke2fs",
+  "synopsis": "[options] [fs-options] device [size]",
+  "purpose": "build a Tonix filesystem",
+  "description": "Used to build a Tonix filesystem on a device.",
+  "options": "-b      specify the size of blocks in bytes\n-d      copy the contents of the given directory into the root directory of the filesystem\n-I      specify the size of each inode in bytes\n-j      create the filesystem with an ext3 journal\n-n      not actually create a filesystem, but display what it would do if it were to create a filesystem\n-S      write superblock and group descriptors only",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "dumpe2fs",
+  "synopsis": "[ -bfghixV ] device",
+  "purpose": "dump ext2/ext3/ext4 filesystem information",
+  "description": "Prints the super block and blocks group information for the filesystem present on device.",
+  "options": "-h     only display the superblock information and not any of the block group descriptor detail information\n-i      display the filesystem data from an image file created by e2image, using device as the pathname to the image file",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "fsck",
+  "synopsis": "[filesystem...]",
+  "purpose": "check and repair a Tonix filesystem",
+  "description": "Used to check and optionally repair one or more Tonix filesystems.",
+  "options": "-A      check all filesystems\n-l      lock the device to guarantee exclusive access\n-R      skip root filesystem\n-p      automatic repair (no questions)\n-n      make no changes to the filesystem",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "mount",
+  "synopsis": "[-l]\t-a [-fnrvw]\t-[NTBM] <source> <directory>",
+  "purpose": "mount a filesystem",
+  "description": "Attach the filesystem found on some device to the file tree",
+  "options": "-a      mount all filesystems mentioned in fstab\n-c      don't canonicalize paths\n-f      dry run; skip the mount(2) syscall\n-T      alternative file to /etc/fstab\n-l      show also filesystem labels\n-n      don't write to /etc/mtab\n-r      mount the filesystem read-only\n-v      say what is being done\n-w      mount the filesystem read-write (default)\n-N      perform mount in another namespace\n-B      mount a subtree somewhere else\n-M      move a subtree to some other place",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "umount",
+  "synopsis": "-a [-dflnrv] {directory|device}...",
+  "purpose": "unmount file systems",
+  "description": "Detaches the mentioned file system(s) from the file hierarchy.",
+  "options": "-a      unmount all filesystems\n-A      unmount all mountpoints for the given device in the current namespace\n-c      don't canonicalize paths\n-d      if mounted loop device, also free this loop device\n-f      force unmount (in case of an unreachable NFS system)\n-n      don't write to /etc/mtab\n-l      detach the filesystem now, clean up things later\n-R      recursively unmount a target with all its children\n-r      in case unmounting fails, try to remount read-only\n-v      say what is being done\n-q      suppress 'not mounted' error messages",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "losetup",
+  "synopsis": "[options]... [loopdev]",
+  "purpose": "set up and control loop devices",
+  "description": "Associate loop devices with regular files or block devices, to detach loop devices, and to query the status of a loop device.",
+  "options": "-a      list all used devices\n-d      detach one or more devices\n-D      detach all used devices\n-f      find first unused device\n-j      list all devices associated with <file>\n-L      avoid possible conflict between devices\n-P      create a partitioned loop device\n-r      set up a read-only loop device\n-v      verbose mode\n-l      list info about all or specified (default)\n-n      don't print headings for --list output",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "udevadm",
+  "synopsis": "info [options] [devpath]",
+  "purpose": "udev management tool",
+  "description": "Expects a command and command specific options.",
+  "options": "",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "df",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "report file system disk space usage",
+  "description": "Displays the amount of disk space available on the file system containing each file name argument.",
+  "options": "-a      include pseudo, duplicate, inaccessible file systems\n-h      print sizes in powers of 1024 (e.g., 1023K)\n-H      print sizes in powers of 1000 (e.g., 1.1K)\n-i      list inode information instead of block usage\n-k      block size = 1K\n-l      limit listing to local file systems\n-P      use the POSIX output format\n-v      (ignored)",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "findmnt",
+  "synopsis": "[options]\t[options] device|mountpoint[options] [device...]",
+  "purpose": "find a filesystem",
+  "description": "List all mounted filesystems or search for a filesystem.",
+  "options": "-s      search in static table of filesystems\n-m      search in table of mounted filesystems\n-k      search in kernel table of mounted filesystems (default)\n-A      disable all built-in filters, print all filesystems\n-b      print sizes in bytes rather than in human readable format\n-D      imitate the output of df(1)\n-f      print the first found filesystem only\n-n      don't print column headings\n-u      don't truncate text in columns",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "mountpoint",
+  "synopsis": "[-d|-q] directory | file\t-x device",
+  "purpose": "see if a directory or file is a mountpoint",
+  "description": "Checks whether the given directory or file is mentioned in the /proc/self/mountinfo file.",
+  "options": "-d      quiet mode - don't print anything\n-q      print maj:min device number of the filesystem\n-x      print maj:min device number of the block device",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "touch",
+  "synopsis": "[OPTION]... FILE...",
+  "purpose": "change file timestamps",
+  "description": "Update the modification time of each FILE to the current time. A FILE argument that does not exist is created empty, unless -c is supplied.",
+  "options": "-c      do not create any files\n-m      change only the modification time",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "cp",
+  "synopsis": "[OPTION]... [-T] SOURCE DEST\n\tcp [OPTION]... SOURCE... DIRECTORY\n\tcp [OPTION]... -t DIRECTORY SOURCE...",
+  "purpose": "copy files and directories",
+  "description": "Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY. The backup suffix is '~'. As a special case, cp makes a backup of SOURCE when the force and backup options are given and SOURCE and DEST are the same name for an existing, regular file.",
+  "options": "-a      same as -dR -p\n-b      make a backup of each existing destination file\n-d      same as -P, preserve links\n-f      if an existing destination file cannot be opened, remove it and try again\n-H      follow command-line symbolic links in SOURCE\n-l      hard link files instead of copying\n-L      always follow symbolic links in SOURCE\n-n      do not overwrite an existing file\n-P      never follow symbolic links in SOURCE\n-p      preserve mode, ownership, timestamps\n-r      \n-R      copy directories recursively\n-s      make symbolic links instead of copying\n-t      copy all SOURCE arguments into DIRECTORY\n-T      treat DEST as a normal file\n-u      copy only when the SOURCE file is newer than the destination file or when the destination file is missing\n-v      explain what is being done\n-x      stay on this file system",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "mv",
+  "synopsis": "[OPTION]... [-T] SOURCE DEST\t[OPTION]... SOURCE... DIRECTORY\t[OPTION]... -t DIRECTORY SOURCE...",
+  "purpose": "move (rename) files",
+  "description": "Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY.",
+  "options": "-b      make a backup of each existing destination file\n-f      do not prompt before overwriting\n-n      do not overwrite an existing file\n-t      move all SOURCE arguments into DIRECTORY\n-T      treat DEST as a normal file\n-u      move only when the SOURCE file is newer than the destination file or when the destination file is missing\n-v      explain what is being done",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "rm",
+  "synopsis": "[OPTION]... [FILE]...",
+  "purpose": "remove files or directories",
+  "description": "Remove each specified file. By default, it does not remove directories. Use -r option to remove each listed directory, too, along with all of its contents.",
+  "options": "-f      ignore nonexistent files and arguments, never prompt\n-r      \n-R      remove directories and their contents recursively\n-d      remove empty directories\n-v      explain what is being done",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "rmdir",
+  "synopsis": "[OPTION]... DIRECTORY...",
+  "purpose": "remove empty directories",
+  "description": "Remove the DIRECTORY(ies), if they are empty.",
+  "options": "-p      remove DIRECTORY and its ancestors; e.g., 'rmdir -p a/b/c' is similar to 'rmdir a/b/c a/b a'\n-v      output a diagnostic for every directory processed",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "mkdir",
+  "synopsis": "[OPTION]... DIRECTORY...",
+  "purpose": "make directories",
+  "description": "Create the DIRECTORY(ies), if they do not already exist.",
+  "options": "-m      set file mode (as in chmod), not a=rwx - umask\n-p      no error if existing, make parent directories as needed\n-v      print a message for each created directory",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "ln",
+  "synopsis": "[OPTION]... [-T] TARGET LINK_NAME\n\tln [OPTION]... TARGET\n\tln [OPTION]... TARGET... DIRECTORY\n\tln [OPTION]... -t DIRECTORY TARGET...",
+  "purpose": "make links between files",
+  "description": "In the 1st form, create a link to TARGET with the name LINK_NAME.\n\tIn the 2nd form, create a link to TARGET in the current directory.\n\tIn the 3rd and 4th forms, create links to each TARGET in DIRECTORY. Create hard links by default, symbolic links with -s. By default, each destination (name of new link) should not already exist. When creating hard links, each TARGET must exist. Symbolic links can hold arbitrary text; if later resolved, a relative link is interpreted in relation to its parent directory.",
+  "options": "-b      make a backup of each existing destination file\n-f      remove existing destination files\n-L      dereference TARGETs that are symbolic links\n-n      treat LINK_NAME as a normal file if it is a symbolic link to a directory\n-P      make hard links directly to symbolic links\n-r      create symbolic links relative to link location\n-s      make symbolic links instead of hard links\n-t      specify the DIRECTORY in which to create the links\n-T      treat LINK_NAME as a normal file always\n-v      print name of each linked file",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "install",
+  "synopsis": "[OPTION]... [-T] SOURCE DEST\n\tinstall [OPTION]... SOURCE... DIRECTORY\n\tinstall [OPTION]... -t DIRECTORY SOURCE...\n\tinstall [OPTION]... -d DIRECTORY...",
+  "purpose": "copy files and set attributes",
+  "description": "Copy files into destination locations you choose. In the first three forms, copy SOURCE to DEST or multiple SOURCE(s) to the existing DIRECTORY, while setting permission modes and owner/group.  In the 4th form, create all components of the given DIRECTORY(ies).",
+  "options": "-b      make a backup of each existing destination file\n-c      (ignored)\n-C      compare each pair of source and destination files, and in some cases, do not modify the destination at all\n-d      treat all arguments as directory names; create all components of the specified directories\n-D      create all leading components of DEST except the last, or all components of --target-directory, then copy SOURCE to DEST\n-g      set group ownership, instead of process' current group\n-m      set permission mode (as in chmod), instead of rwxr-xr-x\n-o      set ownership (super-user only)\n-p      apply access/modification times of SOURCE files to corresponding destination files\n-s      strip symbol tables\n-S      override the usual backup suffix\n-t      copy all SOURCE arguments into DIRECTORY\n-T      treat DEST as a normal file\n-v      print the name of each directory as it is created",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "groupadd",
+  "synopsis": "[options] group",
+  "purpose": "create a new group",
+  "description": "Creates a new group account using the default values from the system.",
+  "options": "-f     exit successfully if the group already exists, and cancel -g if the GID is already used\n-g      use GID for the new group\n-r      create a system group",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "groupdel",
+  "synopsis": "[options] GROUP",
+  "purpose": "delete a group",
+  "description": "Modifies the system account files, deleting all entries that refer to GROUP. The named group must exist.",
+  "options": "-f     delete group even if it is the primary group of a user",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "groupmod",
+  "synopsis": "[options] GROUP",
+  "purpose": "modify a group definition on the system",
+  "description": "Modifies the definition of the specified GROUP by modifying the appropriate entry in the group database.",
+  "options": "-g     the group ID of the given GROUP will be changed to GID\n-n      the name of the group will be changed from GROUP to NEW_GROUP name",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "useradd",
+  "synopsis": "[options] LOGIN",
+  "purpose": "create a new user or update default new user information",
+  "description": "A low level utility for adding users.",
+  "options": "-g      name or ID of the primary group of the new account\n-G      a list of supplementary groups which the user is also a member of\n-l      do not add the user to the lastlog and faillog databases\n-m      create the user's home directory\n-M      do no create the user's home directory\n-N      do not create a group with the same name as the user\n-r      create a system account\n-U      create a group with the same name as the user",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "userdel",
+  "synopsis": "[options] LOGIN",
+  "purpose": "delete a user account and related files",
+  "description": "A low level utility for removing users.",
+  "options": "-f      force removal of files, even if not owned by user\n-r      remove the user's home directory",
+  "notes": "",
+  "author": "Written by Boris",
+  "bugs": "",
+  "see_also": "",
+  "version": "0.01"
+}
+{
+  "name": "usermod",
+  "synopsis": "[options] LOGIN",
+  "purpose": "modify a user account",
+  "description": "Modifies the system account files to reflect the changes that are specified on the command line.",
+  "options": "-a      add the user to the supplementary groups mentioned by the -G option\n-g      force use GROUP as new primary group\n-G      a list of supplementary groups separated from the next by a comma",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -299,11 +599,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "newgrp",
+  "synopsis": "[-] [group]",
+  "purpose": "log in to a new group",
+  "description": "Change the current group ID during a login session.",
+  "options": "",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -311,11 +611,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "lslogins",
+  "synopsis": "[options] [-s] [username]",
+  "purpose": "display information about known users in the system",
+  "description": "Examine the wtmp and btmp logs, /etc/shadow (if necessary) and /etc/passwd and output the desired data.",
+  "options": "-c      display data in a format similar to /etc/passwd\n-e      display in an export-able output format\n-n      display each piece of information on a new line\n-r      display in raw mode\n-s      display system accounts\n-u      display user accounts\n-z      delimit user entries with a nul character",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -323,311 +623,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
-  "notes": "",
-  "author": "Written by Boris",
-  "bugs": "",
-  "see_also": "",
-  "version": "0.01"
-}
-{
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "finger",
+  "synopsis": "[-lms] [user ...]",
+  "purpose": "user information lookup program",
+  "description": "Displays information about the system users.",
+  "options": "-l      produces a multi-line format displaying all of the information described for the -s option as well as the user's home directory\n-m      prevent matching of user names\n-s      displays the user's login name, write status and login time",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -647,11 +647,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "last",
+  "synopsis": "[options] [username...] [tty...]",
+  "purpose": "show a listing of last logged in users",
+  "description": "Searches back through the /var/log/wtmp file (or the file designated by the -f option) and displays a list of all users logged in (and out) since that file was created.",
+  "options": "-a      display hostnames in the last column\n-d      translate the IP number back into a hostname\n-F      print full login and logout times and dates\n-i      display IP numbers in numbers-and-dots notation\n-R      don't display the hostname field\n-w      display full user and domain names\n-x      display system shutdown entries and run level changes",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -659,11 +659,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "fuser",
+  "synopsis": "[-almsuv]",
+  "purpose": "identify processes using files or sockets",
+  "description": "Displays the PIDs of processes using the specified files or file systems.",
+  "options": "-a      display unused files too\n-l      list available signal names\n-m      show all processes using the named filesystems or block device\n-s      silent operation\n-u      display user IDs\n-v      verbose output",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -671,11 +671,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "utmpdump",
+  "synopsis": "[options] [filename]",
+  "purpose": "dump UTMP and WTMP files in raw format",
+  "description": "Dump UTMP and WTMP files in raw format, so they can be examined.",
+  "options": "-r      write back dumped data into utmp file\n-o      write to file instead of standard output",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -683,11 +683,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "ps",
+  "synopsis": "[options]",
+  "purpose": "report a snapshot of the current processes",
+  "description": "Displays information about a selection of the active processes.",
+  "options": "-e      select all processes\n-f      do full-format listing\n-F      extra full format",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -707,11 +707,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "id",
+  "synopsis": "[OPTION]... [USER]",
+  "purpose": "print real and effective user and group IDs",
+  "description": "Print user and group information for the specified USER, or (when USER omitted) for the current user.",
+  "options": "-a      ignore, for compatibility with other versions\n-g      print only the effective group ID\n-G      print all group IDs\n-n      print a name instead of a number, for -ugG\n-r      print the real ID instead of the effective ID, with -ugG\n-u      print only the effective user ID\n-z      delimit entries with NUL characters, not whitespace",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -719,11 +719,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "hostname",
+  "synopsis": "[-afis]",
+  "purpose": "show or set the system's host name",
+  "description": "Display the system's hostname and address",
+  "options": "-a      alias names\n-f      long host name (FQDN)\n-i      addresses for the host name\n-s      short host name",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -731,11 +731,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "tfs",
+  "synopsis": "[OPTION]... FILE...",
+  "purpose": "test file system",
+  "description": "Used for file system operations testing.",
+  "options": "-c      do not create any files\n-m      change only the modification time",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -743,11 +743,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "tmpfs",
+  "synopsis": "[OPTION]... FILE...",
+  "purpose": "temporary file system",
+  "description": "Used for file system operations testing.",
+  "options": "-c      do not create any files\n-m      change only the modification time",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -755,11 +755,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "printenv",
+  "synopsis": "print all or part of environment",
+  "purpose": "[OPTION]... [VARIABLE]...",
+  "description": "Print the values of the specified environment VARIABLE(s).  If no VARIABLE is specified, print name and value pairs for them all.",
+  "options": "-0      end each output line with NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -767,11 +767,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "basename",
+  "synopsis": "NAME",
+  "purpose": "strip directory and suffix from filenames",
+  "description": "Print NAME with any leading directory components removed.",
+  "options": "-a      support multiple arguments and treat each as a NAME\n-s      remove a trailing SUFFIX; implies -a\n-z      end each output line with NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -779,11 +779,11 @@
   "version": "0.01"
 }
 {
-  "name": "",
-  "synopsis": "OPTION... [FILE]...",
-  "purpose": "",
-  "description": "",
-  "options": "-a     d",
+  "name": "dirname",
+  "synopsis": "[OPTION] NAME...",
+  "purpose": "strip last component from file name",
+  "description": "Output NAME with its last non-slash component and trailing slashes removed; if NAME contains no /'s, output '.' (meaning the current directory).",
+  "options": "-z     end each output line with NUL, not newline",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
@@ -795,10 +795,10 @@
   "synopsis": "[option]... database key...",
   "purpose": "get entries from Name Service Switch libraries",
   "description": "Displays entries from databases supported by the Name Service Switch libraries, which are configured in /etc/nss‐witch.conf.  If one or more key arguments are provided, then only the entries that match the supplied keys will be displayed. Otherwise, if no key is provided, all entries will be displayed.  Supported databases:",
-  "options": "i  Disables IDN encoding in lookups for ahosts/getaddrinfo",
+  "options": "-i     Disables IDN encoding in lookups for ahosts/getaddrinfo",
   "notes": "",
   "author": "Written by Boris",
   "bugs": "",
-  "see_also": "nsswitch.conf(5)",
+  "see_also": "nsswitch.conf",
   "version": "0.01"
 }

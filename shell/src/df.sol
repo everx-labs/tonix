@@ -88,11 +88,18 @@ contract df is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"df",
+"[OPTION]... [FILE]...",
+"report file system disk space usage",
+"Displays the amount of disk space available on the file system containing each file name argument.",
+"-a      include pseudo, duplicate, inaccessible file systems\n\
+-h      print sizes in powers of 1024 (e.g., 1023K)\n\
+-H      print sizes in powers of 1000 (e.g., 1.1K)\n\
+-i      list inode information instead of block usage\n\
+-k      block size = 1K\n\
+-l      limit listing to local file systems\n\
+-P      use the POSIX output format\n\
+-v      (ignored)",
 "",
 "Written by Boris",
 "",

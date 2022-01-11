@@ -122,11 +122,13 @@ contract usermod is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"usermod",
+"[options] LOGIN",
+"modify a user account",
+"Modifies the system account files to reflect the changes that are specified on the command line.",
+"-a      add the user to the supplementary groups mentioned by the -G option\n\
+-g      force use GROUP as new primary group\n\
+-G      a list of supplementary groups separated from the next by a comma",
 "",
 "Written by Boris",
 "",

@@ -28,11 +28,11 @@ contract udevadm is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
+"udevadm",
+"info [options] [devpath]",
+"udev management tool",
+"Expects a command and command specific options.",
 "",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
 "",
 "Written by Boris",
 "",

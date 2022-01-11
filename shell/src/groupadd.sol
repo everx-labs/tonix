@@ -84,11 +84,13 @@ contract groupadd is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"groupadd",
+"[options] group",
+"create a new group",
+"Creates a new group account using the default values from the system.",
+"-f     exit successfully if the group already exists, and cancel -g if the GID is already used\n\
+-g      use GID for the new group\n\
+-r      create a system group",
 "",
 "Written by Boris",
 "",

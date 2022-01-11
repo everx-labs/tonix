@@ -34,11 +34,12 @@ contract paste is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"paste",
+"[OPTION]... [FILE]...",
+"merge lines of files",
+"Write lines consisting of the sequentially corresponding lines from each FILE, separated by TABs, to standard output.",
+"-s      paste one file at a time instead of in parallel\n\
+-z      line delimiter is NUL, not newline",
 "",
 "Written by Boris",
 "",

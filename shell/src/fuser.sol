@@ -74,11 +74,16 @@ contract fuser is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"fuser",
+"[-almsuv]",
+"identify processes using files or sockets",
+"Displays the PIDs of processes using the specified files or file systems.",
+"-a      display unused files too\n\
+-l      list available signal names\n\
+-m      show all processes using the named filesystems or block device\n\
+-s      silent operation\n\
+-u      display user IDs\n\
+-v      verbose output",
 "",
 "Written by Boris",
 "",

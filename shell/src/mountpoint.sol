@@ -80,11 +80,13 @@ contract mountpoint is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"mountpoint",
+"[-d|-q] directory | file\t-x device",
+"see if a directory or file is a mountpoint",
+"Checks whether the given directory or file is mentioned in the /proc/self/mountinfo file.",
+"-d      quiet mode - don't print anything\n\
+-q      print maj:min device number of the filesystem\n\
+-x      print maj:min device number of the block device",
 "",
 "Written by Boris",
 "",

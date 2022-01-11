@@ -112,11 +112,12 @@ contract groupmod is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"groupmod",
+"[options] GROUP",
+"modify a group definition on the system",
+"Modifies the definition of the specified GROUP by modifying the appropriate entry in the group database.",
+"-g     the group ID of the given GROUP will be changed to GID\n\
+-n      the name of the group will be changed from GROUP to NEW_GROUP name",
 "",
 "Written by Boris",
 "",

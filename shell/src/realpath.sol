@@ -95,11 +95,17 @@ contract realpath is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"realpath",
+"[OPTION]... FILE...",
+"print the resolved path",
+"Print the resolved absolute file name; all but the last component must exist.",
+"-e      all components of the path must exist\n\
+-m      no path components need exist or be a directory\n\
+-L      resolve '..' components before symlinks\n\
+-P      resolve symlinks as encountered (default)\n\
+-q      suppress most error messages\n\
+-s      don't expand symlinks\n\
+-z      end each output line with NUL, not newline",
 "",
 "Written by Boris",
 "",

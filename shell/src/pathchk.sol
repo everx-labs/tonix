@@ -57,11 +57,12 @@ contract pathchk is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"pathchk",
+"[OPTION]... NAME...",
+"check whether file names are valid or portable",
+"Diagnose invalid or unportable file names.",
+-p      check for most POSIX systems\n\
+-P      check for empty names and leading \"-\"",
 "",
 "Written by Boris",
 "",

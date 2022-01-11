@@ -74,11 +74,12 @@ contract grep is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"grep",
+"[OPTION...] PATTERNS [FILE...]",
+"print lines that match patterns",
+"Searches for PATTERNS in each FILE and prints each line that matches a pattern.",
+"-v      invert the sense of matching, to select non-matching lines\n\
+-x      select only those matches that exactly match the whole line",
 "",
 "Written by Boris",
 "",

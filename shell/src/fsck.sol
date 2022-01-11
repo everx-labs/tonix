@@ -103,11 +103,15 @@ contract fsck is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"fsck",
+"[filesystem...]",
+"check and repair a Tonix filesystem",
+"Used to check and optionally repair one or more Tonix filesystems.",
+"-A      check all filesystems\n\
+-l      lock the device to guarantee exclusive access\n\
+-R      skip root filesystem\n\
+-p      automatic repair (no questions)\n\
+-n      make no changes to the filesystem",
 "",
 "Written by Boris",
 "",

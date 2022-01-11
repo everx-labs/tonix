@@ -46,11 +46,11 @@ contract printenv is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"printenv",
+"print all or part of environment",
+"[OPTION]... [VARIABLE]...",
+"Print the values of the specified environment VARIABLE(s).  If no VARIABLE is specified, print name and value pairs for them all.",
+"-0      end each output line with NUL, not newline",
 "",
 "Written by Boris",
 "",

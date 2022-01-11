@@ -318,11 +318,12 @@ contract dumpe2fs is Format, Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"dumpe2fs",
+"[ -bfghixV ] device",
+"dump ext2/ext3/ext4 filesystem information",
+"Prints the super block and blocks group information for the filesystem present on device.",
+"-h     only display the superblock information and not any of the block group descriptor detail information\n\
+-i      display the filesystem data from an image file created by e2image, using device as the pathname to the image file",
 "",
 "Written by Boris",
 "",

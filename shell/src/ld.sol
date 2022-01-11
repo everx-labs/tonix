@@ -124,7 +124,17 @@ contract ld is Utility {
 "[options] objfile ...",
 "link binaries",
 "Combines a number of object and archive files, relocates their data and ties up symbol references.",
-"-a     d",
+"-M      print map file on standard output\n\
+-n      do not page align data\n\
+-N      do not page align data, do not make text readonly\n\
+-o      set output file name\n\
+-O      optimize output file\n\
+-q      generate relocations in final output\n\
+-r      generate relocatable output\n\
+-R      just link symbols\n\
+-s      strip all symbols\n\
+-S      strip debugging symbols\n\
+-v      print version information",
 "",
 "Written by Boris",
 "",

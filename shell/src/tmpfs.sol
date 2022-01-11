@@ -203,11 +203,12 @@ contract tmpfs is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"tmpfs",
+"[OPTION]... FILE...",
+"temporary file system",
+"Used for file system operations testing.",
+"-c      do not create any files\n\
+-m      change only the modification time",
 "",
 "Written by Boris",
 "",

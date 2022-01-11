@@ -12,7 +12,7 @@ I:=CommandInterpreter
 PRIME:=$I
 
 UTILS:=ls du file stat namei cat colrm column cut expand grep head look rev tail tr unexpand paste wc readlink realpath env man whatis mkfs mke2fs dumpe2fs fsck mount umount losetup udevadm df findmnt mountpoint touch cp mv rm rmdir mkdir ln install groupadd groupdel groupmod useradd userdel usermod chfn newgrp lslogins finger who last fuser utmpdump ps whoami id hostname tfs tmpfs printenv basename dirname getent
-HELP_TOPICS:=tosh help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift history getopts eilish
+HELP_TOPICS:=help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift history getopts eilish
 BUILTINS:=$(HELP_TOPICS) $(UTILS)
 
 INIT:=$(PRIME)
@@ -92,9 +92,6 @@ bocs: $(patsubst %,$(TSBIN)/%.boc,$(BUILTINS))
 
 SCR:=$(TSH)/script
 
-$(TSH)/tosh_process_input.out: $(TMP)/i_input $(BLD)/tosh.abi.json bocs
-	$(UBIN)/tosh process_input $<
-
 $(TSH)/tosh_read_profile.out: $(ETC)/profile $(BLD)/tosh.abi.json bocs
 	$(UBIN)/tosh read_profile $<
 
@@ -104,19 +101,9 @@ prof: $(TSH)/tosh_read_profile.out
 $(TSH)/builtin_main.out: $(TMP)/i_input $(BLD)/builtin.abi.json bocs
 	$(UBIN)/builtin main $<
 
-#$(TSH)/tosh_read_command.out: $(TMP)/i_input $(BLD)/tosh.abi.json bocs
-#	$(UBIN)/builtin builtin_exec read $<
-#	$(UBIN)/tosh read_command $<
-
 $(TSH)/tosh_exec_command.out: $(TSH)/tosh_interpret_command.out
 	$(UBIN)/tosh exec_command
 
-#$(TSH)/stdout: $(TSH)/tosh_read_profile.out
-#$(TSH)/stdout: $(TSH)/tosh_read_command.out
-#$(TSH)/stdout: $(TSH)/tosh_interpret_command.out
-#	jq -r '.env[24]' $< >$@
-#	jq -r '.env[25]' $< >$@
-#	jq -r '.env[]' $<
 $(TSH)/stdout: $(SCR)
 	chmod +x $(SCR);./$(SCR);
 #	jq -r '.env[23]' $<

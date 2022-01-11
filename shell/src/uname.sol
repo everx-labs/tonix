@@ -31,11 +31,19 @@ contract uname is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"uname",
+"[OPTION]...",
+"print system information",
+"Print certain system information. With no OPTION, same as -s.",
+"-a      print all information, in the following order, except omit -p and -i if unknown:\n\
+-s      print the kernel name\n\
+-n      print the network node hostname\n\
+-r      print the kernel release\n\
+-v      print the kernel version\n\
+-m      print the machine hardware name\n\
+-p      print the processor type (non-portable)\n\
+-i      print the hardware platform (non-portable)\n\
+-o      print the operating system",
 "",
 "Written by Boris",
 "",

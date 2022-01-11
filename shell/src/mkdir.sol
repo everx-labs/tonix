@@ -67,11 +67,13 @@ contract mkdir is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"mkdir",
+"[OPTION]... DIRECTORY...",
+"make directories",
+"Create the DIRECTORY(ies), if they do not already exist.",
+"-m      set file mode (as in chmod), not a=rwx - umask\n\
+-p      no error if existing, make parent directories as needed\n\
+-v      print a message for each created directory",
 "",
 "Written by Boris",
 "",

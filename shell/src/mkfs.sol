@@ -709,11 +709,11 @@ sysfs:-:c:11 100 6000 60 100
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"mkfs",
+"[options] [fs-options] device [size]",
+"build a Tonix filesystem",
+"Used to build a Tonix filesystem on a device. The device argument is either the device name, or a regular file that shall contain the filesystem. The size argument is the number of blocks to be used for the filesystem.",
+"-V     produce verbose output, including all filesystem-specific commands that are executed",
 "",
 "Written by Boris",
 "",

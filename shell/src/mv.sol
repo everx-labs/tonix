@@ -141,11 +141,17 @@ contract mv is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"mv",
+"[OPTION]... [-T] SOURCE DEST\t[OPTION]... SOURCE... DIRECTORY\t[OPTION]... -t DIRECTORY SOURCE...",
+"move (rename) files",
+"Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY.",
+"-b      make a backup of each existing destination file\n\
+-f      do not prompt before overwriting\n\
+-n      do not overwrite an existing file\n\
+-t      move all SOURCE arguments into DIRECTORY\n\
+-T      treat DEST as a normal file\n\
+-u      move only when the SOURCE file is newer than the destination file or when the destination file is missing\n\
+-v      explain what is being done",
 "",
 "Written by Boris",
 "",

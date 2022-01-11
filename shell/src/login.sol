@@ -105,11 +105,13 @@ contract login is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"login",
+"[-h host] [username] -r host",
+"begin session on the system",
+"Establish a new session with the system.",
+"-f      do not perform authentication, user is preauthenticated\n\
+-h      name of the remote host for this login\n\
+-r      perform autologin protocol for rlogin",
 "",
 "Written by Boris",
 "",

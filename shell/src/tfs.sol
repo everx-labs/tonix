@@ -187,11 +187,12 @@ contract tfs is SyncFS, Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"tfs",
+"[OPTION]... FILE...",
+"test file system",
+"Used for file system operations testing.",
+"-c      do not create any files\n\
+-m      change only the modification time",
 "",
 "Written by Boris",
 "",

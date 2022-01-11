@@ -89,11 +89,18 @@ contract readlink is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"readlink",
+"[OPTION]... FILE...",
+"print resolved symbolic links or canonical file names",
+"Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
+"-f      all but the last component must exist\n\
+-e      all components must exist\n\
+-m      without requirements on components existence\n\
+-n      do not output the trailing delimiter\n\
+-q      quiet\n\
+-s      suppress most error messages (on by default)\n\
+-v      report error messages\n\
+-z      end each output line with NUL, not newline",
 "",
 "Written by Boris",
 "",

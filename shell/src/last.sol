@@ -73,11 +73,17 @@ contract last is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"last",
+"[options] [username...] [tty...]",
+"show a listing of last logged in users",
+"Searches back through the /var/log/wtmp file (or the file designated by the -f option) and displays a list of all users logged in (and out) since that file was created.",
+"-a      display hostnames in the last column\n\
+-d      translate the IP number back into a hostname\n\
+-F      print full login and logout times and dates\n\
+-i      display IP numbers in numbers-and-dots notation\n\
+-R      don't display the hostname field\n\
+-w      display full user and domain names\n\
+-x      display system shutdown entries and run level changes",
 "",
 "Written by Boris",
 "",

@@ -67,11 +67,12 @@ contract unexpand is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"unexpand",
+"[OPTION]... [FILE]...",
+"convert spaces to tabs",
+"Convert blanks in each FILE to tabs, writing to standard output.",
+"-a      convert all blanks, instead of just initial blanks\n\
+-t      have tabs N characters apart instead of 8 (enables -a)",
 "",
 "Written by Boris",
 "",

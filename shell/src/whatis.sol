@@ -45,11 +45,13 @@ contract whatis is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"whatis",
+"[-dlv] name ...",
+"display one-line manual page descriptions",
+"Searches the manual page names and displays the manual page descriptions of any name matched.",
+"-d      emit debugging messages\n\
+-l      do not trim output to terminal width\n\
+-v      print verbose warning messages",
 "",
 "Written by Boris",
 "",

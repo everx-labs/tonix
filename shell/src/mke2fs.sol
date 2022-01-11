@@ -737,11 +737,16 @@ sysfs:-:c:11 100 6000 60 100
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"mke2fs",
+"[options] [fs-options] device [size]",
+"build a Tonix filesystem",
+"Used to build a Tonix filesystem on a device.",
+"-b      specify the size of blocks in bytes\n\
+-d      copy the contents of the given directory into the root directory of the filesystem\n\
+-I      specify the size of each inode in bytes\n\
+-j      create the filesystem with an ext3 journal\n\
+-n      not actually create a filesystem, but display what it would do if it were to create a filesystem\n\
+-S      write superblock and group descriptors only",
 "",
 "Written by Boris",
 "",

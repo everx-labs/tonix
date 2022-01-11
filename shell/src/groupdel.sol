@@ -91,11 +91,11 @@ contract groupdel is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"groupdel",
+"[options] GROUP",
+"delete a group",
+"Modifies the system account files, deleting all entries that refer to GROUP. The named group must exist.",
+"-f     delete group even if it is the primary group of a user",
 "",
 "Written by Boris",
 "",

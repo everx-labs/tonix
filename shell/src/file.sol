@@ -59,11 +59,17 @@ contract file is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"file",
+"[OPTION...] [FILE...]",
+"determine file type",
+"Determine type of FILE.",
+"-b      do not prepend filenames to output lines\n\
+-E      on filesystem errors, issue an error message and exit\n\
+-L      follow symlinks (default if POSIXLY_CORRECT is set)\n\
+-h      don't follow symlinks (default if POSIXLY_CORRECT is not set) (default)\n\
+-N      do not pad output\n\
+-v      print the version of the program and exit\n\
+-0      terminate filenames with ASCII NUL",
 "",
 "Written by Boris",
 "",

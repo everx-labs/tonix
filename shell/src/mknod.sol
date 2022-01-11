@@ -70,11 +70,11 @@ contract mknod is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"mknod",
+"[OPTION]... NAME TYPE [MAJOR MINOR]",
+"make block or character special files",
+"Create the special file NAME of the given TYPE.",
+"-m     set file permission bits to MODE, not a=rw - umask",
 "",
 "Written by Boris",
 "",

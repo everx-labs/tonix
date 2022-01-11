@@ -52,11 +52,12 @@ contract touch is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"touch",
+"[OPTION]... FILE...",
+"change file timestamps",
+"Update the modification time of each FILE to the current time. A FILE argument that does not exist is created empty, unless -c is supplied.",
+"-c      do not create any files\n\
+-m      change only the modification time",
 "",
 "Written by Boris",
 "",

@@ -66,11 +66,13 @@ contract stat is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"stat",
+"[OPTION]... FILE...",
+"display file or file system status",
+"Display file or file system status.",
+"-L      follow links\n\
+-f      display file system status instead of file status\n\
+-t      print the information in terse form",
 "",
 "Written by Boris",
 "",

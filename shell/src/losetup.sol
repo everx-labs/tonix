@@ -36,11 +36,21 @@ contract losetup is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"losetup",
+"[options]... [loopdev]",
+"set up and control loop devices",
+"Associate loop devices with regular files or block devices, to detach loop devices, and to query the status of a loop device.",
+"-a      list all used devices\n\
+-d      detach one or more devices\n\
+-D      detach all used devices\n\
+-f      find first unused device\n\
+-j      list all devices associated with <file>\n\
+-L      avoid possible conflict between devices\n\
+-P      create a partitioned loop device\n\
+-r      set up a read-only loop device\n\
+-v      verbose mode\n\
+-l      list info about all or specified (default)\n\
+-n      don't print headings for --list output",
 "",
 "Written by Boris",
 "",

@@ -93,11 +93,19 @@ contract findmnt is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"findmnt",
+"[options]\t[options] device|mountpoint[options] [device...]",
+"find a filesystem",
+"List all mounted filesystems or search for a filesystem.",
+"-s      search in static table of filesystems\n\
+-m      search in table of mounted filesystems\n\
+-k      search in kernel table of mounted filesystems (default)\n\
+-A      disable all built-in filters, print all filesystems\n\
+-b      print sizes in bytes rather than in human readable format\n\
+-D      imitate the output of df(1)\n\
+-f      print the first found filesystem only\n\
+-n      don't print column headings\n\
+-u      don't truncate text in columns",
 "",
 "Written by Boris",
 "",

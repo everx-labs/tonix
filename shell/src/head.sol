@@ -61,11 +61,14 @@ contract head is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"head",
+"[OPTION]... [FILE]...",
+"output the first part of files",
+"Print the first 10 lines of each FILE to standard output. With more than one FILE, precede each with a header giving the file name.",
+"-n      print the first NUM lines instead of the first 10;  with the leading '-', print all but the last  NUM lines of each file\n\
+-q      never print headers giving file names\n\
+-v      always print headers giving file names\n\
+-z      line delimiter is NUL, not newline",
 "",
 "Written by Boris",
 "",

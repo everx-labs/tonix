@@ -54,15 +54,18 @@ contract look is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"look",
+"[-bdf] [-t termchar] string [file ...]",
+"display lines beginning with a given string",
+"Displays any lines in file which contain string as a prefix.",
+"-b      use a binary search on the given word list\n\
+-d      dictionary character set and order, i.e., only alphanumeric characters are compared\n\
+-f      ignore the case of alphabetic characters\n\
+-t      specify a string termination character, i.e., only the characters in string up to and including the first occurrence of termchar are compared",
 "",
 "Written by Boris",
 "",
 "",
 "0.01");
-    }    
+    }
 }

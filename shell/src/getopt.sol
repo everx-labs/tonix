@@ -208,4 +208,22 @@ contract getopt is Utility, Commands {
             "test for getopt(1) version",
             "do not quote the output"]);
     }
+
+    function _command_help() internal override pure returns (CommandHelp) {
+        return CommandHelp(
+"getopt",
+"optstring parameters",
+"parse command options",
+"Break up (parse) options in command lines for easy parsing by shell procedures.",
+"-o      the short options to be recognized\n\
+-q      disable error reporting by getopt(3)\n\
+-Q      no normal output\n\
+-T      test for getopt(1) version\n\
+-u      do not quote the output",
+"",
+"Written by Boris",
+"",
+"",
+"0.01");
+    }
 }

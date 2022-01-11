@@ -63,11 +63,12 @@ contract expand is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"expand",
+"[OPTION]... [FILE]...",
+"convert tabs to spaces",
+"Convert tabs in each FILE to spaces, writing to standard output.",
+"-i     do not convert tabs after non blanks\n\
+-t      have tabs N characters apart, not 8",
 "",
 "Written by Boris",
 "",

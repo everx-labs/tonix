@@ -78,11 +78,15 @@ contract rm is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"rm",
+"[OPTION]... [FILE]...",
+"remove files or directories",
+"Remove each specified file. By default, it does not remove directories. Use -r option to remove each listed directory, too, along with all of its contents.",
+"-f      ignore nonexistent files and arguments, never prompt\n\
+-r      \n\
+-R      remove directories and their contents recursively\n\
+-d      remove empty directories\n\
+-v      explain what is being done",
 "",
 "Written by Boris",
 "",

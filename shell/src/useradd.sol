@@ -158,11 +158,18 @@ contract useradd is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"useradd",
+"[options] LOGIN",
+"create a new user or update default new user information",
+"A low level utility for adding users.",
+"-g      name or ID of the primary group of the new account\n\
+-G      a list of supplementary groups which the user is also a member of\n\
+-l      do not add the user to the lastlog and faillog databases\n\
+-m      create the user's home directory\n\
+-M      do no create the user's home directory\n\
+-N      do not create a group with the same name as the user\n\
+-r      create a system account\n\
+-U      create a group with the same name as the user",
 "",
 "Written by Boris",
 "",

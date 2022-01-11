@@ -43,11 +43,12 @@ contract tr is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"tr",
+"[OPTION]... SET1 [SET2]",
+"translate or delete characters",
+"Translate, squeeze, and/or delete characters from standard input, writing to standard output.",
+"-d      delete characters in SET1, do not translate\n\
+-s      replace each sequence of a repeated character that is listed in the last specified SET, with a single occurrence of that character",
 "",
 "Written by Boris",
 "",

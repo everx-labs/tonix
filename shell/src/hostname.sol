@@ -35,11 +35,14 @@ contract hostname is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"hostname",
+"[-afis]",
+"show or set the system's host name",
+"Display the system's hostname and address",
+"-a      alias names\n\
+-f      long host name (FQDN)\n\
+-i      addresses for the host name\n\
+-s      short host name",
 "",
 "Written by Boris",
 "",

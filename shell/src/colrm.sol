@@ -60,11 +60,11 @@ contract colrm is Utility {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
+"colrm",
+"[start [stop]]",
+"remove columns from a file",
+"Removes selected columns from the lines of a file. A column is defined as a single character in a line. Output is written to the standard output.",
 "",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
 "",
 "Written by Boris",
 "",

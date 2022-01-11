@@ -69,11 +69,13 @@ contract ps is Utility, libuadm {
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
-"",
-"OPTION... [FILE]...",
-"",
-"",
-"-a     d",
+"ps",
+"[options]",
+"report a snapshot of the current processes",
+"Displays information about a selection of the active processes.",
+"-e      select all processes\n\
+-f      do full-format listing\n\
+-F      extra full format",
 "",
 "Written by Boris",
 "",
