@@ -49,8 +49,8 @@ BLD:=build
 ccs: $(patsubst %,$(BLD)/%.cs,$(BUILTINS))
 	@true
 
-install: $(patsubst %,$(BLD)/%.cs,$(BUILTINS)) $(patsubst %,$(BLD)/%.abi.json,$(BUILTINS))
-	cp $^ ../$(BLD)
+#install: $(patsubst %,$(BLD)/%.cs,$(BUILTINS)) $(patsubst %,$(BLD)/%.abi.json,$(BUILTINS))
+#	cp $^ ../$(BLD)
 
 $(BLD)/%.tvc: $(SRC)/%.sol
 	$(SOLC) $< -o $(BLD)

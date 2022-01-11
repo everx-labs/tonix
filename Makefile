@@ -34,8 +34,11 @@ HS:=$(HOM)/.sh_history
 TBIN:=$(TMP)/bin
 TSBIN:=$(TMP)/sbin
 TSH:=$(TMP)/tosh
+VAR:=$(VFS)/var
+LOG:=$(VAR)/log
+TFS:=$(TMP)/fs
 
-DIRS:=bin $(VFS) $(TMP) $(PROC) $(DEV) $(USR) $(USH) $(TSBIN) $(UBIN) $(HOM) $(TSH)
+DIRS:=bin $(VFS) $(TMP) $(PROC) $(DEV) $(VAR) $(USR) $(USH) $(TSBIN) $(UBIN) $(HOM) $(TSH) $(LOG) $(TFS)
 
 PHONY += all dirs cc tty tt deploy clean
 all: cc

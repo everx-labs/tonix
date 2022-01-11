@@ -1,0 +1,27 @@
+#set -x
+
+filter() {
+    jq -rj '.[1]' $1 >vfs/tmp/tosh/stdout;
+    jq -rj '.[2]' $1 >vfs/tmp/tosh/stderr;
+    if [ -s vfs/tmp/tosh/stdout ]; then echo ${GREEN}; cat vfs/tmp/tosh/stdout; echo ${NC} | tee -a vfs/var/log/stdout; rm vfs/tmp/tosh/stdout; fi
+    if [ -s vfs/tmp/tosh/stderr ]; then echo ${RED}; cat vfs/tmp/tosh/stderr; echo ${NC} | tee -a vfs/var/log/stderr; rm vfs/tmp/tosh/stderr; fi
+}
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+while true
+do
+    read input
+    case $input in
+        quit)
+            break;;
+        *)
+./vfs/usr/bin/tosh read_line $input;
+./vfs/tmp/tosh/script;
+filter vfs/tmp/tosh/env3_out;
+;;
+
+
+    esac
+done
