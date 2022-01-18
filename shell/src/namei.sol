@@ -1,19 +1,20 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract namei is Utility, libuadm {
 
-    function exec(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        ec = EXECUTE_SUCCESS;
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, string flags, ) = _get_args(args);
         for (string arg: params) {
             (, uint8 ft, uint16 parent, ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_namei(flags, arg, parent, inodes, data) + "\n");
-            else
+            else {
                 err.append("Failed to resolve relative path for" + arg + "\n");
+                ec = EXECUTE_FAILURE;
+            }
         }
     }
 

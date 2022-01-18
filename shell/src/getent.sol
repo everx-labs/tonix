@@ -1,23 +1,23 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
 contract getent is Utility {
 
-    function exec(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        ec = EXECUTE_SUCCESS;
-        (string[] args, , ) = _get_args(e[IS_ARGS]);
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, , ) = _get_args(args);
 
-        uint n_args = args.length;
+        uint n_args = params.length;
         if (n_args > 0) {
-            string db_name = args[0];
+            string db_name = params[0];
             string key;
             if (n_args > 1)
-                key = args[1];
+                key = params[1];
             uint16 db_inode = _resolve_absolute_path("/etc/" + db_name, inodes, data);
-            if (db_inode < INODES)
+            if (db_inode < INODES) {
                 err = "Unknown database: " + db_name + "\n Try `getent --help' or `getent --usage' for more information.";
-            else {
+                ec = EXECUTE_FAILURE;
+            } else {
                 string text = _get_file_contents(db_inode, inodes, data);
                 (string[] lines, ) = _split(text, "\n");
                 for (string line: lines) {

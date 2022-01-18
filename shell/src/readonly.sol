@@ -1,18 +1,15 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract readonly is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = _get_args(args);
         bool functions_only = _flag_set("f", flags);
-        string dbg;
         string s_attrs = "-r";
         if (functions_only)
             s_attrs.append("-f");
-        bool print_reusable = _flag_set("p", flags);
-        string pool = e[IS_POOL];
 
         if (params.empty()) {
             (string[] lines, ) = _split(pool, "\n");
@@ -22,26 +19,31 @@ contract readonly is Shell {
                     out.append(_print_reusable(line));
             }
         }
-        if (print_reusable) {
-            for (string p: params) {
-                (string name, string value) = _strsplit(p, "=");
-                string cur_record = _get_pool_record(name, pool);
-                if (!cur_record.empty()) {
-                    (string cur_attrs, ) = _strsplit(cur_record, " ");
-                    if (_match_attr_set(s_attrs, cur_attrs))
-                        out.append(_print_reusable(cur_record));
-                } else {
-                    ec = EXECUTE_FAILURE;
-                    out.append("readonly: " + name + " not found\n");
-                }
+        for (string p: params) {
+            (string name, ) = _strsplit(p, "=");
+            string cur_record = _get_pool_record(name, pool);
+            if (!cur_record.empty()) {
+                (string cur_attrs, ) = _strsplit(cur_record, " ");
+                if (_match_attr_set(s_attrs, cur_attrs))
+                    out.append(_print_reusable(cur_record));
+            } else {
+                ec = EXECUTE_FAILURE;
+                out.append("readonly: " + name + " not found\n");
             }
-        } else
-            for (string p: params)
-                pool = _set_var(s_attrs, p, pool);
+        }
+    }
 
-        if (pool != e[IS_POOL])
-            wr.push(Write(IS_POOL, pool, O_WRONLY));
-        wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
+    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
+        (string[] params, string flags, ) = _get_args(args);
+        bool functions_only = _flag_set("f", flags);
+        string s_attrs = "-r";
+        string page = pool;
+        if (functions_only)
+            s_attrs.append("-f");
+        ec = EXECUTE_SUCCESS;
+        for (string p: params)
+            page = _set_var(s_attrs, p, page);
+        res = page;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

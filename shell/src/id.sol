@@ -1,14 +1,13 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
 contract id is Utility {
 
-    function exec(string[] e) external pure returns (uint8 ec, string out, string err) {
-        string pool = e[IS_POOL];
+    function exec_env(string args, string pool) external pure returns (uint8 ec, string out, string err) {
         err = "";
 
-        (, string flags, ) = _get_args(e[IS_ARGS]);
+        (, string flags, ) = _get_args(args);
 
         bool effective_gid_only = _flag_set("g", flags);
         bool name_not_number = _flag_set("n", flags);

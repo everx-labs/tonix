@@ -1,15 +1,15 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
 contract look is Utility {
 
-    function exec(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (string[] args, string flags, ) = _get_args(e[IS_ARGS]);
+        (string[] v_args, string flags, ) = _get_args(args);
         string[] params;
-        for (string arg: args) {
+        for (string arg: v_args) {
             (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_look(flags, _get_file_contents(index, inodes, data), params) + "\n");

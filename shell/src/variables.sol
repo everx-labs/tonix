@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "../lib/Format.sol";
 
@@ -60,15 +60,6 @@ abstract contract variables is Format {
     uint8 constant SET_ATTRS        = 6;
     uint8 constant UNSET_ATTRS      = 7;
     uint8 constant APPLY_TO_ALL     = 32;
-
-struct Var {
-    string name;        // Symbol that the user types
-    string decl;        // Declaration string (temp)
-    string value;       // Value that is returned
-    string export_str;  // String for the environment
-    uint16 attributes;  // export, readonly, array, invisible...
-    uint16 context;     // Which context this variable belongs to
-}
 
     // Flags for var_context->flags
     uint16 constant VC_HASLOCAL = 1;
@@ -199,26 +190,23 @@ struct Var {
         }
     }
 
-    function _export_str(Var v) internal pure returns (string) {
-        (string name, string s_attrs, string value, , uint16 mask, ) = v.unpack();
-        bool is_function = (mask & ATTR_FUNCTION) > 0;
+    function _var_record(string attrs, string name, string value) internal pure returns (string) {
+        uint16 mask = _get_mask_ext(attrs);
+        if (attrs == "")
+            attrs = "--";
+        bool is_function = _strchr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=";
         if (!value.empty())
             var_value.append(_wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : W_DQUOTE));
         return is_function ?
             (name + " () " + _wrap(value, W_FUNCTION)) :
-            "declare " + s_attrs + " " + name + var_value + "\n";
+            attrs + " " + _wrap(name, W_SQUARE) + var_value;
     }
 
-    function _pool_str(string s_attrs, string name, string value) internal pure returns (string) {
-        uint16 mask = _get_mask_ext(s_attrs);
-        bool is_function = _strchr(s_attrs, "f") > 0;
-        string var_value = value.empty() ? "" : "=";
-        if (!value.empty())
-            var_value.append(_wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : W_DQUOTE));
-        return is_function ?
-            (name + " () " + _wrap(value, W_FUNCTION)) :
-            s_attrs + " " + _wrap(name, W_SQUARE) + var_value;
+    function _split_var_record(string line) internal pure returns (string, string, string) {
+        (string decl, string value) = _strsplit(line, "=");
+        (string attrs, string name) = _strsplit(decl, " ");
+        return (attrs, _unwrap(name), _unwrap(value));
     }
 
     function _get_pool_record(string name, string pool) internal pure returns (string) {
@@ -230,25 +218,12 @@ struct Var {
     }
 
     function _print_reusable(string line) internal pure returns (string) {
-        (string attrs, string stmt) = _strsplit(line, " ");
-        (string name, string value) = _strsplit(stmt, "=");
-        name = _unwrap(name);
+        (string attrs, string name, string value) = _split_var_record(line);
         bool is_function = _strchr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=" + value;
         return is_function ?
-            (name + " ()" + _wrap(_indent(_translate(_unwrap(value), ";", "\n"), 4, "\n"), W_FUNCTION)) :
+            (name + " ()" + _wrap(_indent(_translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
             "declare " + attrs + " " + name + var_value + "\n";
-    }
-
-    function _var_ext(string name, string pool) internal pure returns (Var) {
-        string cur_record = _get_pool_record(name, pool);
-        string attrs;
-        string value;
-        if (!cur_record.empty()) {
-            (attrs, ) = _strsplit(cur_record, " ");
-            (, value) = _strsplit(cur_record, "=");
-        }
-        return Var(name, attrs, value, "", _get_mask_ext(attrs), IS_POOL);
     }
 
     function _get_mask_ext(string s_attrs) internal pure returns (uint16 mask) {
@@ -326,11 +301,11 @@ struct Var {
         else if (to == W_SQUOTE)
             return "\'" + s + "\'";
         else if (to == W_ARRAY)
-            return "( " + s + " )";
+            return "( " + s + ")";
         else if (to == W_HASHMAP)
-            return "( " + s + " )";
+            return "( " + s + ")";
         else if (to == W_FUNCTION)
-            return "\n{\n" + s + "\n}\n";
+            return "\n{\n" + s + "}\n";
     }
 
     function _unwrap(string s) internal pure returns (string) {
@@ -339,212 +314,4 @@ struct Var {
     }
 
 }
-// Accessing macros
-/*#define vc_isfuncenv(vc)	(((vc)->flags & VC_FUNCENV) != 0)
-#define vc_isbltnenv(vc)	(((vc)->flags & VC_BLTNENV) != 0)
-#define vc_istempenv(vc)	(((vc)->flags & (VC_TEMPFLAGS)) == VC_TEMPENV)
-
-#define vc_istempscope(vc)	(((vc)->flags & (VC_TEMPENV|VC_BLTNENV)) != 0)
-
-#define vc_haslocals(vc)	(((vc)->flags & VC_HASLOCAL) != 0)
-#define vc_hastmpvars(vc)	(((vc)->flags & VC_HASTMPVAR) != 0)
-
-// What a shell variable looks like.
-
-typedef struct variable *sh_var_value_func_t __P((struct variable *));
-typedef struct variable *sh_var_assign_func_t __P((struct variable *, char *, arrayind_t));
-
-// For the future
-union _value {
-  char *s;			// string value
-  intmax_t i;		// int value
-  COMMAND *f;		// function
-  ARRAY *a;			// array
-  HASH_TABLE *h;	// associative array
-  double d;			// floating point number
-  void *v;			// opaque data for future use
-};
-
-typedef struct _vlist {
-  SHELL_VAR **list;
-  int list_size;	// allocated size
-  int list_len;		// current number of entries
-} VARLIST;
-
-
-#define exported_p(var)		((((var)->attributes) & (att_exported)))
-#define readonly_p(var)		((((var)->attributes) & (att_readonly)))
-#define array_p(var)		((((var)->attributes) & (att_array)))
-#define function_p(var)		((((var)->attributes) & (att_function)))
-#define integer_p(var)		((((var)->attributes) & (att_integer)))
-#define local_p(var)		((((var)->attributes) & (att_local)))
-#define assoc_p(var)		((((var)->attributes) & (att_assoc)))
-#define trace_p(var)		((((var)->attributes) & (att_trace)))
-
-#define invisible_p(var)	((((var)->attributes) & (att_invisible)))
-#define non_unsettable_p(var)	((((var)->attributes) & (att_nounset)))
-#define noassign_p(var)		((((var)->attributes) & (att_noassign)))
-#define imported_p(var)		((((var)->attributes) & (att_imported)))
-#define specialvar_p(var)	((((var)->attributes) & (att_special)))
-
-#define tempvar_p(var)		((((var)->attributes) & (att_tempvar)))
-
-/* Acessing variable values: rvalues */
-/*#define value_cell(var)		((var)->value)
-#define function_cell(var)	(COMMAND *)((var)->value)
-#define array_cell(var)		(ARRAY *)((var)->value)
-
-#define var_isnull(var)		((var)->value == 0)
-#define var_isset(var)		((var)->value != 0)
-
-/* Assigning variable values: lvalues */
-/*#define var_setvalue(var, str)	((var)->value = (str))
-#define var_setfunc(var, func)	((var)->value = (char *)(func))
-#define var_setarray(var, arr)	((var)->value = (char *)(arr))
-
-/* Make VAR be auto-exported. */
-/*#define set_auto_export(var) \
-  do { (var)->attributes |= att_exported; array_needs_making = 1; } while (0)
-
-#define SETVARATTR(var, attr, undo) \
-	((undo == 0) ? ((var)->attributes |= (attr)) \
-		     : ((var)->attributes &= ~(attr)))
-
-#define VSETATTR(var, attr)	((var)->attributes |= (attr))
-#define VUNSETATTR(var, attr)	((var)->attributes &= ~(attr))
-
-#define VGETFLAGS(var)		((var)->attributes)
-
-#define VSETFLAGS(var, flags)	((var)->attributes = (flags))
-#define VCLRFLAGS(var)		((var)->attributes = 0)
-
-/* Macros to perform various operations on `exportstr' member of a SHELL_VAR. */
-/*#define CLEAR_EXPORTSTR(var)	(var)->exportstr = (char *)NULL
-#define COPY_EXPORTSTR(var)	((var)->exportstr) ? savestring ((var)->exportstr) : (char *)NULL
-#define SET_EXPORTSTR(var, value)  (var)->exportstr = (value)
-#define SAVE_EXPORTSTR(var, value) (var)->exportstr = (value) ? savestring (value) : (char *)NULL
-
-#define FREE_EXPORTSTR(var) \
-	do { if ((var)->exportstr) free ((var)->exportstr); } while (0)
-
-#define CACHE_IMPORTSTR(var, value) \
-	(var)->exportstr = savestring (value)
-
-#define INVALIDATE_EXPORTSTR(var) \
-	do { \
-	  if ((var)->exportstr) \
-	    { \
-	      free ((var)->exportstr); \
-	      (var)->exportstr = (char *)NULL; \
-	    } \
-	} while (0)
-*/
-/* Stuff for hacking variables. */
-//typedef int sh_var_map_func_t __P((SHELL_VAR *));
-
-/* Where we keep the variables and functions */
-/*extern VAR_CONTEXT *global_variables;
-extern VAR_CONTEXT *shell_variables;
-
-extern HASH_TABLE *shell_functions;
-extern HASH_TABLE *temporary_env;
-
-extern int variable_context;
-extern char *dollar_vars[];
-extern char **export_env;
-
-extern void initialize_shell_variables __P((char **, int));
-extern SHELL_VAR *set_if_not __P((char *, char *));
-
-extern void sh_set_lines_and_columns __P((int, int));
-extern void set_pwd __P((void));
-extern void set_ppid __P((void));
-extern void make_funcname_visible __P((int));
-
-extern SHELL_VAR *var_lookup __P((const char *, VAR_CONTEXT *));
-
-extern SHELL_VAR *find_function __P((const char *));
-extern SHELL_VAR *find_variable __P((const char *));
-extern SHELL_VAR *find_variable_internal __P((const char *, int));
-extern SHELL_VAR *find_tempenv_variable __P((const char *));
-extern SHELL_VAR *copy_variable __P((SHELL_VAR *));
-extern SHELL_VAR *make_local_variable __P((const char *));
-extern SHELL_VAR *bind_variable __P((const char *, char *));
-extern SHELL_VAR *bind_function __P((const char *, COMMAND *));
-
-extern SHELL_VAR **map_over __P((sh_var_map_func_t *, VAR_CONTEXT *));
-SHELL_VAR **map_over_funcs __P((sh_var_map_func_t *));
-extern SHELL_VAR **all_shell_variables __P((void));
-extern SHELL_VAR **all_shell_functions __P((void));
-extern SHELL_VAR **all_visible_variables __P((void));
-extern SHELL_VAR **all_visible_functions __P((void));
-extern SHELL_VAR **all_exported_variables __P((void));
-extern SHELL_VAR **local_exported_variables __P((void));
-extern SHELL_VAR **all_local_variables __P((void));
-#if defined (ARRAY_VARS)
-extern SHELL_VAR **all_array_variables __P((void));
-#endif
-extern char **all_variables_matching_prefix __P((const char *));
-
-extern char **make_var_array __P((HASH_TABLE *));
-extern char **add_or_supercede_exported_var __P((char *, int));
-
-extern char *get_variable_value __P((SHELL_VAR *));
-extern char *get_string_value __P((const char *));
-extern char *sh_get_env_value __P((const char *));
-extern char *make_variable_value __P((SHELL_VAR *, char *));
-
-extern SHELL_VAR *bind_variable_value __P((SHELL_VAR *, char *));
-extern SHELL_VAR *bind_int_variable __P((char *, char *));
-extern SHELL_VAR *bind_var_to_int __P((char *, intmax_t));
-
-extern int assign_in_env __P((const char *));
-extern int unbind_variable __P((const char *));
-extern int unbind_func __P((const char *));
-extern int makunbound __P((const char *, VAR_CONTEXT *));
-extern int kill_local_variable __P((const char *));
-extern void delete_all_variables __P((HASH_TABLE *));
-extern void delete_all_contexts __P((VAR_CONTEXT *));
-
-extern VAR_CONTEXT *new_var_context __P((char *, int));
-extern void dispose_var_context __P((VAR_CONTEXT *));
-extern VAR_CONTEXT *push_var_context __P((char *, int, HASH_TABLE *));
-extern void pop_var_context __P((void));
-extern VAR_CONTEXT *push_scope __P((int, HASH_TABLE *));
-extern void pop_scope __P((int));
-
-extern void push_context __P((char *, int, HASH_TABLE *));
-extern void pop_context __P((void));
-extern void push_dollar_vars __P((void));
-extern void pop_dollar_vars __P((void));
-extern void dispose_saved_dollar_vars __P((void));
-
-extern void adjust_shell_level __P((int));
-extern void non_unsettable __P((char *));
-extern void dispose_variable __P((SHELL_VAR *));
-extern void dispose_used_env_vars __P((void));
-extern void dispose_function_env __P((void));
-extern void dispose_builtin_env __P((void));
-extern void merge_temporary_env __P((void));
-extern void merge_builtin_env __P((void));
-extern void kill_all_local_variables __P((void));
-
-extern void set_var_read_only __P((char *));
-extern void set_func_read_only __P((const char *));
-extern void set_var_auto_export __P((char *));
-extern void set_func_auto_export __P((const char *));
-
-extern void sort_variables __P((SHELL_VAR **));
-
-extern void maybe_make_export_env __P((void));
-extern void update_export_env_inplace __P((char *, int, char *));
-extern void put_command_name_into_env __P((char *));
-extern void put_gnu_argv_flags_into_env __P((intmax_t, char *));
-
-extern void print_var_list __P((SHELL_VAR **));
-extern void print_func_list __P((SHELL_VAR **));
-extern void print_assignment __P((SHELL_VAR *));
-extern void print_var_value __P((SHELL_VAR *, int));
-extern void print_var_function __P((SHELL_VAR *));
-*/
 

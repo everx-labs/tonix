@@ -1,14 +1,14 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "variables.sol";
 
 abstract contract arguments is variables {
 
     function _flag_set(string name, string flags) internal pure returns (bool) {
-        return _strchr(flags, name) > 0;
+        return flags.empty() ? false : _strchr(flags, name) > 0;
     }
 
-    function _flag_values(string flags_query, string flags_set) internal pure returns (bool , bool , bool , bool , bool , bool , bool , bool ) {
+    function _flag_values(string flags_query, string flags_set) internal pure returns (bool, bool, bool, bool, bool, bool, bool, bool) {
         uint len = flags_query.byteLength();
         bool[] tmp;
         for (uint i = 0; i < len; i++)
@@ -29,7 +29,7 @@ abstract contract arguments is variables {
         argv = _val("ARGV", arg);
         if (!s_args.empty())
             (args, ) = _split(s_args, " ");
-        argv.append(format("> get_args: s_args \"{}\", flags \"{}\", page {}\n", s_args, flags, arg));
+//        argv.append(format("> get_args: s_args \"{}\", flags \"{}\", page {}\n", s_args, flags, arg));
     }
 
     function _get_opts(string arg) internal pure returns (string flags, string opt_args) {

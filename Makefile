@@ -17,25 +17,6 @@ VAL0:=15
 TST:=tests
 DBG:=debug
 
-user?=root
-VFS:=vfs
-BIN:=$(VFS)/bin
-DEV:=$(VFS)/dev
-ETC:=$(VFS)/etc
-PROC:=$(VFS)/proc
-SYS:=$(VFS)/sys
-TMP:=$(VFS)/tmp
-USR:=$(VFS)/usr
-UBIN:=$(USR)/bin
-USH:=$(USR)/share
-HOM:=$(VFS)/home/$(user)
-HS:=$(HOM)/.sh_history
-TBIN:=$(TMP)/bin
-TSBIN:=$(TMP)/sbin
-TSH:=$(TMP)/tosh
-VAR:=$(VFS)/var
-LOG:=$(VAR)/log
-
 DIRS:=bin $(VFS) $(TMP) $(PROC) $(DEV) $(VAR) $(USR) $(USH) $(TSBIN) $(UBIN) $(HOM) $(TSH) $(LOG)
 
 PHONY += all dirs cc tty tt deploy clean

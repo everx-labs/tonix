@@ -1,14 +1,12 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 import "../include/Commands.sol";
 
 contract wc is Utility, Commands {
 
-    function exec(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        ec = EXECUTE_SUCCESS;
-        err = "";
-        (string[] args, string flags, ) = _get_args(e[IS_ARGS]);
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, string flags, ) = _get_args(args);
 
         bool print_lines = true;
         bool print_words = true;
@@ -22,7 +20,7 @@ contract wc is Utility, Commands {
         uint total_bytes;
         uint overall_max_width;
 
-        uint n_texts = args.length;
+        uint n_texts = params.length;
         bool count_totals = n_texts > 1;
 
         if (!flags.empty()) {
@@ -42,9 +40,11 @@ contract wc is Utility, Commands {
             Column(print_max_width, 4, ALIGN_RIGHT),
             Column(true, 32, ALIGN_LEFT)];
 
-        for (string arg: args) {
+        for (string arg: params) {
             (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
             if (ft == FT_UNKNOWN) {
+                ec = EXECUTE_FAILURE;
+                err.append(arg + " not found\n");
             } else {
                 string texts = _get_file_contents(index, inodes, data);
                 (string[] text, uint n_fields) = _split(texts, "\n");

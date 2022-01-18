@@ -1,86 +1,108 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract builtin is Shell {
 
-    function _get_fd(string[] e) internal pure returns (uint16 fd) {
-        for (uint i = IS_USER_FD; i < e.length; i++)
-            if (e[i].empty())
-                return uint16(i);
-    }
-
-    function open(string pathname, uint16 flags, string[] e) external pure returns (uint8 ec, uint16 fd, string[] env) {
-        env = e;
-        string fd_table = e[IS_FD_TABLE];
-        string cur_val = _val(pathname, fd_table);
-        if (cur_val.empty()) {
-            fd = _get_fd(e);
-            string record = format("-{} [{}]={}\n", flags, fd, pathname);
-            fd_table.append(record);
-        } else {
-            fd = _atoi(cur_val);
+    function _match_function_comp_spec(string cmd, string flags, string comp_spec) internal pure returns (string) {
+        (string[] lines, ) = _split(comp_spec, "\n");
+        for (string line: lines) {
+            if (_strstr(line, " " + cmd + " ") > 0) {
+                (string fn_attrs, string fn_name, ) = _split_var_record(line);
+                if (_match_attr_set(fn_attrs, flags))
+                    return fn_name;
+            }
         }
-//        fd_table = _set_item_value(pathname, fd_table, format("{}", fd));
-
-        env[IS_FD_TABLE] = fd_table;
     }
 
-    function read(uint16 fd, uint32 count, string[] e) external pure returns (uint8 ec, string out, uint32 b_count, string[] env) {
-        env = e;
-        uint len = e.length;
-        if (fd >= len)
-            ec = 1;
-        string page = e[fd];
-        uint page_len = page.byteLength();
-        uint cap = math.min(page_len, count);
-        out = page.substr(0, cap);
-        /*
-EAGAIN   fd is not a socket and has been marked nonblocking (O_NONBLOCK), and the read would block
-EWOULDBLOCK fs is a socket and has been marked nonblocking (O_NONBLOCK), and the read would block.
-EBADF    fd is not a valid file descriptor or is not open for reading.
-EFAULT   buf is outside your accessible address space.
-EINTR    The call was interrupted by a signal before any data was read; see signal(7).
-EINVAL   fd is attached to an object which is unsuitable for reading; or the file was opened with the O_DIRECT flag, and either
-                dress specified in buf, the value specified in count, or the file offset is not suitably aligned.
-EIO I/O error. process is in a background process group, tries to read from its controlling terminal
-EISDIR fd refers to a directory.*/
-
+    function _item_val(string name, Item[] coll) internal pure returns (string) {
+        for (Item i: coll)
+            if (i.name == name)
+                return i.value;
     }
 
-    function write(uint16 fd, string buf, uint32 count, string[] e) external pure returns (uint32 b_count, uint16 errno, string[] env) {
-        env = e;
-        string fd_table = e[IS_FD_TABLE];
-        string page = e[fd];
-        string cur_val = _val(format("{}", fd), fd_table);
-        if (cur_val.empty()) {
-            // error
-        } else {
-            page.append(buf);
-            env[fd] = page;
+    function run_builtin(Item[] annotation) external pure returns (string res) {
+        string flags = _item_val("FLAGS", annotation);
+        string cmd = _item_val("COMMAND", annotation);
+        string s_args = _item_val("@", annotation);
+        string params = _item_val("PARAMS", annotation);
+        string ec = _item_val("?", annotation);
+        string opterr = _item_val("OPTERR", annotation);
+
+        if (ec == "1")
+            return "echo error parsing command line";
+        else if (ec == "2")
+            return "echo " + opterr;
+
+        string fn;
+        string page = "pool";
+
+        if (cmd == "declare" || cmd == "alias" || cmd == "readonly" || cmd == "export" || cmd == "set" || cmd == "complete") {
+            if (_flag_set("p", flags) || params.empty())
+                fn = "print";
+            else
+                fn = "modify";
+        } else if (cmd == "type" || cmd == "echo" || cmd == "pwd") {
+            fn = "print";
+        } else if (cmd == "help") {
+            fn = "display_help";
+        } else if (cmd == "cd" || cmd == "test") {
+            fn = "builtin_read_fs";
+        } else if (cmd == "mapfile" || cmd == "read" || cmd == "source") {
+            fn = "read_input";
+        } else if (cmd == "unset" || cmd == "unalias" || cmd == "shift") {
+            fn = "modify";
+        } else if (cmd == "command") {
+            if (_flag_set("v", flags) || _flag_set("V", flags))
+                fn = "print";
+            else
+                fn = "execute_command";
+        } else if (cmd == "ulimit") {
+            (bool v1, bool v2, bool v3, bool v4, bool v5, bool v6, bool v7, bool v8) = _flag_values("12345678", flags);
+            if (params.empty()) fn = "print";
+            else if (v1) fn = "v1";
+            else if (v2) fn = "v2";
+            else if (v3) fn = "v3";
+            else if (v4) fn = "v4";
+            else if (v5) fn = "v5";
+            else if (v6) fn = "v6";
+            else if (v7) fn = "v7";
+            else if (v8) fn = "v8";
+            else fn = "execute";
+        } else if (cmd == "hash") {
+            if (params.empty() || _flag_set("t", flags) || _flag_set("l", flags))
+                fn = "print";
+            else
+                fn = "modify";
         }
 
-       /*
-EDESTADDRREQ fd refers to a datagram socket for which a peer address has not been set using connect(2).
-EDQUOT The user's quota of disk blocks on the filesystem containing the file referred to by fd has been exhausted.
-EFAULT buf is outside your accessible address space.
-EFBIG  An attempt was made to write a file that exceeds the implementation-defined maximum file size or the process's file size  limit,
-    or to write at a position past the maximum allowed offset.
-EINTR  The call was interrupted by a signal before any data was written; see signal(7).
-EINVAL fd  is  attached to an object which is unsuitable for writing; or the file was opened with the O_DIRECT flag, and either the ad‐
-    dress specified in buf, the value specified in count, or the file offset is not suitably aligned.
-EIO    A low-level I/O error occurred while modifying the inode.  rite-back of data written by an earlier write(), which  may have been issued to a different file descriptor on the same file.
+        if (cmd == "alias" || cmd == "unalias")
+            page = "aliases";
+        else if (cmd == "hash")
+            page = "hashes";
+        else if (cmd == "shift")
+            page = "pos_params";
+        else if (cmd == "declare" || cmd == "export" || cmd == "readonly") {
+            if (_flag_set("f", flags))
+                page = "functions";
+            else if (fn == "print")
+                page = "pool";
+            else
+                page = "vars";
+        } else if (cmd == "type")
+            page = "pool";
+        else if (cmd == "echo" || cmd == "pwd")
+            page = "vars";
 
-ENOSPC The device containing the file referred to by fd has no room for the data.
-EPERM  The operation was prevented by a file seal; see fcntl(2).
-EPIPE  fd is connected to a pipe or socket whose reading end is closed.  When this happens the writing process will also receive a SIG‐
-    PIPE signal.  (Thus, the write return value is seen only if the program catches, blocks or ignores this signal.)    */
+        string exec_path = "builtin";
+        string exec_line = "./" + exec_path + " " + cmd + " " + fn + " " + page + " " + s_args;
+        res = exec_line;
     }
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
+    /*function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
         ec = 0;
         (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
-    }
+    }*/
 
     function _get_arg_value_uint16(string arg) internal pure returns (uint16 ec, uint16 val) {
         optional(int) arg_val = stoi(arg);

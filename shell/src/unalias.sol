@@ -1,33 +1,28 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract unalias is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
-        string hashmap_page = e[IS_POOL];
-        string alias_page = _get_map_value("TOSH_ALIASES", hashmap_page);
-        ec = 0;
+    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
+        (string[] params, string flags, ) = _get_args(args);
+        string alias_page = pool;
         bool remove_all = _flag_set("a", flags);
 
         if (remove_all)
-            hashmap_page = _translate(hashmap_page, alias_page, "");
+//            res = _translate(pool, alias_page, "");
+            res = "";
         else {
             string initial_val = alias_page;
             for (string token: params) {
-                string cur_val = _val(token, alias_page);
-                if (cur_val.empty())
-                    out.append("-tosh: unalias: " + token + ": not found\n");
-                else {
-                    string record = _wrap(token, W_SQUARE) + "=" + _wrap(cur_val, W_DQUOTE);
-                    alias_page = _trim_spaces(_translate(alias_page, record, ""));
-                }
+                string record = _get_pool_record(token, alias_page);
+                if (!record.empty()) {
+                    alias_page = _translate(alias_page, record + "\n", "");
+                } else
+                    ec = EXECUTE_FAILURE;
             }
-            if (initial_val != alias_page) {
-                hashmap_page = _translate(hashmap_page, initial_val, alias_page);
-                wr.push(Write(IS_POOL, hashmap_page, O_WRONLY));
-            }
+            if (initial_val != alias_page)
+                res = alias_page;
         }
     }
 

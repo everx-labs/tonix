@@ -1,18 +1,18 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
 contract grep is Utility {
 
-    function exec(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
-        (string[] args, string flags, ) = _get_args(e[IS_ARGS]);
+        (string[] v_args, string flags, ) = _get_args(args);
         string[] params;
         string[] f_args;
-        uint n_args = args.length;
+        uint n_args = v_args.length;
 
         for (uint i = 0; i < n_args; i++) {
-            string arg = args[i];
+            string arg = v_args[i];
             (, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
             if (ft == FT_UNKNOWN)
                 params.push(arg);

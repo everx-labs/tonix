@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
@@ -31,27 +31,29 @@ contract read is Shell {
     uint8 constant TOKEN_PARAM      = 5;
     uint8 constant TOKEN_LIST       = 6;
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        string s_input = _trim_spaces(e[IS_STDIN]);
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
+    function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
+        (string[] params, string flags, ) = _get_args(args);
+        (ec, out, res) = _read(params, flags, input, pool);
+    }
 
+    function _read(string[] params, string flags, string input, string pool) internal pure returns (uint8 ec, string out, string res) {
         bool assign_to_array = _flag_set("a", flags);
         bool use_delimiter = _flag_set("d", flags);
         bool echo_input = !_flag_set("s", flags);
 //        string delimiter = use_delimiter ? _get_option_param(s_arg, "d") : " ";
         string delimiter = " ";
+        ec = EXECUTE_SUCCESS;
         string s_attrs = assign_to_array ? "-a" : "--";
 
-        uint16 page_index = IS_POOL;
-        string page = e[page_index];
+        string page = pool;
 
         if (assign_to_array) {
             string array_name = "REPLY";
-            (string[] fields, ) = _split(s_input, delimiter);
+            (string[] fields, ) = _split(input, delimiter);
             page = _set_var(s_attrs, array_name + "=" + _join_fields(fields, " "), page);
         } else {
             uint n_args = params.length;
-            string s_split = s_input;
+            string s_split = input;
             for (uint i = 0; i < n_args - 1; i++) {
                 (string s_head, string s_tail) = _strsplit(s_split, delimiter);
                 page = _set_var(s_attrs, params[i] + "=" + s_head, page);
@@ -61,10 +63,9 @@ contract read is Shell {
                     page = _set_var(s_attrs, params[i + 1] + "=" + s_tail, page);
             }
         }
-        if (e[page_index] != page)
-            wr.push(Write(page_index, page, O_WRONLY));
+        res = page;
         if (echo_input)
-            out.append(s_input);
+            out.append(input);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

@@ -1,42 +1,48 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract alias_ is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
-        string alias_page = _get_map_value("TOSH_ALIASES", e[IS_POOL]);
+    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
+        (string[] params, , string argv) = _get_args(args);
+        string alias_page = pool;
 
-        if (_flag_set("p", flags) || params.empty()) {
-            (string[] aliases, ) = _split(alias_page, " ");
-            for (string al: aliases) {
-                (string name, string value) = _item_value(al);
+        string initial_val = alias_page;
+        string token = params[0];
+        ec = EXECUTE_SUCCESS;
+        if (_strchr(argv, "=") > 0) {
+            (string name, ) = _strsplit(token, "=");
+            string value = _strval(argv, "=", "\n");
+//            string new_value = "-- " + _wrap(name, W_SQUARE) + "=" + _wrap(value, W_DQUOTE);
+            string new_value = _var_record("", name, value);
+            string cur_val = _val(name, alias_page);
+            if (cur_val.empty())
+                alias_page.append(new_value + "\n");
+            else
+                alias_page = _translate(alias_page, cur_val, new_value);
+        }
+        if (initial_val != alias_page)
+            res = _translate(pool, initial_val, alias_page);
+    }
+
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, , ) = _get_args(args);
+        if (params.empty()) {
+            (string[] aliases, ) = _split_line(pool, "\n", "\n");
+            for (string line: aliases) {
+                (, string name, string value) = _split_var_record(line);
                 out.append("alias " + name + "=" + _wrap(value, W_SQUOTE) + "\n");
             }
         } else {
-            string initial_val = alias_page;
-            for (string token: params) {
-                if (_strchr(token, "=") > 0) {
-                    (string name, string value) = _strsplit(token, "=");
-                    string new_value = _wrap(name, W_SQUARE) + "=" + _wrap(value, W_DQUOTE);
-                    string cur_val = _val(name, alias_page);
-                    if (cur_val.empty())
-                        alias_page.append(" " + new_value);
-                    else
-                        alias_page = _translate(alias_page, cur_val, new_value);
-                } else {
-                    string cur_val = _val(token, alias_page);
-                    ec = EXECUTE_FAILURE;
-                    out.append(cur_val.empty() ? "-tosh: alias: " + token + ": not found\n" : "alias " + token + "=" + _wrap(cur_val, W_SQUOTE) + "\n");
-                }
-            }
-            if (initial_val != alias_page) {
-                string nw = _translate(e[IS_POOL], initial_val, alias_page);
-                wr.push(Write(IS_POOL, nw, O_WRONLY));
-            }
+            string token = params[0];
+            string cur_val = _val(token, pool);
+            if (cur_val.empty()) {
+                out.append("-tosh: alias: " + token + ": not found\n");
+                ec = EXECUTE_FAILURE;
+            } else
+                out.append("alias " + token + "=" + _wrap(cur_val, W_SQUOTE) + "\n");
         }
-        wr.push(Write(IS_STDOUT, out, O_WRONLY + O_APPEND));
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

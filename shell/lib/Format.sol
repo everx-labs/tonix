@@ -74,7 +74,17 @@ abstract contract Format is String {
             return _spaces(pad_size / 2) + s + _spaces(pad_size - pad_size / 2); // center align
     }
 
-    function _format_list(string header, string text, uint indent_size, string delimiter) internal pure returns (string out) {
+    function _format_list(string header, string text) internal pure returns (string out) {
+        if (!text.empty())
+            return header + "\n" + _indent(text, 4, "\n");
+    }
+
+    function _format_line(string header, string text) internal pure returns (string out) {
+        if (!text.empty())
+            return header + " " + _indent(text, 0, "\n");
+    }
+
+    function _format_custom(string header, string text, uint indent_size, string delimiter) internal pure returns (string out) {
         if (!text.empty())
             return header + delimiter + _indent(text, indent_size, delimiter);
     }

@@ -1,86 +1,82 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract hash is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] args, string flags, ) = _get_args(e[IS_ARGS]);
-
+//    function print(string args, string hashes, string index, string pool) external pure returns (uint8 ec, string out) {
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = _get_args(args);
         bool print_tabbed = _flag_set("t", flags);
         bool print_reusable = _flag_set("l", flags);
-//        bool no_args = flags.empty() && args.empty();
-        bool no_args = args.empty();
-        bool print = print_tabbed || print_reusable || no_args;
-//        bool use_pathname = _get_option_value(short_options, "p");
+        bool no_args = params.empty();
+        if (no_args) {
+            if (pool.empty())
+                out.append("hash: hash table empty\n");
+            else {
+                out.append("hits\tcommand\n");
+                (string[] lines, ) = _split(pool, "\n");
+                for (string line: lines) {
+                    (, string path, string contents) = _split_var_record(line);
+                    (string[] bins, ) = _split(_trim_spaces(contents), " ");
+                    for (string bin: bins)
+                        out.append(print_reusable ?
+                        "builtin hash -p " + path + "/" + bin + " " + bin + "\n" :
+                        "1\t" + path + "/" + bin + "\n");
+                }
+            }
+        }
+        for (string arg: params) {
+            string path = _get_array_name(arg, pool);
+            if (!path.empty()) {
+                out.append(print_tabbed ?
+                    arg + "\t" + path + "/" + arg + "\n" :
+                    "builtin hash -p " + path + "/" + arg + " " + arg + "\n");
+            } else {
+                ec = EXECUTE_FAILURE;
+                if (print_tabbed)
+                    out.append("-tosh: hash: " + arg + ": not found\n");
+            }
+        }
+    }
+
+//    function modify(string args, string hashes, string index) external pure returns (uint8 ec, string res) {
+    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
+        (string[] params, string flags, ) = _get_args(args);
         bool forget_some = _flag_set("d", flags);
         bool forget_all = _flag_set("r", flags);
         bool drop = forget_some || forget_all;
-        bool add = !print && !drop;
-
-        uint16 page_index = IS_BINPATH;
-        string page = e[page_index];
-        string hashes = page;
-        string commands = _get_map_value("command", e[IS_INDEX]);
-
-        if (print) {
-            if (no_args) {
-                if (hashes.empty())
-                    out.append("hash: hash table empty\n");
-                else {
-                    out.append("hits\tcommand\n");
-                    (string[] dir_arrays, ) = _split(hashes, "\n");
-                    for (string dir: dir_arrays) {
-                        (string path, string contents) = _item_value(dir);
-                        (string[] bins, ) = _split(_trim_spaces(contents), " ");
-                        for (string bin: bins)
-                            out.append(print_reusable ?
-                                "builtin hash -p " + path + "/" + bin + " " + bin + "\n" :
-                                "1\t" + path + "/" + bin + "\n");
-                    }
-                }
-            }
-            for (string arg: args) {
-                string path = _get_array_name(arg, hashes);
-                if (!path.empty()) {
-                    out.append(print_tabbed ?
-                        arg + "\t" + path + "/" + arg + "\n" :
-                        "builtin hash -p " + path + "/" + arg + " " + arg + "\n");
-                } else {
-                    ec = EXECUTE_FAILURE;
-                    if (print_tabbed)
-                        out.append("-tosh: hash: " + arg + ": not found\n");
-                }
-            }
-        } else if (add) {
-            for (string arg: args) {
-                string bins = _get_map_value("/bin", hashes);
-                if (_strstr(commands, arg) > 0)
+        bool add = !drop;
+//        string commands = _get_map_value("command", index);
+        string page = pool;
+        if (add) {
+            for (string arg: params) {
+                string bins = _get_map_value("/bin", pool);
+                bins = _set_add(arg, bins);
+                /*if (_strstr(commands, arg) > 0)
                     bins = _set_add(arg, bins);
                 else {
                     ec = EXECUTE_FAILURE;
-                    out.append("-tosh: hash: " + arg + ": not found\n");
-                }
-                e[page_index] = _translate(hashes, _get_map_value("/bin", hashes), bins);
+//                    out.append("-tosh: hash: " + arg + ": not found\n");
+                }*/
+                page = _translate(page, _get_map_value("/bin", pool), bins);
             }
         } else if (drop) {
             if (forget_all)
-                delete e[page_index];
+                page = "";
             else {
-                for (string arg: args) {
-                    string path = _get_array_name(arg, hashes);
+                for (string arg: params) {
+                    string path = _get_array_name(arg, pool);
                     if (!path.empty())
-                        hashes = _translate(hashes, arg + " ", "");
+                        page = _translate(page, arg + " ", "");
                     else {
                         ec = EXECUTE_FAILURE;
-                        out.append("-tosh: hash: " + arg + ": not found\n");
+//                        out.append("-tosh: hash: " + arg + ": not found\n");
                     }
                 }
-                e[page_index] = hashes;
             }
         }
-        if (page != e[page_index])
-            wr.push(Write(page_index, e[page_index], O_WRONLY));
+        res = page;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

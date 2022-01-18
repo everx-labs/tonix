@@ -1,9 +1,52 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 import "compspec.sol";
 
 contract eilish is Shell, compspec {
+
+    function pipe(uint8 ec, string out, Write[] delta, string[] e) external pure returns (string[] env) {
+        env = e;
+        string dbg;
+        string exec_line = e[IS_PIPELINE];
+        if (ec > EXECUTE_SUCCESS)
+            dbg.append("Executed " + exec_line + " with status " + _itoa(ec) + "\n");
+        string cmd_queue = e[IS_CMD_QUEUE];
+        string pool = e[IS_POOL];
+        string f_name_v = _val("FUNCNAME", pool);
+        string line_no_v = _val("LINENO", pool);
+        uint16 line_no_s = _atoi(line_no_v);
+        env[IS_STDERR].append(format("Executing {}, line {}, status {}\n", f_name_v, line_no_s, ec));
+
+        for (Write d: delta) {
+            (uint16 fd, string text, uint16 mode) = d.unpack();
+            if ((mode & O_ACCMODE) > 0)
+                if ((mode & O_APPEND) > 0)
+                    env[fd].append(text);
+                else
+                    env[fd] = text;
+            if (fd != IS_STDOUT && fd != IS_STDERR)
+                dbg.append(format("page {} changes from\n===\n{}\n===\n to \n===\n{}\n===\n", fd, e[fd], text));
+        }
+
+        (string[] items, uint n_items) = _split(cmd_queue, "\n");
+        if (n_items > 0) {
+            e[IS_CMD_QUEUE] = _translate(cmd_queue, items[0] + "\n", "");
+        }
+        if (n_items > 1) {
+            env[IS_PIPELINE] = items[1];
+        }
+
+//        uint16 next_line_no = line_no++;
+//        string next_line_no_s = _itoa(next_line_no);
+  //      string next_line_val = _value()
+
+//        env[IS_STDERR].append("-> " + )
+
+//        env = _set_val("?", ec, env);
+
+        env[IS_STDIN] = out;
+    }
 
     function on_b_exec(uint8 ec, string out, Write[] delta, string[] e) external pure returns (string[] env) {
         env = e;
@@ -14,7 +57,7 @@ contract eilish is Shell, compspec {
 //        dbg.append("Executed " + exec_line + " with status " + ec + "\n");
 //        uint len = e.length;
         if (ec > EXECUTE_SUCCESS)
-            dbg.append("Executed " + exec_line + " with status " + format("{}", ec) + "\n");
+            dbg.append("Executed " + exec_line + " with status " + _itoa(ec) + "\n");
 
         for (Write d: delta) {
             (uint16 fd, string text, uint16 mode) = d.unpack();
@@ -36,174 +79,236 @@ contract eilish is Shell, compspec {
         env[IS_STDOUT].append(out);
         string exec_line = e[IS_PIPELINE];
         if (ec > EXECUTE_SUCCESS)
-            dbg.append("Executed " + exec_line + " with status " + format("{}", ec) + "\n");
+            dbg.append("Executed " + exec_line + " with status " + _itoa(ec) + "\n");
 
         env[IS_STDERR].append(dbg);
     }
 
-    function read_line(string args, string[] e) external pure returns (string[] env) {
-        env = e;
-        string s_input = _trim_spaces(args);
-        delete env[IS_STDOUT];
-        delete env[IS_STDERR];
-        delete env[IS_PIPELINE];
-        string dbg;
-
-        // Parse redirections
-        (string command_raw, string s_args) = _strsplit(s_input, " ");
-        uint p = _strrchr(s_input, ">");
-        uint q = _strrchr(s_input, "<");
-        string redir_out = p > 0 ? _strtok(s_input, p, " ") : "";
-        string redir_in = q > 0 ? _strtok(s_input, q, " ") : "";
-
-        string pool = e[IS_POOL];
-        /* Expand aliases */
-        string tosh_aliases = _as_map(_get_map_value("TOSH_ALIASES", pool));
-        string expanded = _val(command_raw, tosh_aliases);
-        string cmd = expanded.empty() ? command_raw : expanded;
-
-        (string[] params, uint n_params) = _split(s_args, " ");
-
-        env[IS_BLTN_IN] = s_input;
-
-        string tosh_path = "./vfs/usr/bin/tosh";
-        string tosh_flags = "himBHs";
-
-        string flags = tosh_flags;
-
-        bool noexec = _flag_set("n", flags);
-//        bool nounset = _flag_set("u", flags);
-        bool verbose = _flag_set("v", flags);
-        bool xtrace = _flag_set("x", flags);
-
-        if (verbose)
-            dbg.append(s_input + "\n");
-
-        string opt_string = _val(cmd, e[IS_OPTSTRING]);
-
-        (uint8 ec, string s_flags, string opt_values, string dbg_x, string pos_params, , string pos_map) = _parse_params(params, opt_string);
-        pos_map = "( [0]=\"" + cmd + "\"" + pos_map + " )";
-        dbg.append(dbg_x);
-
-        env[IS_TOSH_VAR] = _trim_spaces(_encode_items([
-            ["_", tosh_path],
-            ["-", tosh_flags],
-            ["#", format("{}", n_params)],
-            ["@", s_args],
-            ["?", format("{}", ec)],
-            ["TOSH", tosh_path],
-            ["TOSH_COMMAND", cmd],
-            ["TOSHOPTS", _as_map("expand_aliases")],
-            ["TOSHPID", ""],
-            ["TOSH_ARGV", s_input],
-            ["TOSH_SUBSHELL", "0"],
-            ["TOSH_ALIASES", tosh_aliases],
-            ["SHELLOPTS", "allexport:hashall"],
-            ["TMPDIR", "vfs/tmp/tosh"],
-            ["SHLVL", "1"]
-            ]));
-
-        /* Expand variables */
-        for (string arg: params) {
-            if (_strchr(arg, "$") > 0) {
-                string ref = _strval(arg, "$", " ");
-                if (_strchr(ref, "{") > 0)
-                    ref = _unwrap(ref);
-                Var v = _var_ext(ref, pool);
-                string ref_val = v.value;
-                pos_params = _translate(pos_params, arg, ref_val);
+    function _match_function_comp_spec(string cmd, string flags, string comp_spec) internal pure returns (string) {
+        (string[] lines, ) = _split(comp_spec, "\n");
+        for (string line: lines) {
+            if (_strstr(line, " " + cmd + " ") > 0) {
+                (string fn_attrs, string fn_name, ) = _split_var_record(line);
+                if (_match_attr_set(fn_attrs, flags))
+                    return fn_name;
             }
         }
-        env[IS_ARGS] = _trim_spaces(_encode_items([
+    }
+
+    function annotate_args(string s_input, string aliases, string opt_string, string comp_spec, string index, string pool) external pure returns (Item[] res) {
+        if (s_input.empty())
+            return res;
+        (string cmd_raw, string s_args) = _strsplit(s_input, " ");
+        string cmd_expanded = _val(cmd_raw, aliases);
+        string input = cmd_expanded.empty() ? s_input : cmd_expanded + " " + s_args;
+        string cmd;
+        (cmd, s_args) = _strsplit(input, " ");
+        string cmd_opt_string = _val(cmd, opt_string);
+
+        string redir_out;
+        string redir_in;
+        string s_flags;
+        string[][2] opt_values;
+        string pos_params;
+        string pos_map;
+        string dbg_x;
+        string[] params;
+        uint n_params;
+        string last_param;
+        uint8 ec;
+        if (!s_args.empty()) {
+            (params, n_params) = _split(s_args, " ");
+
+            uint p = _strrchr(s_input, ">");
+            uint q = _strrchr(s_input, "<");
+            redir_out = p > 0 ? _strtok(s_input, p, " ") : "";
+            redir_in = q > 0 ? _strtok(s_input, q, " ") : "";
+            uint8 t_ec;
+            (t_ec, s_flags, opt_values, dbg_x, pos_params, ) = _parse_params(params, cmd_opt_string);
+            ec = t_ec;
+//            pos_map = "( [0]=\"" + cmd + "\"" + pos_map + " )";
+
+            for (string arg: params) {
+                if (_strchr(arg, "$") > 0) {
+                    string ref = _strval(arg, "$", " ");
+                    if (_strchr(ref, "{") > 0)
+                        ref = _unwrap(ref);
+                    string ref_val = _val(ref, pool);
+                    pos_params = _translate(pos_params, arg, ref_val);
+                }
+            }
+            last_param = params[n_params - 1];
+//            pos_map = _as_indexed_array("POS_ARGS", cmd + " " + s_args, " ");
+            pos_map = cmd + " " + s_args;
+        }
+        string cmd_type = _get_array_name(cmd, index);
+        string exec_path;
+        string exec_line;
+        string cmd_queue;
+
+        if (cmd_type == "builtin") {
+            exec_line = "./tosh run_builtin " + input;
+        } else if (cmd_type == "command") {
+            exec_line = "./tosh execute_command " + input;
+        } else if (!cmd_type.empty()) {
+
+            exec_path = "./" + cmd_type;
+//            string fn_name = _get_array_name(cmd, comp_spec);
+            string fn_name = _match_function_comp_spec(cmd, s_flags, comp_spec);
+            string f_body = _function_body(fn_name, pool);
+            if (!f_body.empty()) {
+                (string[] lines, uint n_lines) = _split(f_body, ";");
+                for (uint i = 0; i < n_lines; i++) {
+                    string s_line = lines[i];
+                    if (s_line.empty())
+                        continue;
+                    if (s_line.substr(0, 1) == '.')
+                        s_line = exec_path + s_line.substr(1);
+                    if (s_line.byteLength() > 2) {
+                        s_line = _translate(s_line, "$@", s_args);
+                        s_line = _translate(s_line, "$0", cmd);
+                    }
+                    cmd_queue.append(format("[{}]=\"{}\"\n", i, s_line));
+                    exec_line.append(s_line + "\n");
+                }
+            } else {
+                fn_name = _get_array_name(cmd, comp_spec);
+                exec_line = exec_path + " " + cmd + " " + fn_name + " " + s_args + ";";
+                cmd_queue = "[0]=\"" + exec_line + "\"\n";
+            }
+        }
+        res = [
+            Item("COMMAND", 0, cmd),
+            Item("PARAMS", 0, pos_params),
+            Item("FLAGS", 0, s_flags),
+            Item("OPT_ARGS", 0, _encode_items(opt_values, " ")),
+            Item("ARGV", 0, input),
+            Item("POS_ARGS", 0, pos_map),
+            Item("#", 0, _itoa(n_params)),
+            Item("@", 0, s_args),
+            Item("?", 0, _itoa(ec)),
+            Item("_", 0, last_param),
+            Item("OPTERR", 0, dbg_x),
+            Item("CMD_TYPE", 0, cmd_type),
+            Item("EXEC_PATH", 0, exec_path),
+            Item("EXEC_LINE", 0, exec_line),
+            Item("COMMAND_QUEUE", 0, cmd_queue),
+            Item("REDIR_IN", 0, redir_in),
+            Item("REDIR_OUT", 0, redir_out)];
+    }
+
+
+    function set_args(string s_input, string aliases, string opt_string, string pool) external pure returns (uint8 ec, string out) {
+        if (s_input.empty())
+            return (EXECUTE_FAILURE, "");
+        /* Expand aliases */
+        (string cmd_raw, string s_args) = _strsplit(s_input, " ");
+        string cmd_expanded = _val(cmd_raw, aliases);
+        string input = cmd_expanded.empty() ? s_input : cmd_expanded + " " + s_args;
+        string cmd;
+        (cmd, s_args) = _strsplit(input, " ");
+        string cmd_opt_string = _val(cmd, opt_string);
+
+        string redir_out;
+        string redir_in;
+        string s_flags;
+        string[][2] opt_values;
+        string pos_params;
+        string pos_map;
+        string dbg_x;
+        string[] params;
+        uint n_params;
+        string last_param;
+        if (!s_args.empty()) {
+            (params, n_params) = _split(s_args, " ");
+            uint p = _strrchr(s_input, ">");
+            uint q = _strrchr(s_input, "<");
+            redir_out = p > 0 ? _strtok(s_input, p, " ") : "";
+            redir_in = q > 0 ? _strtok(s_input, q, " ") : "";
+            uint8 t_ec;
+            (t_ec, s_flags, opt_values, dbg_x, pos_params, ) = _parse_params(params, cmd_opt_string);
+            ec = t_ec;
+            for (string arg: params) {
+                if (_strchr(arg, "$") > 0) {
+                    string ref = _strval(arg, "$", " ");
+                    if (_strchr(ref, "{") > 0)
+                        ref = _unwrap(ref);
+                    string ref_val = _val(ref, pool);
+                    pos_params = _translate(pos_params, arg, ref_val);
+                    s_args = _translate(s_args, arg, ref_val);
+                }
+            }
+        }
+        pos_map = _as_indexed_array("POS_ARGS", s_args.empty() ? cmd : (cmd + " " + s_args), " ");
+        last_param = s_args.empty() ? cmd : params[n_params - 1];
+        out = _as_var_list([
             ["COMMAND", cmd],
             ["PARAMS", pos_params],
             ["FLAGS", s_flags],
-            ["OPT_ARGS", opt_values],
-            ["ARGV", s_input],
-            ["POS_ARGS", pos_map],
+            ["ARGV", input],
+            ["#", _itoa(n_params)],
+            ["@", s_args],
+            ["?", _itoa(ec)],
+            ["_", last_param],
+            ["OPTERR", dbg_x],
             ["REDIR_IN", redir_in],
-            ["REDIR_OUT", redir_out]]));
+            ["REDIR_OUT", redir_out]]);
+        out.append(_as_hashmap("OPT_ARGS", opt_values) + "\n");
+        out.append(pos_map + "\n");
+    }
 
-        /* Resolve execution commands */
-        string comp_specs_page = e[IS_COMP_SPEC];
-        string fn_name = _get_array_name(cmd, comp_specs_page);
+    function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
+        ec = EXECUTE_SUCCESS;
+        out = _as_var_list([
+//        return (EXECUTE_SUCCESS, _encode_items([
+            ["_", _val("TOSH", profile)],
+            ["-", _val("-", profile)],
+            ["TOSH", _val("TOSH", profile)],
+            ["TOSHOPTS", _as_map("expand_aliases")],
+            ["TOSHPID", _val("TOSHPID", profile)],
+            ["TOSH_SUBSHELL", _val("TOSH_SUBSHELL", profile)],
+            ["TOSH_ALIASES", _val("TOSH_ALIASES", profile)],
+            ["SHELLOPTS", "allexport:hashall"],
+            ["TMPDIR", _val("TMPDIR", profile)],
+            ["SHLVL", _val("SHLVL", profile)]]);
+//            ], "\n"));
+    }
+
+    function build_command_queue(string args, string tosh_vars, string comp_spec, string pool) external pure returns (uint8 ec, string out) {
+        (ec, , out) = _build_command_queue(args, tosh_vars, comp_spec, pool);
+    }
+
+    function build_exec_pipeline(string args, string tosh_vars, string comp_spec, string pool) external pure returns (uint8 ec, string out) {
+        (ec, out, ) = _build_command_queue(args, tosh_vars, comp_spec, pool);
+    }
+
+    function _build_command_queue(string args, string tosh_vars, string comp_spec, string pool) internal pure returns (uint8 ec, string exec_line, string cmd_queue) {
+        ec = 0;
+        string cmd = _val("COMMAND", args);
+        string s_args = _val("@", args);
+        string tosh_path = _val("TOSH", tosh_vars);
+        string fn_name = _get_array_name(cmd, comp_spec);
         string f_body = _function_body(fn_name, pool);
-
-        string exec_queue;
-        string exec_cmd;
         if (!f_body.empty()) {
             (string[] lines, uint n_lines) = _split(f_body, ";");
             for (uint i = 0; i < n_lines; i++) {
                 string s_line = lines[i];
                 if (s_line.empty())
                     continue;
-                string first_sym = s_line.substr(0, 1);
-                if (first_sym == '.')
+                if (s_line.substr(0, 1) == '.')
                     s_line = tosh_path + s_line.substr(1);
-                uint len = s_line.byteLength();
-                if (len > 2) {
+                if (s_line.byteLength() > 2) {
                     s_line = _translate(s_line, "$@", s_args);
                     s_line = _translate(s_line, "$0", cmd);
                 }
-                string exec_line = s_line + "\n";
-                exec_queue.append(format("[{}]=\"{}\"\n", i, s_line));
-                exec_cmd.append(exec_line);
+                cmd_queue.append(format("[{}]=\"{}\"\n", i, s_line));
+                exec_line.append(s_line + "\n");
             }
-//            env = _set_val("FUNCNAME", fn_name, env);
-//            env = _set_val("LINENO", "0", env);
         } else {
-            exec_cmd = tosh_path + " " + fn_name + " " + cmd + " " + s_args + ";";
-            exec_queue.append(format("[{}]=\"{}\"\n", 0, exec_cmd));
+            exec_line = tosh_path + " " + fn_name + " " + cmd + " " + s_args + ";";
+            cmd_queue = "[0]=\"" + exec_line + "\"\n";
         }
-
-        if (!noexec) {
-            if (xtrace)
-                dbg.append("+ " + exec_cmd + "\n");
-            env[IS_CMD_QUEUE] = exec_queue;
-            env[IS_PIPELINE] = exec_cmd;
-        }
-
-//        string exec_cmd = tosh_path + " " + s_input + ";";
-        env[IS_BLTN_LINE] = exec_cmd;
-        env[IS_STDERR].append(dbg);
     }
-
-    /*function on_exec(string ec, string out, string err, string[] e) external pure returns (string[] env) {
-        env = e;
-//        string vv = e[IS_TOSH_VAR];
-//        string flags = _val("-", vv);
-//        bool interactive = _flag_set("i", flags);
-//        bool errexit = _flag_set("e", flags);
-//        bool xtrace = _flag_set("x", flags);
-
-        string cmd_queue = e[IS_CMD_QUEUE];
-        string pool = e[IS_POOL];
-        Var f_name_v = _var_ext("FUNCNAME", pool);
-        Var line_no_v = _var_ext("LINENO", pool);
-        string line_no_s = line_no_v.value;
-//        uint16 line_no = _atoi(line_no_s);
-        env[IS_STDERR].append("Executing " + f_name_v.value + ", line " + line_no_s + ", status " + ec + "\n");
-//        uint16 next_line_no = line_no++;
-//        string next_line_no_s = format("{}", next_line_no);
-  //      string next_line_val = _value()
-
-//        env[IS_STDERR].append("-> " + )
-
-//        env = _set_val("?", ec, env);
-        env[IS_STDOUT].append(out);
-        env[IS_STDERR].append(err);
-//        if (xtrace) {
-//        }
-
-//        uint16
-        (string[] items, uint n_items) = _split(cmd_queue, "\n");
-        if (n_items > 0) {
-            e[IS_CMD_QUEUE] = _translate(cmd_queue, items[0] + "\n", "");
-        }
-        if (n_items > 1) {
-            env[IS_PIPELINE] = items[1];
-        }
-    }*/
 
     // Possible states for the parser that require it to do special things.
     uint16 constant PST_CASEPAT	    = 1;   // in a case pattern list
@@ -218,11 +323,11 @@ contract eilish is Shell, compspec {
     uint16 constant PST_CONDEXPR	= 512; // parsing the guts of [[...]]
     uint16 constant PST_ARITHFOR	= 1024; // parsing an arithmetic for command
 
-    function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string opt_values, string dbg, string pos_params, string s_attrs, string pos_map) {
-//        pos_map = "[0]=" + cmd;
+//    function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string opt_values, string dbg, string pos_params, string s_attrs, string pos_map) {
+    function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string[][2] opt_values, string dbg, string pos_params, string s_attrs) {
         uint n_params = params.length;
         uint opt_str_len = opt_string.byteLength();
-        opt_values = "(";
+//        opt_values = "(";
         for (uint i = 0; i < n_params; i++) {
             string token = params[i];
             uint t_len = token.byteLength();
@@ -263,20 +368,21 @@ contract eilish is Shell, compspec {
                     ec = EX_BADUSAGE;
                     dbg.append("error: unrecognized option: " + o + " opt_string: " + opt_string + "\n");
                 }
-                opt_values.append(format(" [{}]=\"{}\"", o, val));
-                pos_map.append(format(" [{}]=\"{}\"", i + 1, token));
+//                opt_values.append(format(" [{}]=\"{}\"", o, val));
+                opt_values.push([o, val]);
+//                pos_map.append(format(" [{}]=\"{}\"", i + 1, token));
                 s_flags.append(o);
             } else if (token.substr(0, 1) == "+") {
                 s_attrs.append(token);
             } else {
-                pos_map.append(format(" [{}]=\"{}\"", i + 1, token));
+//                pos_map.append(format(" [{}]=\"{}\"", i + 1, token));
                 if (pos_params.empty())
                     pos_params = token;
                 else
                     pos_params.append(" " + token);
             }
         }
-        opt_values.append(" )");
+//        opt_values.append(" )");
     }
 
     function execute_command(string[] e) external pure returns (string[] env) {
@@ -328,21 +434,6 @@ contract eilish is Shell, compspec {
         for (uint i = 0; i < n_lines; i++)
             env.push(empty);
     }
-
-    /*function _export_session(mapping (uint => ItemHashMap) env_in) internal pure returns (Session session) {
-        mapping (uint => Item) shell_vars = env_in[tvm.hash("shell_vars")].value;
-
-        return Session(
-            _atoi(shell_vars[tvm.hash("PPID")].value),
-            _atoi(shell_vars[tvm.hash("UID")].value),
-            _atoi(shell_vars[tvm.hash("UID")].value),
-            _atoi(shell_vars[tvm.hash("WD")].value),
-            shell_vars[tvm.hash("USER")].value,
-            shell_vars[tvm.hash("USER")].value,
-            shell_vars[tvm.hash("NAME")].value,
-            shell_vars[tvm.hash("PWD")].value
-        );
-    }*/
 
     function _check_args(string command_s, CommandInfo ci, string short_options, string[] args) private pure returns (Err[] errors) {
         uint16 n_args = uint16(args.length);

@@ -1,24 +1,24 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract mapfile is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        ec = 0;
-        string arg = e[IS_ARGS];
+    function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
+        (string[] params, string flags, ) = _get_args(args);
+        ec = EXECUTE_SUCCESS;
         string dbg;
-        (string[] params, string flags, ) = _get_args(arg);
 
-        string delimiter = _flag_set("d", flags) ? _opt_arg_value("d", arg) : "\n";
-        uint count = _flag_set("n", flags) ? _atoi(_opt_arg_value("n", arg)) : 0;
-        uint origin = _flag_set("O", flags) ? _atoi(_opt_arg_value("O", arg)) : 0;
+        string s_attrs = "-a";
+        string delimiter = _flag_set("d", flags) ? _opt_arg_value("d", args) : "\n";
+        uint count = _flag_set("n", flags) ? _atoi(_opt_arg_value("n", args)) : 0;
+        uint origin = _flag_set("O", flags) ? _atoi(_opt_arg_value("O", args)) : 0;
         string array_name = params.empty() ? "MAPFILE" : params[params.length - 1];
         string ofs = _flag_set("t", flags) ? " " : (delimiter + " ");
         string ofs_2 = _flag_set("t", flags) ? "" : delimiter;
         uint16 page_index = IS_STDIN;
         if (_flag_set("u", flags)) {
-            string s_fd = _opt_arg_value("u", arg);
+            string s_fd = _opt_arg_value("u", args);
             uint16 fd = _atoi(s_fd);
             if (fd > 0)
                 page_index = fd;
@@ -27,9 +27,7 @@ contract mapfile is Shell {
         }
 
         dbg.append(format("delim {} arr_name {} page_index {}\n", delimiter, array_name, page_index));
-        string page = e[page_index];
-        dbg.append(page);
-        (string[] fields, uint n_lines) = _split(page, "\n");
+        (string[] fields, uint n_lines) = _split(input, "\n");
         string[][2] entries;
         uint cap = count > 0 ? math.min(count, n_lines) : n_lines;
         for (uint i = origin; i < origin + cap; i++) {
@@ -38,10 +36,10 @@ contract mapfile is Shell {
         }
         out = _wrap(array_name, W_SQUARE) + "=" + _as_map(out);
         out.append("======\n");
-        out.append(_wrap(array_name, W_SQUARE) + "=" + _encode_items(entries));
+        string arr_val = array_name + "=" + _encode_items(entries, " ");
+        out.append(_wrap(array_name, W_SQUARE) + "=" + _encode_items(entries, "\n"));
+        res = _set_var(s_attrs, arr_val, pool);
 //        dbg.append(format("{}=( {} )\n", array_name, _join_fields(fields, ";")));
-
-        wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -1,0 +1,140 @@
+#set -x
+#echo $# $0 $1 $2 $3
+fn=$1
+shift
+param=$1
+
+case $fn in
+    b_exec|builtin_read_fs|builtin_help|exec|ustat|read_fs_to_env|exec_env)
+        util=$param;;
+    read_input)
+        util=$param;
+        shift;
+#        fn=b_exec;
+        input=$1;
+#        input=`cat $1`;
+        ;;
+    display_help)
+        util=help;;
+    run_builtin)
+        util=builtin;;
+    execute_command)
+        util=command;;
+    command_help)
+        util=$param;;
+    display_man_page)
+        util=man;;
+    handle_action)
+        util=tmpfs;;
+    *)
+        util=eilish;;
+esac
+
+args() {
+   case $fn in
+        builtin_read_fs)
+           jq '{e: .}' run/env >tmp/shell_in;
+           jq -s 'add' tmp/shell_in run/fs;;
+        run_builtin|execute_command)
+            jq -n --slurpfile annotation run/annotation '{$annotation}';;
+#            jq -n --rawfile args run/args --rawfile pool run/builtins '{$args, $pool}';;
+        b_exec)
+            jq '{e: .}' run/env >tmp/shell_in;
+            jq -s 'add' tmp/shell_in run/fs;;
+        exec)
+            jq --rawfile args run/args '. + {$args}' run/fs;;
+        exec_env)
+            jq --rawfile args run/args --rawfile pool run/pool '. + {$args} + {$pool}' run/fs;;
+        on_exec)
+            jq '{e: .}' run/env >tmp/shell_in;
+            jq -s 'add' tmp/shell_in tmp/post_exec;;
+        on_b_exec)
+            jq '{e: .}' run/env >tmp/shell_in;
+            jq '.delta=(.wr // [])' tmp/post_b_exec >tmp/delta_in;
+            jq -s 'add' tmp/shell_in tmp/delta_in;;
+        handle_action)
+#            jq '.inodes_in = .inodes | .data_in = .data | del(.inodes, .data)' vfs/tmp/fs >vfs/tmp/tmpfs/fs_in;
+            jq '.inodes_in = .inodes | .data_in = .data | del(.inodes, .data)' run/fs >vfs/tmp/tmpfs/fs_in;
+            jq -s 'add' vfs/tmp/session  vfs/tmp/tosh/tosh_process_input.out vfs/tmp/tmpfs/fs_in vfs/tmp/tmpfs/delta;;
+        read_input)
+            input2=`jq -r 'select(.name=="_") .value' run/annotation`;
+            jq -n --rawfile args run/args --rawfile input $input2 --rawfile pool run/pool '{$args, $input, $pool}';;
+#            jq -n --rawfile args run/args --rawfile input $input --rawfile pool run/pool '{$args, $input, $pool}';;
+        display_help)
+            jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/builtin_help '{args: $v, help_files: $v1}';;
+        display_man_page)
+            jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/man_pages '{args: $v, help_files: $v1}';;
+        *)
+            echo '{}';;
+    esac
+}
+
+filter() {
+    case $fn in
+        get_command_info)
+            cp $1 vfs/usr/share/$util.info;;
+        builtin_help)
+            cp $1 vfs/usr/share/$util.help;;
+        command_help)
+            cp $1 vfs/usr/share/$util.man;;
+        builtin_read_fs|ustat)
+            cp $1 tmp/post_b_exec;;
+        exec)
+#            cp $1 tmp/post_exec;;
+            jq -rj '.out' $1 >run/stdout;
+            jq -rj '.err' $1 >run/stderr;;
+        display_man_page)
+            jq -rj '.out' $1 >run/stdout;;
+        run_builtin|execute_command)
+            eval `jq -r '.res' $1`;;
+        b_exec)
+            cp $1 tmp/post_b_exec;;
+        read_input)
+            jq -rj '.ec' $1 >run/ec;
+            jq -rj '.out' $1 >run/stdout;
+            jq -rj '.res' $1 >run/res
+            if [ -s run/res ]; then
+                case $param in
+                    unset|export|readonly|declare)
+                        cp run/res run/pool;;
+                    hash)
+                        cp run/res run/hashes;;
+                    alias|unalias)
+                        cp run/res run/aliases;;
+                    *)
+                        ;;
+                esac
+            fi;
+            ;;
+        display_help)
+            jq -rj '.out' $1 >run/stdout;;
+        on_exec)
+            jq -r 'if has("env") then .env else empty end' $1 >tmp/env3_t;
+            if [ -s tmp/env3_t ]; then
+                cp tmp/env3_t run/env;
+            fi;
+            jq -rj '.env[1]' $1 >run/stdout;
+            jq -rj '.env[2]' $1 >run/stderr;
+            ;;
+        on_b_exec)
+            jq -r 'if has("env") then .env else empty end' $1 >tmp/env3_t;
+            if [ -s tmp/env3_t ]; then
+                cp tmp/env3_t run/env;
+            fi;
+            jq -rj '.env[1]' $1 >run/stdout;
+            jq -rj '.env[2]' $1 >run/stderr;
+            ;;
+        handle_action)
+            cp $1 vfs/tmp/tmpfs/fs_out;
+            cp vfs/tmp/tmpfs/fs_out run/fs;;
+        alter)
+            cp $1 vfs/tmp/tmpfs/fs_out;;
+        *)
+            ;;
+    esac
+}
+
+args >tmp/${util}_$fn.args
+#~/bin/tonos-cli -j run --boc vfs/tmp/sbin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
+~/bin/tonos-cli -j run --boc bin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
+filter tmp/${util}_$fn.out

@@ -1,39 +1,31 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract unset is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
-        string err;
-        string dbg;
-        out = err;
+    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
+        (string[] params, string flags, ) = _get_args(args);
+//        string dbg;
         bool unset_vars = _flag_set("v", flags);
         bool unset_functions = _flag_set("f", flags);
         string s_attrs = unset_functions ? "-f" : unset_vars ? "+f" : "";
-
-        string pool = e[IS_POOL];
-
+        string page = pool;
         for (string arg: params) {
             string line = _get_pool_record(arg, pool);
             if (!line.empty()) {
                 (string attrs, ) = _strsplit(line, " ");
                 if (_match_attr_set(s_attrs, attrs)) {
-                    dbg.append("found " + line + "\n");
-                    pool = _translate(pool, line + "\n", "");
+  //                  dbg.append("found " + line + "\n");
+                    page = _translate(page, line + "\n", "");
                 }
             } else {
                 ec = EXECUTE_FAILURE;
-                out.append("unset: " + arg + " not found\n");
+//                out.append("unset: " + arg + " not found\n");
                 // not found
             }
         }
-        if (pool != e[IS_POOL])
-            wr.push(Write(IS_POOL, pool, O_WRONLY));
-
-        wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
-        wr.push(Write(IS_STDOUT, err, O_WRONLY + O_APPEND));
+        res = page;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

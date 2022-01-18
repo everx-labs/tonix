@@ -1,21 +1,53 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract ulimit is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        string s_args = _value_of("@", e[IS_SPECIAL_VAR]);
-
-        bool soft_resource_limit = _flag("S", e);
-        bool hard_resource_limit = _flag("H", e);
-        ec = 0;
-        string options = e[IS_VARIABLE];
-        if (options.empty())
-            options = "f";
+    /*function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = _get_args(args);
+        bool soft_resource_limit = _flag_set("S", flags);
+        bool hard_resource_limit = _flag_set("H", flags);
+        ec = EXECUTE_SUCCESS;
+        string options;// = e[IS_VARIABLE];
+//        if (options.empty())
+//            options = "f";
 
         bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
-        bool print_all = _flag("a", e);
+        bool print_all = _flag_set("a", flags);
+    }*/
+
+    function _table(TvmCell[] cls) internal pure returns (string out) {
+        Column[] columns_format = [
+            Column(true, 3, ALIGN_LEFT),
+            Column(true, 5, ALIGN_LEFT),
+            Column(true, 6, ALIGN_LEFT),
+            Column(true, 5, ALIGN_LEFT)];
+
+        string[][] table = [["N", "cells", "bytes", "refs"]];
+        for (uint i = 0; i < cls.length; i++) {
+            (uint cells, uint bits, uint refs) = cls[i].dataSize(1000);
+            uint bytess = bits / 8;
+            table.push([_itoa(i), _itoa(cells), _itoa(bytess), _itoa(refs)]);
+        }
+        out = _format_table_ext(columns_format, table, " ", "\n");
+    }
+
+    function v1(string args, string pool) external pure returns (uint8 ec, string out) {
+
+    }
+
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = _get_args(args);
+        bool soft_resource_limit = _flag_set("S", flags);
+        bool hard_resource_limit = _flag_set("H", flags);
+        ec = EXECUTE_SUCCESS;
+        string options;// = e[IS_VARIABLE];
+//        if (options.empty())
+//            options = "f";
+
+        bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
+        bool print_all = _flag_set("a", flags);
 
 /*/proc/27196/limits
 Limit                     Soft Limit           Hard Limit           Units
@@ -55,11 +87,11 @@ Max realtime timeout      unlimited            unlimited            us*/
         bool max_pseudoterminals = _flag("P", env_in);
         bool max_user_threads = _flag("T", env_in);*/
 
-        uint16 page_index = IS_LIMIT;
-        string page = e[page_index];
+//        uint16 page_index = IS_LIMIT;
+//        string page = e[page_index];
 
         if (print_all) {
-            (string[] items, ) = _split_line(page, "\n", "\n");
+            (string[] items, ) = _split_line(pool, "\n", "\n");
             for (string item: items) {
 //                (string attrs, string name, string value) = _parse_var(item);
 //                out.append(name + " " + value + "\n");

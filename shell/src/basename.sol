@@ -1,24 +1,24 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
 contract basename is Utility {
 
-    function exec(string[] e) external pure returns (uint8 ec, string out, string err) {
+    function exec(string args) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (string[] args, string flags, ) = _get_args(e[IS_ARGS]);
+        (string[] params, string flags, ) = _get_args(args);
 
         bool multiple_args = _flag_set("a", flags);
         string line_terminator = _flag_set("z", flags) ? "\x00" : "\n";
 
         if (multiple_args)
-            for (string s: args) {
+            for (string s: params) {
                 (, string not_dir) = _dir(s);
                 out.append(not_dir + line_terminator);
             }
         else {
-            (, out) = _dir(args[0]);
+            (, out) = _dir(params[0]);
             out.append(line_terminator);
         }
     }

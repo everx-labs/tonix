@@ -74,6 +74,11 @@ struct Write {
     uint16 mask;
 }
 
+struct En {
+    string index;
+    Item[] aliases;
+}
+
 abstract contract Shell is Internal, arguments {
 
 //    uint8 constant EPERM   = 1;  // Operation not permitted
@@ -251,9 +256,36 @@ abstract contract Shell is Internal, arguments {
     int8 constant FLAG_ERROR = -1;
     int8 constant FLAG_UNKNOWN = 0;
 
-    function _encode_items(string[][2] entries) internal pure returns (string res) {
+    function _item_index(string name, Item[] map) internal pure returns (uint) {
+        for (uint i = 0; i < map.length; i++)
+            if (map[i].name == name)
+                return i + 1;
+    }
+
+    function _as_var_list(string[][2] entries) internal pure returns (string res) {
         for (uint i = 0; i < entries.length; i++)
-            res.append(_encode_item_2(entries[i][0], entries[i][1]) + " ");
+            res.append("-- " + _wrap(entries[i][0], W_SQUARE) + (entries[i][1].empty() ? "" : ("=" + _wrap(entries[i][1], W_DQUOTE))) + "\n");
+    }
+
+    function _as_hashmap(string name, string[][2] entries) internal pure returns (string res) {
+        string body;
+        for (uint i = 0; i < entries.length; i++)
+            body.append(_wrap(entries[i][0], W_SQUARE) + "=" + _wrap(entries[i][1], W_DQUOTE) + " ");
+        res = "-A " + _wrap(name, W_SQUARE) + "=" + _wrap(body, W_HASHMAP);
+    }
+
+    function _as_indexed_array(string name, string value, string ifs) internal pure returns (string res) {
+        string body;
+        (string[] fields, uint n_fields) = _split(value, ifs);
+        for (uint i = 0; i < n_fields; i++)
+            body.append(format("[{}]=\"{}\" ", i, fields[i]));
+        res = "-a " + _wrap(name, W_SQUARE) + "=" + _wrap(body, W_ARRAY);
+    }
+
+
+    function _encode_items(string[][2] entries, string delimiter) internal pure returns (string res) {
+        for (uint i = 0; i < entries.length; i++)
+            res.append(_encode_item_2(entries[i][0], entries[i][1]) + delimiter);
     }
 
     function _encode_item(string key, string value) internal pure returns (string res) {
@@ -314,12 +346,12 @@ abstract contract Shell is Internal, arguments {
     function _set_var(string attrs, string token, string pg) internal pure returns (string page) {
         (string name, string value) = _strsplit(token, "=");
         string cur_record = _get_pool_record(name, pg);
-        string new_record = _pool_str(attrs, name, value);
+        string new_record = _var_record(attrs, name, value);
         if (!cur_record.empty()) {
             (string cur_attrs, ) = _strsplit(cur_record, " ");
             (, string cur_value) = _strsplit(cur_record, "=");
             string new_value = !value.empty() ? value : !cur_value.empty() ? _unwrap(cur_value) : "";
-            new_record = _pool_str(_meld_attr_set(attrs, cur_attrs), name, new_value);
+            new_record = _var_record(_meld_attr_set(attrs, cur_attrs), name, new_value);
             page = _translate(pg, cur_record, new_record);
         } else
             page = pg + new_record + "\n";
@@ -360,29 +392,6 @@ abstract contract Shell is Internal, arguments {
                 return (fields[i + 1], false);
             else if (fields[i] == opt_arg_plus)
                 return (fields[i + 1], true);
-        }
-    }
-
-    function _parse_args(string s_args) internal pure returns (string[] args, string short_options, string[] long_options) {
-        (string[] tokens, ) = _split(s_args, " ");
-        bool discard_next = false;
-        for (string token: tokens) {
-            uint len = token.byteLength();
-            if (len == 0 || discard_next)
-                continue;
-            string s1 = token.substr(0, 1);
-            if (s1 == ">" || s1 == "<") {
-                discard_next = true;
-                continue;
-            }
-            if (s1 == "-" && len > 1) {
-                if (token.substr(1, 1) == "-") {
-                    if (len > 2)
-                        long_options.push(token.substr(2));
-                } else
-                    short_options.append(token.substr(1));
-            } else
-                args.push(token);
         }
     }
 

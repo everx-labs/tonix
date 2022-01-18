@@ -12,7 +12,7 @@ I:=CommandInterpreter
 PRIME:=$I
 
 UTILS:=ls du file stat namei cat colrm column cut expand grep head look rev tail tr unexpand paste wc readlink realpath env man whatis mkfs mke2fs dumpe2fs fsck mount umount losetup udevadm df findmnt mountpoint touch cp mv rm rmdir mkdir ln install groupadd groupdel groupmod useradd userdel usermod chfn newgrp lslogins finger who last fuser utmpdump ps whoami id hostname tfs tmpfs printenv basename dirname getent
-HELP_TOPICS:=help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift history getopts eilish
+HELP_TOPICS:=help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift getopts eilish
 BUILTINS:=$(HELP_TOPICS) $(UTILS)
 
 INIT:=$(PRIME)
@@ -21,20 +21,24 @@ user?=root
 
 BOOTDIR:=
 VFS:=vfs
-BIN:=$(VFS)/bin
+#BIN:=$(VFS)/bin
 DEV:=$(VFS)/dev
 ETC:=$(VFS)/etc
 PROC:=$(VFS)/proc
 SYS:=$(VFS)/sys
 TMP:=$(VFS)/tmp
 USR:=$(VFS)/usr
-UBIN:=$(USR)/bin
+UBIN:=bin
 USH:=$(USR)/share
 HOM:=$(VFS)/home/$(user)
 HS:=$(HOM)/.sh_history
-TBIN:=$(TMP)/bin
-TSBIN:=$(TMP)/sbin
+#TBIN:=$(TMP)/bin
+#TSBIN:=$(TMP)/sbin
+TBIN:=bin
+TSBIN:=bin
 TSH:=$(TMP)/tosh
+VAR:=$(VFS)/var
+LOG:=$(VAR)/log
 
 DIRS:=bin $(VFS) $(PROC) $(DEV)
 

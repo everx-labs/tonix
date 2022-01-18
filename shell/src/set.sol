@@ -1,16 +1,103 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract set is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        string s_input = e[IS_STDIN];
-        ec = 0;
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
+    function show(En e) external pure returns (string out) {
+        for (Item i: e.aliases)
+            out.append("alias " + i.name + "=" + _wrap(i.value, W_SQUOTE) + "\n");
+    }
+
+    function _item_attr_index(string s_attrs, string name, Item[] map) internal pure returns (uint) {
+        for (uint i = 0; i < map.length; i++)
+            if (map[i].name == name && _match_attr_set(s_attrs, _mask_str(map[i].attrs)))
+                return i + 1;
+    }
+
+    /*function add(string kind, string content, Item[] pagr) external pure returns (En en) {
+        en = e;
+        Item[] page;
+        if (kind == "alias")
+            page = e.aliases;
+        else if (kind == "function")
+            page = e.functions;
+        else if (kind == "builtin")
+            page = e.builtins;
+        else if (kind == "variable")
+            page = e.variables;
+        else if (kind == "command")
+            page = e.commands;
+        else if (kind == "keyword")
+            page = e.keywords;
+    }*/
+
+
+    function _print(string s_attrs, string content, Item[] page) internal pure returns (string out) {
+        if (content.empty()) {
+            for (Item i: page) {
+                (string name, uint16 mask, string value) = i.unpack();
+                if (name.empty())
+                    continue;
+                string attrs = _mask_str(mask);
+                if (_match_attr_set(s_attrs, attrs)) {
+                    if ((mask & ATTR_FUNCTION) > 0)
+                        out.append(name + " ()\n{\n" + _indent(_translate(_unwrap(value), ";", "\n"), 4, "\n") + "}\n");
+                    else
+                        out.append(attrs + " " + name + "=" + value + "\n");
+                }
+            }
+        }
+    }
+
+    /*function _add(string s_attrs, string content, Item[] page) internal pure returns (Item[] res) {
+        res = page;
+        uint16 mask = _get_mask_ext(s_attrs);
+        (string[] lines, uint n_lines) = _split(content, "\n");
+        for (string line: lines) {
+            (string attrs, string stmt) = _strsplit(line, " ");
+            (string name, string value) = _strsplit(stmt, "=");
+            Item item = Item(name, mask, value);
+            uint index = _item_attr_index(s_attrs, name, page);
+            if (index == 0)
+                res.push(item);
+            else
+                res[index - 1] = item;
+        }
+    }*/
+
+    /*function print(string s_attrs, string content, Item[] page) external pure returns (string out) {
+        return _print(s_attrs, content, page);
+    }*/
+
+    /*function add(string s_attrs, string content, Item[] page) external pure returns (Item[] res) {
+        return _add(s_attrs, content, page);
+    }*/
+
+    function imprt(string content) external pure returns (Item[] res) {
+        (string[] lines, ) = _split(content, "\n");
+        for (string line: lines) {
+            if (line.empty())
+                continue;
+            (string attrs, string stmt) = _strsplit(line, " ");
+            (string name, string value) = _strsplit(stmt, "=");
+            if (_strchr(name, "[") > 0)
+                name = _unwrap(name);
+            if (!value.empty()) {
+                if (_strchr(value, "\"") > 0)
+                    value = _unwrap(value);
+            }
+            uint16 mask = _get_mask_ext(attrs);
+            Item item = Item(name, mask, value);
+            res.push(item);
+        }
+    }
+
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = _get_args(args);
+        ec = EXECUTE_SUCCESS;
         if (params.empty()) {
-            for (string page: e)
-                out.append(page + "\n");
+            out.append(pool + "\n");
         } else {
         }
     }

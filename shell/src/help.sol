@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
@@ -38,10 +38,8 @@ contract help is Shell {
             out.append(bh.name + " " + bh.synopsis + "\n");
     }
 
-    function display_help(BuiltinHelp[] help_files, string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, string argv) = _get_args(e[IS_ARGS]);
-        string dbg = argv;
-        string err;
+    function display_help(string args, BuiltinHelp[] help_files) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = _get_args(args);
         uint8 command_format = _get_help_format(flags);
 
         if (params.empty())
@@ -49,15 +47,11 @@ contract help is Shell {
 
         for (string arg: params) {
             (uint8 t_ec, BuiltinHelp help_file) = _get_help_file(arg, help_files);
-            if (t_ec == EXECUTE_SUCCESS)
-                out.append(_help_cmd(command_format, help_file));
-            else {
-                ec = t_ec;
-                err.append("-tosh: help: no help topics match `" + arg + "'.  Try `help help' or `man -k " + arg + "' or `info " + arg + "'.");
-            }
+            ec = t_ec;
+            out.append(t_ec == EXECUTE_SUCCESS ?
+                _help_cmd(command_format, help_file) :
+                ("-tosh: help: no help topics match `" + arg + "'.  Try `help help' or `man -k " + arg + "' or `info " + arg + "'."));
         }
-        if (!err.empty())
-            wr.push(Write(IS_STDERR, err + dbg, O_WRONLY + O_APPEND));
     }
 
     function _help_cmd(uint8 command_format, BuiltinHelp bh) internal pure returns (string out) {
@@ -72,20 +66,20 @@ contract help is Shell {
         string help_text = _join_fields([
             purpose + "\n",
             description + "\n",
-            _format_list("Options:", options, 2, "\n"),
-            _format_list("", arguments, 0, "\n"),
-            _format_list("Exit Status:", exit_status, 0, "\n")], "\n");
+            _format_custom("Options:", options, 2, "\n"),
+            _format_line("", arguments),
+            _format_line("Exit Status:", exit_status)], "\n");
 
         if (command_format == COMMAND_FORMAT_DEFAULT)
-            return _format_list(name + ": " + name + " " + synopsis, help_text, 4, "\n");
+            return _format_list(name + ": " + name + " " + synopsis, help_text);
 
         if (command_format == COMMAND_FORMAT_PSEUDO_MAN_PAGE)
             return _join_fields([
-                _format_list("NAME", name + " - " + purpose, 4, "\n"),
-                _format_list("SYNOPSIS", name + " " + synopsis, 4, "\n"),
-                _format_list("DESCRIPTION", help_text, 4, "\n"),
-                _format_list("SEE ALSO", "tosh(1)", 4, "\n"),
-                _format_list("IMPLEMENTATION", "in progress", 4, "\n")], "\n");
+                _format_list("NAME", name + " - " + purpose),
+                _format_list("SYNOPSIS", name + " " + synopsis),
+                _format_list("DESCRIPTION", help_text),
+                _format_list("SEE ALSO", "tosh(1)"),
+                _format_list("IMPLEMENTATION", "in progress")], "\n");
     }
 
     function _get_command_info(string c) internal pure returns (BuiltinHelp) {
@@ -140,14 +134,6 @@ matching PATTERN, otherwise the list of help topics is printed.",
   PATTERN   Pattern specifying a help topic",
 "Returns success unless PATTERN is not found or an invalid option is given.");
     }
-            /*"",
-            "",
-            "",
-            "\
-            \n\
-            ",
-            "",
-            "");*/
 
     function _command_info() internal pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
         return ("help", "display information about builtin commands", "[-dms]",

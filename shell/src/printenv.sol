@@ -1,16 +1,14 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
 contract printenv is Utility {
 
-    function exec(string[] e) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
+    function exec(string args, string pool) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, string flags, ) = _get_args(args);
         string delimiter = _flag_set("0", flags) ? "\x00" : "\n";
 
         string s_attrs = "-x";
-        string pool = e[IS_POOL];
-
         if (params.empty()) {
             (string[] lines, ) = _split(pool, "\n");
             for (string line: lines) {

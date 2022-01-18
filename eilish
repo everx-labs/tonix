@@ -1,0 +1,55 @@
+#set -x
+#echo $# $0 $1 $2 $3
+fn=$1
+shift
+param=$1
+util=eilish
+
+case $fn in
+    set_args|annotate_args)
+        input=$@;;
+    *)
+        ;;
+esac
+
+args() {
+   case $fn in
+        set_args)
+            echo -n $param >run/command;
+            jq -n --arg v "$input" --rawfile aliases run/aliases --rawfile opt_string run/optstring --rawfile pool run/pool '{s_input: $v, $aliases, $opt_string, $pool}';;
+        annotate_args)
+            echo -n $param >run/command;
+            jq -n --arg v "$input" --rawfile aliases run/aliases --rawfile opt_string run/optstring --rawfile comp_spec run/comp_spec --rawfile index run/index --rawfile pool run/pool '{s_input: $v, $aliases, $opt_string, $comp_spec, $index, $pool}';;
+        set_tosh_vars)
+            jq -n --rawfile profile etc/profile '{$profile}';;
+        build_command_queue)
+            jq -n --rawfile args run/args --rawfile tosh_vars run/tosh_vars --rawfile comp_spec run/comp_spec --rawfile pool run/pool '{$args, $tosh_vars, $comp_spec, $pool}';;
+        build_exec_pipeline)
+            jq -n --rawfile args run/args --rawfile tosh_vars run/tosh_vars --rawfile comp_spec run/comp_spec --rawfile pool run/pool '{$args, $tosh_vars, $comp_spec, $pool}';;
+    esac
+}
+
+filter() {
+    case $fn in
+        set_args)
+            jq -rj '.ec' $1 >run/ec;
+            jq -rj '.out' $1 >run/args;;
+        annotate_args)
+            jq '.res[]' $1 >run/annotation;;
+        set_tosh_vars)
+            jq -r '.out' $1 >run/tosh_vars;;
+        build_command_queue)
+            jq -rj '.ec' $1 >run/ec;
+            jq -rj '.out' $1 >run/command_queue;;
+        build_exec_pipeline)
+            jq -rj '.ec' $1 >run/ec;
+            jq -rj '.out' $1 >run/exec_pipeline;
+            chmod +x run/exec_pipeline;;
+        *)
+            ;;
+    esac
+}
+
+args >tmp/${util}_$fn.args
+~/bin/tonos-cli -j run --boc bin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
+filter tmp/${util}_$fn.out

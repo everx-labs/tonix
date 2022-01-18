@@ -1,0 +1,73 @@
+#set -x
+#echo $# $0 $1 $2 $3
+builtin=$1
+shift
+fn=$1
+shift
+page=$1
+input=$2
+
+args() {
+   case $fn in
+        print)
+            jq -n --rawfile args run/args --rawfile pool run/$page '{$args, $pool}';;
+        modify)
+            jq -n --rawfile args run/args --rawfile pool run/$page '{$args, $pool}';;
+        annotate_args)
+            echo -n $param >run/command;
+            jq -n --arg v "$input" --rawfile aliases run/aliases --rawfile opt_string run/optstring --rawfile comp_spec run/comp_spec --rawfile index run/index --rawfile pool run/pool '{s_input: $v, $aliases, $opt_string, $comp_spec, $index, $pool}';;
+        display_help)
+            jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/builtin_help '{args: $v, help_files: $v1}';;
+        run_builtin)
+            jq -n --slurpfile annotation run/annotation '{$annotation}';;
+        execute)
+            jq -n --slurpfile annotation run/annotation '{$annotation}';;
+        add)
+            jq -n --arg s_attrs "--" --rawfile content x --slurpfile page pg '{s_attrs: $s_attrs, $content, $page}';;
+        imprt)
+            jq -n --rawfile content $input '{$content}';;
+        *)
+            echo '{}';;
+    esac
+}
+
+filter() {
+    case $fn in
+        print)
+            jq -rj '.out' $1;;
+        display_help)
+            jq -rj '.out' $1;;
+        annotate_args)
+            jq '.res[]' $1 >run/annotation;;
+        run_builtin)
+            eval `jq -r '.res' $1`;;
+        execute)
+#            eval `jq -r '.res' $1`;;
+            echo `jq -r '.res' $1`;;
+        modify)
+            jq -rj '.ec' $1 >run/ec
+            jq -rj '.res' $1 >run/res
+            if [ -s run/res ]; then
+                case $builtin in
+                    unset|export|readonly|declare|alias)
+                        cp run/res run/$page;;
+#                    hash)
+#                        cp run/res run/hashes;;
+                    shift)
+                        diff run/pos_params run/res;
+                        cp run/res run/shifted;;
+                    *)
+                        ;;
+                esac
+            fi;
+            ;;
+        add|imprt)
+            jq '.res[]' $1 >j_res;;
+        *)
+            ;;
+    esac
+}
+
+args >tmp/${builtin}_$fn.args
+~/bin/tonos-cli -j run --boc bin/$builtin.boc --abi build/$builtin.abi.json $fn tmp/${builtin}_$fn.args >tmp/${builtin}_$fn.out
+filter tmp/${builtin}_$fn.out

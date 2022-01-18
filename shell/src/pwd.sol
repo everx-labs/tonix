@@ -1,21 +1,19 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract pwd is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out) {
-        (ec, out) = _pwd(e);
-    }
-
-    function exec(string[] e) external pure returns (uint8 ec, string out, string err) {
-        (ec, out) = _pwd(e);
-        err = "";
-    }
-
-    function _pwd(string[] e) internal pure returns (uint8, string) {
-        string wd = _val("PWD", e[IS_POOL]);
-        return (wd.empty() ? 1 : 0, wd);
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (, string flags, ) = _get_args(args);
+        bool print_physical = !flags.empty() && _flag_set("P", flags);
+        if (!print_physical) {
+            string wd = _val("PWD", pool);
+            if (wd.empty())
+                ec = EXECUTE_FAILURE;
+            else
+                out = wd;
+        }
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

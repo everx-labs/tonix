@@ -102,7 +102,9 @@ abstract contract String {
                 }
                 cur++;
             }
-            fields.push(text.substr(prev));
+            string tail = text.substr(prev);
+            if (tail != delimiter)
+                fields.push(tail);
             n_fields = fields.length;
         }
     }
@@ -165,6 +167,10 @@ abstract contract String {
     function _atoi(string s) internal pure returns (uint16) {
         optional(int) val = stoi(s);
         return val.hasValue() ? uint16(val.get()) : 0;
+    }
+
+    function _itoa(uint num) internal pure returns (string) {
+        return format("{}", num);
     }
 
     /********** Path utilities ************/

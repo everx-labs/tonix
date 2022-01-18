@@ -15,24 +15,6 @@ INIT:=$(PRIME)
 KEY:=~
 RKEYS:=$(KEY)/k1.keys
 
-user?=root
-VFS:=vfs
-BIN:=$(VFS)/bin
-DEV:=$(VFS)/dev
-ETC:=$(VFS)/etc
-PROC:=$(VFS)/proc
-SYS:=$(VFS)/sys
-TMP:=$(VFS)/tmp
-USR:=$(VFS)/usr
-UBIN:=$(USR)/bin
-USH:=$(USR)/share
-HOM:=$(VFS)/home/$(user)
-HS:=$(HOM)/.sh_history
-TBIN:=$(TMP)/bin
-TSBIN:=$(TMP)/sbin
-#TSH:=$(TMP)/sh
-TSH:=$(TMP)/tosh
-
 PHONY += ccb deploy clean
 all: ccb
 

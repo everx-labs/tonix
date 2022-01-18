@@ -1,13 +1,13 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Shell.sol";
 
 contract echo is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] /*wr*/) {
-        (string[] args, string flags, ) = _get_args(e[IS_ARGS]);
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = _get_args(args);
         bool no_trailing_newline = _flag_set("n", flags);
-        out = _join_fields(args, " ");
+        out = _join_fields(params, " ");
         if (!no_trailing_newline)
             out.append("\n");
         ec = EXECUTE_SUCCESS;

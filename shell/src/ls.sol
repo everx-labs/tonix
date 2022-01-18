@@ -1,12 +1,12 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract ls is Utility, libuadm {
 
-    function exec(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, string flags, ) = _get_args(args);
         for (string arg: params) {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
             if (ft != FT_UNKNOWN)
@@ -21,11 +21,6 @@ contract ls is Utility, libuadm {
     function _ls_sort_rating(string f, Inode inode, string name, uint16 dir_idx) private pure returns (uint rating) {
         (bool use_ctime, bool largest_first, bool unsorted, bool no_sort, bool newest_first, bool reverse_order, , ) = _flag_values("cSUftr", f);
         bool directory_order = unsorted || no_sort;
-        /*bool use_ctime = _flag_set("c", f);
-        bool largest_first = _flag_set("S", f);
-        bool directory_order = _flag_set("U", f) || _flag_set("f", f);
-        bool newest_first = _flag_set("t", f);
-        bool reverse_order = _flag_set("r", f);*/
         uint rating_lo = directory_order ? dir_idx : _alpha_rating(name, 8);
         uint rating_hi;
 
@@ -53,18 +48,23 @@ contract ls is Utility, libuadm {
 
         (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
         if (print_index_node)
-            l = [format("{}", index)];
+//            l = [format("{}", index)];
+            l = [_itoa(index)];
         if (print_allocated_size)
-            l.push(format("{}", n_blocks));
+//            l.push(format("{}", n_blocks));
+            l.push(_itoa(n_blocks));
 
         if (long_format) {
             l.push(_permissions(mode));
-            l.push(format("{}", n_links));
+//            l.push(format("{}", n_links));
+            l.push(_itoa(n_links));
             if (numeric) {
                 if (!no_owner)
-                    l.push(format("{}", owner_id));
+//                    l.push(format("{}", owner_id));
+                    l.push(_itoa(owner_id));
                 if (!no_group)
-                    l.push(format("{}", group_id));
+//                    l.push(format("{}", group_id));
+                    l.push(_itoa(group_id));
             } else {
                 string s_owner = _get_user_name(owner_id, inodes, data);
                 string s_group = _get_group_name(group_id, inodes, data);

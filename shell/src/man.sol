@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
@@ -12,28 +12,23 @@ contract man is Utility {
                 return (EXECUTE_SUCCESS, bh);
     }
 
-    function display_man_page(CommandHelp[] help_files, string[] e) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, string flags, string argv) = _get_args(e[IS_ARGS]);
-        string dbg = argv;
+    function display_man_page(string args, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags,) = _get_args(args);
         uint8 command_format = 1;
 
         if (params.empty())
             out.append("What manual page do you want?\nFor example, try 'man man'.");
         for (string arg: params) {
             (uint8 t_ec, CommandHelp help_file) = _get_man_file(arg, help_files);
-            if (t_ec == EXECUTE_SUCCESS)
-                out.append(_get_man_text(command_format, help_file));
-            else {
-                ec = t_ec;
-                err.append("-tosh: help: no help topics match `" + arg + "'.  Try `help help' or `man -k " + arg + "' or `info " + arg + "'.");
-            }
+            ec = t_ec;
+            out.append(t_ec == EXECUTE_SUCCESS ? _get_man_text(command_format, help_file) : ("No manual entry for " + arg + ".\n"));
         }
     }
 
     /* Informational commands helpers */
     function _get_man_text(uint8 command_format, CommandHelp help_file) private pure returns (string) {
         (string name, string synopsis, string purpose, string description, string options, string notes, string author, string bugs, string see_also, string version) = help_file.unpack();
-        options.append("--help\tdisplay this help and exit\n--version\n\t\toutput version information and exit");
+        options.append("\n--help\tdisplay this help and exit\n--version\n\t\toutput version information and exit");
 
         /*if (command_format < COMMAND_FORMAT_DESCRIPTION)
             return "";
@@ -44,15 +39,15 @@ contract man is Utility {
 
         if (command_format == 1)
             return _join_fields([
-                _format_list("NAME", name + " - " + purpose, 4, "\n"),
-                _format_list("SYNOPSIS", name + " " + synopsis, 4, "\n"),
-                _format_list("DESCRIPTION", description, 4, "\n"),
-                _format_list("OPTIONS", options, 4, "\n"),
-                _format_list("", notes, 4, "\n"),
-                _format_list("AUTHOR", author, 4, "\n"),
-                _format_list("REPORTING BUGS", bugs, 4, "\n"),
-                _format_list("SEE ALSO", see_also, 4, "\n"),
-                _format_list("Version ", version, 0, " ")], "\n");
+                _format_list("NAME", name + " - " + purpose),
+                _format_list("SYNOPSIS", name + " " + synopsis),
+                _format_list("DESCRIPTION", description),
+                _format_list("OPTIONS", options),
+                _format_list("", notes),
+                _format_list("AUTHOR", author),
+                _format_list("REPORTING BUGS", bugs),
+                _format_list("SEE ALSO", see_also),
+                _format_line("Version ", version)], "\n");
     }
 
 //        for (string u: uses)
