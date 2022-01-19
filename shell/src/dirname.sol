@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 

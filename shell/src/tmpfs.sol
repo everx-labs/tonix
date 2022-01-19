@@ -1,18 +1,9 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "../lib/SyncFS.sol";
 import "Utility.sol";
 
-/* Generic block device hosting a generic file system */
 contract tmpfs is Utility {
-
-    function handle_action(Session session, Action file_action, Ar[] ars, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
-        return _handle_action(session, file_action, ars, inodes_in, data_in);
-    }
-
-    function exec(Session session, Action file_action, Ar[] ars, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
-        return _handle_action(session, file_action, ars, inodes_in, data_in);
-    }
 
     function fopen(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint16 device_id;
@@ -56,10 +47,10 @@ contract tmpfs is Utility {
         inodes[SB_INODES] = _claim_inodes_and_blocks(inodes[SB_INODES], 0, n_blocks);
     }
 
-    function _handle_action(Session session, Action file_action, Ar[] ars, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+    function handle_action(string env, Action file_action, Ar[] ars, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint16 device_id;
         uint16 block_size = 100;
-        (, uint16 uid, uint16 gid, , , , , ) = session.unpack();
+        (uint16 uid, uint16 gid) = _get_user_data(env);
         (uint8 at, uint16 n_files) = file_action.unpack();
         inodes = inodes_in;
         data = data_in;

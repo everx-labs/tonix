@@ -1,10 +1,9 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
 contract hash is Shell {
 
-//    function print(string args, string hashes, string index, string pool) external pure returns (uint8 ec, string out) {
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = _get_args(args);
         bool print_tabbed = _flag_set("t", flags);
@@ -14,15 +13,18 @@ contract hash is Shell {
             if (pool.empty())
                 out.append("hash: hash table empty\n");
             else {
-                out.append("hits\tcommand\n");
+                if (!print_reusable)
+                    out.append("hits\tcommand\n");
                 (string[] lines, ) = _split(pool, "\n");
                 for (string line: lines) {
                     (, string path, string contents) = _split_var_record(line);
                     (string[] bins, ) = _split(_trim_spaces(contents), " ");
-                    for (string bin: bins)
+                    for (string bin: bins) {
+                        (string name, string value) = _item_value(bin);
                         out.append(print_reusable ?
-                        "builtin hash -p " + path + "/" + bin + " " + bin + "\n" :
-                        "1\t" + path + "/" + bin + "\n");
+                            "builtin hash -p " + path + "/" + name + " " + name + "\n" :
+                            _pad(value, 4, ALIGN_RIGHT) + "\t" + path + "/" + name + "\n");
+                    }
                 }
             }
         }
@@ -40,43 +42,88 @@ contract hash is Shell {
         }
     }
 
-//    function modify(string args, string hashes, string index) external pure returns (uint8 ec, string res) {
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
         (string[] params, string flags, ) = _get_args(args);
         bool forget_some = _flag_set("d", flags);
         bool forget_all = _flag_set("r", flags);
-        bool drop = forget_some || forget_all;
-        bool add = !drop;
-//        string commands = _get_map_value("command", index);
         string page = pool;
-        if (add) {
+        if (forget_all)
+            page = "";
+        else if (forget_some) {
             for (string arg: params) {
-                string bins = _get_map_value("/bin", pool);
-                bins = _set_add(arg, bins);
-                /*if (_strstr(commands, arg) > 0)
-                    bins = _set_add(arg, bins);
+                string path = _get_array_name(arg, pool);
+                if (!path.empty())
+                    page = _translate(page, arg + " ", "");
                 else {
                     ec = EXECUTE_FAILURE;
-//                    out.append("-tosh: hash: " + arg + ": not found\n");
-                }*/
-                page = _translate(page, _get_map_value("/bin", pool), bins);
-            }
-        } else if (drop) {
-            if (forget_all)
-                page = "";
-            else {
-                for (string arg: params) {
-                    string path = _get_array_name(arg, pool);
-                    if (!path.empty())
-                        page = _translate(page, arg + " ", "");
-                    else {
-                        ec = EXECUTE_FAILURE;
 //                        out.append("-tosh: hash: " + arg + ": not found\n");
-                    }
                 }
             }
         }
         res = page;
+    }
+
+    function lookup(string args, string page, string pool) external pure returns (uint8 ec, string out, string res) {
+        (string[] params, string flags, ) = _get_args(args);
+        string hashes = page;
+//        string path = _val("PATH", pool);
+        string commands = _get_map_value("command", pool);
+//        (string[] path_dirs, ) = _split(path, ":");
+        string bins = _get_map_value("/bin", hashes);
+        string init_bins = bins;
+        bool print_tabbed = _flag_set("t", flags);
+
+        for (string arg: params) {
+            string path_map = _get_pool_record(arg, page);
+            if (path_map.empty()) {
+                if (print_tabbed) {
+                    ec = EXECUTE_FAILURE;
+                    out.append("hash: " + arg + ": not found\n");
+                } else {
+                    if (_strstr(commands, arg) > 0)
+                        bins = _set_item_value(arg, "0", bins);
+                    else
+                        ec = EXECUTE_FAILURE;
+                }
+            } else {
+                if (print_tabbed) {
+                    (, string bin_path, ) = _split_var_record(path_map);
+                    out.append(bin_path + "/" + arg);
+                    string s_hit_count = _val(arg, path_map);
+                    uint16 hc = _atoi(s_hit_count);
+                    string upd = _set_item_value(arg, _itoa(hc + 1), path_map);
+                    hashes = _translate(hashes, path_map, upd);
+                } else {
+                    string upd = _set_item_value(arg, "0", path_map);
+                    hashes = _translate(hashes, path_map, upd);
+                }
+            }
+        }
+        hashes = _translate(hashes, init_bins, bins);
+        res = hashes;
+    }
+
+    function lookup_fn(string args, string page, string pool) external pure returns (uint8 ec, string out, string res) {
+        string arg = _val("COMMAND", args);
+        string fn_map = _get_pool_record(arg, page);
+        if (fn_map.empty()) {
+            string commands = _get_map_value("command", pool);
+            if (_strstr(commands, " " + arg + " ") > 0) {
+                fn_map = _get_map_value("exec", page);
+                string upd = _set_item_value(arg, "0", fn_map);
+                res = _translate(page, fn_map, upd);
+            } else {
+                ec = EXECUTE_FAILURE;
+                out.append("hash: " + arg + ": not found\n");
+            }
+        } else {
+            (, string fn_name, ) = _split_var_record(fn_map);
+            out.append(arg + " " + fn_name);
+            string s_hit_count = _val(arg, fn_map);
+            uint16 hc = _atoi(s_hit_count);
+            string upd = _set_item_value(arg, _itoa(hc + 1), fn_map);
+            res = _translate(page, fn_map, upd);
+        }
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

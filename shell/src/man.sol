@@ -1,8 +1,7 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
-/* Base contract for the devices exporting command manuals */
 contract man is Utility {
 
     function _get_man_file(string arg, CommandHelp[] help_files) internal pure returns (uint8 ec, CommandHelp help_file) {

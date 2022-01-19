@@ -1,37 +1,22 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract mv is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function _induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-//    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
         Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
+        for (string arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
             arg_list.push(Arg(arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _mv(args, flags, session.wd, arg_list, _get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _mv(params, flags, wd, arg_list, _get_inode_count(inodes), inodes, data);
     }
 
-    function _mv(string[] args, uint flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
-        bool verbose = (flags & _v) > 0;
-        bool preserve = (flags & _n) > 0;
-        bool request_backup = (flags & _b) > 0;
-        bool to_file_flag = (flags & _T) > 0;
-        bool to_dir_flag = (flags & _t) > 0;
-        bool newer_only = (flags & _u) > 0;
-        bool force = (flags & _f) > 0;
-        bool recurse = (flags & _r + _R) > 0;
+    function _mv(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+        (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool recurse)
+            = _flag_values("vnbTtufR", flags);
 
         bool to_dir = to_dir_flag;
         uint nargs = args.length;
@@ -93,8 +78,6 @@ contract mv is Utility {
             if (s_ino < INODES) { errors.push(Err(0, s_ino, s_path)); break; }
             if (verbose) {out.append("renamed" + _quote(s_path) + "=>" + _quote(t_path)); }
 
-            if (s_ft == FT_DIR && action_type == IO_HARDLINK_FILES)
-                errors.push(Err(no_hardlink_on_dir, 0, s_path));
             if (s_ft == FT_DIR && action_type == IO_COPY_FILES && !recurse)
                 errors.push(Err(omitting_directory, 0, s_path));
             else if (to_file_flag && to_dir && s_ft == FT_REG_FILE)
@@ -109,12 +92,12 @@ contract mv is Utility {
                 dirents.append(_dir_entry_line(action_type == IO_HARDLINK_FILES ? s_ino : ic++, file_name, s_ft));
                 dirent_action_type = IO_ADD_DIR_ENTRY;
 
-                    ars.push(Ar(IO_UNLINK, s_ft, s_ino, s_dir_idx, s_path, ""));
-                    if (inodes[s_ino].n_links < 2) {
-                        string victim_dirent_pattern = _dir_entry_line(s_ino, s_path, s_ft);
-                        string dir_text = data[s_parent];
-                        string new_dir_contents = _translate(dir_text, victim_dirent_pattern, "");
-                        ars.push(Ar(IO_UPDATE_DIR_ENTRY, FT_DIR, s_parent, s_dir_idx, s_path, new_dir_contents));
+                ars.push(Ar(IO_UNLINK, s_ft, s_ino, s_dir_idx, s_path, ""));
+                if (inodes[s_ino].n_links < 2) {
+                    string victim_dirent_pattern = _dir_entry_line(s_ino, s_path, s_ft);
+                    string dir_text = data[s_parent];
+                    string new_dir_contents = _translate(dir_text, victim_dirent_pattern, "");
+                    ars.push(Ar(IO_UPDATE_DIR_ENTRY, FT_DIR, s_parent, s_dir_idx, s_path, new_dir_contents));
                 }
             }
         }

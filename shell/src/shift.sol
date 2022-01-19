@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -24,8 +24,6 @@ contract shift is Shell {
         string pos_args = _val("POS_ARGS", pool);
         string opt_args = _val("OPT_ARGS", pool);
 
-//        string pos_map = _as_indexed_array("POS_ARGS", cmd + " " + s_args, " ");
-
         uint16 n_params = _atoi(s_n_params);
         if (n_params < shift_count) {
             ec = EXECUTE_FAILURE;
@@ -33,7 +31,6 @@ contract shift is Shell {
             return (ec, "Can't shift that many");
         }
 
-//        string cmd_type = _get_array_name(cmd, index);
         string new_pos_str = " ";
         (string[] prev, uint n_prev) = _split(s_args, " ");
         uint n_new = n_prev - shift_count;
@@ -44,7 +41,6 @@ contract shift is Shell {
             argv.append(" " + params[i]);
         }
         new_pos_str = _unwrap(new_pos_str);
-//        n_params -= shift_count;
         string pos_map = _as_indexed_array("POS_ARGS", new_pos_str.empty() ? cmd : cmd + " " + new_pos_str, " ");
         last_param = n_new > 0 ? params[n_new - 1] : cmd;
 
@@ -61,40 +57,9 @@ contract shift is Shell {
             ["OPT_ERR", dbg_x],
             ["REDIR_IN", redir_in],
             ["REDIR_OUT", redir_out]]);
-//        res.append(_as_hashmap("OPT_ARGS", opt_values) + "\n");
         res.append(opt_args + "\n");
         res.append(pos_map + "\n");
     }
-
-/*    function reindex(uint16 Item[] annotation) external pure returns (uint8 ec, Item[] res) {
-        string flags = _item_val("FLAGS", annotation);
-        string cmd = _item_val("COMMAND", annotation);
-//        string params = _item_val("@", annotation);
-        string s_args = _item_val("@", annotation);
-        string params = _item_val("PARAMS", annotation);
-    }*/
-
-    /*&function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, string argv) = _get_args(e[IS_ARGS]);
-        uint n_params = params.length;
-
-        uint16 n;// = _atoi(s_args);
-        string pos_str = e[IS_POSITIONAL];
-        string special_vars;
-        string dbg;
-        ec = 0;
-        string new_pos_str;
-        for (uint i = 0; i < n_params - n; i++) {
-            params[i] = params[i + n];
-            new_pos_str.append(params[i] + " ");
-            special_vars.append(format("{}={}\n", i, params[i]));
-        }
-        pos_str = _trim_spaces(new_pos_str);
-
-
-        wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
-
-    }*/
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(

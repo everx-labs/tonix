@@ -5,10 +5,17 @@ import "../lib/libuadm.sol";
 
 contract who is Utility, libuadm {
 
-    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, , uint flags) = input.unpack();
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , , string flags, ) = _get_env(args);
+        ec = EXECUTE_SUCCESS;
+        (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
+            , bool users_logged_in) = _flag_values("bHlqsTwu", flags);
+
+//    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
+//        (, , uint flags) = input.unpack();
 //        bool all_fields = (flags & _a) > 0;
-        bool last_boot_time = (flags & _b) > 0;
+        /*bool last_boot_time = (flags & _b) > 0;
 //        bool dead_processes = (flags & _d) > 0;
         bool print_headings = (flags & _H) > 0;
         bool system_login_proc = (flags & _l) > 0;
@@ -17,7 +24,7 @@ contract who is Utility, libuadm {
         bool default_format = (flags & _s) > 0;
   //      bool last_clock_change = (flags & _t) > 0;
         bool user_message_status = (flags & _T + _w) > 0;
-        bool users_logged_in = (flags & _u) > 0;
+        bool users_logged_in = (flags & _u) > 0;*/
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
 
         uint16 var_run_dir = _resolve_absolute_path("/var/run", inodes, data);
@@ -37,7 +44,7 @@ contract who is Utility, libuadm {
                 count++;
             }
             out.append(format("\n# users = {}\n", count));
-            return out;
+            return (EXECUTE_SUCCESS, out, err);
         }
 
         string[][] table;

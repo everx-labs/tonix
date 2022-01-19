@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -70,10 +70,12 @@ contract builtin is Shell {
             else if (v8) fn = "v8";
             else fn = "execute";
         } else if (cmd == "hash") {
-            if (params.empty() || _flag_set("t", flags) || _flag_set("l", flags))
+            if (params.empty() || _flag_set("l", flags))
                 fn = "print";
-            else
+            else if (_flag_set("d", flags) || _flag_set("r", flags) )
                 fn = "modify";
+            else if (_flag_set("t", flags) || flags.empty())
+                fn = "lookup";
         }
 
         if (cmd == "alias" || cmd == "unalias")
@@ -91,18 +93,13 @@ contract builtin is Shell {
                 page = "vars";
         } else if (cmd == "type")
             page = "pool";
-        else if (cmd == "echo" || cmd == "pwd")
+        else if (cmd == "echo" || cmd == "pwd" || cmd == "cd")
             page = "vars";
 
         string exec_path = "builtin";
         string exec_line = "./" + exec_path + " " + cmd + " " + fn + " " + page + " " + s_args;
         res = exec_line;
     }
-
-    /*function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        ec = 0;
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
-    }*/
 
     function _get_arg_value_uint16(string arg) internal pure returns (uint16 ec, uint16 val) {
         optional(int) arg_val = stoi(arg);

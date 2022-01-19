@@ -1,27 +1,8 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract rmdir is Utility {
-
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function _induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-//    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-        Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
-            arg_list.push(Arg(arg, ft, index, parent, dir_index));
-        }
-        (out, file_action, ars, errors) = _rmdir(flags, arg_list, inodes, data);
-    }
 
     function _remove_dir_entries(string dir_list, string[] victims) internal pure returns (string contents) {
         contents = dir_list;
@@ -29,9 +10,20 @@ contract rmdir is Utility {
             contents = _translate(contents, s, "");
     }
 
-    function _rmdir(uint flags, Arg[] arg_list, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
-        bool verbose = (flags & _v) > 0;
-        bool force_removal = (flags & _f) > 0;
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
+        Arg[] arg_list;
+        for (string arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
+            arg_list.push(Arg(arg, ft, index, parent, dir_index));
+        }
+        (out, file_action, ars, errors) = _rmdir(flags, arg_list, inodes, data);
+    }
+
+    function _rmdir(string flags, Arg[] arg_list, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+
+        bool verbose = _flag_set("v", flags);
+        bool force_removal = _flag_set("f", flags);
 
         mapping (uint16 => string[]) victims;
 

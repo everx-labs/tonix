@@ -1,25 +1,29 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract groupadd is Utility, libuadm {
 
-    function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-
+//    function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+//        (, string[] args, uint flags) = input.unpack();
+        (, string[] params, string flags, ) = _get_env(args);
         mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
 
-        session.pid = session.pid;
-        out = out;
+//        session.pid = session.pid;
+        out = "";
         UserEvent ue;
-        (ue, file_action, ars, errors) = _groupadd(flags, args, inodes, data, groups);
+        (ue, file_action, ars, errors) = _groupadd(flags, params, inodes, data, groups);
+        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
-    function _groupadd(uint flags, string[] args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => GroupInfo) groups) private pure returns (UserEvent ue, Action file_action, Ar[] ars, Err[] errs) {
-        bool force = (flags & _f) > 0;
+    function _groupadd(string flags, string[] args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => GroupInfo) groups) private pure returns (UserEvent ue, Action file_action, Ar[] ars, Err[] errs) {
+//    function _groupadd(uint flags, string[] args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => GroupInfo) groups) private pure returns (UserEvent ue, Action file_action, Ar[] ars, Err[] errs) {
+        (bool force, bool use_group_id, bool is_system_group, , , , , ) = _flag_values("fgr", flags);
+        /*bool force = (flags & _f) > 0;
         bool use_group_id = (flags & _g) > 0;
-        bool is_system_group = (flags & _r) > 0;
+        bool is_system_group = (flags & _r) > 0;*/
 
         uint n_args = args.length;
         string target_group_name = args[n_args - 1];

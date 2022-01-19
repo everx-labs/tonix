@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
@@ -6,9 +6,11 @@ import "../lib/libuadm.sol";
 contract ls is Utility, libuadm {
 
     function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, string flags, ) = _get_args(args);
+        (uint16 wd, string[] params, string flags, string cwd) = _get_env(args);
+        if (params.empty())
+            params.push(cwd);
         for (string arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_ls(flags, Arg(arg, ft, index, parent, dir_index), inodes, data) + "\n");
             else {
@@ -48,22 +50,17 @@ contract ls is Utility, libuadm {
 
         (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
         if (print_index_node)
-//            l = [format("{}", index)];
             l = [_itoa(index)];
         if (print_allocated_size)
-//            l.push(format("{}", n_blocks));
             l.push(_itoa(n_blocks));
 
         if (long_format) {
             l.push(_permissions(mode));
-//            l.push(format("{}", n_links));
             l.push(_itoa(n_links));
             if (numeric) {
                 if (!no_owner)
-//                    l.push(format("{}", owner_id));
                     l.push(_itoa(owner_id));
                 if (!no_group)
-//                    l.push(format("{}", group_id));
                     l.push(_itoa(group_id));
             } else {
                 string s_owner = _get_user_name(owner_id, inodes, data);

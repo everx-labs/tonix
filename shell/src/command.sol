@@ -1,43 +1,44 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
 contract command is Shell {
 
-//    function print(string args, string hashes, string index, string pool) external pure returns (uint8 ec, string out) {
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = _get_args(args);
         bool descr = _flag_set("v", flags);
         bool verbose = _flag_set("V", flags);
-            for (string arg: params) {
-                string t = _get_array_name(arg, pool);
-                string value;
-                if (t == "keyword")
-                    value = descr ? arg : (arg + " is a shell keyword");
-                else if (t == "alias") {
-                    string val = _val(arg, _get_map_value("TOSH_ALIASES", pool));
-                    value = descr ? "alias " + arg + "=" + _wrap(val, W_SQUOTE) : (arg + " is aliased to `" + val + "\'");
-                } else if (t == "function") {
-                    value = descr ? arg : (arg + " is a function\n" + _print_reusable(_get_pool_record(arg, pool)));
-                } else if (t == "builtin")
-                    value = descr ? arg : (arg + " is a shell builtin");
-                else if (t == "command") {
-                    string path = _get_array_name(" " + arg + " ", pool);
-                    if (!path.empty())
-                        value = descr ? arg : (arg + " is hashed (" + path + "/" + arg + ")");
-                    else {
-                        path = _get_array_name(" " + arg + " ", pool);
-                        value = path + "/" + arg;
-                        if (verbose)
-                            value = arg + " is " + value;
-                    }
-                } else {
-                    ec = EXECUTE_FAILURE;
+        for (string arg: params) {
+            string t = _get_array_name(arg, pool);
+            string value;
+            if (t == "keyword")
+                value = descr ? arg : (arg + " is a shell keyword");
+            else if (t == "alias") {
+                string val = _val(arg, pool);
+                value = descr ? "alias " + arg + "=" + _wrap(val, W_SQUOTE) : (arg + " is aliased to `" + val + "\'");
+            } else if (t == "function")
+                value = descr ? arg : (arg + " is a function\n" + _print_reusable(_get_pool_record(arg, pool)));
+            else if (t == "builtin")
+                value = descr ? arg : (arg + " is a shell builtin");
+            else if (t == "command") {
+                string path_map = _get_pool_record(arg, pool);
+                string path;
+                if (!path_map.empty())
+                    (, path, ) = _split_var_record(path_map);
+                if (!path.empty())
+                    value = descr ? arg : (arg + " is hashed (" + path + "/" + arg + ")");
+                else {
+                    value = "/bin/" + arg;
                     if (verbose)
-                        out.append("-tosh: command: " + arg + ": not found\n");
+                        value = arg + " is " + value;
                 }
-                out.append(value + "\n");
+            } else {
+                ec = EXECUTE_FAILURE;
+                if (verbose)
+                    out.append("-tosh: command: " + arg + ": not found\n");
             }
+            out.append(value + "\n");
+        }
     }
 
     function _item_val(string name, Item[] coll) internal pure returns (string) {
@@ -46,25 +47,45 @@ contract command is Shell {
                 return i.value;
     }
 
-    function execute_command(Item[] annotation) external pure returns (string res) {
-//        string flags = _item_val("FLAGS", annotation);
-        string cmd = _item_val("COMMAND", annotation);
-        string s_args = _item_val("@", annotation);
-//        string params = _item_val("PARAMS", annotation);
+    function execute_command(string args, string page, string pool) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
+        string comp_spec = page;
+        string cmd = _val("COMMAND", args);
+        string s_args = _val("@", args);
+        string fn_name;
 
+        string fn_map = _get_pool_record(cmd, comp_spec);
+        if (fn_map.empty()) {
+            string commands = _get_map_value("command", pool);
+            if (_strstr(commands, " " + cmd + " ") > 0) {
+                fn_name = "exec";
+                fn_map = _get_map_value(fn_name, comp_spec);
+                string upd = _set_item_value(cmd, "0", fn_map);
+                cs_res = _translate(comp_spec, fn_map, upd);
+            } else {
+                ec = EXECUTE_FAILURE;
+//                out.append("hash: " + cmd + ": not found\n");
+            }
+        } else {
+            (, fn_name, ) = _split_var_record(fn_map);
+//            out.append(cmd + " " + fn_name);
+            string s_hit_count = _val(cmd, fn_map);
+            uint16 hc = _atoi(s_hit_count);
+            string upd = _set_item_value(cmd, _itoa(hc + 1), fn_map);
+            cs_res = _translate(comp_spec, fn_map, upd);
+        }
+
+        string s_attrs = "-x";
+        (string[] lines, ) = _split(pool, "\n");
+        for (string line: lines) {
+            (string attrs, ) = _strsplit(line, " ");
+            if (_match_attr_set(s_attrs, attrs))
+                exports.append(line + "\n");
+        }
+        exports.append(args);
         string exec_path = "command";
-        string fn;
-        string cmds_exec = " ls file namei du stat cat paste tr head tail wc grep look expand unexpand rev colrm column cut basename dirname getent ";
-        string cmds_exec_env = " id whoami printenv ";
-        string pattern = " " + cmd + " ";
-        if (_strstr(cmds_exec, pattern) > 0)
-            fn = "exec";
-        else if (_strstr(cmds_exec_env, pattern) > 0)
-            fn = "exec_env";
-//        string exec_line = "./" + exec_path + " " + cmd + " " + fn + " " + params;
-        string exec_line = "./" + exec_path + " " + fn + " " + cmd + " " + s_args;
-        res = exec_line;
 
+        fn_name = fn_name.empty() ? "exec" : fn_name;
+        exec_line = "./" + exec_path + " " + fn_name + " " + cmd + " " + s_args;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

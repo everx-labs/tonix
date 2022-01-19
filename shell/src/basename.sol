@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -8,6 +8,9 @@ contract basename is Utility {
         ec = EXECUTE_SUCCESS;
         err = "";
         (string[] params, string flags, ) = _get_args(args);
+
+        if (params.empty())
+            return (EXECUTE_FAILURE, "", "basename: missing operand\n");
 
         bool multiple_args = _flag_set("a", flags);
         string line_terminator = _flag_set("z", flags) ? "\x00" : "\n";

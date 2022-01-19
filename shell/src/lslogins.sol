@@ -1,27 +1,42 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract lslogins is Utility, libuadm {
 
-    function ustat(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
+    /*function ustat(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
 //    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
         (, string[] args, uint flags) = input.unpack();
         (out, ) = _lslogins(flags, args, session, inodes, data);
-    }
+    }*/
 
-    function _lslogins(uint flags, string[] args, Session session, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
-        bool print_system = (flags & _s) > 0 || (flags & _u) == 0;
-        bool print_user = (flags & _u) > 0 || (flags & _s) == 0;
+//    function _lslogins(uint flags, string[] args, Session session, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = _get_env(args);
+        ec = EXECUTE_SUCCESS;
+        (bool flag_system, bool flag_user, bool colon, bool newline, bool raw, bool nulll, , ) = _flag_values("sucnrz", flags);
+//        bool flag_system = _flag_set("s", flags);
+//        bool flag_user = _flag_set("u", flags);
+        (uint16 uid, ) = _get_user_data(args);
+//        bool print_system = (flags & _s) > 0 || (flags & _u) == 0;
+//        bool print_user = (flags & _u) > 0 || (flags & _s) == 0;
+        bool print_system = flag_system || !flag_user;
+        bool print_user = !flag_system || flag_user;
         string field_separator;
-        if ((flags & _c) > 0)
+//        if ((flags & _c) > 0)
+        if (colon)
             field_separator = ":";
-        field_separator = _if(field_separator, (flags & _n) > 0, "\n");
-        field_separator = _if(field_separator, (flags & _r) > 0, " ");
-        field_separator = _if(field_separator, (flags & _z) > 0, "\x00");
+        field_separator = _if(field_separator, newline, "\n");
+        field_separator = _if(field_separator, raw, " ");
+        field_separator = _if(field_separator, nulll, "\x00");
+//        field_separator = _if(field_separator, (flags & _n) > 0, "\n");
+//        field_separator = _if(field_separator, (flags & _r) > 0, " ");
+//        field_separator = _if(field_separator, (flags & _z) > 0, "\x00");
         if (field_separator.byteLength() > 1)
-            return ("Mutually exclusive options\n", [Err(0, mutually_exclusive_options, "")]);
+//            return ("Mutually exclusive options\n", [Err(0, mutually_exclusive_options, "")]);
+            return (EXECUTE_SUCCESS, "", "Mutually exclusive options\n");
         bool formatted_table = field_separator.empty();
         bool print_all = (print_system || print_user) && args.empty();
 
@@ -40,23 +55,23 @@ contract lslogins is Utility, libuadm {
                 Column(!print_all, 20, ALIGN_LEFT)];
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
 
-        if (args.empty() && session.uid < GUEST_USER) {
-            for ((uint16 uid, UserInfo user_info): users) {
-                (uint16 gid, string s_owner, string s_group) = user_info.unpack();
-                    table.push([format("{}", uid), s_owner, format("{}", gid), s_group]);
+        if (params.empty() && uid < GUEST_USER) {
+            for ((uint16 t_uid, UserInfo user_info): users) {
+                (uint16 t_gid, string s_owner, string s_group) = user_info.unpack();
+                    table.push([_itoa(t_uid), s_owner, _itoa(t_gid), s_group]);
             }
         } else {
-            string user_name = args[0];
-            for ((uint16 uid, UserInfo user_info): users)
+            string user_name = params[0];
+            for ((uint16 t_uid, UserInfo user_info): users)
                 if (user_info.user_name == user_name) {
-                    (uint16 gid, , string s_group) = user_info.unpack();
+                    (uint16 t_gid, , string s_group) = user_info.unpack();
                     string home_dir = "/home/" + user_name;
                     table = [
                         ["Username:", user_name],
-                        ["UID:", format("{}", uid)],
+                        ["UID:", _itoa(t_uid)],
                         ["Home directory:", home_dir],
                         ["Primary group:", s_group],
-                        ["GID:", format("{}", gid)]];
+                        ["GID:", _itoa(t_gid)]];
                     break;
                 }
         }

@@ -1,16 +1,16 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract printenv is Utility {
 
-    function exec(string args, string pool) external pure returns (uint8 ec, string out, string err) {
+    function exec(string args) external pure returns (uint8 ec, string out, string err) {
         (string[] params, string flags, ) = _get_args(args);
         string delimiter = _flag_set("0", flags) ? "\x00" : "\n";
 
         string s_attrs = "-x";
         if (params.empty()) {
-            (string[] lines, ) = _split(pool, "\n");
+            (string[] lines, ) = _split(args, "\n");
             for (string line: lines) {
                 (string attrs, string stmt) = _strsplit(line, " ");
                 if (_match_attr_set(s_attrs, attrs)) {
@@ -20,7 +20,7 @@ contract printenv is Utility {
             }
         }
         for (string p: params) {
-            string cur_record = _get_pool_record(p, pool);
+            string cur_record = _get_pool_record(p, args);
             if (!cur_record.empty()) {
                 (string attrs, string stmt) = _strsplit(cur_record, " ");
                 if (_match_attr_set(s_attrs, attrs)) {

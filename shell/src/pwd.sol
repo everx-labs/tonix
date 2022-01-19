@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -9,10 +9,13 @@ contract pwd is Shell {
         bool print_physical = !flags.empty() && _flag_set("P", flags);
         if (!print_physical) {
             string wd = _val("PWD", pool);
-            if (wd.empty())
+            if (wd.empty()) {
                 ec = EXECUTE_FAILURE;
-            else
+                out = "pwd: current directory cannot be read";
+            } else {
+                ec = EXECUTE_SUCCESS;
                 out = wd;
+            }
         }
     }
 

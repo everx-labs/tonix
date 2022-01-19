@@ -29,7 +29,8 @@ build_cmd() {
 }
 ./eilish set_tosh_vars
 #cat run/vars run/tosh_vars run/hashes run/functions >run/pool
-cat run/vars run/tosh_vars run/hashes run/functions run/aliases run/index >run/pool
+#cat run/vars run/tosh_vars run/hashes run/functions run/aliases run/index >run/pool
+cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
 
 while true
 do
@@ -45,6 +46,7 @@ rm -f run/command run/ec;
 #./builtin set print;
 ./eilish set_args "$input";
 ./eilish annotate_args "$input";
+#./builtin hash lookup_fn "$input";
 #./builtin set print run/annotation;
 #exec_line=$(build_cmd)
 #build_cmd >run/exec_pipeline;

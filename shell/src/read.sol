@@ -1,35 +1,8 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
 contract read is Shell {
-
-    uint8 constant COMMAND_UNKNOWN  = 0;
-    uint8 constant COMMAND_ALIAS    = 1;
-    uint8 constant COMMAND_KEYWORD  = 2;
-    uint8 constant COMMAND_FUNCTION = 3;
-    uint8 constant COMMAND_BUILTIN  = 4;
-    uint8 constant COMMAND_FILE     = 5;
-    uint8 constant COMMAND_NOT_FOUND= 6;
-
-    uint8 constant ITEM_DEFAULT = 0;
-    uint8 constant ITEM_INDEXED_ARRAY = 1;
-    uint8 constant ITEM_HASHMAP = 2;
-    uint8 constant ITEM_INTEGER = 3;
-    uint8 constant ITEM_LOWERCASE = 4;
-    uint8 constant ITEM_REFERENCE = 5;
-    uint8 constant ITEM_READONLY = 6;
-    uint8 constant ITEM_TRACE = 7;
-    uint8 constant ITEM_UPPERCASE = 8;
-    uint8 constant ITEM_EXPORT = 9;
-
-    uint8 constant TOKEN_UNKNOWN    = 0;
-    uint8 constant TOKEN_COMMAND    = 1;
-    uint8 constant TOKEN_BUILTIN    = 2;
-    uint8 constant TOKEN_FILE       = 3;
-    uint8 constant TOKEN_OPTION     = 4;
-    uint8 constant TOKEN_PARAM      = 5;
-    uint8 constant TOKEN_LIST       = 6;
 
     function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
         (string[] params, string flags, ) = _get_args(args);

@@ -1,23 +1,17 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
 contract cd is Shell {
 
-    function builtin_read_fs(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, , ) = _get_args(e[IS_ARGS]);
-        uint16 page_index = IS_POOL;
-        string page = e[page_index];
+    function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
+        (string[] params, , ) = _get_args(args);
+        string page = pool;
 
         string s_attrs = "--";
         string cur_dir = _val("PWD", page);
         string old_wd = _val("OLDPWD", page);
         string home_dir = _val("HOME", page);
-        string dbg;
-        out = "";
-
-//        if (params.empty())
-//            params.push("~");
         string arg = params.empty() ? home_dir : params[0];
 
         uint16 wd = _resolve_absolute_path(cur_dir, inodes, data);
@@ -31,22 +25,16 @@ contract cd is Shell {
 
         if (ft == FT_DIR) {
             string new_dir = _get_absolute_path(index, inodes, data);
-
-            dbg.append("CD: " + cur_dir + " -> " + new_dir + "\n");
-
             page = _set_var(s_attrs, "OLDPWD=" + cur_dir, page);
             page = _set_var(s_attrs, "PWD=" + new_dir, page);
             page = _set_var(s_attrs, "WD=" + format("{}", index), page);
 
-            if (e[page_index] != page)
-                wr.push(Write(page_index, page, O_WRONLY));
+            res = page;
         } else if (ft == FT_UNKNOWN) {
             ec = ENOENT;
         } else {
             ec = ENOTDIR;
         }
-
-        wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
     }
 
     function _dereference(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (Arg) {
@@ -61,7 +49,6 @@ contract cd is Shell {
         return Arg(s_arg, ft, ino, parent, dir_index);
     }
 
-//    function _get_command_info(string c) internal pure returns (string synopsis, string purpose, string description, string options, string arguments, string exit_status) {
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {
         return BuiltinHelp(
 "cd",

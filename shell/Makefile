@@ -11,7 +11,7 @@ TOC:=$(TOOLS_BIN)/tonos-cli
 I:=CommandInterpreter
 PRIME:=$I
 
-UTILS:=ls du file stat namei cat colrm column cut expand grep head look rev tail tr unexpand paste wc readlink realpath env man whatis mkfs mke2fs dumpe2fs fsck mount umount losetup udevadm df findmnt mountpoint touch cp mv rm rmdir mkdir ln install groupadd groupdel groupmod useradd userdel usermod chfn newgrp lslogins finger who last fuser utmpdump ps whoami id hostname tfs tmpfs printenv basename dirname getent
+UTILS:=ls du file stat namei cat colrm column cut expand grep head look rev tail tr unexpand paste wc readlink realpath env man whatis mkfs mke2fs dumpe2fs fsck mount umount losetup udevadm df findmnt mountpoint touch cp mv rm rmdir mkdir ln install groupadd groupdel groupmod useradd userdel usermod chfn newgrp lslogins finger who last fuser utmpdump ps whoami id hostname tfs tmpfs printenv basename dirname getent uname
 HELP_TOPICS:=help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift getopts eilish
 BUILTINS:=$(HELP_TOPICS) $(UTILS)
 

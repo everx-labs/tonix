@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 import "compspec.sol";
@@ -116,6 +116,8 @@ contract eilish is Shell, compspec {
         uint n_params;
         string last_param;
         uint8 ec;
+        string err;
+        string out;
         if (!s_args.empty()) {
             (params, n_params) = _split(s_args, " ");
 
@@ -126,7 +128,6 @@ contract eilish is Shell, compspec {
             uint8 t_ec;
             (t_ec, s_flags, opt_values, dbg_x, pos_params, ) = _parse_params(params, cmd_opt_string);
             ec = t_ec;
-//            pos_map = "( [0]=\"" + cmd + "\"" + pos_map + " )";
 
             for (string arg: params) {
                 if (_strchr(arg, "$") > 0) {
@@ -138,23 +139,29 @@ contract eilish is Shell, compspec {
                 }
             }
             last_param = params[n_params - 1];
-//            pos_map = _as_indexed_array("POS_ARGS", cmd + " " + s_args, " ");
             pos_map = cmd + " " + s_args;
         }
         string cmd_type = _get_array_name(cmd, index);
         string exec_path;
         string exec_line;
         string cmd_queue;
+        string fn_name;
 
         if (cmd_type == "builtin") {
             exec_line = "./tosh run_builtin " + input;
+//            fn_name = _get_array_name(cmd, comp_spec);
+            string fn_spec = _get_pool_record(cmd, comp_spec);
+            if (!fn_spec.empty())
+                (, fn_name, ) = _split_var_record(fn_spec);
         } else if (cmd_type == "command") {
             exec_line = "./tosh execute_command " + input;
+//            fn_name = _get_array_name(cmd, comp_spec);
+            string fn_spec = _get_pool_record(cmd, comp_spec);
+            if (!fn_spec.empty())
+                (, fn_name, ) = _split_var_record(fn_spec);
         } else if (!cmd_type.empty()) {
-
             exec_path = "./" + cmd_type;
-//            string fn_name = _get_array_name(cmd, comp_spec);
-            string fn_name = _match_function_comp_spec(cmd, s_flags, comp_spec);
+            fn_name = _match_function_comp_spec(cmd, s_flags, comp_spec);
             string f_body = _function_body(fn_name, pool);
             if (!f_body.empty()) {
                 (string[] lines, uint n_lines) = _split(f_body, ";");
@@ -176,7 +183,12 @@ contract eilish is Shell, compspec {
                 exec_line = exec_path + " " + cmd + " " + fn_name + " " + s_args + ";";
                 cmd_queue = "[0]=\"" + exec_line + "\"\n";
             }
+        } else {
+            ec = EXECUTE_FAILURE;
+            err = cmd + ": command not found\n";
         }
+        if (ec > EXECUTE_SUCCESS)
+            exec_line = "echo " + err;
         res = [
             Item("COMMAND", 0, cmd),
             Item("PARAMS", 0, pos_params),
@@ -191,8 +203,11 @@ contract eilish is Shell, compspec {
             Item("OPTERR", 0, dbg_x),
             Item("CMD_TYPE", 0, cmd_type),
             Item("EXEC_PATH", 0, exec_path),
+            Item("EXEC_FUNCTION", 0, fn_name),
             Item("EXEC_LINE", 0, exec_line),
             Item("COMMAND_QUEUE", 0, cmd_queue),
+            Item("S_OUT", 0, out),
+            Item("S_ERR", 0, err),
             Item("REDIR_IN", 0, redir_in),
             Item("REDIR_OUT", 0, redir_out)];
     }
@@ -260,7 +275,6 @@ contract eilish is Shell, compspec {
     function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
         ec = EXECUTE_SUCCESS;
         out = _as_var_list([
-//        return (EXECUTE_SUCCESS, _encode_items([
             ["_", _val("TOSH", profile)],
             ["-", _val("-", profile)],
             ["TOSH", _val("TOSH", profile)],
@@ -271,7 +285,6 @@ contract eilish is Shell, compspec {
             ["SHELLOPTS", "allexport:hashall"],
             ["TMPDIR", _val("TMPDIR", profile)],
             ["SHLVL", _val("SHLVL", profile)]]);
-//            ], "\n"));
     }
 
     function build_command_queue(string args, string tosh_vars, string comp_spec, string pool) external pure returns (uint8 ec, string out) {
@@ -323,11 +336,9 @@ contract eilish is Shell, compspec {
     uint16 constant PST_CONDEXPR	= 512; // parsing the guts of [[...]]
     uint16 constant PST_ARITHFOR	= 1024; // parsing an arithmetic for command
 
-//    function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string opt_values, string dbg, string pos_params, string s_attrs, string pos_map) {
     function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string[][2] opt_values, string dbg, string pos_params, string s_attrs) {
         uint n_params = params.length;
         uint opt_str_len = opt_string.byteLength();
-//        opt_values = "(";
         for (uint i = 0; i < n_params; i++) {
             string token = params[i];
             uint t_len = token.byteLength();
@@ -342,7 +353,6 @@ contract eilish is Shell, compspec {
                     if (t_len == 2) // arg separator
                         continue;
                     o = token.substr(2); // long option
-//                    long_opts.push(o);
                 } else {
                     // short option(s)
                     o = token.substr(1);
@@ -368,105 +378,19 @@ contract eilish is Shell, compspec {
                     ec = EX_BADUSAGE;
                     dbg.append("error: unrecognized option: " + o + " opt_string: " + opt_string + "\n");
                 }
-//                opt_values.append(format(" [{}]=\"{}\"", o, val));
                 opt_values.push([o, val]);
-//                pos_map.append(format(" [{}]=\"{}\"", i + 1, token));
                 s_flags.append(o);
-            } else if (token.substr(0, 1) == "+") {
+            } else if (token.substr(0, 1) == "+")
                 s_attrs.append(token);
-            } else {
-//                pos_map.append(format(" [{}]=\"{}\"", i + 1, token));
+            else {
                 if (pos_params.empty())
                     pos_params = token;
                 else
                     pos_params.append(" " + token);
             }
         }
-//        opt_values.append(" )");
     }
 
-    function execute_command(string[] e) external pure returns (string[] env) {
-        env = e;
-        // When executing a command, the words that the parser has marked as variable assignments (preceding the command name) and redirections
-        // are saved for later reference. Words that are not variable assignments or redirections are expanded; the first remaining word after
-        // expansion is taken to be the name of the command and the rest are arguments to that command. Then redirections are performed, then
-        // strings assigned to variables are expanded. If no command name results, variables will affect the current shell environment.
-
-        // An important part of the tasks of the shell is to search for commands. Bash does this as follows:
-            // Check whether the command contains slashes. If not, first check with the function list to see if it contains a command by the name we are looking for.
-            //    If command is not a function, check for it in the built-in list.
-            //    If command is neither a function nor a built-in, look for it analyzing the directories listed in PATH. Bash uses a hash table (data storage area in memory) to remember the full path names of executables so extensive PATH searches can be avoided.
-            //    If the search is unsuccessful, bash prints an error message and returns an exit status of 127.
-            // If the search was successful or if the command contains slashes, the shell executes the command in a separate execution environment.
-            // If execution fails because the file is not executable and not a directory, it is assumed to be a shell script.
-            // If the command was not begun asynchronously, the shell waits for the command to complete and collects its exit status.
-    }
-
-    function read_script(string s_input, string[] e) external pure returns (string[] env) {
-        e[IS_STDIN] = s_input;
-        env = e;
-        /*string s_arg = _trim_spaces(s_input);
-        (string[] commands, uint n_commands) = _split(s_arg, ";");
-        string pos_params;
-        for (uint i = 0; i < n_commands; i++) {
-            s_arg = _trim_spaces(commands[i]);
-            if (s_arg.empty())
-                continue;
-            (string[] args, uint n_args) = _split(s_arg, " ");
-            for (uint j = 0; j < n_args; j++)
-                pos_params.append(args[j] + " ");
-        }*/
-    }
-
-    function login_shell(string[] e) external pure returns (string[] env) {
-        env = e;
-        /*env.push(profile);
-        string empty;
-        (, uint n_lines) = _split(profile, "\n");
-        for (uint i = 0; i < n_lines; i++)
-            env.push(empty);*/
-    }
-
-    function read_profile(string profile) external pure returns (string[] env) {
-        env.push(profile);
-        string empty;
-        (, uint n_lines) = _split(profile, "\n");
-        for (uint i = 0; i < n_lines; i++)
-            env.push(empty);
-    }
-
-    function _check_args(string command_s, CommandInfo ci, string short_options, string[] args) private pure returns (Err[] errors) {
-        uint16 n_args = uint16(args.length);
-        string extra_flags;
-        uint short_options_len = short_options.byteLength();
-        string possible_options = ci.options;
-        for (uint i = 0; i < short_options_len; i++) {
-            string actual_option = short_options.substr(i, 1);
-            uint p = _strchr(possible_options, actual_option);
-            if (p == 0)
-                extra_flags.append(actual_option);
-        }
-
-        if (n_args < ci.min_args)
-            errors.push(Err(missing_file_operand, 0, command_s));
-        if (n_args > ci.max_args)
-            errors.push(Err(extra_operand, 0, args[ci.max_args]));
-        if (!extra_flags.empty())
-            errors.push(Err(invalid_option, 0, extra_flags));
-        if (!errors.empty())
-            errors.push(Err(try_help_for_info, 0, command_s));
-    }
-
-    function _parse_short_options(string short_options) private pure returns (uint flags) {
-        bytes opts = bytes(short_options);
-        for (uint i = 0; i < opts.length; i++)
-            flags |= uint(1) << uint8(opts[i]);
-    }
-
-     function process_args() external accept {
-    }
-
-//    function _builtin_help() internal pure override returns (string synopsis, string purpose, string description, string options, string arguments, string exit_status) {
     function _builtin_help() internal pure override returns  (BuiltinHelp bh) {
         return BuiltinHelp("tosh",
             "[command ...]",
@@ -476,7 +400,7 @@ contract eilish is Shell, compspec {
             "",
             "");
     }
-//    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
+
     function _command_info() internal pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
         return ("tosh", "display", "[-dms]",
             "Displays brief summaries of builtin commands.",

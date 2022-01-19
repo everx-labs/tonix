@@ -35,14 +35,18 @@ args() {
         builtin_read_fs)
            jq '{e: .}' run/env >tmp/shell_in;
            jq -s 'add' tmp/shell_in run/fs;;
-        run_builtin|execute_command)
+        run_builtin)
             jq -n --slurpfile annotation run/annotation '{$annotation}';;
 #            jq -n --rawfile args run/args --rawfile pool run/builtins '{$args, $pool}';;
+        execute_command)
+            jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
+#            jq -n --slurpfile annotation run/annotation '{$annotation}';;
         b_exec)
             jq '{e: .}' run/env >tmp/shell_in;
             jq -s 'add' tmp/shell_in run/fs;;
         exec)
-            jq --rawfile args run/args '. + {$args}' run/fs;;
+#            jq --rawfile args run/args '. + {$args}' run/fs;;
+            jq --rawfile args run/export '. + {$args}' run/fs;;
         exec_env)
             jq --rawfile args run/args --rawfile pool run/pool '. + {$args} + {$pool}' run/fs;;
         on_exec)
@@ -85,8 +89,15 @@ filter() {
             jq -rj '.err' $1 >run/stderr;;
         display_man_page)
             jq -rj '.out' $1 >run/stdout;;
-        run_builtin|execute_command)
+        run_builtin)
             eval `jq -r '.res' $1`;;
+        execute_command)
+#            ./builtin export export_env;
+            jq -rj '.ec' $1 >run/ec;
+            jq -rj '.exports' $1 >run/export;
+            jq -rj '.cs_res' $1 >run/comp_spec;
+            eval `jq -rj '.exec_line' $1`;;
+#            eval `jq -r '.res' $1`;;
         b_exec)
             cp $1 tmp/post_b_exec;;
         read_input)

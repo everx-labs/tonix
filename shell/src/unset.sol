@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -6,7 +6,6 @@ contract unset is Shell {
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
         (string[] params, string flags, ) = _get_args(args);
-//        string dbg;
         bool unset_vars = _flag_set("v", flags);
         bool unset_functions = _flag_set("f", flags);
         string s_attrs = unset_functions ? "-f" : unset_vars ? "+f" : "";
@@ -16,7 +15,6 @@ contract unset is Shell {
             if (!line.empty()) {
                 (string attrs, ) = _strsplit(line, " ");
                 if (_match_attr_set(s_attrs, attrs)) {
-  //                  dbg.append("found " + line + "\n");
                     page = _translate(page, line + "\n", "");
                 }
             } else {

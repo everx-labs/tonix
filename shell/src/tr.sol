@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -7,10 +7,10 @@ contract tr is Utility {
     function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (string[] v_args, string flags, ) = _get_args(args);
+        (uint16 wd, string[] v_args, string flags, ) = _get_env(args);
         string[] params;
         for (string arg: v_args) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
+            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_tr(flags, _get_file_contents(index, inodes, data), params) + "\n");
             else

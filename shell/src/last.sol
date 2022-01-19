@@ -1,19 +1,25 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract last is Utility, libuadm {
 
-    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, , uint flags) = input.unpack();
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = _get_env(args);
+        ec = EXECUTE_SUCCESS;
+
+//    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
+//        (, , uint flags) = input.unpack();
 //        bool host_names = (flags & _a) > 0;
 //        bool translate_address = (flags & _d) > 0;
 //        bool full_dates = (flags & _F) > 0;
 //        bool numeric_addresses = (flags & _i) > 0;
 //        bool no_host_names = (flags & _R) > 0;
 //        bool full_domain_names = (flags & _w) > 0;
-        bool shutdown_entries = (flags & _x) > 0;
+//        bool shutdown_entries = (flags & _x) > 0;
+        bool shutdown_entries = _flag_set("x", flags);
 
         uint16 var_log_dir = _resolve_absolute_path("/var/log", inodes, data);
         (uint16 wtmp_index, uint8 wtmp_file_type) = _lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");

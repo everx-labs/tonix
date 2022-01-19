@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "../include/Internal.sol";
 import "arguments.sol";

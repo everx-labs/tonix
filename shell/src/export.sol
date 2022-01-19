@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -46,6 +46,18 @@ contract export is Shell {
         for (string p: params)
             page = _set_var(s_attrs, p, page);
         res = page;
+    }
+
+    function export_env(string args, string pool) external pure returns (uint8 ec, string res) {
+        string s_attrs = "-x";
+        (string[] lines, ) = _split(pool, "\n");
+        for (string line: lines) {
+            (string attrs, ) = _strsplit(line, " ");
+            if (_match_attr_set(s_attrs, attrs))
+                res.append(line + "\n");
+        }
+        res.append(args);
+        ec = EXECUTE_SUCCESS;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

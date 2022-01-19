@@ -1,13 +1,13 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract du is Utility {
 
     function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, string flags, ) = _get_args(args);
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
         for (string arg: params) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
+            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_du(flags, arg, ft, index, inodes, data) + "\n");
             else {
@@ -20,12 +20,7 @@ contract du is Utility {
     function _du(string f, string path, uint8 ft, uint16 index, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string) {
         (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, , , ) = _flag_values("0ahcs", f);
 
-//        string line_end = _flag_set("0", f) ? "\x00" : "\n";
         string line_end = null_line_end ? "\x00" : "\n";
-        /*bool count_files = _flag_set("a", f);
-        bool human_readable = _flag_set("h", f);
-        bool produce_total = _flag_set("c", f);
-        bool summarize = _flag_set("s", f);*/
 
         if (count_files && summarize)
             return "du: cannot both summarize and show all entries\n";
@@ -44,9 +39,6 @@ contract du is Utility {
 
     function _count_dir(string f, string dir_name, Inode inode, bytes dir_data, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[][] lines, uint32 total) {
         (bool count_files, bool include_subdirs, bool human_readable, , , , , ) = _flag_values("aSh", f);
-        /*bool count_files = _flag_set("a", f);
-        bool include_subdirs = !_flag_set("S", f);
-        bool human_readable = _flag_set("h", f);*/
 
         (DirEntry[] contents, int16 status) = _read_dir_data(dir_data);
 

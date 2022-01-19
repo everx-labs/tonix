@@ -1,10 +1,25 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract uname is Utility {
 
-    function exec(Session session, InputS input) external pure returns (string out) {
+    function exec(string args) external pure returns (uint8 ec, string out, string err) {
+        ( , , string flags, ) = _get_env(args);
+        string host_name = _val("HOSTNAME", args);
+        string arch = _val("HOSTTYPE", args);
+
+        ec = EXECUTE_SUCCESS;
+        err = "";
+        (bool all, bool kernel, bool node, bool hw_platform, bool machine, bool processor, bool os, ) = _flag_values("asnimpo", flags);
+        if (all) out = "Tonix FileSys TVM TONOS TVM\n";
+        if (kernel || flags.empty()) out = "Tonix ";
+        if (node) out.append(host_name);
+        if (hw_platform || machine) out.append("TVM ");
+        if (os) out.append("TON OS ");
+        if (processor) out.append(arch + " ");
+    }
+    /*function exec(Session session, InputS input) external pure returns (string out) {
         (, , uint flags) = input.unpack();
         if ((flags & _a) > 0) return "Tonix FileSys TON TONOS TON\n";
         if ((flags & _s) > 0 || flags == 0) out = "Tonix ";
@@ -12,7 +27,7 @@ contract uname is Utility {
         if ((flags & _i + _m) > 0) out.append("TON ");
         if ((flags & _o) > 0) out.append("TON OS ");
         if ((flags & _p) > 0) out.append("TON ");
-    }
+    }*/
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list,
                         uint8 min_args, uint16 max_args, string[] option_descriptions) {

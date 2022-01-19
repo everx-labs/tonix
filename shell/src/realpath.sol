@@ -1,23 +1,39 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.54.0;
 
 import "Utility.sol";
 
 contract realpath is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-        (out, errors) = _realpath(flags, args, session.wd, inodes, data);
+    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+//        (string[] params, string flags, ) = _get_args(args);
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
+
+//    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Err[] errors) {
+  //      (, string[] args, uint flags) = input.unpack();
+//        string s_wd = _val("WD", args);
+//        uint16 wd = _atoi(s_wd);
+        if (wd >= ROOT_DIR)
+            (out, err) = _realpath(flags, params, wd, inodes, data);
+        else {
+            err.append("Failed to resolve relative path for" + args + "\n");
+            ec = EXECUTE_FAILURE;
+        }
     }
 
-    function _realpath(uint flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
-        bool canon_existing = (flags & _e) > 0;
+//    function _realpath(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
+    function _realpath(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, string err) {
+        (bool canon_existing, bool canon_missing, bool dont_expand_symlinks, bool no_errors, bool null_delimiter, /*bool logical*/, /*bool physical*/, )
+            = _flag_values("emsqzLP", flags);
+        /*bool canon_existing = (flags & _e) > 0;
         bool canon_missing = (flags & _m) > 0;
         bool canon_existing_dir = (flags & _m + _e) == 0;
 //        bool logical = (flags & _L) > 0;
 //        bool physical = (flags & _P) > 0;
         bool expand_symlinks = (flags & _s) == 0;
         bool print_errors = (flags & _q) == 0;
-        string line_delimiter = (flags & _z) > 0 ? "\x00" : "\n";
+        string line_delimiter = (flags & _z) > 0 ? "\x00" : "\n";*/
+        bool canon_existing_dir = !canon_existing && !canon_missing;
+        string line_delimiter = null_delimiter ? "\x00" : "\n";
 
         for (string s_arg: s_args) {
             (string arg_dir, string arg_base) = _dir(s_arg);
@@ -25,13 +41,14 @@ contract realpath is Utility {
             string path = is_abs_path ? s_arg : _xpath(s_arg, wd, inodes, data);
             uint16 cur_dir = is_abs_path ? _resolve_absolute_path(arg_dir, inodes, data) : wd;
 
-            if ((canon_existing_dir || canon_existing) && expand_symlinks) {
+            if ((canon_existing_dir || canon_existing) && !dont_expand_symlinks) {
                 (uint16 index, uint8 ft) = _lookup_dir(inodes[cur_dir], data[cur_dir], arg_base);
                 if (ft == FT_SYMLINK)
                     (path, ft, , ,) = _dereference(EXPAND_SYMLINKS, s_arg, wd, inodes, data).unpack();
                 if (!canon_missing && index < INODES) {
-                    if (print_errors)
-                        errors.push(Err(0, index, s_arg));
+                    if (!no_errors)
+                        //errors.push(Err(0, index, s_arg));
+                        err.append("realpath: missing " + s_arg + ", index " + _itoa(index) + "\n");
                     continue;
                 }
             }

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -8,9 +8,6 @@ contract source is Shell {
         (string[] params, , ) = _get_args(args);
         ec = EXECUTE_SUCCESS;
 
-//    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-//        (string[] params, string flags, string argv) = _get_args(e[IS_ARGS]);
-  //      string file_contents = e[IS_STDIN];
         string file_contents = input;
         string tosh_path = _val("TOSH", pool);
         string s_args = _val("$@", pool);

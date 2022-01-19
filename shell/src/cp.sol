@@ -1,40 +1,24 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract cp is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function _induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-//    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
         Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
+        for (string arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
             arg_list.push(Arg(arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _cp(args, flags, session.wd, arg_list, _get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _cp(params, flags, wd, arg_list, _get_inode_count(inodes), inodes, data);
     }
 
-    /* File manipulation operations - cp, ln and mv */
-    function _cp(string[] args, uint flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
-        bool verbose = (flags & _v) > 0;
-        bool preserve = (flags & _n) > 0;
-        bool request_backup = (flags & _b) > 0;
-        bool to_file_flag = (flags & _T) > 0;
-        bool to_dir_flag = (flags & _t) > 0;
-        bool newer_only = (flags & _u) > 0;
-        bool force = (flags & _f) > 0;
-        bool recurse = (flags & _r + _R) > 0;
-        bool hardlink = (flags & _l) > 0;
-        bool symlink = (flags & _s) > 0;
+    function _cp(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+        (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool recurse)
+            = _flag_values("vnbTtufr", flags);
+        bool hardlink = _flag_set("l", flags);
+        bool symlink = _flag_set("s", flags);
 
         if (hardlink && symlink)
             errors.push(Err(hard_or_symlink, 0, ""));

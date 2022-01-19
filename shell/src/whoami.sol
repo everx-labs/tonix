@@ -1,12 +1,13 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract whoami is Utility {
 
-    function exec_env(string args, string pool) external pure returns (uint8 ec, string out, string err) {
-        ec = args.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
-        out = _val("USER", pool);
+    function exec(string args) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, , ) = _get_args(args);
+        ec = params.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+        out = _val("USER", args);
         err = "";
     }
 

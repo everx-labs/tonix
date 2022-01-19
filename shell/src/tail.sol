@@ -1,15 +1,14 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract tail is Utility {
 
     function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (string[] v_args, string flags, ) = _get_args(args);
+        (uint16 wd, string[] v_args, string flags, ) = _get_env(args);
         string[] params;
-
         for (string arg: v_args) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
+            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
             if (ft != FT_UNKNOWN) {
                 (string s_out, string s_err) = _tail(flags, _get_file_contents(index, inodes, data), arg, params);
                 if (s_err.empty())
@@ -26,10 +25,6 @@ contract tail is Utility {
     function _tail(string flags, string texts, string arg, string[] params) private pure returns (string out, string err) {
         (string[] text, ) = _split(texts, "\n");
         (bool num_lines, bool never_headers, bool always_headers, bool null_delimiter, , , ,) = _flag_values("nqvz", flags);
-        /*bool num_lines = _flag_set("n", flags);
-        bool never_headers = _flag_set("q", flags);
-        bool always_headers = _flag_set("v", flags);
-        string line_delimiter = _flag_set("z", flags) ? "\x00" : "\n";*/
         string line_delimiter = null_delimiter ? "\x00" : "\n";
         string file_name = arg;
         uint n_lines = 10;

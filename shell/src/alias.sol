@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -14,7 +14,6 @@ contract alias_ is Shell {
         if (_strchr(argv, "=") > 0) {
             (string name, ) = _strsplit(token, "=");
             string value = _strval(argv, "=", "\n");
-//            string new_value = "-- " + _wrap(name, W_SQUARE) + "=" + _wrap(value, W_DQUOTE);
             string new_value = _var_record("", name, value);
             string cur_val = _val(name, alias_page);
             if (cur_val.empty())
@@ -27,6 +26,8 @@ contract alias_ is Shell {
     }
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        ec = EXECUTE_SUCCESS;
+        out = "";
         (string[] params, , ) = _get_args(args);
         if (params.empty()) {
             (string[] aliases, ) = _split_line(pool, "\n", "\n");
@@ -38,8 +39,8 @@ contract alias_ is Shell {
             string token = params[0];
             string cur_val = _val(token, pool);
             if (cur_val.empty()) {
-                out.append("-tosh: alias: " + token + ": not found\n");
                 ec = EXECUTE_FAILURE;
+                out.append("-tosh: alias: " + token + ": not found\n");
             } else
                 out.append("alias " + token + "=" + _wrap(cur_val, W_SQUOTE) + "\n");
         }

@@ -1,20 +1,8 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
 contract shopt is Shell {
-
-    /*function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
-        (ec, out, res) = _shopt(params, flags, pool);
-    }
-
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, ) = _get_args(e[IS_ARGS]);
-        (ec, out, ) = _shopt(params, flags, e[IS_POOL]);
-    }
-
-    function _shopt(string[] params, string flags, string pool) internal pure returns (uint8 ec, string out, string res) {*/
 
     function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
         ec = 0;

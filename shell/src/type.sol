@@ -1,24 +1,10 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 import "compspec.sol";
 
 contract type_ is Shell, compspec {
 
-    uint8 constant COMMAND_UNKNOWN  = 0;
-    uint8 constant COMMAND_ALIAS    = 1;
-    uint8 constant COMMAND_KEYWORD  = 2;
-    uint8 constant COMMAND_FUNCTION = 3;
-    uint8 constant COMMAND_BUILTIN  = 4;
-    uint8 constant COMMAND_FILE     = 5;
-    uint8 constant COMMAND_NOT_FOUND= 6;
-
-    uint8 constant FORMAT_DEFAULT       = 1;
-    uint8 constant FORMAT_TERSE         = 2;
-    uint8 constant FORMAT_DISK_FILE_NAME = 3;
-    uint8 constant FORMAT_ALL_LOCATIONS = 4;
-
-//    function print(string args, string hashes, string index, string pool) external pure returns (uint8 ec, string out) {
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = _get_args(args);
 
@@ -29,7 +15,6 @@ contract type_ is Shell, compspec {
 //        bool path_search = _flag("P", env_in);
 
         for (string arg: params) {
-//            string t = _get_array_name(arg, index);
             string t = _get_array_name(arg, pool);
             string value;
             if (t == "keyword")
@@ -41,13 +26,14 @@ contract type_ is Shell, compspec {
             } else if (t == "builtin")
                 value = f_terse ? "builtin" : (arg + " is a shell builtin");
             else if (t == "command") {
-//                string path = _get_array_name(arg, hashes);
-                string path = _get_array_name(" " + arg + " ", pool);
+                string path_map = _get_pool_record(arg, pool);
+                string path;
+                if (!path_map.empty())
+                    (, path, ) = _split_var_record(path_map);
                 if (!path.empty())
                     value = f_terse ? "file" : (arg + " is hashed (" + path + "/" + arg + ")");
                 else
-//                    value = f_terse ? "file" : (arg + " is " + _get_array_name(arg, hashes) + "/" + arg);
-                    value = f_terse ? "file" : (arg + " is " + _get_array_name(arg, pool) + "/" + arg);
+                    value = f_terse ? "file" : (arg + " is " + "/bin/" + arg);
             } else {
                 value = "-tosh: type: " + arg + ": not found";
                 ec = EXECUTE_FAILURE;

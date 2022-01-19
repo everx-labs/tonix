@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 
@@ -8,7 +8,7 @@ contract unalias is Shell {
         (string[] params, string flags, ) = _get_args(args);
         string alias_page = pool;
         bool remove_all = _flag_set("a", flags);
-
+        ec = EXECUTE_SUCCESS;
         if (remove_all)
 //            res = _translate(pool, alias_page, "");
             res = "";

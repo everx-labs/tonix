@@ -1,19 +1,19 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract touch is Utility {
 
-    function induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (Action file_action, Ar[] ars) {
-        (, string[] args, uint flags) = input.unpack();
+  function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
         Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
+        for (string arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
             arg_list.push(Arg(arg, ft, index, parent, dir_index));
         }
         uint16 ic = _get_inode_count(inodes);
-        bool create_files = (flags & _c) == 0;
-        bool update_if_exists = (flags & _m) == 0;
+        bool create_files = !_flag_set("c", flags);
+        bool update_if_exists = !_flag_set("m", flags);
 
         uint n = arg_list.length;
         file_action = Action(IO_CREATE_FILES, uint16(n));

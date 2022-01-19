@@ -6,14 +6,14 @@ contract grep is Utility {
 
     function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
-        (string[] v_args, string flags, ) = _get_args(args);
+        (uint16 wd, string[] v_args, string flags, ) = _get_env(args);
         string[] params;
         string[] f_args;
         uint n_args = v_args.length;
 
         for (uint i = 0; i < n_args; i++) {
             string arg = v_args[i];
-            (, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
+            (, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
             if (ft == FT_UNKNOWN)
                 params.push(arg);
             else
@@ -24,8 +24,10 @@ contract grep is Utility {
             (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_grep(flags, _get_file_contents(index, inodes, data), params) + "\n");
-            else
+            else {
                 err.append("Failed to resolve relative path for" + arg + "\n");
+                ec = EXECUTE_FAILURE;
+            }
         }
     }
 

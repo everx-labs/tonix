@@ -1,30 +1,22 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract mkdir is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function _induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
         Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
+        for (string arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
             arg_list.push(Arg(arg, ft, index, parent, dir_index));
         }
         (out, file_action, ars, errors) = _mkdir(flags, arg_list, _get_inode_count(inodes));
     }
 
-    function _mkdir(uint flags, Arg[] arg_list, uint16 ic) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
-        bool error_if_exists = (flags & _p) == 0;
-        bool report_actions = (flags & _v) > 0;
+    function _mkdir(string flags, Arg[] arg_list, uint16 ic) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+        bool error_if_exists = !_flag_set("p", flags);
+        bool report_actions = _flag_set("v", flags);
 
         uint8 action_type = IO_CREATE_FILES;
         uint8 action_item_type = IO_MKDIR;
