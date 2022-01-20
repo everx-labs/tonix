@@ -111,7 +111,6 @@ contract eilish is Shell, compspec {
         string[][2] opt_values;
         string pos_params;
         string pos_map;
-        string dbg_x;
         string[] params;
         uint n_params;
         string last_param;
@@ -126,7 +125,7 @@ contract eilish is Shell, compspec {
             redir_out = p > 0 ? _strtok(s_input, p, " ") : "";
             redir_in = q > 0 ? _strtok(s_input, q, " ") : "";
             uint8 t_ec;
-            (t_ec, s_flags, opt_values, dbg_x, pos_params, ) = _parse_params(params, cmd_opt_string);
+            (t_ec, s_flags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
             ec = t_ec;
 
             for (string arg: params) {
@@ -149,13 +148,11 @@ contract eilish is Shell, compspec {
 
         if (cmd_type == "builtin") {
             exec_line = "./tosh run_builtin " + input;
-//            fn_name = _get_array_name(cmd, comp_spec);
             string fn_spec = _get_pool_record(cmd, comp_spec);
             if (!fn_spec.empty())
                 (, fn_name, ) = _split_var_record(fn_spec);
         } else if (cmd_type == "command") {
             exec_line = "./tosh execute_command " + input;
-//            fn_name = _get_array_name(cmd, comp_spec);
             string fn_spec = _get_pool_record(cmd, comp_spec);
             if (!fn_spec.empty())
                 (, fn_name, ) = _split_var_record(fn_spec);
@@ -185,7 +182,7 @@ contract eilish is Shell, compspec {
             }
         } else {
             ec = EXECUTE_FAILURE;
-            err = cmd + ": command not found\n";
+            err.append(cmd + ": command not found\n");
         }
         if (ec > EXECUTE_SUCCESS)
             exec_line = "echo " + err;
@@ -193,14 +190,14 @@ contract eilish is Shell, compspec {
             Item("COMMAND", 0, cmd),
             Item("PARAMS", 0, pos_params),
             Item("FLAGS", 0, s_flags),
-            Item("OPT_ARGS", 0, _encode_items(opt_values, " ")),
+            Item("OPT_ARGS", 0, _trim_trailing(_encode_items(opt_values, " "))),
             Item("ARGV", 0, input),
             Item("POS_ARGS", 0, pos_map),
             Item("#", 0, _itoa(n_params)),
             Item("@", 0, s_args),
             Item("?", 0, _itoa(ec)),
             Item("_", 0, last_param),
-            Item("OPTERR", 0, dbg_x),
+            Item("OPTERR", 0, err),
             Item("CMD_TYPE", 0, cmd_type),
             Item("EXEC_PATH", 0, exec_path),
             Item("EXEC_FUNCTION", 0, fn_name),
@@ -230,10 +227,11 @@ contract eilish is Shell, compspec {
         string[][2] opt_values;
         string pos_params;
         string pos_map;
-        string dbg_x;
+        string err;
         string[] params;
         uint n_params;
         string last_param;
+        string opt_args;
         if (!s_args.empty()) {
             (params, n_params) = _split(s_args, " ");
             uint p = _strrchr(s_input, ">");
@@ -241,7 +239,7 @@ contract eilish is Shell, compspec {
             redir_out = p > 0 ? _strtok(s_input, p, " ") : "";
             redir_in = q > 0 ? _strtok(s_input, q, " ") : "";
             uint8 t_ec;
-            (t_ec, s_flags, opt_values, dbg_x, pos_params, ) = _parse_params(params, cmd_opt_string);
+            (t_ec, s_flags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
             ec = t_ec;
             for (string arg: params) {
                 if (_strchr(arg, "$") > 0) {
@@ -253,7 +251,16 @@ contract eilish is Shell, compspec {
                     s_args = _translate(s_args, arg, ref_val);
                 }
             }
+            opt_args = _as_hashmap("OPT_ARGS", opt_values);
+            if (!_val("help", opt_args).empty() || !_val("version", opt_args).empty()) {
+                s_args = cmd;
+                pos_params = cmd;
+                params = [cmd];
+                n_params = 1;
+                cmd = "man";
+            }
         }
+
         pos_map = _as_indexed_array("POS_ARGS", s_args.empty() ? cmd : (cmd + " " + s_args), " ");
         last_param = s_args.empty() ? cmd : params[n_params - 1];
         out = _as_var_list([
@@ -265,11 +272,11 @@ contract eilish is Shell, compspec {
             ["@", s_args],
             ["?", _itoa(ec)],
             ["_", last_param],
-            ["OPTERR", dbg_x],
+            ["OPTERR", err],
             ["REDIR_IN", redir_in],
             ["REDIR_OUT", redir_out]]);
-        out.append(_as_hashmap("OPT_ARGS", opt_values) + "\n");
         out.append(pos_map + "\n");
+        out.append(opt_args + "\n");
     }
 
     function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
@@ -336,22 +343,25 @@ contract eilish is Shell, compspec {
     uint16 constant PST_CONDEXPR	= 512; // parsing the guts of [[...]]
     uint16 constant PST_ARITHFOR	= 1024; // parsing an arithmetic for command
 
-    function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string[][2] opt_values, string dbg, string pos_params, string s_attrs) {
+    function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string[][2] opt_values, string err, string pos_params, string s_attrs) {
         uint n_params = params.length;
         uint opt_str_len = opt_string.byteLength();
+        bool expect_options = true;
         for (uint i = 0; i < n_params; i++) {
             string token = params[i];
             uint t_len = token.byteLength();
             if (t_len == 0)
                 continue;
-            if (token.substr(0, 1) == "-") {
+            if (expect_options && token.substr(0, 1) == "-") {
                 string o;
                 string val;
                 if (t_len == 1)
                     continue; // stdin redirect
                 if (token.substr(1, 1) == "-") {
-                    if (t_len == 2) // arg separator
+                    if (t_len == 2) { // arg separator
+                        expect_options = false;
                         continue;
+                    }
                     o = token.substr(2); // long option
                 } else {
                     // short option(s)
@@ -362,24 +372,32 @@ contract eilish is Shell, compspec {
                         continue;
                     }
                 }
-                uint p = _strchr(opt_string, o); // _strstr() for long options ?
-                if (p > 0) {
-                    if (p < opt_str_len && opt_string.substr(p, 1) == ":") {
-                        if (i + 1 < n_params) {
-                            val = params[i + 1];
-                            i++;
-                        } else {
-                            ec = EX_BADUSAGE;
-                            dbg.append(format("error: missing option {} value in {} at {} pos {}\n", o, opt_string, p, i));
-                        }
-                    } else
-                        val = o;
+                uint o_len = o.byteLength();
+                if (o_len == 1) {
+                    uint p = _strchr(opt_string, o); // _strstr() for long options ?
+                    if (p > 0) {
+                        if (p < opt_str_len && opt_string.substr(p, 1) == ":") {
+                            if (i + 1 < n_params) {
+                                val = params[i + 1];
+                                i++;
+                            } else {
+                                ec = EX_BADUSAGE;
+                                err.append(format("error: missing option {} value in {} at {} pos {}\n", o, opt_string, p, i));
+                            }
+                        } else
+                            val = o;
+                        opt_values.push([o, val]);
+                        s_flags.append(o);
+                    } else {
+                        ec = EX_BADUSAGE;
+                        err.append("error: unrecognized option: " + o + " opt_string: " + (opt_string.empty() ? "empty" : opt_string) + "\n");
+                    }
                 } else {
-                    ec = EX_BADUSAGE;
-                    dbg.append("error: unrecognized option: " + o + " opt_string: " + opt_string + "\n");
+                    if (o == "help" || o == "version")
+                        opt_values.push([o, o]);
+                    else
+                        err.append("error: unrecognized option: " + o + ". Long options are not yet supported\n");
                 }
-                opt_values.push([o, val]);
-                s_flags.append(o);
             } else if (token.substr(0, 1) == "+")
                 s_attrs.append(token);
             else {

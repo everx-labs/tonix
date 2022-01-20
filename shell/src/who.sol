@@ -1,13 +1,13 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract who is Utility, libuadm {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , , string flags, ) = _get_env(args);
+        ( , , string flags, ) = _get_env(argv);
         ec = EXECUTE_SUCCESS;
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
             , bool users_logged_in) = _flag_values("bHlqsTwu", flags);

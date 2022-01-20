@@ -5,8 +5,8 @@ import "../include/Commands.sol";
 
 contract wc is Utility, Commands {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(args);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
 
         bool print_lines = true;
         bool print_words = true;

@@ -1,63 +1,29 @@
 #set -x
 
 filter() {
-    if [ -s run/stdout ]; then echo ${GREEN}; cat run/stdout; echo ${NC} | tee -a var/log/stdout; rm run/stdout; fi
-    if [ -s run/stderr ]; then echo ${RED}; cat run/stderr; echo ${NC} | tee -a var/log/stderr; rm run/stderr; fi
+    if [ -s run/stdout ]; then cat run/stdout >>var/log/stdout; cat run/stdout >>var/log/session; echo ${GREEN}; cat run/stdout; echo ${NC}; rm run/stdout; fi
+    if [ -s run/stderr ]; then cat run/stderr >>var/log/stderr; cat run/stderr >>var/log/session; echo ${RED}; cat run/stderr; echo ${NC}; rm run/stderr; fi
 }
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-get_value() {
-    jq -r 'select(.name == "$1") .value' $2;
-}
-build_cmd() {
-#    input2=`jq -r 'select(.name == "_") .value' run/annotation`;
-#    cmd_type=`jq -r 'select(.name == "CMD_TYPE") .value' run/annotation`;
-#    cmd_type=$(get_value) CMD_TYPE run/annotation)
-#    cmd_type=get_value CMD_TYPE run/annotation;
-#    cmd_type=`jq -r 'select(.name == "CMD_TYPE") .value' run/annotation`;
-#    cmd=`jq -r 'select(.name == "COMMAND") .value' run/annotation`;
-#    exec_path=`jq -r 'select(.name == "EXEC_PATH") .value' run/annotation`;
-#    cmd_args=`jq -r 'select(.name == "@") .value' run/annotation`;
-    exec_line=`jq -r 'select(.name == "EXEC_LINE") .value' run/annotation`;
-#    printf "cmd_type: %s cmd: %s exec_path: %s cmd_args: %s exec_line: %s\n" "$cmd_type" "$cmd" "$exec_path" "$cmd_args" "$exec_line";
-#    printf "> %s %s %s\n" "$cmd_type" "$cmd" "$cmd_args";
-#    printf "%s%s %s %s\n" "$exec_path" "$cmd_type" "$cmd" "$cmd_args";
-    printf "%s\n" "$exec_line";
-#    jq -n --rawfile args run/args --rawfile input $input2 --rawfile pool run/pool '{$args, $input, $pool}';;
-}
 ./eilish set_tosh_vars
-#cat run/vars run/tosh_vars run/hashes run/functions >run/pool
-#cat run/vars run/tosh_vars run/hashes run/functions run/aliases run/index >run/pool
 cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
 
 while true
 do
     echo -n "$ "
     read input
+    echo ">" $input >>var/log/session
     case $input in
         quit)
             break;;
         *)
 rm -f run/command run/ec;
-#./builtin set add;
-#./builtin set imprt $input;
-#./builtin set print;
 ./eilish set_args "$input";
 ./eilish annotate_args "$input";
-#./builtin hash lookup_fn "$input";
-#./builtin set print run/annotation;
-#exec_line=$(build_cmd)
-#build_cmd >run/exec_pipeline;
-#jq -r 'select(.name == "EXEC_LINE") .value' run/annotation >run/exec_pipeline;
 eval `jq -r 'select(.name == "EXEC_LINE") .value' run/annotation`;
-#chmod +x ./run/exec_pipeline;
-#./run/exec_pipeline;
-#echo "$exec_line";
-#./builtin type terse;
-#./eilish build_exec_pipeline;
-#./run/exec_pipeline;
 filter;
 ;;
     esac

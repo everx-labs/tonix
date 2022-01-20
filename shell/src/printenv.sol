@@ -4,13 +4,13 @@ import "Utility.sol";
 
 contract printenv is Utility {
 
-    function exec(string args) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, string flags, ) = _get_args(args);
+    function main(string argv) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, string flags, ) = _get_args(argv);
         string delimiter = _flag_set("0", flags) ? "\x00" : "\n";
 
         string s_attrs = "-x";
         if (params.empty()) {
-            (string[] lines, ) = _split(args, "\n");
+            (string[] lines, ) = _split(argv, "\n");
             for (string line: lines) {
                 (string attrs, string stmt) = _strsplit(line, " ");
                 if (_match_attr_set(s_attrs, attrs)) {
@@ -20,7 +20,7 @@ contract printenv is Utility {
             }
         }
         for (string p: params) {
-            string cur_record = _get_pool_record(p, args);
+            string cur_record = _get_pool_record(p, argv);
             if (!cur_record.empty()) {
                 (string attrs, string stmt) = _strsplit(cur_record, " ");
                 if (_match_attr_set(s_attrs, attrs)) {

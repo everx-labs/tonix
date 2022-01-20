@@ -1,37 +1,22 @@
-pragma ton-solidity >= 0.54.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract realpath is Utility {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-//        (string[] params, string flags, ) = _get_args(args);
-        (uint16 wd, string[] params, string flags, ) = _get_env(args);
-
-//    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Err[] errors) {
-  //      (, string[] args, uint flags) = input.unpack();
-//        string s_wd = _val("WD", args);
-//        uint16 wd = _atoi(s_wd);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
         if (wd >= ROOT_DIR)
             (out, err) = _realpath(flags, params, wd, inodes, data);
         else {
-            err.append("Failed to resolve relative path for" + args + "\n");
+            err.append("Failed to resolve relative path for" + argv + "\n");
             ec = EXECUTE_FAILURE;
         }
     }
 
-//    function _realpath(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
     function _realpath(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, string err) {
         (bool canon_existing, bool canon_missing, bool dont_expand_symlinks, bool no_errors, bool null_delimiter, /*bool logical*/, /*bool physical*/, )
             = _flag_values("emsqzLP", flags);
-        /*bool canon_existing = (flags & _e) > 0;
-        bool canon_missing = (flags & _m) > 0;
-        bool canon_existing_dir = (flags & _m + _e) == 0;
-//        bool logical = (flags & _L) > 0;
-//        bool physical = (flags & _P) > 0;
-        bool expand_symlinks = (flags & _s) == 0;
-        bool print_errors = (flags & _q) == 0;
-        string line_delimiter = (flags & _z) > 0 ? "\x00" : "\n";*/
         bool canon_existing_dir = !canon_existing && !canon_missing;
         string line_delimiter = null_delimiter ? "\x00" : "\n";
 

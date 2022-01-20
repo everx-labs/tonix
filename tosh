@@ -5,14 +5,12 @@ shift
 param=$1
 
 case $fn in
-    b_exec|builtin_read_fs|builtin_help|exec|ustat|read_fs_to_env|exec_env)
+    b_exec|builtin_read_fs|builtin_help|exec|ustat|read_fs_to_env|exec_env/main)
         util=$param;;
     read_input)
         util=$param;
         shift;
-#        fn=b_exec;
         input=$1;
-#        input=`cat $1`;
         ;;
     display_help)
         util=help;;
@@ -37,16 +35,15 @@ args() {
            jq -s 'add' tmp/shell_in run/fs;;
         run_builtin)
             jq -n --slurpfile annotation run/annotation '{$annotation}';;
-#            jq -n --rawfile args run/args --rawfile pool run/builtins '{$args, $pool}';;
         execute_command)
             jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
-#            jq -n --slurpfile annotation run/annotation '{$annotation}';;
         b_exec)
             jq '{e: .}' run/env >tmp/shell_in;
             jq -s 'add' tmp/shell_in run/fs;;
         exec)
-#            jq --rawfile args run/args '. + {$args}' run/fs;;
             jq --rawfile args run/export '. + {$args}' run/fs;;
+        main)
+            jq --rawfile args run/export '. + {$argv}' run/fs;;
         exec_env)
             jq --rawfile args run/args --rawfile pool run/pool '. + {$args} + {$pool}' run/fs;;
         on_exec)
@@ -56,14 +53,9 @@ args() {
             jq '{e: .}' run/env >tmp/shell_in;
             jq '.delta=(.wr // [])' tmp/post_b_exec >tmp/delta_in;
             jq -s 'add' tmp/shell_in tmp/delta_in;;
-        handle_action)
-#            jq '.inodes_in = .inodes | .data_in = .data | del(.inodes, .data)' vfs/tmp/fs >vfs/tmp/tmpfs/fs_in;
-            jq '.inodes_in = .inodes | .data_in = .data | del(.inodes, .data)' run/fs >vfs/tmp/tmpfs/fs_in;
-            jq -s 'add' vfs/tmp/session  vfs/tmp/tosh/tosh_process_input.out vfs/tmp/tmpfs/fs_in vfs/tmp/tmpfs/delta;;
         read_input)
             input2=`jq -r 'select(.name=="_") .value' run/annotation`;
             jq -n --rawfile args run/args --rawfile input $input2 --rawfile pool run/pool '{$args, $input, $pool}';;
-#            jq -n --rawfile args run/args --rawfile input $input --rawfile pool run/pool '{$args, $input, $pool}';;
         display_help)
             jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/builtin_help '{args: $v, help_files: $v1}';;
         display_man_page)
@@ -84,20 +76,25 @@ filter() {
         builtin_read_fs|ustat)
             cp $1 tmp/post_b_exec;;
         exec)
-#            cp $1 tmp/post_exec;;
+            jq -rj '.out' $1 >run/stdout;
+            jq -rj '.err' $1 >run/stderr;;
+        main)
             jq -rj '.out' $1 >run/stdout;
             jq -rj '.err' $1 >run/stderr;;
         display_man_page)
             jq -rj '.out' $1 >run/stdout;;
         run_builtin)
+            jq -r '.res' $1 >>var/log/commands
             eval `jq -r '.res' $1`;;
         execute_command)
-#            ./builtin export export_env;
             jq -rj '.ec' $1 >run/ec;
-            jq -rj '.exports' $1 >run/export;
-            jq -rj '.cs_res' $1 >run/comp_spec;
+            jq 'if (.ec == "0") then . else empty end' $1 >tmp/cmd_exec;
+            if [ -s tmp/cmd_exec ]; then
+                jq -rj '.exports' $1 >run/export;
+                jq -rj '.cs_res' $1 >run/comp_spec;
+            fi
+            jq -r '.exec_line' $1 >>var/log/commands
             eval `jq -rj '.exec_line' $1`;;
-#            eval `jq -r '.res' $1`;;
         b_exec)
             cp $1 tmp/post_b_exec;;
         read_input)
@@ -135,17 +132,11 @@ filter() {
             jq -rj '.env[1]' $1 >run/stdout;
             jq -rj '.env[2]' $1 >run/stderr;
             ;;
-        handle_action)
-            cp $1 vfs/tmp/tmpfs/fs_out;
-            cp vfs/tmp/tmpfs/fs_out run/fs;;
-        alter)
-            cp $1 vfs/tmp/tmpfs/fs_out;;
         *)
             ;;
     esac
 }
 
 args >tmp/${util}_$fn.args
-#~/bin/tonos-cli -j run --boc vfs/tmp/sbin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
 ~/bin/tonos-cli -j run --boc bin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
 filter tmp/${util}_$fn.out

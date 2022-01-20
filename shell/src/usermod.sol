@@ -1,18 +1,12 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract usermod is Utility, libuadm {
 
-    function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _uadm(session, input, inodes, data);
-    }
-
-    function _uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-
-        session.pid = session.pid;
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+        (, string[] params, string flags, ) = _get_env(args);
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
 
@@ -26,49 +20,13 @@ contract usermod is Utility, libuadm {
         if (group_file_type == FT_REG_FILE)
             etc_group = _get_file_contents(group_index, inodes, data);
         string prev_entry;
-        UserEvent ue;
-        (ue, errors, prev_entry) = _usermod(flags, args, users, groups);
-
-        if (errors.empty()) {
-            (uint8 et, uint16 user_id, uint16 group_id, /*uint16 options*/, string user_name, string group_name, ) = ue.unpack();
-            string text;
-            if (et == UA_ADD_USER) {
-                text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
-                ars.push(Ar(et, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", text));
-            } else if (et == UA_ADD_GROUP) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(et, FT_REG_FILE, group_index, group_dir_idx, "group", text));
-            } else if (et == UA_DELETE_GROUP) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, text, "")));
-            } else if (et == UA_DELETE_USER) {
-                text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, text, "")));
-            } else if (et == UA_CHANGE_GROUP_ID) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, prev_entry, text)));
-            } else if (et == UA_RENAME_GROUP) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, prev_entry, text)));
-            } else if (et == UA_UPDATE_USER) {
-                text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, prev_entry, text)));
-            }
-            file_action = Action(et, 1);
-
-        }
-        out = out;
-    }
-
-    function _usermod(uint flags, string[] args, mapping (uint16 => UserInfo) users, mapping (uint16 => GroupInfo) groups) private pure returns (UserEvent ue, Err[] errs, string prev_entry) {
 //        bool append_to_supp_groups = (flags & _a) > 0;
-        bool change_primary_group = (flags & _g) > 0;
-        bool supp_groups_list = (flags & _G) > 0;
+        bool change_primary_group = _flag_set("g", flags);
+        bool supp_groups_list = _flag_set("G", flags);
 
-        uint n_args = args.length;
-        string user_name = args[n_args - 1];
+        uint n_args = params.length;
+        string user_name = params[n_args - 1];
         uint16 user_id;
-        uint16 options;
         uint16 group_id;
         string group_name;
         uint16[] group_list;
@@ -80,21 +38,21 @@ contract usermod is Utility, libuadm {
             }
 
         if (user_id == 0)
-            errs.push(Err(E_NOTFOUND, 0, user_name)); // specified user doesn't exist
+            errors.push(Err(E_NOTFOUND, 0, user_name)); // specified user doesn't exist
 
         prev_entry = format("{}\t{}\t{}\t{}\t/home/{}", user_name, user_id, users[user_id].gid, users[user_id].primary_group, user_name);
         if (change_primary_group && n_args > 1) {
-            string group_id_s = args[0];
+            string group_id_s = params[0];
             optional(int) val = stoi(group_id_s);
             if (!val.hasValue())
-                errs.push(Err(E_BAD_ARG, 0, group_id_s)); // invalid argument to option
+                errors.push(Err(E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
                 group_id = uint16(val.get());
             if (!groups.exists(group_id))
-                errs.push(Err(E_NOTFOUND, 0, group_id_s)); // specified group doesn't exist
+                errors.push(Err(E_NOTFOUND, 0, group_id_s)); // specified group doesn't exist
             group_name = groups[group_id].group_name;
         } else if (supp_groups_list && n_args > 1) {
-            string supp_string = args[0];
+            string supp_string = params[0];
             (string[] supp_list, ) = _split(supp_string, ",");
             for (string s: supp_list) {
                 uint16 gid_found = 0;
@@ -104,11 +62,16 @@ contract usermod is Utility, libuadm {
                 if (gid_found > 0)
                     group_list.push(gid_found);
                 else
-                    errs.push(Err(E_NOTFOUND, 0, s));
+                    errors.push(Err(E_NOTFOUND, 0, s));
             }
         }
-        if (errs.empty())
-            ue = UserEvent(UA_UPDATE_USER, user_id, group_id, options, user_name, group_name, group_list);
+      if (errors.empty()) {
+            string text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
+            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, prev_entry, text)));
+            file_action = Action(UA_UPDATE_USER, 1);
+        } else
+            ec = EXECUTE_FAILURE;
+        out = "";
     }
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {

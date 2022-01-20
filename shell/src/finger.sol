@@ -1,26 +1,33 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract finger is Utility, libuadm {
 
-    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, string[] args, uint flags) = input.unpack();
-        bool flag_multi_line = (flags & _l) > 0;
-//        bool no_names_matching = (flags & _m) > 0;
-        bool flag_short_format = (flags & _s) > 0;
-        bool short_format = flag_short_format && !flag_multi_line;
-        string user_name = args[0];
-        string[][] table;
-        if (short_format)
-            table = [["Login", "Tty", "Idle", "Login Time"]];
-        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
-        for ((, UserInfo user_info): users)
-            if (user_info.user_name == user_name)
-                table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (, string[] params, string flags, ) = _get_env(argv);
 
-        out = _format_table(table, " ", "\n", ALIGN_CENTER);
+        bool flag_multi_line = _flag_set("l", flags);
+//        bool no_names_matching = (flags & _m) > 0;
+        bool flag_short_format = _flag_set("s", flags);
+        bool short_format = flag_short_format && !flag_multi_line;
+        if (params.empty())
+            out = "No one logged on.";
+        else {
+            string user_name = params[0];
+            string[][] table;
+            if (short_format)
+                table = [["Login", "Tty", "Idle", "Login Time"]];
+            mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
+            for ((, UserInfo user_info): users)
+                if (user_info.user_name == user_name)
+                    table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);
+
+            out = _format_table(table, " ", "\n", ALIGN_CENTER);
+        }
+        ec = EXECUTE_SUCCESS;
+        err = "";
     }
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {

@@ -4,10 +4,10 @@ import "Utility.sol";
 
 contract basename is Utility {
 
-    function exec(string args) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (string[] params, string flags, ) = _get_args(args);
+        (string[] params, string flags, ) = _get_args(argv);
 
         if (params.empty())
             return (EXECUTE_FAILURE, "", "basename: missing operand\n");

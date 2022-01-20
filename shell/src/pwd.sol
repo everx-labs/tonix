@@ -11,11 +11,9 @@ contract pwd is Shell {
             string wd = _val("PWD", pool);
             if (wd.empty()) {
                 ec = EXECUTE_FAILURE;
-                out = "pwd: current directory cannot be read";
-            } else {
-                ec = EXECUTE_SUCCESS;
-                out = wd;
-            }
+                out = "pwd: current directory cannot be read\n";
+            } else
+                out = wd + "\n";
         }
     }
 

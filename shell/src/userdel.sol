@@ -1,18 +1,12 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
 
 contract userdel is Utility, libuadm {
 
-    function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _uadm(session, input, inodes, data);
-    }
-
-    function _uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-
-        session.pid = session.pid;
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+        (, string[] params, string flags, ) = _get_env(args);
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
 
@@ -25,46 +19,10 @@ contract userdel is Utility, libuadm {
             etc_passwd = _get_file_contents(passwd_index, inodes, data);
         if (group_file_type == FT_REG_FILE)
             etc_group = _get_file_contents(group_index, inodes, data);
-        string prev_entry;
-        UserEvent ue;
-        (ue, errors) = _userdel(flags, args, users, groups);
+        bool force = _flag_set("f", flags);
+        bool remove_home_dir = _flag_set("r", flags);
 
-        if (errors.empty()) {
-            (uint8 et, uint16 user_id, uint16 group_id, /*uint16 options*/, string user_name, string group_name, ) = ue.unpack();
-            string text;
-            if (et == UA_ADD_USER) {
-                text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
-                ars.push(Ar(et, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", text));
-            } else if (et == UA_ADD_GROUP) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(et, FT_REG_FILE, group_index, group_dir_idx, "group", text));
-            } else if (et == UA_DELETE_GROUP) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, text, "")));
-            } else if (et == UA_DELETE_USER) {
-                text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, text, "")));
-            } else if (et == UA_CHANGE_GROUP_ID) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, prev_entry, text)));
-            } else if (et == UA_RENAME_GROUP) {
-                text = format("{}\t{}\n", group_name, group_id);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, prev_entry, text)));
-            } else if (et == UA_UPDATE_USER) {
-                text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, prev_entry, text)));
-            }
-            file_action = Action(et, 1);
-
-        }
-        out = out;
-    }
-
-    function _userdel(uint flags, string[] args, mapping (uint16 => UserInfo) users, mapping (uint16 => GroupInfo) groups) private pure returns (UserEvent ue, Err[] errs) {
-        bool force = (flags & _f) > 0;
-        bool remove_home_dir = (flags & _r) > 0;
-
-        string victim_user_name = args[0];
+        string victim_user_name = params[0];
         uint16 victim_user_id;
         uint16 victim_group_id;
         uint16[] removed_groups;
@@ -81,7 +39,7 @@ contract userdel is Utility, libuadm {
             }
 
         if (victim_user_id == 0)
-            errs.push(Err(E_NOTFOUND, 0, victim_user_name)); // specified user doesn't exist
+            errors.push(Err(E_NOTFOUND, 0, victim_user_name)); // specified user doesn't exist
 
         // TODO: check for a running process
         for ((uint16 gid, GroupInfo gi): groups)
@@ -91,8 +49,17 @@ contract userdel is Utility, libuadm {
 //                else
 //                    errs.push(Err(8, 0, victim_user_name)); // can't remove user's primary group
             }
-        if (errs.empty())
-            ue = UserEvent(UA_DELETE_USER, victim_user_id, victim_group_id, options, victim_user_name, victim_user_name, removed_groups);
+        if (errors.empty()) {
+            string text = format("{}\t{}\t{}\t{}\t/home/{}\n", victim_user_name, victim_user_id, victim_group_id, victim_user_name, victim_user_name);
+            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, text, "")));
+            if (!removed_groups.empty()) {
+                text = format("{}\t{}\n", victim_user_name, victim_group_id);
+                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, text, "")));
+            }
+            file_action = Action(UA_DELETE_USER, 1);
+        } else
+            ec = EXECUTE_FAILURE;
+        out = "";
     }
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {

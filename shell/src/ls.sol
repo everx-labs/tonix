@@ -5,8 +5,8 @@ import "../lib/libuadm.sol";
 
 contract ls is Utility, libuadm {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, string cwd) = _get_env(args);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (uint16 wd, string[] params, string flags, string cwd) = _get_env(argv);
         if (params.empty())
             params.push(cwd);
         for (string arg: params) {
@@ -217,7 +217,8 @@ contract ls is Utility, libuadm {
 "ls",
 "[OPTION]... [FILE]...",
 "list directory contents",
-"List information about the FILE (the current directory by default).",
+"List information about the FILE (the current directory by default).\n\
+Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.",
 "-a      do not ignore entries starting with .\n\
 -A      do not list implied . and ..\n\
 -B      do not list implied entries ending with ~\n\

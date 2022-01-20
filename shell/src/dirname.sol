@@ -4,10 +4,10 @@ import "Utility.sol";
 
 contract dirname is Utility {
 
-    function exec(string args) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (string[] params, , ) = _get_args(args);
+        (string[] params, , ) = _get_args(argv);
         for (string s: params) {
             (string dir, ) = _dir(s);
             out += dir + "\n";

@@ -4,11 +4,11 @@ import "Utility.sol";
 
 contract hostname is Utility {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , , string flags, ) = _get_env(args);
+        ( , , string flags, ) = _get_env(argv);
         ec = EXECUTE_SUCCESS;
-        string host_name = _val("HOSTNAME", args);
+        string host_name = _val("HOSTNAME", argv);
         bool long_host_name = _flag_set("f", flags);
         bool addresses = _flag_set("i", flags);
 

@@ -4,10 +4,10 @@ import "Utility.sol";
 
 contract id is Utility {
 
-    function exec(string args) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv) external pure returns (uint8 ec, string out, string err) {
         err = "";
 
-        ( , , string flags, ) = _get_env(args);
+        ( , , string flags, ) = _get_env(argv);
 
         bool effective_gid_only = _flag_set("g", flags);
         bool name_not_number = _flag_set("n", flags);
@@ -16,11 +16,11 @@ contract id is Utility {
         bool all_group_ids = _flag_set("G", flags);
         bool is_ugG = effective_uid_only || effective_gid_only || all_group_ids;
 
-        string user_name = _val("USER", args);
-        string group_name = _val("USER", args);
-        string uid = _val("UID", args);
-        string eid = _val("EID", args);
-        string gid = _val("UID", args);
+        string user_name = _val("USER", argv);
+        string group_name = _val("USER", argv);
+        string uid = _val("UID", argv);
+        string eid = _val("EID", argv);
+        string gid = _val("UID", argv);
 
         if ((name_not_number || real_id) && !is_ugG) {
             err = "id: cannot print only names or real IDs in default format";

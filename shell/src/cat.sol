@@ -4,8 +4,8 @@ import "Utility.sol";
 
 contract cat is Utility {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(args);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
         for (string arg: params) {
             (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)

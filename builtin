@@ -28,8 +28,6 @@ args() {
             jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/builtin_help '{args: $v, help_files: $v1}';;
         run_builtin)
             jq -n --slurpfile annotation run/annotation '{$annotation}';;
-        execute_command)
-            jq -n --slurpfile annotation run/annotation '{$annotation}';;
         add)
             jq -n --arg s_attrs "--" --rawfile content x --slurpfile page pg '{s_attrs: $s_attrs, $content, $page}';;
         imprt)
@@ -42,16 +40,13 @@ args() {
 filter() {
     case $fn in
         print)
-            jq -rj '.out' $1;;
+            jq -rj '.out' $1 >run/stdout;;
         display_help)
-            jq -rj '.out' $1;;
+            jq -rj '.out' $1 >run/stdout;;
         annotate_args)
             jq '.res[]' $1 >run/annotation;;
         run_builtin)
             eval `jq -r '.res' $1`;;
-        execute_command)
-#            eval `jq -r '.res' $1`;;
-            echo `jq -r '.res' $1`;;
         modify)
             jq -rj '.ec' $1 >run/ec
             jq -rj '.res' $1 >run/res
@@ -81,7 +76,6 @@ filter() {
         lookup_fn)
             jq -rj '.out' $1;
             jq -rj '.res' $1 >run/lookup_res;
-#            jq -rj '.out' $1 >run/lookup_res;
             if [ -s run/lookup_res ]; then
                 cp run/lookup_res run/comp_spec;
             fi;;

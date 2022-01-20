@@ -4,10 +4,10 @@ import "Utility.sol";
 
 contract look is Utility {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (uint16 wd, string[] v_args, string flags, ) = _get_env(args);
+        (uint16 wd, string[] v_args, string flags, ) = _get_env(argv);
         string[] params;
         for (string arg: v_args) {
             (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);

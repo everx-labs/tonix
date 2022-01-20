@@ -1,24 +1,32 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
 contract readlink is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-        (out, errors) = _readlink(flags, args, session.wd, inodes, data);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
+        Err[] errors;
+        if (wd >= ROOT_DIR)
+            (out, errors) = _readlink(flags, params, wd, inodes, data);
+        else {
+            err.append("Failed to resolve relative path for" + argv + "\n");
+            ec = EXECUTE_FAILURE;
+        }
+        if (!errors.empty()) {
+            ec = EXECUTE_FAILURE;
+            for (Err e: errors)
+                err.append("Failed to read link: " + e.arg + "\n");
+        }
+
     }
 
-    /* Path resolution commands */
-    function _readlink(uint flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
-        bool canon_existing_dir = (flags & _f) > 0;
-        bool canon_existing = (flags & _e) > 0;
-        bool canon_missing = (flags & _m) > 0;
-        bool no_newline = (flags & _n) > 0;
-        bool print_errors = (flags & _v) > 0;
-        string line_delimiter = (flags & _z) > 0 ? "\x00" : "\n";
+    function _readlink(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
+        (bool canon_existing_dir, bool canon_existing, bool canon_missing, bool no_newline, bool print_errors, bool null_delimiter, , )
+            = _flag_values("femsqz", flags);
+        string line_delimiter = null_delimiter ? "\x00" : "\n";
 
-        bool canon = (flags & _f + _e + _m) > 0;
+        bool canon = canon_existing_dir || canon_existing || canon_missing;
         uint16 mode = canon_existing ? 3 : canon_existing_dir ? 2 : canon_missing ? 1 : 0;
 
         for (string s_arg: s_args) {
@@ -45,7 +53,7 @@ contract readlink is Utility {
     }
 
     function _canonicalize(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string res, bool valid) {
-        uint16 canon_mode = mode & 3;
+        uint16 canon_mode = mode & 0x03;
         (string arg_dir, string arg_base) = _dir(s_arg);
         bool is_abs_path = s_arg.substr(0, 1) == "/";
         valid = true;

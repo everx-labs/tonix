@@ -4,8 +4,8 @@ import "Utility.sol";
 
 contract colrm is Utility {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] v_args, , ) = _get_env(args);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        (uint16 wd, string[] v_args, , ) = _get_env(argv);
         string[] params;
 
         for (string arg: v_args) {

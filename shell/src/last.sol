@@ -5,9 +5,9 @@ import "../lib/libuadm.sol";
 
 contract last is Utility, libuadm {
 
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , string[] params, string flags, ) = _get_env(args);
+        ( , string[] params, string flags, ) = _get_env(argv);
         ec = EXECUTE_SUCCESS;
 
 //    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {

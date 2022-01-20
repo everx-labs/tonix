@@ -41,29 +41,17 @@ contract command is Shell {
         }
     }
 
-    function _item_val(string name, Item[] coll) internal pure returns (string) {
-        for (Item i: coll)
-            if (i.name == name)
-                return i.value;
-    }
-
-    function execute_command(string args, string page, string pool) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
-        string comp_spec = page;
-        string cmd = _val("COMMAND", args);
-        string s_args = _val("@", args);
-        string fn_name;
-
+    function _update_hash_table(string cmd, string comp_spec, string pool) internal pure returns (uint8 ec, string fn_name, string cs_res) {
         string fn_map = _get_pool_record(cmd, comp_spec);
         if (fn_map.empty()) {
             string commands = _get_map_value("command", pool);
             if (_strstr(commands, " " + cmd + " ") > 0) {
-                fn_name = "exec";
+                fn_name = "main";
                 fn_map = _get_map_value(fn_name, comp_spec);
                 string upd = _set_item_value(cmd, "0", fn_map);
                 cs_res = _translate(comp_spec, fn_map, upd);
             } else {
                 ec = EXECUTE_FAILURE;
-//                out.append("hash: " + cmd + ": not found\n");
             }
         } else {
             (, fn_name, ) = _split_var_record(fn_map);
@@ -73,7 +61,9 @@ contract command is Shell {
             string upd = _set_item_value(cmd, _itoa(hc + 1), fn_map);
             cs_res = _translate(comp_spec, fn_map, upd);
         }
+    }
 
+    function _export_env(string args, string pool) internal pure returns (string exports) {
         string s_attrs = "-x";
         (string[] lines, ) = _split(pool, "\n");
         for (string line: lines) {
@@ -82,10 +72,21 @@ contract command is Shell {
                 exports.append(line + "\n");
         }
         exports.append(args);
-        string exec_path = "command";
+    }
 
-        fn_name = fn_name.empty() ? "exec" : fn_name;
-        exec_line = "./" + exec_path + " " + fn_name + " " + cmd + " " + s_args;
+    function execute_command(string args, string page, string pool) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
+        string comp_spec = page;
+        string cmd = _val("COMMAND", args);
+        string s_args = _val("@", args);
+        string fn_name;
+
+        (ec, fn_name, cs_res) = _update_hash_table(cmd, comp_spec, pool);
+        exports = _export_env(args, pool);
+
+        if (ec == EXECUTE_SUCCESS)
+            exec_line = "./command " + fn_name + " " + cmd + " " + s_args;
+        else
+            exec_line = "echo Error executing command: " + cmd + ", args " + s_args;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -5,40 +5,26 @@ import "../lib/libuadm.sol";
 
 contract lslogins is Utility, libuadm {
 
-    /*function ustat(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-//    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, string[] args, uint flags) = input.unpack();
-        (out, ) = _lslogins(flags, args, session, inodes, data);
-    }*/
-
-//    function _lslogins(uint flags, string[] args, Session session, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
-    function exec(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , string[] params, string flags, ) = _get_env(args);
+        ( , string[] params, string flags, ) = _get_env(argv);
         ec = EXECUTE_SUCCESS;
         (bool flag_system, bool flag_user, bool colon, bool newline, bool raw, bool nulll, , ) = _flag_values("sucnrz", flags);
-//        bool flag_system = _flag_set("s", flags);
-//        bool flag_user = _flag_set("u", flags);
-        (uint16 uid, ) = _get_user_data(args);
-//        bool print_system = (flags & _s) > 0 || (flags & _u) == 0;
-//        bool print_user = (flags & _u) > 0 || (flags & _s) == 0;
         bool print_system = flag_system || !flag_user;
         bool print_user = !flag_system || flag_user;
         string field_separator;
-//        if ((flags & _c) > 0)
+        (uint16 uid, ) = _get_user_data(argv);
+
         if (colon)
             field_separator = ":";
         field_separator = _if(field_separator, newline, "\n");
         field_separator = _if(field_separator, raw, " ");
         field_separator = _if(field_separator, nulll, "\x00");
-//        field_separator = _if(field_separator, (flags & _n) > 0, "\n");
-//        field_separator = _if(field_separator, (flags & _r) > 0, " ");
-//        field_separator = _if(field_separator, (flags & _z) > 0, "\x00");
         if (field_separator.byteLength() > 1)
 //            return ("Mutually exclusive options\n", [Err(0, mutually_exclusive_options, "")]);
-            return (EXECUTE_SUCCESS, "", "Mutually exclusive options\n");
+            return (EXECUTE_FAILURE, "", "Mutually exclusive options\n");
         bool formatted_table = field_separator.empty();
-        bool print_all = (print_system || print_user) && args.empty();
+        bool print_all = (print_system || print_user) && argv.empty();
 
         if (formatted_table)
             field_separator = " ";
@@ -47,12 +33,8 @@ contract lslogins is Utility, libuadm {
         if (formatted_table)
             table = [["UID", "USER", "GID", "GROUP"]];
         Column[] columns_format = print_all ? [
-                Column(print_all, 5, ALIGN_LEFT),
-                Column(print_all, 10, ALIGN_LEFT),
-                Column(print_all, 5, ALIGN_LEFT),
-                Column(print_all, 10, ALIGN_LEFT)] :
-               [Column(!print_all, 15, ALIGN_LEFT),
-                Column(!print_all, 20, ALIGN_LEFT)];
+                Column(print_all, 5, ALIGN_LEFT), Column(print_all, 10, ALIGN_LEFT), Column(print_all, 5, ALIGN_LEFT), Column(print_all, 10, ALIGN_LEFT)] :
+               [Column(!print_all, 15, ALIGN_LEFT), Column(!print_all, 20, ALIGN_LEFT)];
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
 
         if (params.empty() && uid < GUEST_USER) {

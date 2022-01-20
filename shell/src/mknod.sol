@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -12,16 +12,18 @@ struct DeviceRecord {
 
 contract mknod is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(args);
+//    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+//        (, string[] args, uint flags) = input.unpack();
         string node_name;
-        uint n_args = args.length;
-        if (!args.empty())
-            node_name = args[0];
+        uint n_args = params.length;
+        if (!params.empty())
+            node_name = params[0];
         string node_type;
         uint8 file_type;
         if (n_args > 1) {
-            node_type = args[1];
+            node_type = params[1];
             if (node_type == "b") {
                 file_type = FT_BLKDEV;
             }
@@ -33,7 +35,7 @@ contract mknod is Utility {
         }
     }
 
-    function _mknod(uint8 file_type, string file_name, uint flags, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+    function _mknod(uint8 file_type, string file_name, string flags, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
 
         uint8 action_type = IO_CREATE_FILES;
         uint8 action_item_type = IO_MKDIR;

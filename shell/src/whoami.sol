@@ -4,10 +4,10 @@ import "Utility.sol";
 
 contract whoami is Utility {
 
-    function exec(string args) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, , ) = _get_args(args);
+    function main(string argv) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, , ) = _get_args(argv);
         ec = params.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
-        out = _val("USER", args);
+        out = _val("USER", argv);
         err = "";
     }
 

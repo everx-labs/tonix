@@ -4,10 +4,10 @@ import "Utility.sol";
 
 contract uname is Utility {
 
-    function exec(string args) external pure returns (uint8 ec, string out, string err) {
-        ( , , string flags, ) = _get_env(args);
-        string host_name = _val("HOSTNAME", args);
-        string arch = _val("HOSTTYPE", args);
+    function main(string argv) external pure returns (uint8 ec, string out, string err) {
+        ( , , string flags, ) = _get_env(argv);
+        string host_name = _val("HOSTNAME", argv);
+        string arch = _val("HOSTTYPE", argv);
 
         ec = EXECUTE_SUCCESS;
         err = "";
