@@ -4,30 +4,19 @@ import "Shell.sol";
 
 contract builtin is Shell {
 
-    function _match_function_comp_spec(string cmd, string flags, string comp_spec) internal pure returns (string) {
-        (string[] lines, ) = _split(comp_spec, "\n");
-        for (string line: lines) {
-            if (_strstr(line, " " + cmd + " ") > 0) {
-                (string fn_attrs, string fn_name, ) = _split_var_record(line);
-                if (_match_attr_set(fn_attrs, flags))
-                    return fn_name;
-            }
-        }
-    }
-
     function _item_val(string name, Item[] coll) internal pure returns (string) {
         for (Item i: coll)
             if (i.name == name)
                 return i.value;
     }
 
-    function run_builtin(Item[] annotation) external pure returns (string res) {
-        string flags = _item_val("FLAGS", annotation);
-        string cmd = _item_val("COMMAND", annotation);
-        string s_args = _item_val("@", annotation);
-        string params = _item_val("PARAMS", annotation);
-        string ec = _item_val("?", annotation);
-        string opterr = _item_val("OPTERR", annotation);
+    function run_builtin(string args) external pure returns (string res) {
+        string flags = _val("FLAGS", args);
+        string cmd = _val("COMMAND", args);
+        string s_args = _val("@", args);
+        string params = _val("PARAMS", args);
+        string ec = _val("?", args);
+        string opterr = _val("OPTERR", args);
 
         if (ec == "1")
             return "echo error parsing command line";
@@ -37,22 +26,25 @@ contract builtin is Shell {
         string fn;
         string page = "pool";
 
+        if (cmd == "builtin")
+            return "./ty " + s_args;
+
         if (cmd == "declare" || cmd == "alias" || cmd == "readonly" || cmd == "export" || cmd == "set" || cmd == "complete") {
             if (_flag_set("p", flags) || params.empty())
                 fn = "print";
             else
                 fn = "modify";
-        } else if (cmd == "type" || cmd == "echo" || cmd == "pwd") {
+        } else if (cmd == "type" || cmd == "echo" || cmd == "pwd")
             fn = "print";
-        } else if (cmd == "help") {
+        else if (cmd == "help")
             fn = "display_help";
-        } else if (cmd == "cd" || cmd == "test") {
+        else if (cmd == "cd" || cmd == "test")
             fn = "builtin_read_fs";
-        } else if (cmd == "mapfile" || cmd == "read" || cmd == "source") {
+        else if (cmd == "mapfile" || cmd == "read" || cmd == "source")
             fn = "read_input";
-        } else if (cmd == "unset" || cmd == "unalias" || cmd == "shift") {
+        else if (cmd == "unset" || cmd == "unalias" || cmd == "shift")
             fn = "modify";
-        } else if (cmd == "command") {
+        else if (cmd == "command") {
             if (_flag_set("v", flags) || _flag_set("V", flags))
                 fn = "print";
             else
@@ -96,9 +88,7 @@ contract builtin is Shell {
         else if (cmd == "echo" || cmd == "pwd" || cmd == "cd")
             page = "vars";
 
-        string exec_path = "builtin";
-        string exec_line = "./" + exec_path + " " + cmd + " " + fn + " " + page + " " + s_args;
-        res = exec_line;
+        res = "./builtin " + cmd + " " + fn + " " + page + " " + s_args;
     }
 
     function _get_arg_value_uint16(string arg) internal pure returns (uint16 ec, uint16 val) {

@@ -15,24 +15,6 @@ contract set is Shell {
                 return i + 1;
     }
 
-    /*function add(string kind, string content, Item[] pagr) external pure returns (En en) {
-        en = e;
-        Item[] page;
-        if (kind == "alias")
-            page = e.aliases;
-        else if (kind == "function")
-            page = e.functions;
-        else if (kind == "builtin")
-            page = e.builtins;
-        else if (kind == "variable")
-            page = e.variables;
-        else if (kind == "command")
-            page = e.commands;
-        else if (kind == "keyword")
-            page = e.keywords;
-    }*/
-
-
     function _print(string s_attrs, string content, Item[] page) internal pure returns (string out) {
         if (content.empty()) {
             for (Item i: page) {
@@ -50,31 +32,7 @@ contract set is Shell {
         }
     }
 
-    /*function _add(string s_attrs, string content, Item[] page) internal pure returns (Item[] res) {
-        res = page;
-        uint16 mask = _get_mask_ext(s_attrs);
-        (string[] lines, uint n_lines) = _split(content, "\n");
-        for (string line: lines) {
-            (string attrs, string stmt) = _strsplit(line, " ");
-            (string name, string value) = _strsplit(stmt, "=");
-            Item item = Item(name, mask, value);
-            uint index = _item_attr_index(s_attrs, name, page);
-            if (index == 0)
-                res.push(item);
-            else
-                res[index - 1] = item;
-        }
-    }*/
-
-    /*function print(string s_attrs, string content, Item[] page) external pure returns (string out) {
-        return _print(s_attrs, content, page);
-    }*/
-
-    /*function add(string s_attrs, string content, Item[] page) external pure returns (Item[] res) {
-        return _add(s_attrs, content, page);
-    }*/
-
-    function imprt(string content) external pure returns (Item[] res) {
+    /*function imprt(string content) external pure returns (Item[] res) {
         (string[] lines, ) = _split(content, "\n");
         for (string line: lines) {
             if (line.empty())
@@ -91,7 +49,7 @@ contract set is Shell {
             Item item = Item(name, mask, value);
             res.push(item);
         }
-    }
+    }*/
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = _get_args(args);

@@ -48,18 +48,6 @@ contract export is Shell {
         res = page;
     }
 
-    function export_env(string args, string pool) external pure returns (uint8 ec, string res) {
-        string s_attrs = "-x";
-        (string[] lines, ) = _split(pool, "\n");
-        for (string line: lines) {
-            (string attrs, ) = _strsplit(line, " ");
-            if (_match_attr_set(s_attrs, attrs))
-                res.append(line + "\n");
-        }
-        res.append(args);
-        ec = EXECUTE_SUCCESS;
-    }
-
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(
 "export",

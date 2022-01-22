@@ -146,6 +146,12 @@ abstract contract String {
         return " \'" + s + "\'";
     }
 
+    function _trim_trailing(string s) internal pure returns (string) {
+        uint len = s.byteLength();
+        if (len > 0)
+            return s.substr(0, len - 1);
+    }
+
     function _line_and_word_count(string[] text) internal pure returns (uint line_count, uint word_count, uint char_count, uint max_width, uint max_words_per_line) {
         for (string line: text) {
             uint line_len = line.byteLength();

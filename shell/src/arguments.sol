@@ -15,12 +15,12 @@ abstract contract arguments is variables {
             tmp.push(_strchr(flags_set, flags_query.substr(i, 1)) > 0);
         return (len > 0 ? tmp[0] : false,
                 len > 1 ? tmp[1] : false,
-                len > 2 ? tmp[1] : false,
-                len > 3 ? tmp[1] : false,
-                len > 4 ? tmp[1] : false,
-                len > 5 ? tmp[1] : false,
-                len > 6 ? tmp[1] : false,
-                len > 7 ? tmp[1] : false);
+                len > 2 ? tmp[2] : false,
+                len > 3 ? tmp[3] : false,
+                len > 4 ? tmp[4] : false,
+                len > 5 ? tmp[5] : false,
+                len > 6 ? tmp[6] : false,
+                len > 7 ? tmp[7] : false);
     }
 
     function _get_args(string arg) internal pure returns (string[] args, string flags, string argv) {

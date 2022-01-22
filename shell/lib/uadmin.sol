@@ -1,10 +1,79 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
-import "../include/Internal.sol";
-//import "../lib/libpath.sol";
-import "../lib/stdio.sol";
+import "stdio.sol";
 
-abstract contract libuadm is Internal {
+library uadmin {
+
+    function user_groups(string user_name, string etc_group) internal returns (string primary, string[] supp) {
+        (string[] lines, ) = stdio.split(etc_group, "\n");
+        for (string line: lines) {
+            (string group_name, , string member_list) = parse_group_entry_line(line);
+            if (user_name == group_name)
+                primary = group_name;
+            if (stdio.strstr(member_list, user_name) > 0)
+                supp.push(group_name);
+        }
+    }
+
+    function parse_group_entry_line(string line) internal returns (string name, uint16 gid, string members) {
+        (string[] fields, uint n_fields) = stdio.split(line, ":");
+        if (n_fields > 2) {
+            name = fields[0];
+            gid = stdio.atoi(fields[2]);
+            members = n_fields > 3 ? fields[3] : name;
+        }
+        if (gid == 0 && name != "root")
+            gid = 10000;
+    }
+
+    function parse_passwd_entry_line(string line) internal returns (string name, uint16 uid, uint16 primary_gid, string home_dir) {
+        (string[] fields, uint n_fields) = stdio.split(line, ":");
+        if (n_fields > 5) {
+            name = fields[0];
+            uid = stdio.atoi(fields[2]);
+            primary_gid = stdio.atoi(fields[3]);
+            home_dir = fields[4];
+        }
+        if (primary_gid == 0 && name != "root")
+            primary_gid = 10000;
+        if (uid == 0 && name != "root")
+            uid = 10000;
+    }
+
+    function group_name_by_id(uint16 gid, string etc_group) internal returns (string) {
+        (string[] lines, ) = stdio.split(etc_group, "\n");
+        for (string line: lines) {
+            (string group_name, uint16 id, ) = parse_group_entry_line(line);
+            if (id == gid)
+                return group_name;
+        }
+    }
+
+    function group_entry_by_name(string name, string etc_group) internal returns (string) {
+        (string[] lines, ) = stdio.split(etc_group, "\n");
+        for (string line: lines) {
+            (string group_name, , ) = parse_group_entry_line(line);
+            if (name == group_name)
+                return line;
+        }
+    }
+
+    function passwd_entry_by_primary_gid(uint16 gid, string etc_passwd) internal returns (string) {
+        (string[] lines, ) = stdio.split(etc_passwd, "\n");
+        for (string line: lines) {
+            (, , uint16 primary_gid, ) = parse_passwd_entry_line(line);
+            if (primary_gid == gid)
+                return line;
+        }
+    }
+
+    function passwd_entry_line(string user_name, uint16 user_id, uint16 group_id, string group_name) internal returns (string) {
+        return format("{}:x:{}:{}:{}:/home/{}:\n", user_name, user_id, group_id, group_name, user_name);
+    }
+
+    function group_entry_line(string group_name, uint16 group_id) internal returns (string) {
+        return format("{}:x:{}:\n", group_name, group_id);
+    }
 
     uint16 constant FAILLOG_ENAB    = 1;
     uint16 constant LOG_UNKFAIL_ENAB = 2;
@@ -43,7 +112,7 @@ abstract contract libuadm is Internal {
     uint8 constant E_PAM_USERNAME  = 12; // can't determine your username for use with pam
     uint8 constant E_PAM_ERROR     = 13; // pam returned an error, see syslog facility id groupmod for the PAM error message
 
-    function _passwd_entry_line(string user_name, uint16 user_id, uint16 group_id, string group_name) internal pure returns (string) {
+    /*function _passwd_entry_line(string user_name, uint16 user_id, uint16 group_id, string group_name) internal pure returns (string) {
         return format("{}:x:{}:{}:{}:/home/{}:\n", user_name, user_id, group_id, group_name, user_name);
     }
 
@@ -60,17 +129,6 @@ abstract contract libuadm is Internal {
         }
         if (gid == 0 && name != "root")
             gid = 10000;
-    }
-
-    function _user_groups(string user_name, string etc_group) internal pure returns (string primary, string[] supp) {
-        (string[] lines, ) = _split(etc_group, "\n");
-        for (string line: lines) {
-            (string group_name, , string member_list) = _parse_group_entry_line(line);
-            if (user_name == group_name)
-                primary = group_name;
-            if (_strstr(member_list, user_name) > 0)
-                supp.push(group_name);
-        }
     }
 
     function _login_def_flag(uint16 key) internal pure returns (bool) {
@@ -154,10 +212,10 @@ abstract contract libuadm is Internal {
     }
 
     function _get_user_name(uint16 uid, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string) {
-        (string[] etc_passwd_contents, ) = stdio.split(_get_file_contents_at_path("/etc/passwd", inodes, data), "\n");
-        string s_uid = stdio.itoa(uid);
+        (string[] etc_passwd_contents, ) = stdio._split(_get_file_contents_at_path("/etc/passwd", inodes, data), "\n");
+        string s_uid = format("{}", uid);
         for (string s: etc_passwd_contents) {
-            (string[] fields, uint n_fields) = stdio.split(s, ":");
+            (string[] fields, uint n_fields) = stdio._split(s, ":");
             if (n_fields > 4)
                 if (fields[2] == s_uid)
                     return fields[0];
@@ -165,21 +223,20 @@ abstract contract libuadm is Internal {
     }
 
     function _get_group_name(uint16 gid, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string) {
-        (string[] etc_group_contents, ) = stdio.split(_get_file_contents_at_path("/etc/group", inodes, data), "\n");
-        string s_gid = stdio.itoa(gid);
+        (string[] etc_group_contents, ) = stdio._split(_get_file_contents_at_path("/etc/group", inodes, data), "\n");
+        string s_gid = format("{}", gid);
         for (string s: etc_group_contents) {
-            (string[] fields, uint n_fields) = stdio.split(s, ":");
+            (string[] fields, uint n_fields) = stdio._split(s, ":");
             if (n_fields > 2)
                 if (fields[2] == s_gid)
                     return fields[0];
         }
     }
 
-    /* User access helpers */
     function _get_login_info(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (mapping (uint16 => UserInfo) login_info) {
-        (string[] etc_passwd_contents, ) = stdio.split(_get_file_contents_at_path("/etc/passwd", inodes, data), "\n");
+        (string[] etc_passwd_contents, ) = stdio._split(_get_file_contents_at_path("/etc/passwd", inodes, data), "\n");
         for (string s: etc_passwd_contents) {
-            (string[] fields, uint n_fields) = stdio.split(s, ":");
+            (string[] fields, uint n_fields) = stdio._split(s, ":");
             if (n_fields > 4) {
                 optional(int) res = stoi(fields[2]);
                 uint16 uid = res.hasValue() ? uint16(res.get()) : 10000;//GUEST_USER;
@@ -190,9 +247,9 @@ abstract contract libuadm is Internal {
     }
 
     function _get_group_info(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (mapping (uint16 => GroupInfo) group_info) {
-        (string[] etc_group_contents, ) = stdio.split(_get_file_contents_at_path("/etc/group", inodes, data), "\n");
+        (string[] etc_group_contents, ) = stdio._split(_get_file_contents_at_path("/etc/group", inodes, data), "\n");
         for (string s: etc_group_contents) {
-            (string[] fields, uint n_fields) = stdio.split(s, ":");
+            (string[] fields, uint n_fields) = stdio._split(s, ":");
             if (n_fields > 2) {
                 optional(int) res = stoi(fields[2]);
                 uint16 gid = res.hasValue() ? uint16(res.get()) : 10000;
@@ -200,5 +257,5 @@ abstract contract libuadm is Internal {
             }
         }
     }
-
+*/
 }

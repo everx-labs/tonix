@@ -1,13 +1,5 @@
 #set -x
 
-filter() {
-    if [ -s run/stdout ]; then cat run/stdout >>var/log/stdout; cat run/stdout >>var/log/session; echo ${GREEN}; cat run/stdout; echo ${NC}; rm run/stdout; fi
-    if [ -s run/stderr ]; then cat run/stderr >>var/log/stderr; cat run/stderr >>var/log/session; echo ${RED}; cat run/stderr; echo ${NC}; rm run/stderr; fi
-}
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m'
-
 ./eilish set_tosh_vars
 cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
 
@@ -15,16 +7,11 @@ while true
 do
     echo -n "$ "
     read input
-    echo ">" $input >>var/log/session
+    echo ">" "$input" >>var/log/session
     case $input in
         quit)
             break;;
         *)
-rm -f run/command run/ec;
-./eilish set_args "$input";
-./eilish annotate_args "$input";
-eval `jq -r 'select(.name == "EXEC_LINE") .value' run/annotation`;
-filter;
-;;
+            ./ty "$input";;
     esac
 done

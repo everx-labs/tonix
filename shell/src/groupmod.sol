@@ -62,17 +62,6 @@ contract groupmod is Utility, libuadm {
         out = "";
     }
 
-    function _groupmod(string flags, string[] args, mapping (uint16 => GroupInfo) groups) private pure returns (UserEvent ue, Err[] errs, string prev_entry) {
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("groupmod", "modify a group definition on the system", "[options] GROUP",
-            "Modifies the definition of the specified GROUP by modifying the appropriate entry in the group database.",
-            "gn", 1, M, [
-            "the group ID of the given GROUP will be changed to GID",
-            "the name of the group will be changed from GROUP to NEW_GROUP name"]);
-    }
-
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
 "groupmod",

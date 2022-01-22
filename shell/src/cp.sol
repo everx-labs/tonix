@@ -141,7 +141,7 @@ contract cp is Utility {
 "cp",
 "[OPTION]... [-T] SOURCE DEST\n\tcp [OPTION]... SOURCE... DIRECTORY\n\tcp [OPTION]... -t DIRECTORY SOURCE...",
 "copy files and directories",
-"Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY. The backup suffix is '~'. As a special case, cp makes a backup of SOURCE when the force and backup options are given and SOURCE and DEST are the same name for an existing, regular file.",
+"Copy SOURCE to DEST, or multiple SOURCE(s) to DIRECTORY.",
 "-a      same as -dR -p\n\
 -b      make a backup of each existing destination file\n\
 -d      same as -P, preserve links\n\
@@ -160,7 +160,8 @@ contract cp is Utility {
 -u      copy only when the SOURCE file is newer than the destination file or when the destination file is missing\n\
 -v      explain what is being done\n\
 -x      stay on this file system",
-"",
+"The backup suffix is '~'. As a special case, cp makes a backup of SOURCE when the force and backup options are given\n\
+and SOURCE and DEST are the same name for an existing, regular file.",
 "Written by Boris",
 "",
 "",

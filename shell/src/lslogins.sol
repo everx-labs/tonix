@@ -13,7 +13,8 @@ contract lslogins is Utility, libuadm {
         bool print_system = flag_system || !flag_user;
         bool print_user = !flag_system || flag_user;
         string field_separator;
-        (uint16 uid, ) = _get_user_data(argv);
+        //(uint16 uid, ) = _get_user_data(argv);
+        uint16 uid = _atoi(_val("UID", argv));
 
         if (colon)
             field_separator = ":";

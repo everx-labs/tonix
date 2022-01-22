@@ -4,9 +4,7 @@ shift
 param=$1
 
 case $fn in
-    exec|ustat|induce|uadm|main)
-        util=$param;;
-    command_help)
+    exec|ustat|induce|uadm|main|command_help)
         util=$param;;
     display_man_page)
         util=man;;
@@ -38,22 +36,15 @@ filter() {
     case $fn in
         execute_command)
             echo `jq -r '.res' $1`;;
-        ustat)
-            cp $1 vfs/tmp/tosh/post_b_exec;;
-        exec)
-            jq -rj '.out' $1 >run/stdout;
-            jq -rj '.err' $1 >run/stderr;;
-        main)
+        exec|main)
             jq -rj '.out' $1 >run/stdout;
             jq -rj '.err' $1 >run/stderr;;
         display_man_page)
             jq -rj '.out' $1 >run/stdout;;
-        b_exec)
-            cp $1 vfs/tmp/tosh/post_b_exec;;
         induce|uadm)
             jq 'if (.ec == "0") then . else empty end' $1 >tmp/delta;
             if [ -s tmp/delta ]; then
-                ./tmpfs handle_action;
+                cat tmp/delta;
             fi;;
         *)
             ;;

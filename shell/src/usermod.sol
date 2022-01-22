@@ -65,22 +65,13 @@ contract usermod is Utility, libuadm {
                     errors.push(Err(E_NOTFOUND, 0, s));
             }
         }
-      if (errors.empty()) {
+        if (errors.empty()) {
             string text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
             ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, prev_entry, text)));
             file_action = Action(UA_UPDATE_USER, 1);
         } else
             ec = EXECUTE_FAILURE;
         out = "";
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("usermod", "modify a user account", "[options] LOGIN",
-            "Modifies the system account files to reflect the changes that are specified on the command line.",
-            "agG", 1, M, [
-            "add the user to the supplementary groups mentioned by the -G option",
-            "force use GROUP as new primary group",
-            "a list of supplementary groups separated from the next by a comma"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

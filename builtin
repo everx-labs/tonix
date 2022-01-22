@@ -1,5 +1,4 @@
 #set -x
-#echo $# $0 $1 $2 $3
 builtin=$1
 shift
 fn=$1
@@ -13,25 +12,14 @@ args() {
             jq -n --rawfile args run/args --rawfile pool run/$page '{$args, $pool}';;
         modify)
             jq -n --rawfile args run/args --rawfile pool run/$page '{$args, $pool}';;
+        read_input)
+            jq -n --rawfile args run/args --rawfile input $input --rawfile pool run/pool '{$args, $input, $pool}';;
         lookup)
             jq -n --rawfile args run/args --rawfile page run/$page --rawfile pool run/pool '{$args, $page, $pool}';;
-        lookup_fn)
-            jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
-        export_env)
-            jq -n --rawfile args run/args --rawfile pool run/pool '{$args, $pool}';;
         builtin_read_fs)
             jq --rawfile args run/args --rawfile pool run/$page '. + {$args} + {$pool}' run/fs;;
-        annotate_args)
-            echo -n $param >run/command;
-            jq -n --arg v "$input" --rawfile aliases run/aliases --rawfile opt_string run/optstring --rawfile comp_spec run/comp_spec --rawfile index run/index --rawfile pool run/pool '{s_input: $v, $aliases, $opt_string, $comp_spec, $index, $pool}';;
         display_help)
             jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/builtin_help '{args: $v, help_files: $v1}';;
-        run_builtin)
-            jq -n --slurpfile annotation run/annotation '{$annotation}';;
-        add)
-            jq -n --arg s_attrs "--" --rawfile content x --slurpfile page pg '{s_attrs: $s_attrs, $content, $page}';;
-        imprt)
-            jq -n --rawfile content $input '{$content}';;
         *)
             echo '{}';;
     esac
@@ -43,10 +31,6 @@ filter() {
             jq -rj '.out' $1 >run/stdout;;
         display_help)
             jq -rj '.out' $1 >run/stdout;;
-        annotate_args)
-            jq '.res[]' $1 >run/annotation;;
-        run_builtin)
-            eval `jq -r '.res' $1`;;
         modify)
             jq -rj '.ec' $1 >run/ec
             jq -rj '.res' $1 >run/res
@@ -73,22 +57,17 @@ filter() {
                         ;;
                 esac
             fi;;
-        lookup_fn)
-            jq -rj '.out' $1;
-            jq -rj '.res' $1 >run/lookup_res;
-            if [ -s run/lookup_res ]; then
-                cp run/lookup_res run/comp_spec;
-            fi;;
-        export_env)
-            jq -rj '.res' $1 >run/export;;
         builtin_read_fs)
             jq -rj '.ec' $1 >run/ec;
             jq -rj '.res' $1 >run/res;
             if [ -s run/res ]; then
                 cp run/res run/$page;
             fi;;
-        add|imprt)
-            jq '.res[]' $1 >j_res;;
+        read_input)
+            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/script;
+            if [ -s tmp/script ]; then
+                ./tz tmp/script;
+            fi;;
         *)
             ;;
     esac

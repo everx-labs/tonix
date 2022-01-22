@@ -103,29 +103,6 @@ contract hash is Shell {
         res = hashes;
     }
 
-    function lookup_fn(string args, string page, string pool) external pure returns (uint8 ec, string out, string res) {
-        string arg = _val("COMMAND", args);
-        string fn_map = _get_pool_record(arg, page);
-        if (fn_map.empty()) {
-            string commands = _get_map_value("command", pool);
-            if (_strstr(commands, " " + arg + " ") > 0) {
-                fn_map = _get_map_value("exec", page);
-                string upd = _set_item_value(arg, "0", fn_map);
-                res = _translate(page, fn_map, upd);
-            } else {
-                ec = EXECUTE_FAILURE;
-                out.append("hash: " + arg + ": not found\n");
-            }
-        } else {
-            (, string fn_name, ) = _split_var_record(fn_map);
-            out.append(arg + " " + fn_name);
-            string s_hit_count = _val(arg, fn_map);
-            uint16 hc = _atoi(s_hit_count);
-            string upd = _set_item_value(arg, _itoa(hc + 1), fn_map);
-            res = _translate(page, fn_map, upd);
-        }
-    }
-
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(
 "hash",

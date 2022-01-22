@@ -2,50 +2,46 @@ pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
 contract groupadd is Utility, libuadm {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = _get_env(args);
-        mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
         out = "";
         (bool force, bool use_group_id, bool is_system_group, , , , , ) = _flag_values("fgr", flags);
 
-        uint n_args = params.length;
-        string target_group_name = params[n_args - 1];
+//        string target_group_name = params[n_args - 1];
+        string target_group_name = _val("_", args);
         uint16 target_group_id;
+        string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
 
-        for ((, GroupInfo gi): groups)
-            if (gi.group_name == target_group_name)
-                errors.push(Err(E_NAME_IN_USE, 0, target_group_name));
-
-        if (use_group_id && n_args > 1) {
-            string group_id_s = params[0];
-            optional(int) val = stoi(group_id_s);
-            uint16 n_gid;
-            if (!val.hasValue())
+        (string primary, ) = uadmin.user_groups(target_group_name, etc_group);
+        if (!primary.empty())
+            errors.push(Err(E_NAME_IN_USE, 0, target_group_name));
+        if (use_group_id) {
+            string group_id_s = _opt_arg_value("g", args);
+            uint16 n_gid = stdio.atoi(group_id_s);
+            if (n_gid == 0)
                 errors.push(Err(E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
-                n_gid = uint16(val.get());
-            target_group_id = uint16(n_gid);
-            if (groups.exists(target_group_id))
+                target_group_id = uint16(n_gid);
+            if (!uadmin.group_name_by_id(target_group_id, etc_group).empty()) {
                 if (force)
                     target_group_id = 0;
                 else
                     errors.push(Err(E_GID_IN_USE, 0, group_id_s));
+            }
         }
 
         (, , uint16 reg_groups_counter, uint16 sys_groups_counter) = _get_counters(inodes, data);
         if (target_group_id == 0)
             target_group_id = is_system_group ? sys_groups_counter++ : reg_groups_counter++;
 
-        uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
-        (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
-        string etc_group;
-        if (group_file_type == FT_REG_FILE)
-            etc_group = _get_file_contents(group_index, inodes, data);
         if (errors.empty()) {
-            string text = _group_entry_line(target_group_name, target_group_id);
+            uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
+            (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
+            string text = uadmin.group_entry_line(target_group_name, target_group_id);
             if (group_file_type == FT_UNKNOWN) {
                 uint16 ic = _get_inode_count(inodes);
                 ars.push(Ar(IO_MKFILE, FT_REG_FILE, ic, etc_dir, "group", text));
@@ -57,15 +53,6 @@ contract groupadd is Utility, libuadm {
         ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("groupadd", "create a new group", "[options] group",
-            "Creates a new group account using the default values from the system.",
-            "fgr", 1, M, [
-            "exit successfully if the group already exists, and cancel -g if the GID is already used",
-            "use GID for the new group",
-            "create a system group"]);
-    }
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(

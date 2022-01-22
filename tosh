@@ -1,27 +1,17 @@
 #set -x
-#echo $# $0 $1 $2 $3
 fn=$1
 shift
 param=$1
 
 case $fn in
-    b_exec|builtin_read_fs|builtin_help|exec|ustat|read_fs_to_env|exec_env/main)
+    b_exec|builtin_help|exec|read_fs_to_env|main)
         util=$param;;
-    read_input)
-        util=$param;
-        shift;
-        input=$1;
-        ;;
-    display_help)
-        util=help;;
     run_builtin)
         util=builtin;;
     execute_command)
         util=command;;
     command_help)
         util=$param;;
-    display_man_page)
-        util=man;;
     handle_action)
         util=tmpfs;;
     *)
@@ -30,11 +20,8 @@ esac
 
 args() {
    case $fn in
-        builtin_read_fs)
-           jq '{e: .}' run/env >tmp/shell_in;
-           jq -s 'add' tmp/shell_in run/fs;;
         run_builtin)
-            jq -n --slurpfile annotation run/annotation '{$annotation}';;
+            jq -n --rawfile args run/args '{$args}';;
         execute_command)
             jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
         b_exec)
@@ -44,22 +31,6 @@ args() {
             jq --rawfile args run/export '. + {$args}' run/fs;;
         main)
             jq --rawfile args run/export '. + {$argv}' run/fs;;
-        exec_env)
-            jq --rawfile args run/args --rawfile pool run/pool '. + {$args} + {$pool}' run/fs;;
-        on_exec)
-            jq '{e: .}' run/env >tmp/shell_in;
-            jq -s 'add' tmp/shell_in tmp/post_exec;;
-        on_b_exec)
-            jq '{e: .}' run/env >tmp/shell_in;
-            jq '.delta=(.wr // [])' tmp/post_b_exec >tmp/delta_in;
-            jq -s 'add' tmp/shell_in tmp/delta_in;;
-        read_input)
-            input2=`jq -r 'select(.name=="_") .value' run/annotation`;
-            jq -n --rawfile args run/args --rawfile input $input2 --rawfile pool run/pool '{$args, $input, $pool}';;
-        display_help)
-            jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/builtin_help '{args: $v, help_files: $v1}';;
-        display_man_page)
-            jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/man_pages '{args: $v, help_files: $v1}';;
         *)
             echo '{}';;
     esac
@@ -73,19 +44,16 @@ filter() {
             cp $1 vfs/usr/share/$util.help;;
         command_help)
             cp $1 vfs/usr/share/$util.man;;
-        builtin_read_fs|ustat)
-            cp $1 tmp/post_b_exec;;
         exec)
             jq -rj '.out' $1 >run/stdout;
             jq -rj '.err' $1 >run/stderr;;
         main)
             jq -rj '.out' $1 >run/stdout;
             jq -rj '.err' $1 >run/stderr;;
-        display_man_page)
-            jq -rj '.out' $1 >run/stdout;;
         run_builtin)
-            jq -r '.res' $1 >>var/log/commands
-            eval `jq -r '.res' $1`;;
+            b_ex=`jq -r '.res' $1`
+            echo "$b_ex" >>var/log/commands
+            eval "$b_ex";;
         execute_command)
             jq -rj '.ec' $1 >run/ec;
             jq 'if (.ec == "0") then . else empty end' $1 >tmp/cmd_exec;
@@ -97,41 +65,6 @@ filter() {
             eval `jq -rj '.exec_line' $1`;;
         b_exec)
             cp $1 tmp/post_b_exec;;
-        read_input)
-            jq -rj '.ec' $1 >run/ec;
-            jq -rj '.out' $1 >run/stdout;
-            jq -rj '.res' $1 >run/res
-            if [ -s run/res ]; then
-                case $param in
-                    unset|export|readonly|declare)
-                        cp run/res run/pool;;
-                    hash)
-                        cp run/res run/hashes;;
-                    alias|unalias)
-                        cp run/res run/aliases;;
-                    *)
-                        ;;
-                esac
-            fi;
-            ;;
-        display_help)
-            jq -rj '.out' $1 >run/stdout;;
-        on_exec)
-            jq -r 'if has("env") then .env else empty end' $1 >tmp/env3_t;
-            if [ -s tmp/env3_t ]; then
-                cp tmp/env3_t run/env;
-            fi;
-            jq -rj '.env[1]' $1 >run/stdout;
-            jq -rj '.env[2]' $1 >run/stderr;
-            ;;
-        on_b_exec)
-            jq -r 'if has("env") then .env else empty end' $1 >tmp/env3_t;
-            if [ -s tmp/env3_t ]; then
-                cp tmp/env3_t run/env;
-            fi;
-            jq -rj '.env[1]' $1 >run/stdout;
-            jq -rj '.env[2]' $1 >run/stderr;
-            ;;
         *)
             ;;
     esac

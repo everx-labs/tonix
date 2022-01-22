@@ -11,8 +11,8 @@ TOC:=$(TOOLS_BIN)/tonos-cli
 I:=CommandInterpreter
 PRIME:=$I
 
-UTILS:=ls du file stat namei cat colrm column cut expand grep head look rev tail tr unexpand paste wc readlink realpath env man whatis mkfs mke2fs dumpe2fs fsck mount umount losetup udevadm df findmnt mountpoint touch cp mv rm rmdir mkdir ln install groupadd groupdel groupmod useradd userdel usermod chfn newgrp lslogins finger who last fuser utmpdump ps whoami id hostname tfs tmpfs printenv basename dirname getent uname pathchk mknod
-HELP_TOPICS:=help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift getopts eilish
+UTILS:=basename cat chfn colrm column cp cut df dirname du dumpe2fs env expand file findmnt finger fsck fuser getent grep groupadd groupdel groupmod groups head hostname id install last ln look losetup ls lslogins man mkdir mke2fs mkfs mknod mount mountpoint mv namei newgrp paste pathchk printenv ps readlink realpath rev rm rmdir stat tail tfs tmpfs touch tr udevadm umount uname unexpand useradd userdel usermod utmpdump wc whatis who whoami
+HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help jobs mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
 BUILTINS:=$(HELP_TOPICS) $(UTILS)
 
 INIT:=$(PRIME)
@@ -85,9 +85,6 @@ hb:
 # SH processing start
 
 bocs: $(patsubst %,$(TSBIN)/%.boc,$(BUILTINS))
-	@true
-
-prof: $(TSH)/tosh_read_profile.out
 	@true
 
 tosh: bocs

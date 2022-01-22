@@ -50,14 +50,11 @@ contract command is Shell {
                 fn_map = _get_map_value(fn_name, comp_spec);
                 string upd = _set_item_value(cmd, "0", fn_map);
                 cs_res = _translate(comp_spec, fn_map, upd);
-            } else {
+            } else
                 ec = EXECUTE_FAILURE;
-            }
         } else {
             (, fn_name, ) = _split_var_record(fn_map);
-//            out.append(cmd + " " + fn_name);
-            string s_hit_count = _val(cmd, fn_map);
-            uint16 hc = _atoi(s_hit_count);
+            uint16 hc = _atoi(_val(cmd, fn_map));
             string upd = _set_item_value(cmd, _itoa(hc + 1), fn_map);
             cs_res = _translate(comp_spec, fn_map, upd);
         }
