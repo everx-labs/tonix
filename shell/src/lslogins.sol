@@ -13,7 +13,6 @@ contract lslogins is Utility, libuadm {
         bool print_system = flag_system || !flag_user;
         bool print_user = !flag_system || flag_user;
         string field_separator;
-        //(uint16 uid, ) = _get_user_data(argv);
         uint16 uid = _atoi(_val("UID", argv));
 
         if (colon)
@@ -22,7 +21,6 @@ contract lslogins is Utility, libuadm {
         field_separator = _if(field_separator, raw, " ");
         field_separator = _if(field_separator, nulll, "\x00");
         if (field_separator.byteLength() > 1)
-//            return ("Mutually exclusive options\n", [Err(0, mutually_exclusive_options, "")]);
             return (EXECUTE_FAILURE, "", "Mutually exclusive options\n");
         bool formatted_table = field_separator.empty();
         bool print_all = (print_system || print_user) && argv.empty();
@@ -59,19 +57,6 @@ contract lslogins is Utility, libuadm {
                 }
         }
         out = _format_table_ext(columns_format, table, field_separator, "\n");
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("lslogins", "display information about known users in the system", "[options] [-s] [username]",
-            "Examine the wtmp and btmp logs, /etc/shadow (if necessary) and /etc/passwd and output the desired data.",
-            "cenrsuz", 0, 1, [
-            "display data in a format similar to /etc/passwd",
-            "display in an export-able output format",
-            "display each piece of information on a new line",
-            "display in raw mode",
-            "display system accounts",
-            "display user accounts",
-            "delimit user entries with a nul character"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

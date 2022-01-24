@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.52.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 

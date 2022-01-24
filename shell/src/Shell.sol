@@ -1,8 +1,9 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "../include/Internal.sol";
 import "variables.sol";
 import "arguments.sol";
+import "../lib/stdio.sol";
 
 struct CommandInfo {
     uint8 min_args;
@@ -276,7 +277,7 @@ abstract contract Shell is Internal, arguments {
 
     function _as_indexed_array(string name, string value, string ifs) internal pure returns (string res) {
         string body;
-        (string[] fields, uint n_fields) = _split(value, ifs);
+        (string[] fields, uint n_fields) = stdio.split(value, ifs);
         for (uint i = 0; i < n_fields; i++)
             body.append(format("[{}]=\"{}\" ", i, fields[i]));
         res = "-a " + _wrap(name, W_SQUARE) + "=" + _wrap(body, W_ARRAY);
@@ -299,17 +300,17 @@ abstract contract Shell is Internal, arguments {
     function _encode_item_2(string key, string value) internal pure returns (string res) {
         res = _wrap(key, W_SQUARE);
         if (!value.empty())
-            res.append("=" + (_strchr(value, "(") > 0 ? value : _wrap(value, W_DQUOTE)));
+            res.append("=" + (stdio.strchr(value, "(") > 0 ? value : _wrap(value, W_DQUOTE)));
     }
 
      function _flag(string name, string[] env_in) internal pure returns (bool) {
-        return _strstr(env_in[IS_OPTION_VALUE], name + "=") > 0;
+        return stdio.strstr(env_in[IS_OPTION_VALUE], name + "=") > 0;
     }
 
     function _trim_spaces(string s_arg) internal pure returns (string res) {
-        res = _tr_squeeze(s_arg, " ");
+        res = stdio.tr_squeeze(s_arg, " ");
         uint len = res.byteLength();
-        if (len > 0 && _strrchr(res, " ") == len)
+        if (len > 0 && stdio.strrchr(res, " ") == len)
             res = res.substr(0, len - 1);
         len = res.byteLength();
         if (len > 0 && res.substr(0, 1) == " ")
@@ -320,46 +321,46 @@ abstract contract Shell is Internal, arguments {
         if (name.empty())
             return empty;
         string name_pattern = _wrap(name, W_SQUARE) + "=";
-        (string[] lines, ) = _split(page, "\n");
+        (string[] lines, ) = stdio.split(page, "\n");
         for (string line: lines) {
-            if (_strstr(line, name_pattern) > 0) {
-                uint q = _strstr(line, "=");
+            if (stdio.strstr(line, name_pattern) > 0) {
+                uint q = stdio.strstr(line, "=");
                 return q > 0 ? line.substr(q) : empty;
             }
         }
     }
 
     function _get_array_name(string value, string context) internal pure returns (string name) {
-        (string[] lines, ) = _split(context, "\n");
+        (string[] lines, ) = stdio.split(context, "\n");
         string val_pattern = _wrap(value, W_SPACE);
         for (string line: lines)
-            if (_strstr(line, val_pattern) > 0)
-                return _strval(line, "[", "]");
+            if (stdio.strstr(line, val_pattern) > 0)
+                return stdio.strval(line, "[", "]");
     }
 
     function _set_item_value(string name, string value, string page) internal pure returns (string) {
         string cur_value = _val(name, page);
         string new_record = _encode_item(name, value);
-        return cur_value.empty() ? page + " " + new_record : _translate(page, _encode_item(name, cur_value), new_record);
+        return cur_value.empty() ? page + " " + new_record : stdio.translate(page, _encode_item(name, cur_value), new_record);
     }
 
     function _set_var(string attrs, string token, string pg) internal pure returns (string page) {
-        (string name, string value) = _strsplit(token, "=");
+        (string name, string value) = stdio.strsplit(token, "=");
         string cur_record = _get_pool_record(name, pg);
         string new_record = _var_record(attrs, name, value);
         if (!cur_record.empty()) {
-            (string cur_attrs, ) = _strsplit(cur_record, " ");
-            (, string cur_value) = _strsplit(cur_record, "=");
+            (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+            (, string cur_value) = stdio.strsplit(cur_record, "=");
             string new_value = !value.empty() ? value : !cur_value.empty() ? _unwrap(cur_value) : "";
             new_record = _var_record(_meld_attr_set(attrs, cur_attrs), name, new_value);
-            page = _translate(pg, cur_record, new_record);
+            page = stdio.translate(pg, cur_record, new_record);
         } else
             page = pg + new_record + "\n";
     }
 
     function _set_add(string token, string context) internal pure returns (string) {
-        if (_strstr(context, " " + token + " ") == 0)
-            return _translate(context, " )", " " + token + " )");
+        if (stdio.strstr(context, " " + token + " ") == 0)
+            return stdio.translate(context, " )", " " + token + " )");
         return context;
     }
 
@@ -368,13 +369,13 @@ abstract contract Shell is Internal, arguments {
     }
 
     function _get_option_value(string options, string s) internal pure returns (bool) {
-        return _strchr(options, s) > 0;
+        return stdio.strchr(options, s) > 0;
     }
 
     function _get_option_param(string s_args, string short_option) internal pure returns (string) {
         if (s_args.empty())
             return "";
-        (string[] fields, uint n_fields) = _split(s_args, " ");
+        (string[] fields, uint n_fields) = stdio.split(s_args, " ");
         string opt_arg = "-" + short_option;
         for (uint i = 0; i < n_fields - 1; i++)
             if (fields[i] == opt_arg)
@@ -384,7 +385,7 @@ abstract contract Shell is Internal, arguments {
     function _get_dual_option_param(string s_args, string short_option) internal pure returns (string, bool) {
         if (s_args.empty())
             return ("", false);
-        (string[] fields, uint n_fields) = _split(s_args, " ");
+        (string[] fields, uint n_fields) = stdio.split(s_args, " ");
         string opt_arg_dash = "-" + short_option;
         string opt_arg_plus = "+" + short_option;
         for (uint i = 0; i < n_fields - 1; i++) {

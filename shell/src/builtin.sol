@@ -38,7 +38,7 @@ contract builtin is Shell {
             fn = "print";
         else if (cmd == "help")
             fn = "display_help";
-        else if (cmd == "cd" || cmd == "test")
+        else if (cmd == "cd" || cmd == "test" || cmd == "dirs" || cmd == "pushd" || cmd == "popd")
             fn = "builtin_read_fs";
         else if (cmd == "mapfile" || cmd == "read" || cmd == "source")
             fn = "read_input";
@@ -87,6 +87,8 @@ contract builtin is Shell {
             page = "pool";
         else if (cmd == "echo" || cmd == "pwd" || cmd == "cd")
             page = "vars";
+        else if (cmd == "dirs" || cmd == "pushd" || cmd == "popd")
+            page = "dir_stack";
 
         res = "./builtin " + cmd + " " + fn + " " + page + " " + s_args;
     }

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "../include/Internal.sol";
 import "../lib/stdio.sol";
@@ -21,7 +21,7 @@ library libfs {
     function _read_sb(mapping (uint16 => Inode) /*inodes*/, mapping (uint16 => bytes) data) internal returns (SuperBlock sb) {
         bytes sb_data = data[SB];
 
-        (string[] fields, ) = stdio._split_line(sb_data, " ", "\n");
+        (string[] fields, ) = stdio.split_line(sb_data, " ", "\n");
         uint[] values;
         string[] texts;
         for (string s: fields) {
@@ -31,6 +31,9 @@ library libfs {
             else
                 texts.push(s);
         }
+
+        if (texts.length < 3 || values.length < 13)
+            return sb;
 
         bool file_system_state = texts[0] == "Y";
         bool errors_behavior = texts[1] == "Y";
@@ -61,60 +64,23 @@ library libfs {
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();
 
         string[][] table = [
-//            ["Filesystem volume name:", "<none>"],
-//            ["Last mounted on:", "/swap"],
-//            ["Filesystem UUID:", "3255683f-53a2-4fdf-91cf-b4c1041e2a62"],
-//            ["Filesystem magic number:", "0xEF53"],
-//            ["Filesystem revision #:", "1 (dynamic)"],
-//            ["Filesystem features:", "has_journal ext_attr resize_inode dir_index filetype needs_recovery extent 64bit flex_bg sparse_super large_file huge_file dir_nlink extra_isize metadata_csum"],
-//            ["Filesystem flags:", "signed_directory_hash"],
-//            ["Default mount options:", "user_xattr acl"],
             ["Filesystem state:", file_system_state ? "clean" : "dirty"],
             ["Errors behavior:", errors_behavior ? "Continue" : "Stop"],
             ["Filesystem OS type:", file_system_OS_type],
-            ["Inode count:", format("{}", inode_count)],
-            ["Block count:", format("{}", block_count)],
-//            ["Reserved block count:", "3355443"],
-            ["Free blocks:", format("{}", free_blocks)],
-            ["Free inodes:", format("{}", free_inodes)],
+            ["Inode count:", stdio.itoa(inode_count)],
+            ["Block count:", stdio.itoa(block_count)],
+            ["Free blocks:", stdio.itoa(free_blocks)],
+            ["Free inodes:", stdio.itoa(free_inodes)],
             ["First block:", "0"],
-            ["Block size:", format("{}", block_size)],
-//            ["Fragment size:", "4096"],
-//            ["Group descriptor size:", "64"],
-//            ["Reserved GDT blocks:", "1024"],
-//            ["Blocks per group:", "32768"],
-//            ["Fragments per group:", "32768"],
-//            ["Inodes per group:", "8192"],
-//            ["Inode blocks per group:", "512"],
-//            ["Flex block group size:", "4096"],
+            ["Block size:", stdio.itoa(block_size)],
             ["Filesystem created:", libfmt._ts(created_at)],
             ["Last mount time:", libfmt._ts(last_mount_time)],
             ["Last write time:", libfmt._ts(last_write_time)],
-            ["Mount count:", format("{}", mount_count)],
-            ["Maximum mount count:", format("{}", max_mount_count)],
-//            ["Last checked:", "Wed Apr 10 19:35:05 2019"],
-//            ["Check interval:", "0 (<none>)"],
-            ["Lifetime writes:", format("{}", lifetime_writes)], // "1028 MB"
-//            ["Reserved blocks uid:", "0 (user root)"],
-//            ["Reserved blocks gid:", "0 (group root)"],
-            ["First inode:", format("{}", first_inode)],
-            ["Inode size:", format("{}", inode_size)]
-//            ["Required extra isize:", "32"],
-//            ["Desired extra isize:", "32"],
-//            ["Journal inode:", format("{}", journal_inode)],
-//            ["Default directory hash:", "half_md4"],
-//            ["Directory Hash Seed:", "832ad346-60be-4f80-92f8-835728a807fe"],
-//            ["Journal backup:", "inode blocks"],
-//            ["Checksum type:", "crc32c"],
-//            ["Checksum:", "0x559724f0"],
-//            ["Journal features:", "journal_64bit journal_checksum_v3"],
-//            ["Journal size:", "1024M"],
-//            ["Journal length:", "262144"],
-//            ["Journal sequence:", "0x00000002"],
-//            ["Journal start:", "1"],
-//            ["Journal checksum type:", "crc32c"],
-//            ["Journal checksum:", "0x6d7f5c12"]
-            ];
+            ["Mount count:", stdio.itoa(mount_count)],
+            ["Maximum mount count:", stdio.itoa(max_mount_count)],
+            ["Lifetime writes:", stdio.itoa(lifetime_writes)],
+            ["First inode:", stdio.itoa(first_inode)],
+            ["Inode size:", stdio.itoa(inode_size)]];
         return libfmt._format_table(table, "\t", "\n", libfmt.ALIGN_LEFT);
     }
 

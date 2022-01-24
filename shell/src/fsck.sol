@@ -1,12 +1,39 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libfs.sol";
 
-/* Generic block device hosting a generic file system */
 contract fsck is Utility {
 
-    function exec(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+    uint8 constant NO_ERRORS                = 0;
+    uint8 constant ERRORS_CORRECTED         = 1;
+    uint8 constant ERRORS_CORRECTED_REBOOT  = 2;
+    uint8 constant ERRORS_UNCORRECTED       = 4;
+    uint8 constant OPERATIONAL_ERROR        = 8;
+    uint8 constant USAGE_OR_SYNTAX_ERROR    = 16;
+    uint8 constant CANCELED_BY_USER         = 32;
+    uint8 constant SHARED_LIBRARY_ERROR     = 128;
+
+    function _print_dir_contents(uint16 start_dir_index, mapping (uint16 => bytes) data) internal pure returns (uint8 ec, string out) {
+        (DirEntry[] contents, int16 status) = _read_dir_data(data[start_dir_index]);
+        if (status < 0) {
+            out.append(format("Error: {} \n", status));
+            ec = EXECUTE_FAILURE;
+        } else {
+            uint len = uint(status);
+            for (uint16 j = 0; j < len; j++) {
+                (uint8 ft, string name, uint16 index) = contents[j].unpack();
+                if (ft == FT_UNKNOWN)
+                    continue;
+                out.append(_dir_entry_line(index, name, ft));
+            }
+        }
+    }
+
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, mapping (uint16 => Inode) inodes_out, mapping (uint16 => bytes) data_out) {
+        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
+
+    /*function exec(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         return _fsck(session, pc, inodes_in, data_in);
     }
 
@@ -17,24 +44,47 @@ contract fsck is Utility {
     function _fsck(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) internal pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         (, , string short_options, , , , , ) = pc.unpack();
         bool auto_repair = _strchr(short_options, "p") > 0;
-        bool no_changes = _strchr(short_options, "n") > 0;
-
+        bool no_changes = _strchr(short_options, "n") > 0;*/
+        bool auto_repair = _flag_set("p", flags);
+        bool check_all = _flag_set("A", flags);
+        bool no_changes = _flag_set("n", flags);
         bool repair = auto_repair && !no_changes;
 
-        inodes = inodes_in;
-        data = data_in;
+        inodes_out = inodes;
+        data_out = data;
+
+        string start_dir = params.empty() ? "/" : params[0];
+
+        uint16 start_dir_index = _resolve_absolute_path(start_dir, inodes, data);
+        if (start_dir_index >= ROOT_DIR) {
+            (DirEntry[] contents, int16 status) = _read_dir_data(data[start_dir_index]);
+            if (status < 0) {
+                out.append(format("Error: {} \n", status));
+                ec = EXECUTE_FAILURE;
+            } else {
+                uint len = uint(status);
+                for (uint16 j = 0; j < len; j++) {
+                    (uint8 ft, string name, uint16 index) = contents[j].unpack();
+                    if (ft == FT_UNKNOWN)
+                        continue;
+                    out.append(_dir_entry_line(index, name, ft));
+                }
+            }
+        }
+
 //        uint16 block_size = 100;
         uint16 first_block = 0;
         uint total_inodes;
         uint total_blocks_reported;
         uint total_blocks_actual;
 
+    if (check_all) {
         out = libfs._display_sb(inodes, data);
 
         SuperBlock sb = libfs._read_sb(inodes, data);
 
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
-            uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
+            uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, /*uint32 last_write_time*/, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();
 
         for ((uint16 i, Inode ino): inodes) {
@@ -46,8 +96,10 @@ contract fsck is Utility {
                 errors.append(format("Size mismatch: inode: {} data: {} \n", file_size, len));
                 if (repair) {
                     out.append(format("Fixing inode {}: size {} -> {}\n", i, file_size, len));
-                    inodes[i].file_size = len;
-                }
+                    inodes_out[i].file_size = len;
+                    ec |= ERRORS_CORRECTED;
+                } else
+                    ec |= ERRORS_UNCORRECTED;
             }
             uint16 n_data_blocks = uint16(len / block_size + 1);
             if (n_blocks != n_data_blocks) {
@@ -89,16 +141,6 @@ contract fsck is Utility {
         out.append(format("Blocks SB: count: {} free: {} first: {} size: {}\n", block_count, free_blocks, first_block, block_size));
         out.append(format("Blocks reported: {} actual: {}\n", total_blocks_reported, total_blocks_actual));
     }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("fsck", "check and repair a Tonix filesystem", "[filesystem...]",
-            "Used to check and optionally repair one or more Tonix filesystems.",
-            "AlRpn", 1, M, [
-            "check all filesystems",
-            "lock the device to guarantee exclusive access",
-            "skip root filesystem",
-            "automatic repair (no questions)",
-            "make no changes to the filesystem"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -111,6 +153,7 @@ contract fsck is Utility {
 -l      lock the device to guarantee exclusive access\n\
 -R      skip root filesystem\n\
 -p      automatic repair (no questions)\n\
+-N      don't execute, just show what would be done\n\
 -n      make no changes to the filesystem",
 "",
 "Written by Boris",

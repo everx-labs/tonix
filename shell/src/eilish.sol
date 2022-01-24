@@ -1,23 +1,52 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
-import "compspec.sol";
 
-contract eilish is Shell, compspec {
+struct Command {
+    string cmd;
+    string s_args;
+    string redir_in;
+    string redir_out;
+}
 
-    function set_args(string s_input, string aliases, string opt_string, string index, string pool) external pure returns (uint8 ec, string out, string res) {
-        if (s_input.empty())
-            return (EXECUTE_FAILURE, "", "");
-        /* Expand aliases */
-        (string cmd_raw, string s_args) = _strsplit(s_input, " ");
-        string cmd_expanded = _val(cmd_raw, aliases);
-        string input = cmd_expanded.empty() ? s_input : cmd_expanded + " " + s_args;
-        string cmd;
-        (cmd, s_args) = _strsplit(input, " ");
+contract eilish is Shell {
+
+    function compound(string s_input, string aliases) external pure returns (Command[] res) {
+//        return _compound(s_input, aliases);
+    }
+
+    function _compound(string s_input, string aliases) internal pure returns (Command[] res) {
+        /*if (s_input.empty())
+            return res;
+        (string[] commands, ) = stdio.split(s_input, ";");
+        for (string line: commands) {
+            (string cmd_raw, string s_args) = stdio.strsplit(line, " ");
+            string cmd_expanded = _val(cmd_raw, aliases);
+            string input = cmd_expanded.empty() ? line : cmd_expanded + " " + s_args;
+            string cmd;
+            (cmd, s_args) = stdio.strsplit(input, " ");
+            string redir_in;
+            string redir_out;
+            if (!s_args.empty()) {
+                uint p = stdio.strrchr(s_args, ">");
+                if (p > 0) {
+                    redir_out = stdio.strtok(s_args, p, " ");
+                    s_args = _trim_spaces(s_args.substr(0, p - 1));
+                }
+                uint q = stdio.strrchr(s_args, "<");
+                if (q > 0) {
+                    redir_in = stdio.strtok(s_args, q, " ");
+                    s_args = _trim_spaces(s_args.substr(0, q - 1));
+                }
+            }
+            res.push(Command(cmd, s_args, redir_in, redir_out));
+        }*/
+    }
+
+    /*function set_args_simple(Command s_cmd, string opt_string, string index, string pool) external pure returns (Command[] res) {
+        (string cmd, string s_args, string redir_in, string redir_out) = s_cmd.unpack();
         string cmd_opt_string = _val(cmd, opt_string);
 
-        string redir_out;
-        string redir_in;
         string s_flags;
         string[][2] opt_values;
         string pos_params;
@@ -28,22 +57,18 @@ contract eilish is Shell, compspec {
         string last_param;
         string opt_args;
         if (!s_args.empty()) {
-            (params, n_params) = _split(s_args, " ");
-            uint p = _strrchr(s_input, ">");
-            uint q = _strrchr(s_input, "<");
-            redir_out = p > 0 ? _strtok(s_input, p, " ") : "";
-            redir_in = q > 0 ? _strtok(s_input, q, " ") : "";
-            uint8 t_ec;
-            (t_ec, s_flags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
-            ec = t_ec;
+            (params, n_params) = stdio.split(s_args, " ");
+            (s_flags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
+            if (!err.empty())
+                ec = EX_BADUSAGE;
             for (string arg: params) {
-                if (_strchr(arg, "$") > 0) {
-                    string ref = _strval(arg, "$", " ");
-                    if (_strchr(ref, "{") > 0)
+                if (stdio.strchr(arg, "$") > 0) {
+                    string ref = stdio.strval(arg, "$", " ");
+                    if (stdio.strchr(ref, "{") > 0)
                         ref = _unwrap(ref);
                     string ref_val = _val(ref, pool);
-                    pos_params = _translate(pos_params, arg, ref_val);
-                    s_args = _translate(s_args, arg, ref_val);
+                    pos_params = stdio.translate(pos_params, arg, ref_val);
+                    s_args = stdio.translate(s_args, arg, ref_val);
                 }
             }
             opt_args = _as_hashmap("OPT_ARGS", opt_values);
@@ -57,11 +82,13 @@ contract eilish is Shell, compspec {
         }
         string cmd_type = _get_array_name(cmd, index);
         string exec_line;
-        if (cmd_type == "builtin") {
+        if (cmd_type == "builtin")
             exec_line = "./tosh run_builtin " + input;
-        } else if (cmd_type == "command") {
+        else if (cmd_type == "command")
             exec_line = "./tosh execute_command " + input;
-        } else if (!cmd_type.empty()) {
+        else if (cmd_type == "function")
+            exec_line = "./tosh execute_function " + input;
+        else if (!cmd_type.empty()) {
             exec_line = "echo error: eilish: " + cmd + " unkown commmand type: " + cmd_type;
             ec = EXECUTE_FAILURE;
         }
@@ -73,19 +100,103 @@ contract eilish is Shell, compspec {
             ["PARAMS", pos_params],
             ["FLAGS", s_flags],
             ["ARGV", input],
-            ["#", _itoa(n_params)],
+            ["#", stdio.itoa(n_params)],
             ["@", s_args],
-            ["?", _itoa(ec)],
+            ["?", stdio.itoa(ec)],
             ["_", last_param],
             ["OPTERR", err],
             ["REDIR_IN", redir_in],
             ["REDIR_OUT", redir_out]]);
         out.append(pos_map + "\n");
         out.append(opt_args + "\n");
+    }*/
+
+    function set_args(string s_input, string aliases, string opt_string, string index, string pool) external pure returns (uint8 ec, string out, string res, string redir_in, string redir_out) {
+        if (s_input.empty())
+            return (EXECUTE_FAILURE, "", "", "", "");
+        /*(string cmd_raw, string s_args) = stdio.strsplit(s_input, " ");
+        string cmd_expanded = _val(cmd_raw, aliases);
+        string input = cmd_expanded.empty() ? s_input : cmd_expanded + " " + s_args;
+        string cmd;
+        (cmd, s_args) = stdio.strsplit(input, " ");
+        string cmd_opt_string = _val(cmd, opt_string);
+
+        string s_flags;
+        string[][2] opt_values;
+        string pos_params;
+        string pos_map;
+        string err;
+        string[] params;
+        uint n_params;
+        string last_param;
+        string opt_args;
+        if (!s_args.empty()) {
+            uint p = stdio.strrchr(s_args, ">");
+            if (p > 0) {
+                redir_out = stdio.strtok(s_args, p, " ");
+                s_args = s_args.substr(0, p - 1);
+            }
+            uint q = stdio.strrchr(s_args, "<");
+            if (q > 0) {
+                redir_in = stdio.strtok(s_args, q, " ");
+                s_args = s_args.substr(0, q - 1);
+            }
+            (params, n_params) = stdio.split(s_args, " ");
+            (s_flags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
+            if (!err.empty())
+                ec = EX_BADUSAGE;
+            for (string arg: params) {
+                if (stdio.strchr(arg, "$") > 0) {
+                    string ref = stdio.strval(arg, "$", " ");
+                    if (stdio.strchr(ref, "{") > 0)
+                        ref = _unwrap(ref);
+                    string ref_val = _val(ref, pool);
+                    pos_params = stdio.translate(pos_params, arg, ref_val);
+                    s_args = stdio.translate(s_args, arg, ref_val);
+                }
+            }
+            opt_args = _as_hashmap("OPT_ARGS", opt_values);
+            if (!_val("help", opt_args).empty() || !_val("version", opt_args).empty()) {
+                s_args = cmd;
+                pos_params = cmd;
+                params = [cmd];
+                n_params = 1;
+                cmd = "man";
+            }
+        }
+        string cmd_type = _get_array_name(cmd, index);
+        string exec_line;
+        if (cmd_type == "builtin")
+            exec_line = "./tosh run_builtin " + input;
+        else if (cmd_type == "command")
+            exec_line = "./tosh execute_command " + input;
+        else if (cmd_type == "function")
+            exec_line = "./tosh execute_function " + input;
+        else if (!cmd_type.empty()) {
+            exec_line = "echo error: eilish: " + cmd + " unkown commmand type: " + cmd_type;
+            ec = EXECUTE_FAILURE;
+        }
+        res = exec_line;
+        pos_map = _as_indexed_array("POS_ARGS", s_args.empty() ? cmd : (cmd + " " + s_args), " ");
+        last_param = s_args.empty() ? cmd : params[n_params - 1];
+        out = _as_var_list([
+            ["COMMAND", cmd],
+            ["PARAMS", pos_params],
+            ["FLAGS", s_flags],
+            ["ARGV", input],
+            ["#", stdio.itoa(n_params)],
+            ["@", s_args],
+            ["?", stdio.itoa(ec)],
+            ["_", last_param],
+            ["OPTERR", err],
+            ["REDIR_IN", redir_in],
+            ["REDIR_OUT", redir_out]]);
+        out.append(pos_map + "\n");
+        out.append(opt_args + "\n");*/
     }
 
     function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
-        ec = EXECUTE_SUCCESS;
+        /*ec = EXECUTE_SUCCESS;
         out = _as_var_list([
             ["_", _val("TOSH", profile)],
             ["-", _val("-", profile)],
@@ -96,7 +207,7 @@ contract eilish is Shell, compspec {
             ["TOSH_ALIASES", _val("TOSH_ALIASES", profile)],
             ["SHELLOPTS", "allexport:hashall"],
             ["TMPDIR", _val("TMPDIR", profile)],
-            ["SHLVL", _val("SHLVL", profile)]]);
+            ["SHLVL", _val("SHLVL", profile)]]);*/
     }
 
     // Possible states for the parser that require it to do special things.
@@ -112,8 +223,8 @@ contract eilish is Shell, compspec {
     uint16 constant PST_CONDEXPR	= 512; // parsing the guts of [[...]]
     uint16 constant PST_ARITHFOR	= 1024; // parsing an arithmetic for command
 
-    function _parse_params(string[] params, string opt_string) internal pure returns (uint8 ec, string s_flags, string[][2] opt_values, string err, string pos_params, string s_attrs) {
-        uint n_params = params.length;
+    function _parse_params(string[] params, string opt_string) internal pure returns (string s_flags, string[][2] opt_values, string err, string pos_params, string s_attrs) {
+        /*uint n_params = params.length;
         uint opt_str_len = opt_string.byteLength();
         bool expect_options = true;
         for (uint i = 0; i < n_params; i++) {
@@ -143,24 +254,20 @@ contract eilish is Shell, compspec {
                 }
                 uint o_len = o.byteLength();
                 if (o_len == 1) {
-                    uint p = _strchr(opt_string, o); // _strstr() for long options ?
+                    uint p = stdio.strchr(opt_string, o); // _strstr() for long options ?
                     if (p > 0) {
                         if (p < opt_str_len && opt_string.substr(p, 1) == ":") {
                             if (i + 1 < n_params) {
                                 val = params[i + 1];
                                 i++;
-                            } else {
-                                ec = EX_BADUSAGE;
+                            } else
                                 err.append(format("error: missing option {} value in {} at {} pos {}\n", o, opt_string, p, i));
-                            }
                         } else
                             val = o;
                         opt_values.push([o, val]);
                         s_flags.append(o);
-                    } else {
-                        ec = EX_BADUSAGE;
+                    } else
                         err.append("error: unrecognized option: " + o + " opt_string: " + (opt_string.empty() ? "empty" : opt_string) + "\n");
-                    }
                 } else {
                     if (o == "help" || o == "version")
                         opt_values.push([o, o]);
@@ -175,16 +282,16 @@ contract eilish is Shell, compspec {
                 else
                     pos_params.append(" " + token);
             }
-        }
+        }*/
     }
 
     function _builtin_help() internal pure override returns  (BuiltinHelp bh) {
-        return BuiltinHelp("eilish",
+        /*return BuiltinHelp("eilish",
             "[command ...]",
             "Command shell",
             "Command shell",
             "",
             "",
-            "");
+            "");*/
     }
 }

@@ -1,33 +1,16 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-//import "../lib/libuadm.sol";
 import "../lib/uadmin.sol";
 
 contract groupdel is Utility {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-//        (, , , ) = _get_env(args);
-
-//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
-//        mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
-
         string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
         string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
 
         string victim_group_name = _val("_", args);
-//        string victim_group_name = params[0];
-//        uint16 victim_group_id;
-//        uint16[] removed_groups;
-
         string victim_entry = uadmin.group_entry_by_name(victim_group_name, etc_group);
-        /*for ((uint16 group_id, GroupInfo gi): groups)
-            if (gi.group_name == victim_group_name) {
-                victim_group_id = group_id;
-                removed_groups.push(victim_group_id);
-            }
-
-        if (victim_group_id == 0)*/
         if (victim_entry.empty())
             errors.push(Err(uadmin.E_NOTFOUND, 0, victim_group_name)); // specified group doesn't exist
 
@@ -38,10 +21,6 @@ contract groupdel is Utility {
             (string user_name, , , ) = uadmin.parse_passwd_entry_line(active_uid_entry);
             errors.push(Err(8, 0, user_name)); // can't remove user's primary group
         }
-
-        /*for ((, UserInfo ui): users)
-            if (ui.primary_group == victim_group_name)*/
-//                errors.push(Err(8, 0, ui.user_name)); // can't remove user's primary group
 
         if (errors.empty()) {
             uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);

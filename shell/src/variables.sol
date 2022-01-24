@@ -99,7 +99,7 @@ abstract contract variables is Format {
     function _fetch_value(string key, uint16 delimiter, string page) internal pure returns (string value) {
         string key_pattern = _wrap(key, W_SQUARE);
         (string val_pattern_start, string val_pattern_end) = _wrap_symbols(delimiter);
-        return _strval(page, key_pattern + "=" + val_pattern_start, val_pattern_end);
+        return stdio.strval(page, key_pattern + "=" + val_pattern_start, val_pattern_end);
     }
 
     function _val(string key, string page) internal pure returns (string value) {
@@ -115,7 +115,7 @@ abstract contract variables is Format {
     }
 
     function _item_value(string item) internal pure returns (string, string) {
-        (string key, string value) = _strsplit(item, "=");
+        (string key, string value) = stdio.strsplit(item, "=");
         return (_unwrap(key), _unwrap(value));
     }
 
@@ -125,7 +125,7 @@ abstract contract variables is Format {
             string attr_sign = part_attrs.substr(i * 2, 1);
             string attr_sym = part_attrs.substr(i * 2 + 1, 1);
 
-            bool flag_cur = _strchr(cur_attrs, attr_sym) > 0;
+            bool flag_cur = stdio.strchr(cur_attrs, attr_sym) > 0;
             bool flag_match = (flag_cur && attr_sign == "-");
             if (!flag_match)
                 return false;
@@ -140,11 +140,11 @@ abstract contract variables is Format {
             string attr_sign = part_attrs.substr(i * 2, 1);
             string attr_sym = part_attrs.substr(i * 2 + 1, 1);
 
-            bool flag_cur = _strchr(cur_attrs, attr_sym) > 0;
+            bool flag_cur = stdio.strchr(cur_attrs, attr_sym) > 0;
             if (!flag_cur && attr_sign == "-")
                 res.append(attr_sym);
             else if (flag_cur && attr_sign == "+")
-                res = _translate(res, attr_sym, "");
+                res = stdio.translate(res, attr_sym, "");
         }
         if (res == "-")
             return "--";
@@ -176,7 +176,7 @@ abstract contract variables is Format {
     }
 
     function _str_context(string text, string pattern, string delimiter) internal pure returns (string) {
-        uint q = _strstr(text, pattern);
+        uint q = stdio.strstr(text, pattern);
         if (q > 0) {
             uint d_len = delimiter.byteLength();
             string s_head = text.substr(0, q - 1);
@@ -184,7 +184,7 @@ abstract contract variables is Format {
 
             uint p = _strrstr(s_head, delimiter);
             string s_before = p > 0 ? s_head.substr(p - 1 + d_len) : s_head;
-            p = _strstr(s_tail, delimiter);
+            p = stdio.strstr(s_tail, delimiter);
             string s_after = p > 0 ? s_tail.substr(0, p - 1) : s_tail;
             return s_before + pattern + s_after;
         }
@@ -194,7 +194,7 @@ abstract contract variables is Format {
         uint16 mask = _get_mask_ext(attrs);
         if (attrs == "")
             attrs = "--";
-        bool is_function = _strchr(attrs, "f") > 0;
+        bool is_function = stdio.strchr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=";
         if (!value.empty())
             var_value.append(_wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : W_DQUOTE));
@@ -204,25 +204,25 @@ abstract contract variables is Format {
     }
 
     function _split_var_record(string line) internal pure returns (string, string, string) {
-        (string decl, string value) = _strsplit(line, "=");
-        (string attrs, string name) = _strsplit(decl, " ");
+        (string decl, string value) = stdio.strsplit(line, "=");
+        (string attrs, string name) = stdio.strsplit(decl, " ");
         return (attrs, _unwrap(name), _unwrap(value));
     }
 
     function _get_pool_record(string name, string pool) internal pure returns (string) {
         string pat = _wrap(name, W_SQUARE);
-        (string[] lines, ) = _split(pool, "\n");
+        (string[] lines, ) = stdio.split(pool, "\n");
         for (string line: lines)
-            if (_strstr(line, pat) > 0)
+            if (stdio.strstr(line, pat) > 0)
                 return line;
     }
 
     function _print_reusable(string line) internal pure returns (string) {
         (string attrs, string name, string value) = _split_var_record(line);
-        bool is_function = _strchr(attrs, "f") > 0;
+        bool is_function = stdio.strchr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=" + value;
         return is_function ?
-            (name + " ()" + _wrap(_indent(_translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
+            (name + " ()" + _wrap(_indent(stdio.translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
             "declare " + attrs + " " + name + var_value + "\n";
     }
 

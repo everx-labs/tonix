@@ -1,9 +1,12 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
-import "../lib/String.sol";
+//import "../lib/String.sol";
+import "stdio.sol";
+import "path.sol";
 
-/* Table formatting routines */
-abstract contract Format is String {
+/* Assorted formatting routines */
+abstract contract Format {
+//abstract contract Format is String {
 
     uint8 constant ALIGN_NONE   = 0;
     uint8 constant ALIGN_RIGHT  = 1;
@@ -90,7 +93,7 @@ abstract contract Format is String {
     }
 
     function _indent(string text, uint indent_size, string delimiter) internal pure returns (string out) {
-        (string[] lines, uint n_lines) = _split(text, "\n");
+        (string[] lines, uint n_lines) = stdio.split(text, "\n");
         string spaces;
         for (uint i = 0; i < indent_size; i++)
             spaces.append(" ");
@@ -226,7 +229,7 @@ abstract contract Format is String {
     }
 
     function _parse_record(string line, string separator) internal pure returns (uint[] values, string[] names, address[] addresses) {
-        (string[] fields, ) = _split_line(line, separator, "\n");
+        (string[] fields, ) = stdio.split_line(line, separator, "\n");
         for (string s: fields) {
             uint len = s.byteLength();
             if (len > 65)

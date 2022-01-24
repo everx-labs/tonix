@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "../include/Errors.sol";
 import "../include/Base.sol";
@@ -241,16 +241,16 @@ abstract contract Internal is Base, Format, Errors {
         (ino, ft) = _lookup_dir(inode, data[dir], name);
     }
 
-    function _resolve_absolute_path(string path, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (uint16) {
-        if (path == ROOT)
+    function _resolve_absolute_path(string s_path, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (uint16) {
+        if (s_path == ROOT)
             return ROOT_DIR;
-        (string dir, string not_dir) = _dir(path);
-        (uint16 ino, ) = _fetch_dir_entry(not_dir, _resolve_absolute_path(dir, inodes, data), inodes, data);
+        (string s_dir, string s_not_dir) = path.dir(s_path);
+        (uint16 ino, ) = _fetch_dir_entry(s_not_dir, _resolve_absolute_path(s_dir, inodes, data), inodes, data);
         return ino;
     }
 
     function _xpath(string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string) {
-        return _strip_path(_xpath0(s_arg, wd, inodes, data));
+        return path.strip_path(_xpath0(s_arg, wd, inodes, data));
     }
 
     function _xpath0(string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string) {
@@ -263,7 +263,7 @@ abstract contract Internal is Base, Format, Errors {
         if (len > 1 && s_arg.substr(0, 2) == "./")
             return cwd + "/" + s_arg.substr(2);
         if (len > 1 && s_arg.substr(0, 2) == "..") {
-            (string dir_name, ) = _dir(cwd);
+            (string dir_name, ) = path.dir(cwd);
             if (s_arg == "..")
                 return dir_name;
             if (dir_name == "/")
@@ -283,8 +283,8 @@ abstract contract Internal is Base, Format, Errors {
         return (parent == ROOT_DIR ? "" : _get_absolute_path(parent, inodes, data)) + "/" + inodes[dir].file_name;
     }
 
-    function _get_file_contents_at_path(string path, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string) {
-        (string dir_name, string file_name) = _dir(path);
+    function _get_file_contents_at_path(string s_path, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string) {
+        (string dir_name, string file_name) = path.dir(s_path);
         uint16 dir_index = _resolve_absolute_path(dir_name, inodes, data);
         (uint16 file_index, uint8 ft) = _lookup_dir(inodes[dir_index], data[dir_index], file_name);
         if (ft == FT_UNKNOWN)
@@ -315,8 +315,8 @@ abstract contract Internal is Base, Format, Errors {
             return (ROOT_DIR, FT_DIR, ROOT_DIR, 1);
         parent = name.substr(0, 1) == "/" ? ROOT_DIR : dir;
 
-        (string dir_path, string base_name) = _dir(name);
-        string[] parts = _disassemble_path(dir_path);
+        (string dir_path, string base_name) = path.dir(name);
+        string[] parts = path.disassemble_path(dir_path);
         uint len = parts.length;
 
         for (uint i = len - 1; i > 0; i--) {
@@ -427,7 +427,7 @@ abstract contract Internal is Base, Format, Errors {
     }
 
     function _parse_entry(string s) internal pure returns (DirEntry dirent) {
-        uint p = _strchr(s, "\t");
+        uint p = stdio.strchr(s, "\t");
         if (p > 1) {
             optional(int) index_u = stoi(s.substr(p));
             if (index_u.hasValue())
@@ -438,7 +438,7 @@ abstract contract Internal is Base, Format, Errors {
     }
 
     function _read_dir_data(bytes dir_data) internal pure returns (DirEntry[] contents, int16 status) {
-        (string[] lines, ) = _split(dir_data, "\n");
+        (string[] lines, ) = stdio.split(dir_data, "\n");
         for (string s: lines)
             contents.push(_parse_entry(s));
         status = int16(contents.length);
@@ -631,13 +631,13 @@ abstract contract Internal is Base, Format, Errors {
     }
 
     function _get_sb_text(bytes data) internal pure returns (string[] values, uint n_fields) {
-        return _split_line(data, " ", "\n");
+        return stdio.split_line(data, " ", "\n");
     }
 
     function _get_sb_data(bytes data) internal pure returns (uint16[] values) {
-        (string[] fields, ) = _split_line(data, " ", "\n");
+        (string[] fields, ) = stdio.split_line(data, " ", "\n");
         for (string s: fields)
-            values.push(_atoi(s));
+            values.push(stdio.atoi(s));
     }
 
     function _write_tar_index_entry_bin(Inode inode) internal pure returns (string line) {

@@ -7,11 +7,10 @@ import "../lib/uadmin.sol";
 contract groupadd is Utility, libuadm {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = _get_env(args);
+        (, , string flags, ) = _get_env(args);
         out = "";
         (bool force, bool use_group_id, bool is_system_group, , , , , ) = _flag_values("fgr", flags);
 
-//        string target_group_name = params[n_args - 1];
         string target_group_name = _val("_", args);
         uint16 target_group_id;
         string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
