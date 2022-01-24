@@ -5,7 +5,7 @@ param=$1
 util=eilish
 
 case $fn in
-    set_args)
+    set_args|compound)
         input=$@;;
     *)
         ;;
@@ -14,8 +14,9 @@ esac
 args() {
    case $fn in
         set_args)
-            echo -n "$param" >run/command;
             jq -n --arg v "$input" --rawfile aliases run/aliases --rawfile opt_string run/optstring --rawfile index run/index --rawfile pool run/pool '{s_input: $v, $aliases, $opt_string, $index, $pool}';;
+        compound)
+            jq -n --arg v "$input" --rawfile aliases run/aliases '{s_input: $v, $aliases}';;
         set_tosh_vars)
             jq -n --rawfile profile etc/profile '{$profile}';;
     esac
@@ -26,7 +27,11 @@ filter() {
         set_args)
             jq -rj '.ec' $1 >run/ec;
             jq -rj '.res' $1 >run/ei_exec;
+#            jq -rj '.redir_in' $1 >run/redir_in;
+#            jq -rj '.redir_out' $1 >run/redir_out;
             jq -rj '.out' $1 >run/args;;
+        compound)
+            jq -rj '.res' $1;;
         set_tosh_vars)
             jq -r '.out' $1 >run/tosh_vars;;
         *)

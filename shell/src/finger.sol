@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract finger is Utility {
 
@@ -23,11 +22,6 @@ contract finger is Utility {
             string line = uadmin.passwd_entry_by_name(user_name, etc_passwd);
             if (!line.empty())
                 table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);
-            /*mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
-            for ((, UserInfo user_info): users)
-                if (user_info.user_name == user_name)
-                    table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);*/
-
             out = fmt.format_table(table, " ", "\n", fmt.ALIGN_CENTER);
         }
         ec = EXECUTE_SUCCESS;

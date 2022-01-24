@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract lslogins is Utility {
 
@@ -24,7 +23,7 @@ contract lslogins is Utility {
         if (field_separator.byteLength() > 1)
             return (EXECUTE_FAILURE, "", "Mutually exclusive options\n");
         bool formatted_table = field_separator.empty();
-        bool print_all = (print_system || print_user) && argv.empty();
+        bool print_all = (print_system || print_user) && params.empty();
 
         if (formatted_table)
             field_separator = " ";
@@ -35,15 +34,11 @@ contract lslogins is Utility {
         Column[] columns_format = print_all ? [
                 Column(print_all, 5, fmt.ALIGN_LEFT), Column(print_all, 10, fmt.ALIGN_LEFT), Column(print_all, 5, fmt.ALIGN_LEFT), Column(print_all, 10, fmt.ALIGN_LEFT)] :
                [Column(!print_all, 15, fmt.ALIGN_LEFT), Column(!print_all, 20, fmt.ALIGN_LEFT)];
-//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
 
         if (params.empty() && uid < GUEST_USER) {
             (string[] lines, ) = stdio.split(etc_passwd, "\n");
             for (string line: lines) {
-            /*for ((uint16 t_uid, UserInfo user_info): users) {
-                (uint16 t_gid, string s_owner, string s_group) = user_info.unpack();*/
                 (string s_owner, uint16 t_uid, uint16 t_gid, ) = uadmin.parse_passwd_entry_line(line);
-
                 table.push([stdio.itoa(t_uid), s_owner, stdio.itoa(t_gid), s_owner]);
             }
         } else {
@@ -51,15 +46,10 @@ contract lslogins is Utility {
             string line = uadmin.passwd_entry_by_name(user_name, etc_passwd);
             if (!line.empty()) {
                 (, uint16 t_uid, uint16 t_gid, string home_dir) = uadmin.parse_passwd_entry_line(line);
-            /*for ((uint16 t_uid, UserInfo user_info): users)
-                if (user_info.user_name == user_name) {
-                    (uint16 t_gid, , string s_group) = user_info.unpack();
-                    string home_dir = "/home/" + user_name;*/
                     table = [
                         ["Username:", user_name],
                         ["UID:", stdio.itoa(t_uid)],
                         ["Home directory:", home_dir],
-//                        ["Primary group:", s_group],
                         ["Primary group:", user_name],
                         ["GID:", stdio.itoa(t_gid)]];
 //                    break;

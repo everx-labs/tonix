@@ -4,17 +4,13 @@ import "Utility.sol";
 
 contract findmnt is Utility {
 
-    function exec(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, , uint flags) = input.unpack();
-        bool flag_fstab_only = (flags & _s) > 0;
-        bool flag_mtab_only = (flags & _m) > 0;
-//        bool flag_kernel = (flags & _k) > 0;
-        bool like_df = (flags & _D) > 0;
-        bool first_fs_only = (flags & _f) > 0;
-        bool no_headings = (flags & _n) > 0;
-        bool no_truncate = (flags & _u) > 0;
-        bool all_columns = (flags & _o) > 0;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , , string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
 
+        (bool flag_fstab_only, bool flag_mtab_only, , bool like_df, bool first_fs_only, bool no_headings,
+            bool no_truncate, bool all_columns) = arg.flag_values("smkDfnuo", flags);
         bool df_style = like_df || all_columns;
         bool non_df_style = !like_df || all_columns;
 

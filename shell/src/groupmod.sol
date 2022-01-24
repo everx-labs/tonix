@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract groupmod is Utility {
 
@@ -40,7 +39,6 @@ contract groupmod is Utility {
                 errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
                 n_gid = uint16(val.get());
-//            if (groups.exists(n_gid))
             if (!uadmin.group_name_by_id(n_gid, etc_group).empty())
                 errors.push(Err(uadmin.E_GID_IN_USE, 0, group_id_s));
             else

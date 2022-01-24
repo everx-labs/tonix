@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract lsblk is Utility {
 
@@ -67,9 +66,6 @@ contract lsblk is Utility {
                 string mount_path = dev_file_ft == FT_BLKDEV ? ROOT : "";
                 string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
                 string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
-
-//                string s_owner = _get_user_name(owner_id, inodes, data);
-//                string s_group = _get_group_name(group_id, inodes, data);
 
                 table.push([
                     name,

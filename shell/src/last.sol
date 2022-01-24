@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract last is Utility {
 
@@ -37,12 +36,10 @@ contract last is Utility {
             Column(true, 30, fmt.ALIGN_LEFT)];
 
         mapping (uint16 => uint32) log_ts;
-//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         LoginEvent[] wtmp;
 
         for (LoginEvent le: wtmp) {
             (uint8 letype, uint16 user_id, uint16 tty_id, , uint32 timestamp) = le.unpack();
-//            string ui_user_name = users[user_id].user_name;
             string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
             string ui_user_name;
             if (!line.empty())

@@ -6,8 +6,13 @@ NC='\033[0m'
 
 input=$1
 #echo $input
+#./eilish compound "$input"
 ./eilish set_args "$input"
+redir_in=`jq -rj '.redir_in' tmp/eilish_set_args.out`
+redir_out=`jq -rj '.redir_out' tmp/eilish_set_args.out`
 eval `cat run/ei_exec`
 if [ -s tmp/error ]; then echo ${RED} Error; cat run/stderr; echo ${NC}; break; fi;
+#if [ -s run/redir_out ]; then echo REDIR OUT => `cat run/redir_out`; echo ${GREEN}; cat run/stdout; echo ${NC}; rm run/stdout; fi
+if [ ! -z "$redir_out" ]; then cat run/stdout >$redir_out; rm run/stdout; fi
 if [ -s run/stdout ]; then cat run/stdout >>var/log/stdout; cat run/stdout >>var/log/session; echo ${GREEN}; cat run/stdout; echo ${NC}; rm run/stdout; fi
 if [ -s run/stderr ]; then cat run/stderr >>var/log/stderr; cat run/stderr >>var/log/session; echo ${RED}; cat run/stderr; echo ${NC}; rm run/stderr; fi

@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract ls is Utility {
 
@@ -14,7 +13,7 @@ contract ls is Utility {
             if (ft != FT_UNKNOWN)
                 out.append(_ls(flags, Arg(s_arg, ft, index, parent, dir_index), inodes, data) + "\n");
             else {
-                err.append("Failed to resolve relative path for" + s_arg + "\n");
+                err.append("ls: failed to resolve relative path for " + s_arg + "\n");
                 ec = EXECUTE_FAILURE;
             }
         }
@@ -36,14 +35,6 @@ contract ls is Utility {
     }
 
     function _ls_populate_line(string f, Inode inode, uint16 index, string name, uint8 file_type, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[] l) {
-//        bool long_format = _flag_set("l", f) || _flag_set("n", f) || _flag_set("g", f) || _flag_set("o", f);
-//        bool print_index_node = _flag_set("i", f);
-//        bool no_owner = _flag_set("g", f);
-//        bool no_group = _flag_set("o", f);
-//        bool no_group_names = _flag_set("G", f);
-//        bool numeric = _flag_set("n", f);
-//        bool human_readable = _flag_set("h", f);
-//        bool print_allocated_size = _flag_set("s", f);
         bool double_quotes = arg.flag_set("Q", f) && !arg.flag_set("N", f);
         bool append_slash_to_dirs = arg.flag_set("p", f) || arg.flag_set("F", f);
         bool use_ctime = arg.flag_set("c", f);

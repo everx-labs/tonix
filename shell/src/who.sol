@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract who is Utility {
 
@@ -30,7 +29,6 @@ contract who is Utility {
                 string ui_user_name;
                 if (!line.empty())
                     (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
-//                out.append(users[user_id].user_name + "\t");
                 out.append(ui_user_name + "\t");
                 count++;
             }
@@ -52,7 +50,6 @@ contract who is Utility {
             Column(!default_format || users_logged_in, 5, fmt.ALIGN_RIGHT)];
         for ((, Login l): utmp) {
             (uint16 user_id, uint16 tty_id, uint16 process_id, uint32 login_time) = l.unpack();
-//            if (system_login_proc && user_id > _login_defs_uint16[SYS_UID_MAX])
             if (system_login_proc && user_id > uadmin.login_def_value(uadmin.SYS_UID_MAX))
                 continue;
 

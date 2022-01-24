@@ -1,26 +1,17 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract fuser is Utility {
 
-    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, , uint flags) = input.unpack();
-//        bool all_fields = (flags & _a) > 0;
-        bool last_boot_time = (flags & _b) > 0;
-//        bool dead_processes = (flags & _d) > 0;
-        bool print_headings = (flags & _H) > 0;
-        bool system_login_proc = (flags & _l) > 0;
-//        bool init_spawned_proc = (flags & _p) > 0;
-        bool all_logged_on = (flags & _q) > 0;
-        bool default_format = (flags & _s) > 0;
-  //      bool last_clock_change = (flags & _t) > 0;
-        bool user_message_status = (flags & _T + _w) > 0;
-        bool users_logged_in = (flags & _u) > 0;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , , string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
+        (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
+            , bool users_logged_in) = arg.flag_values("bHlqsTwu", flags);
         string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
 
-//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         mapping (uint16 => Login) utmp;
 
         if (all_logged_on) {
@@ -33,12 +24,11 @@ contract fuser is Utility {
                 string ui_user_name;
                 if (!line.empty())
                     (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
-//                out.append(users[user_id].user_name + "\t");
                 out.append(ui_user_name + "\t");
                 count++;
             }
             out.append(format("\n# users = {}\n", count));
-            return out;
+            return (EXECUTE_SUCCESS, out, err);
         }
 
         string[][] table;
@@ -61,8 +51,6 @@ contract fuser is Utility {
             string ui_user_name;
             if (!line.empty())
                 (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
-
-//            (, string ui_user_name, ) = users[user_id].unpack();
             table.push([ui_user_name, "+", stdio.itoa(tty_id), fmt.ts(login_time), stdio.itoa(process_id)]);
         }
 

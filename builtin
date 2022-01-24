@@ -1,4 +1,4 @@
-#set -x
+set -x
 builtin=$1
 shift
 fn=$1
@@ -58,15 +58,24 @@ filter() {
                 esac
             fi;;
         builtin_read_fs)
-            jq -rj '.ec' $1 >run/ec;
-            jq -rj '.res' $1 >run/res;
-            if [ -s run/res ]; then
-                cp run/res run/$page;
+            jq -rj '.ec' $1 >run/ec
+            jq -rj '.res' $1 >run/res
+            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/page_changed
+#            if [ -s run/res ]; then
+            if [ -s tmp/page_changed ]; then
+                cp run/res run/$page
+                cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
             fi;;
         read_input)
-            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/script;
-            if [ -s tmp/script ]; then
-                ./tz tmp/script;
+#            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/script;
+            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/in_out;
+            if [ -s tmp/in_out ]; then
+                case $builtin in
+                    source)
+                       ./tz tmp/in_out;;
+                    *)
+                        cat tmp/in_out;;
+                esac
             fi;;
         *)
             ;;

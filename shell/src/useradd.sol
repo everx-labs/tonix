@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract useradd is Utility {
 
@@ -41,7 +40,6 @@ contract useradd is Utility {
             else
                 n_gid = uint16(val.get());
             group_id = uint16(n_gid);
-//            if (!groups.exists(group_id))
             if (uadmin.group_name_by_id(group_id, etc_group).empty())
                 errors.push(Err(uadmin.E_NOTFOUND, 0, group_id_s)); // specified group doesn't exist
             else
@@ -53,7 +51,6 @@ contract useradd is Utility {
                 errors.push(Err(uadmin.E_BAD_ARG, 0, user_id_s)); // invalid argument to option
             else
                 user_id = uint16(val.get());
-//            if (users.exists(user_id))
             line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
             if (!line.empty())
                 errors.push(Err(uadmin.E_GID_IN_USE, 0, user_id_s)); // UID already in use (and no -o)
