@@ -1,22 +1,14 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract newgrp is Utility, libuadm {
+contract newgrp is Utility {
 
     function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] args, uint flags) = input.unpack();
+        string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
 
-        mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
-
-        session.pid = session.pid;
-        out = out;
-        UserEvent ue;
-        (ue, file_action, ars, errors) = _newgrp(flags, args, inodes, data, groups);
-    }
-
-    function _newgrp(uint flags, string[] args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => GroupInfo) groups) private pure returns (UserEvent ue, Action file_action, Ar[] ars, Err[] errs) {
         bool force = (flags & _f) > 0;
         bool use_group_id = (flags & _g) > 0;
         bool is_system_group = (flags & _r) > 0;
@@ -27,40 +19,38 @@ contract newgrp is Utility, libuadm {
         uint16 options = is_system_group ? UAO_SYSTEM : 0;
         uint16[] added_groups;
 
-        for ((, GroupInfo gi): groups)
-            if (gi.group_name == target_group_name)
-                errs.push(Err(E_NAME_IN_USE, 0, target_group_name));
-
+        string g_line = uadmin.group_entry_by_name(target_group_name, etc_group);
+        if (!g_line.empty()) {
+//        for ((, GroupInfo gi): groups)
+//            if (gi.group_name == target_group_name)
+                errors.push(Err(uadmin.E_NAME_IN_USE, 0, target_group_name));
+        }
         if (use_group_id && n_args > 1) {
             string group_id_s = args[0];
             optional(int) val = stoi(group_id_s);
             uint16 n_gid;
             if (!val.hasValue())
-                errs.push(Err(E_BAD_ARG, 0, group_id_s)); // invalid argument to option
+                errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
                 n_gid = uint16(val.get());
             target_group_id = uint16(n_gid);
-            if (groups.exists(target_group_id))
+//            if (groups.exists(target_group_id))
+            if (!uadmin.group_name_by_id(target_group_id, etc_group).empty())
+                errors.push(Err(uadmin.E_GID_IN_USE, 0, group_id_s));
                 if (force)
                     target_group_id = 0;
                 else
-                    errs.push(Err(E_GID_IN_USE, 0, group_id_s));
+                    errors.push(Err(uadmin.E_GID_IN_USE, 0, group_id_s));
         }
 
-        (, , uint16 reg_groups_counter, uint16 sys_groups_counter) = _get_counters(inodes, data);
+        (, , uint16 reg_groups_counter, uint16 sys_groups_counter) = uadmin.get_counters(etc_group);
         if (target_group_id == 0)
             target_group_id = is_system_group ? sys_groups_counter++ : reg_groups_counter++;
 
-        if (errs.empty())
-            ue = UserEvent(UA_ADD_GROUP, target_group_id, target_group_id, options, target_group_name, target_group_name, added_groups);
-
         uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
         (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
-        string etc_group;
-        if (group_file_type == FT_REG_FILE)
-            etc_group = _get_file_contents(group_index, inodes, data);
-        if (errs.empty()) {
-            string text = _group_entry_line(target_group_name, target_group_id);
+        if (errors.empty()) {
+            string text = uadmin.group_entry_line(target_group_name, target_group_id);
             if (group_file_type == FT_UNKNOWN) {
                 uint16 ic = _get_inode_count(inodes);
                 ars.push(Ar(IO_MKFILE, FT_REG_FILE, ic, etc_dir, "group", text));
@@ -70,13 +60,6 @@ contract newgrp is Utility, libuadm {
             file_action = Action(UA_ADD_GROUP, 1);
         }
 
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        string[] empty;
-        return ("newgrp", "log in to a new group", "[-] [group]",
-            "Change the current group ID during a login session.",
-            "", 1, M, empty);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

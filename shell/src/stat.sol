@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract stat is Utility, libuadm {
+contract stat is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
@@ -25,8 +25,9 @@ contract stat is Utility, libuadm {
         Inode inode = inodes[index];
         uint16 blk_size = _get_block_size(inodes);
         (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
-        string s_owner = _get_user_name(owner_id, inodes, data);
-        string s_group = _get_group_name(group_id, inodes, data);
+
+        string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
+        string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
 
         (string major, string minor) = ft == FT_BLKDEV || ft == FT_CHRDEV  ? _get_device_version(device_id) : ("0", "0");
 

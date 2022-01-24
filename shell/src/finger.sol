@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract finger is Utility, libuadm {
+contract finger is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (, string[] params, string flags, ) = arg.get_env(argv);
@@ -19,10 +19,14 @@ contract finger is Utility, libuadm {
             string[][] table;
             if (short_format)
                 table = [["Login", "Tty", "Idle", "Login Time"]];
-            mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
+            string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
+            string line = uadmin.passwd_entry_by_name(user_name, etc_passwd);
+            if (!line.empty())
+                table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);
+            /*mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
             for ((, UserInfo user_info): users)
                 if (user_info.user_name == user_name)
-                    table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);
+                    table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);*/
 
             out = fmt.format_table(table, " ", "\n", fmt.ALIGN_CENTER);
         }

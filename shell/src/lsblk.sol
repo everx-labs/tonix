@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract lsblk is Utility, libuadm {
+contract lsblk is Utility {
 
     /* Query devices and file systems status */
     function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Err[] errors) {
@@ -20,18 +20,18 @@ contract lsblk is Utility, libuadm {
 
         string[][] table;
         Column[] columns_format = [
-            Column(true, 15, ALIGN_LEFT), // Name
-            Column(print_device_info, 3, ALIGN_RIGHT),
-            Column(print_device_info, 4, ALIGN_LEFT),
-            Column(print_device_info || print_permissions, 7, ALIGN_CENTER),
-            Column(print_device_info, 2, ALIGN_CENTER),
-            Column(print_device_info, 4, ALIGN_CENTER),
-            Column(print_fsinfo, 8, ALIGN_CENTER),
-            Column(print_fsinfo, 6, ALIGN_CENTER),
-            Column(print_device_info || print_fsinfo, 10, ALIGN_LEFT),
-            Column(print_permissions, 5, ALIGN_CENTER),
-            Column(print_permissions, 5, ALIGN_CENTER),
-            Column(print_permissions, 10, ALIGN_LEFT)];
+            Column(true, 15, fmt.ALIGN_LEFT), // Name
+            Column(print_device_info, 3, fmt.ALIGN_RIGHT),
+            Column(print_device_info, 4, fmt.ALIGN_LEFT),
+            Column(print_device_info || print_permissions, 7, fmt.ALIGN_CENTER),
+            Column(print_device_info, 2, fmt.ALIGN_CENTER),
+            Column(print_device_info, 4, fmt.ALIGN_CENTER),
+            Column(print_fsinfo, 8, fmt.ALIGN_CENTER),
+            Column(print_fsinfo, 6, fmt.ALIGN_CENTER),
+            Column(print_device_info || print_fsinfo, 10, fmt.ALIGN_LEFT),
+            Column(print_permissions, 5, fmt.ALIGN_CENTER),
+            Column(print_permissions, 5, fmt.ALIGN_CENTER),
+            Column(print_permissions, 10, fmt.ALIGN_LEFT)];
 
         uint16 dev_dir = _resolve_absolute_path("/dev", inodes, data);
 
@@ -65,8 +65,11 @@ contract lsblk is Utility, libuadm {
                     continue;
                 string name = (full_path ? "/dev/" : "") + fields0[2];
                 string mount_path = dev_file_ft == FT_BLKDEV ? ROOT : "";
-                string s_owner = _get_user_name(owner_id, inodes, data);
-                string s_group = _get_group_name(group_id, inodes, data);
+                string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
+                string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
+
+//                string s_owner = _get_user_name(owner_id, inodes, data);
+//                string s_group = _get_group_name(group_id, inodes, data);
 
                 table.push([
                     name,

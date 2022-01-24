@@ -4,6 +4,34 @@ import "stdio.sol";
 
 library uadmin {
 
+    uint16 constant S_IWUSR = 1 << 7;
+    uint16 constant S_IRUSR = 1 << 8;
+
+    function get_counters(string etc_passwd) internal returns (uint16 reg_users_counter, uint16 sys_users_counter, uint16 reg_groups_counter, uint16 sys_groups_counter) {
+        uint16 uid_min = login_def_value(UID_MIN);
+        uint16 sys_uid_min = login_def_value(SYS_UID_MIN);
+        uint16 gid_min = login_def_value(GID_MIN);
+        uint16 sys_gid_min = login_def_value(SYS_GID_MIN);
+
+        reg_users_counter = uid_min;
+        sys_users_counter = sys_uid_min;
+        reg_groups_counter = gid_min;
+        sys_groups_counter = sys_gid_min;
+
+        (string[] lines, ) = stdio.split(etc_passwd, "\n");
+        for (string line: lines) {
+            (, uint16 user_id, uint16 group_id, ) = parse_passwd_entry_line(line);
+            if (user_id >= uid_min)
+                reg_users_counter = user_id + 1;
+            else if (user_id >= sys_uid_min)
+                sys_users_counter = user_id + 1;
+            if (group_id >= gid_min)
+                reg_groups_counter = group_id + 1;
+            else if (group_id >= sys_gid_min)
+                sys_groups_counter = group_id + 1;
+        }
+    }
+
     function user_groups(string user_name, string etc_group) internal returns (string primary, string[] supp) {
         (string[] lines, ) = stdio.split(etc_group, "\n");
         for (string line: lines) {
@@ -49,6 +77,15 @@ library uadmin {
         }
     }
 
+    function user_name_by_id(uint16 uid, string etc_passwd) internal returns (string) {
+        (string[] lines, ) = stdio.split(etc_passwd, "\n");
+        for (string line: lines) {
+            (string user_name, uint16 id, , ) = parse_passwd_entry_line(line);
+            if (id == uid)
+                return user_name;
+        }
+    }
+
     function group_entry_by_name(string name, string etc_group) internal returns (string) {
         (string[] lines, ) = stdio.split(etc_group, "\n");
         for (string line: lines) {
@@ -67,12 +104,74 @@ library uadmin {
         }
     }
 
+    function passwd_entry_by_uid(uint16 uid, string etc_passwd) internal returns (string) {
+        (string[] lines, ) = stdio.split(etc_passwd, "\n");
+        for (string line: lines) {
+            (, uint16 id, , ) = parse_passwd_entry_line(line);
+            if (id == uid)
+                return line;
+        }
+    }
+
+    function passwd_entry_by_name(string name, string etc_passwd) internal returns (string) {
+        (string[] lines, ) = stdio.split(etc_passwd, "\n");
+        for (string line: lines) {
+            (string u_name, , , ) = parse_passwd_entry_line(line);
+            if (u_name == name)
+                return line;
+        }
+    }
+
     function passwd_entry_line(string user_name, uint16 user_id, uint16 group_id, string group_name) internal returns (string) {
         return format("{}:x:{}:{}:{}:/home/{}:\n", user_name, user_id, group_id, group_name, user_name);
     }
 
     function group_entry_line(string group_name, uint16 group_id) internal returns (string) {
         return format("{}:x:{}:\n", group_name, group_id);
+    }
+
+    function login_def_flag(uint16 key) internal returns (bool) {
+        mapping (uint16 => bool) login_defs_bool;
+
+        login_defs_bool[FAILLOG_ENAB] = true;
+        login_defs_bool[LOG_UNKFAIL_ENAB] = true;
+        login_defs_bool[LOG_OK_LOGINS] = true;
+        login_defs_bool[SYSLOG_SU_ENAB] = true;
+        login_defs_bool[SYSLOG_SG_ENAB] = true;
+        login_defs_bool[DEFAULT_HOME] = true;
+        login_defs_bool[USERGROUPS_ENAB] = true;
+
+        return login_defs_bool[key];
+    }
+
+    function login_def_value(uint16 key) internal returns (uint16) {
+        mapping (uint16 => uint16) login_defs_uint16;
+
+        login_defs_uint16[GID_MIN] = 1000; // Min/max values for automatic gid selection in groupadd
+        login_defs_uint16[GID_MAX] = 20000;
+        login_defs_uint16[SYS_GID_MIN] = 100;
+        login_defs_uint16[SYS_GID_MAX] = 999;
+        login_defs_uint16[UID_MIN] = 1000; // Min/max values for automatic gid selection in groupadd
+        login_defs_uint16[UID_MAX] = 20000;
+        login_defs_uint16[SYS_UID_MIN] = 100;
+        login_defs_uint16[SYS_UID_MAX] = 999;
+        login_defs_uint16[TTYPERM] = S_IRUSR + S_IWUSR;
+
+        return login_defs_uint16[key];
+    }
+
+    function login_def_string(uint16 key) internal returns (string) {
+        mapping (uint16 => string) login_defs_string;
+        login_defs_string[SULOG_FILE] = "/var/log/sulog";
+        login_defs_string[FTMP_FILE] = "/var/log/btmp";
+        login_defs_string[SU_NAME] = "su";
+        login_defs_string[ENV_SUPATH] = "PATH=/bin";
+        login_defs_string[ENV_PATH] = "PATH=/bin";
+        login_defs_string[TTYGROUP] = "tty";
+        login_defs_string[CHFN_RESTRICT] = "rwh";
+        login_defs_string[CONSOLE_GROUPS] = "floppy:audio:cdrom";
+
+        return login_defs_string[key];
     }
 
     uint16 constant FAILLOG_ENAB    = 1;

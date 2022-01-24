@@ -1,16 +1,16 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract useradd is Utility, libuadm {
+contract useradd is Utility {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
-        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
-        mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
-        bool create_user_group_def = _login_def_flag(USERGROUPS_ENAB);
-        bool create_home_dir_def = _login_def_flag(CREATE_HOME);
+        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
+        string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
+        bool create_user_group_def = uadmin.login_def_flag(uadmin.USERGROUPS_ENAB);
+        bool create_home_dir_def = uadmin.login_def_flag(uadmin.CREATE_HOME);
 
         (bool is_system_account, bool create_home_flag, bool do_not_create_home_flag, bool create_user_group_flag, bool do_not_create_user_group_flag,
             bool use_user_id, bool use_group_id, bool supp_groups_list) = arg.flag_values("rmMUNugG", flags);
@@ -28,48 +28,49 @@ contract useradd is Utility, libuadm {
 
         uint16[] new_group_ids;
 
-        for ((, UserInfo u): users)
-            if (u.user_name == user_name)
-                errors.push(Err(E_NAME_IN_USE, 0, user_name));
+        string line = uadmin.passwd_entry_by_name(user_name, etc_passwd);
+        if (!line.empty())
+            errors.push(Err(uadmin.E_NAME_IN_USE, 0, user_name));
 
         if (use_group_id && n_args > 1) {
             string group_id_s = params[0];
             optional(int) val = stoi(group_id_s);
             uint16 n_gid;
             if (!val.hasValue())
-                errors.push(Err(E_BAD_ARG, 0, group_id_s)); // invalid argument to option
+                errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
                 n_gid = uint16(val.get());
             group_id = uint16(n_gid);
-            if (!groups.exists(group_id))
-                errors.push(Err(E_NOTFOUND, 0, group_id_s)); // specified group doesn't exist
+//            if (!groups.exists(group_id))
+            if (uadmin.group_name_by_id(group_id, etc_group).empty())
+                errors.push(Err(uadmin.E_NOTFOUND, 0, group_id_s)); // specified group doesn't exist
             else
                 new_group_ids = [group_id];
         } else if (use_user_id && n_args > 1) {
             string user_id_s = params[0];
             optional(int) val = stoi(user_id_s);
             if (!val.hasValue())
-                errors.push(Err(E_BAD_ARG, 0, user_id_s)); // invalid argument to option
+                errors.push(Err(uadmin.E_BAD_ARG, 0, user_id_s)); // invalid argument to option
             else
                 user_id = uint16(val.get());
-            if (users.exists(user_id))
-                errors.push(Err(E_GID_IN_USE, 0, user_id_s)); // UID already in use (and no -o)
+//            if (users.exists(user_id))
+            line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
+            if (!line.empty())
+                errors.push(Err(uadmin.E_GID_IN_USE, 0, user_id_s)); // UID already in use (and no -o)
         } else if (supp_groups_list && n_args > 1) {
             string supp_string = params[0];
             (string[] supp_list, ) = stdio.split(supp_string, ",");
             for (string s: supp_list) {
-                uint16 gid_found = 0;
-                for ((uint16 gid, GroupInfo gi): groups)
-                    if (gi.group_name == s)
-                        gid_found = gid;
-                if (gid_found > 0)
+                string g_line = uadmin.group_entry_by_name(s, etc_group);
+                if (!g_line.empty()) {
+                    (, uint16 gid_found, ) = uadmin.parse_group_entry_line(g_line);
                     new_group_ids.push(gid_found);
-                else
-                    errors.push(Err(E_NOTFOUND, 0, s));
+                } else
+                    errors.push(Err(uadmin.E_NOTFOUND, 0, s));
             }
         }
 
-        (uint16 reg_users_counter, uint16 sys_users_counter, uint16 reg_groups_counter, uint16 sys_groups_counter) = _get_counters(inodes, data);
+        (uint16 reg_users_counter, uint16 sys_users_counter, uint16 reg_groups_counter, uint16 sys_groups_counter) = uadmin.get_counters(etc_passwd);
         if (user_id == 0)
             user_id = is_system_account ? sys_users_counter++ : reg_users_counter++;
 
@@ -86,15 +87,10 @@ contract useradd is Utility, libuadm {
             uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
             (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
             (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
-            string etc_passwd;
-            string etc_group;
-            if (passwd_file_type == FT_REG_FILE)
-                etc_passwd = _get_file_contents(passwd_index, inodes, data);
-            if (group_file_type == FT_REG_FILE)
-                etc_group = _get_file_contents(group_index, inodes, data);
+
             uint16 ic = _get_inode_count(inodes);
 
-            text = _passwd_entry_line(user_name, user_id, group_id, user_name);
+            text = uadmin.passwd_entry_line(user_name, user_id, group_id, user_name);
             if (passwd_file_type == FT_UNKNOWN || passwd_dir_idx == 0) {
                 ars.push(Ar(IO_MKFILE, FT_REG_FILE, ic, etc_dir, "passwd", text));
                 ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", _dir_entry_line(ic, "passwd", FT_REG_FILE)));
@@ -104,7 +100,7 @@ contract useradd is Utility, libuadm {
                 ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", etc_passwd + text));
 
             if (create_user_group) {
-                string group_text = _group_entry_line(user_name, group_id);
+                string group_text = uadmin.group_entry_line(user_name, group_id);
                 if (group_file_type == FT_UNKNOWN || group_dir_idx == 0) {
                     ars.push(Ar(IO_MKFILE, FT_REG_FILE, ic, etc_dir, "group", group_text));
                     ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", _dir_entry_line(ic, "group", FT_REG_FILE)));

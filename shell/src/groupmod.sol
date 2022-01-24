@@ -1,13 +1,12 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract groupmod is Utility, libuadm {
+contract groupmod is Utility {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
-        mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
 
         uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
         (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
@@ -24,14 +23,12 @@ contract groupmod is Utility, libuadm {
         uint16 target_group_id;
         uint16 new_group_id;
         string new_group_name;
-        for ((uint16 gid, GroupInfo gi): groups)
-            if (gi.group_name == target_group_name) {
-                target_group_id = gid;
-                break;
-            }
+        string g_line = uadmin.group_entry_by_name(target_group_name, etc_group);
+        if (!g_line.empty())
+            (, target_group_id, ) = uadmin.parse_group_entry_line(g_line);
 
         if (target_group_id == 0)
-            errors.push(Err(E_NOTFOUND, 0, target_group_name)); // specified group doesn't exist
+            errors.push(Err(uadmin.E_NOTFOUND, 0, target_group_name)); // specified group doesn't exist
 
         prev_entry = format("{}\t{}\n", target_group_name, target_group_id);
 
@@ -40,18 +37,19 @@ contract groupmod is Utility, libuadm {
             uint16 n_gid;
             optional(int) val = stoi(group_id_s);
             if (!val.hasValue())
-                errors.push(Err(E_BAD_ARG, 0, group_id_s)); // invalid argument to option
+                errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
                 n_gid = uint16(val.get());
-            if (groups.exists(n_gid))
-                errors.push(Err(E_GID_IN_USE, 0, group_id_s)); // specified group doesn't exist
+//            if (groups.exists(n_gid))
+            if (!uadmin.group_name_by_id(n_gid, etc_group).empty())
+                errors.push(Err(uadmin.E_GID_IN_USE, 0, group_id_s));
             else
                 new_group_id = n_gid;
         } else if (use_new_name && n_args > 1) {
             new_group_name = params[0];
-            for ((, GroupInfo gi): groups)
-                if (gi.group_name == new_group_name)
-                    errors.push(Err(E_NAME_IN_USE, 0, new_group_name));
+            g_line = uadmin.group_entry_by_name(new_group_name, etc_group);
+            if (!g_line.empty())
+                errors.push(Err(uadmin.E_NAME_IN_USE, 0, new_group_name));
         }
         if (errors.empty()) {
             string text = format("{}\t{}\n", use_new_name ? new_group_name : target_group_name, new_group_id);

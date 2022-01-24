@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract lslogins is Utility, libuadm {
+contract lslogins is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
@@ -13,7 +13,8 @@ contract lslogins is Utility, libuadm {
         bool print_system = flag_system || !flag_user;
         bool print_user = !flag_system || flag_user;
         string field_separator;
-        uint16 uid = stdio.atoi(_val("UID", argv));
+        uint16 uid = stdio.atoi(vars.val("UID", argv));
+        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
 
         if (colon)
             field_separator = ":";
@@ -34,26 +35,34 @@ contract lslogins is Utility, libuadm {
         Column[] columns_format = print_all ? [
                 Column(print_all, 5, fmt.ALIGN_LEFT), Column(print_all, 10, fmt.ALIGN_LEFT), Column(print_all, 5, fmt.ALIGN_LEFT), Column(print_all, 10, fmt.ALIGN_LEFT)] :
                [Column(!print_all, 15, fmt.ALIGN_LEFT), Column(!print_all, 20, fmt.ALIGN_LEFT)];
-        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
+//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
 
         if (params.empty() && uid < GUEST_USER) {
-            for ((uint16 t_uid, UserInfo user_info): users) {
-                (uint16 t_gid, string s_owner, string s_group) = user_info.unpack();
-                    table.push([stdio.itoa(t_uid), s_owner, stdio.itoa(t_gid), s_group]);
+            (string[] lines, ) = stdio.split(etc_passwd, "\n");
+            for (string line: lines) {
+            /*for ((uint16 t_uid, UserInfo user_info): users) {
+                (uint16 t_gid, string s_owner, string s_group) = user_info.unpack();*/
+                (string s_owner, uint16 t_uid, uint16 t_gid, ) = uadmin.parse_passwd_entry_line(line);
+
+                table.push([stdio.itoa(t_uid), s_owner, stdio.itoa(t_gid), s_owner]);
             }
         } else {
             string user_name = params[0];
-            for ((uint16 t_uid, UserInfo user_info): users)
+            string line = uadmin.passwd_entry_by_name(user_name, etc_passwd);
+            if (!line.empty()) {
+                (, uint16 t_uid, uint16 t_gid, string home_dir) = uadmin.parse_passwd_entry_line(line);
+            /*for ((uint16 t_uid, UserInfo user_info): users)
                 if (user_info.user_name == user_name) {
                     (uint16 t_gid, , string s_group) = user_info.unpack();
-                    string home_dir = "/home/" + user_name;
+                    string home_dir = "/home/" + user_name;*/
                     table = [
                         ["Username:", user_name],
                         ["UID:", stdio.itoa(t_uid)],
                         ["Home directory:", home_dir],
-                        ["Primary group:", s_group],
+//                        ["Primary group:", s_group],
+                        ["Primary group:", user_name],
                         ["GID:", stdio.itoa(t_gid)]];
-                    break;
+//                    break;
                 }
         }
         out = fmt.format_table_ext(columns_format, table, field_separator, "\n");

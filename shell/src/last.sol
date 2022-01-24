@@ -1,13 +1,13 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract last is Utility, libuadm {
+contract last is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ( , , string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
 
 //    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
@@ -20,6 +20,7 @@ contract last is Utility, libuadm {
 //        bool full_domain_names = (flags & _w) > 0;
 //        bool shutdown_entries = (flags & _x) > 0;
         bool shutdown_entries = arg.flag_set("x", flags);
+        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
 
         uint16 var_log_dir = _resolve_absolute_path("/var/log", inodes, data);
         (uint16 wtmp_index, uint8 wtmp_file_type) = _lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
@@ -36,12 +37,17 @@ contract last is Utility, libuadm {
             Column(true, 30, fmt.ALIGN_LEFT)];
 
         mapping (uint16 => uint32) log_ts;
-        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
+//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         LoginEvent[] wtmp;
 
         for (LoginEvent le: wtmp) {
             (uint8 letype, uint16 user_id, uint16 tty_id, , uint32 timestamp) = le.unpack();
-            string ui_user_name = users[user_id].user_name;
+//            string ui_user_name = users[user_id].user_name;
+            string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
+            string ui_user_name;
+            if (!line.empty())
+                (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
+
             if (letype == AE_LOGIN)
                 log_ts[tty_id] = timestamp;
             if (letype == AE_LOGOUT) {

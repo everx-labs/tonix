@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract ls is Utility, libuadm {
+contract ls is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (uint16 wd, string[] params, string flags, string cwd) = arg.get_env(argv);
@@ -67,8 +67,10 @@ contract ls is Utility, libuadm {
                 if (!owner_only)
                     l.push(stdio.itoa(group_id));
             } else {
-                string s_owner = _get_user_name(owner_id, inodes, data);
-                string s_group = _get_group_name(group_id, inodes, data);
+//                string s_owner = _get_user_name(owner_id, inodes, data);
+//                string s_group = _get_group_name(group_id, inodes, data);
+                string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
+                string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
 
                 if (!group_only)
                     l.push(s_owner);

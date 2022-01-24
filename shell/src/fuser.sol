@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract fuser is Utility, libuadm {
+contract fuser is Utility {
 
     function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
         (, , uint flags) = input.unpack();
@@ -18,16 +18,23 @@ contract fuser is Utility, libuadm {
   //      bool last_clock_change = (flags & _t) > 0;
         bool user_message_status = (flags & _T + _w) > 0;
         bool users_logged_in = (flags & _u) > 0;
-        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
+        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
+
+//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         mapping (uint16 => Login) utmp;
 
         if (all_logged_on) {
             uint count;
             for ((, Login l): utmp) {
                 uint16 user_id = l.user_id;
-                if (system_login_proc && user_id > _login_def_value(SYS_UID_MAX))
+                if (system_login_proc && user_id > uadmin.login_def_value(uadmin.SYS_UID_MAX))
                     continue;
-                out.append(users[user_id].user_name + "\t");
+                string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
+                string ui_user_name;
+                if (!line.empty())
+                    (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
+//                out.append(users[user_id].user_name + "\t");
+                out.append(ui_user_name + "\t");
                 count++;
             }
             out.append(format("\n# users = {}\n", count));
@@ -48,10 +55,14 @@ contract fuser is Utility, libuadm {
             Column(!default_format || users_logged_in, 5, fmt.ALIGN_RIGHT)];
         for ((, Login l): utmp) {
             (uint16 user_id, uint16 tty_id, uint16 process_id, uint32 login_time) = l.unpack();
-//            if (system_login_proc && user_id > _login_defs_uint16[SYS_UID_MAX])
-            if (system_login_proc && user_id > _login_def_value(SYS_UID_MAX))
+            if (system_login_proc && user_id > uadmin.login_def_value(uadmin.SYS_UID_MAX))
                 continue;
-            (, string ui_user_name, ) = users[user_id].unpack();
+            string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
+            string ui_user_name;
+            if (!line.empty())
+                (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
+
+//            (, string ui_user_name, ) = users[user_id].unpack();
             table.push([ui_user_name, "+", stdio.itoa(tty_id), fmt.ts(login_time), stdio.itoa(process_id)]);
         }
 

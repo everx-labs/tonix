@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract namei is Utility, libuadm {
+contract namei is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
@@ -31,8 +31,10 @@ contract namei is Utility, libuadm {
             string part = parts[i - 1];
             (uint16 ino, uint8 ft) = _lookup_dir(inodes[cur_dir], data[cur_dir], part);
             (uint16 mode, uint16 owner_id, uint16 group_id, , , , , , , ) = inodes[ino].unpack();
-            string s_owner = _get_user_name(owner_id, inodes, data);
-            string s_group = _get_group_name(group_id, inodes, data);
+//            string s_owner = _get_user_name(owner_id, inodes, data);
+//            string s_group = _get_group_name(group_id, inodes, data);
+            string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
+            string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
 
             out.append(" " + (modes ? _permissions(mode) : _file_type_sign(ft)) + " " + (owners ? s_owner + " "  + s_group + " " : "") + part + "\n");
             cur_dir = ino;

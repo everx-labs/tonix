@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libuadm.sol";
+import "../lib/uadmin.sol";
 
-contract chfn is Utility, libuadm {
+contract chfn is Utility {
 
     function ustat(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
 //    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
@@ -12,7 +12,7 @@ contract chfn is Utility, libuadm {
     }
 
     function _chfn(uint flags, string[] args, Session session, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
-        bool print_system = (flags & _s) > 0 || (flags & _u) == 0;
+        /*bool print_system = (flags & _s) > 0 || (flags & _u) == 0;
         bool print_user = (flags & _u) > 0 || (flags & _s) == 0;
         string field_separator;
         if ((flags & _c) > 0)
@@ -38,7 +38,7 @@ contract chfn is Utility, libuadm {
                 Column(print_all, 10, fmt.ALIGN_LEFT)] :
                [Column(!print_all, 15, fmt.ALIGN_LEFT),
                 Column(!print_all, 20, fmt.ALIGN_LEFT)];
-        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
+//        mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
 
         if (args.empty() && session.uid < GUEST_USER) {
             for ((uint16 uid, UserInfo user_info): users) {
@@ -60,7 +60,7 @@ contract chfn is Utility, libuadm {
                     break;
                 }
         }
-        out = fmt.format_table_ext(columns_format, table, field_separator, "\n");
+        out = fmt.format_table_ext(columns_format, table, field_separator, "\n");*/
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -71,9 +71,9 @@ contract chfn is Utility, libuadm {
 "",
 "-a     d",
 "",
-"Written by Boris",
+"Not implemented",
 "",
 "",
-"0.01");
+"0.00");
     }
 }

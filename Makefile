@@ -98,6 +98,10 @@ bin/xterm: $(SRC)/xterm.c
 	gcc $< -lreadline -o $@
 bin/mc: $(SRC)/mc.c
 	gcc $< -lreadline -o $@
+bin/dir_list: src/dir_list.c
+	gcc $< -o $@ -lmenu -lncurses
+dl: bin/dir_list tmp/dirs_builtin_read_fs.out
+	./$< "`jq -rj '.res' $(word 2,$^)`"
 
 .PHONY: $(PHONY)
 
