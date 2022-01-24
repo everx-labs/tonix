@@ -6,13 +6,13 @@ contract hostname is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , , string flags, ) = _get_env(argv);
+        ( , , string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
-        string host_name = _val("HOSTNAME", argv);
-        bool long_host_name = _flag_set("f", flags);
-        bool addresses = _flag_set("i", flags);
+        string host_name = vars.val("HOSTNAME", argv);
+        bool long_host_name = arg.flag_set("f", flags);
+        bool addresses = arg.flag_set("i", flags);
 
-        (string[] f_hostname, uint n_fields) = _split(_get_file_contents_at_path("/etc/hostname", inodes, data), "\n");
+        (string[] f_hostname, uint n_fields) = stdio.split(_get_file_contents_at_path("/etc/hostname", inodes, data), "\n");
         if (n_fields > 0) {
             string s_domain = "tonix";
             if (addresses && n_fields > 1)
@@ -24,16 +24,6 @@ contract hostname is Utility {
             }
         } else
             out = host_name;
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("hostname", "show or set the system's host name", "[-afis]",
-            "Display the system's hostname and address",
-            "afis", 0, 0, [
-            "alias names",
-            "long host name (FQDN)",
-            "addresses for the host name",
-            "short host name"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -13,7 +13,7 @@ struct DeviceRecord {
 contract mknod is Utility {
 
     function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(args);
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
 //    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
 //        (, string[] args, uint flags) = input.unpack();
         string node_name;
@@ -59,15 +59,8 @@ contract mknod is Utility {
         for ((uint16 dir_i, string[] added_dirents): parent_dirs) {
             uint16 n_dirents = uint16(added_dirents.length);
             if (n_dirents > 0)
-                ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, dir_i, n_dirents, "", _join_fields(added_dirents, "\n")));
+                ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, dir_i, n_dirents, "", stdio.join_fields(added_dirents, "\n")));
         }
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("mknod", "make block or character special files", "[OPTION]... NAME TYPE [MAJOR MINOR]",
-            "Create the special file NAME of the given TYPE.",
-            "m", 1, M, [
-            "set file permission bits to MODE, not a=rw - umask"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

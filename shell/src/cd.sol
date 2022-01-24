@@ -5,13 +5,13 @@ import "Shell.sol";
 contract cd is Shell {
 
     function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-        (string[] params, , ) = _get_args(args);
+        (string[] params, , ) = arg.get_args(args);
         string page = pool;
 
         string s_attrs = "--";
-        string cur_dir = _val("PWD", page);
-        string old_wd = _val("OLDPWD", page);
-        string home_dir = _val("HOME", page);
+        string cur_dir = vars.val("PWD", page);
+        string old_wd = vars.val("OLDPWD", page);
+        string home_dir = vars.val("HOME", page);
         string arg = params.empty() ? home_dir : params[0];
 
         uint16 wd = _resolve_absolute_path(cur_dir, inodes, data);

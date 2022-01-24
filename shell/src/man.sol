@@ -35,7 +35,7 @@ contract man is Utility {
 
         if (command_format == 2) {
             string usage = "Usage: " + name + " " + synopsis;
-            return _join_fields([usage, description, _format_custom("Options:", options, 2, "\n")], "\n");
+            return stdio.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n");
         }
 
         if (command_format == 3) {
@@ -44,30 +44,18 @@ contract man is Utility {
 
         if (command_format == 1)
 //            return _join_fields([
-            return _format_custom(name + "(1)", _join_fields([
-                _format_list("NAME", name + " - " + purpose),
-                _format_list("SYNOPSIS", name + " " + synopsis),
-                _format_list("DESCRIPTION", description),
-                _format_list("OPTIONS", options),
-                _format_list("", notes),
-                _format_list("AUTHOR", author),
-                _format_list("REPORTING BUGS", bugs),
-                _format_list("SEE ALSO", see_also),
-                _format_line("Version ", version)], "\n"),
+            return fmt.format_custom(name + "(1)", stdio.join_fields([
+                fmt.format_list("NAME", name + " - " + purpose),
+                fmt.format_list("SYNOPSIS", name + " " + synopsis),
+                fmt.format_list("DESCRIPTION", description),
+                fmt.format_list("OPTIONS", options),
+                fmt.format_list("", notes),
+                fmt.format_list("AUTHOR", author),
+                fmt.format_list("REPORTING BUGS", bugs),
+                fmt.format_list("SEE ALSO", see_also),
+                fmt.format_line("Version ", version)], "\n"),
 //                "\n");
                 0, "\n");
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return (
-            "man",
-            "[COMMAND]",
-            "an interface to the system reference manuals",
-            "System's manual pager. Each page argument given to man is normally the name of a program, utility or function.",
-            "a",
-            0,
-            M, [
-                "find all matching manual pages"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

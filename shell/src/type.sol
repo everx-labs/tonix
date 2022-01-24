@@ -6,11 +6,11 @@ import "compspec.sol";
 contract type_ is Shell, compspec {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
+        (string[] params, string flags, ) = arg.get_args(args);
 
 //        bool all_locations = _flag("a", env_in);
 //        bool func_lookup = _flag("f", env_in);
-        bool f_terse = _flag_set("t", flags);
+        bool f_terse = arg.flag_set("t", flags);
 //        bool disk_file_name = _flag("p", env_in);
 //        bool path_search = _flag("P", env_in);
 
@@ -20,16 +20,16 @@ contract type_ is Shell, compspec {
             if (t == "keyword")
                 value = f_terse ? "keyword" : (arg + " is a shell keyword");
             else if (t == "alias")
-                value = f_terse ? "alias" : (arg + " is aliased to `" + _val(arg, pool) + "\'");
+                value = f_terse ? "alias" : (arg + " is aliased to `" + vars.val(arg, pool) + "\'");
             else if (t == "function") {
-                value = f_terse ? "function" : (arg + " is a function\n" + _print_reusable(_get_pool_record(arg, pool)));
+                value = f_terse ? "function" : (arg + " is a function\n" + vars.print_reusable(vars.get_pool_record(arg, pool)));
             } else if (t == "builtin")
                 value = f_terse ? "builtin" : (arg + " is a shell builtin");
             else if (t == "command") {
-                string path_map = _get_pool_record(arg, pool);
+                string path_map = vars.get_pool_record(arg, pool);
                 string path;
                 if (!path_map.empty())
-                    (, path, ) = _split_var_record(path_map);
+                    (, path, ) = vars.split_var_record(path_map);
                 if (!path.empty())
                     value = f_terse ? "file" : (arg + " is hashed (" + path + "/" + arg + ")");
                 else

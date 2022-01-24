@@ -5,28 +5,28 @@ import "Utility.sol";
 contract cat is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
-        for (string arg: params) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+        for (string s_arg: params) {
+            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_cat(flags, _get_file_contents(index, inodes, data)) + "\n");
             else {
-                err.append("Failed to resolve relative path for" + arg + "\n");
+                err.append("Failed to resolve relative path for" + s_arg + "\n");
                 ec = EXECUTE_FAILURE;
             }
         }
     }
 
     function _cat(string f, string text) private pure returns (string out) {
-        bool number_lines = _flag_set("n", f);
-        bool number_nonempty_lines = _flag_set("b", f);
-        bool dollar_at_line_end = _flag_set("E", f) || _flag_set("e", f) || _flag_set("A", f);
-        bool suppress_repeated_empty_lines = _flag_set("s", f);
-        bool convert_tabs = _flag_set("T", f) || _flag_set("t", f) || _flag_set("A", f);
-        bool show_nonprinting = _flag_set("v", f) || _flag_set("e", f) || _flag_set("t", f) || _flag_set("A", f);
+        bool number_lines = arg.flag_set("n", f);
+        bool number_nonempty_lines = arg.flag_set("b", f);
+        bool dollar_at_line_end = arg.flag_set("E", f) || arg.flag_set("e", f) || arg.flag_set("A", f);
+        bool suppress_repeated_empty_lines = arg.flag_set("s", f);
+        bool convert_tabs = arg.flag_set("T", f) || arg.flag_set("t", f) || arg.flag_set("A", f);
+        bool show_nonprinting = arg.flag_set("v", f) || arg.flag_set("e", f) || arg.flag_set("t", f) || arg.flag_set("A", f);
 
         bool repeated_empty_line = false;
-        (string[] lines, uint n_lines) = _split(text, "\n");
+        (string[] lines, uint n_lines) = stdio.split(text, "\n");
         for (uint i = 0; i < n_lines; i++) {
             string line_in = lines[i];
             uint len = line_in.byteLength();
@@ -41,28 +41,12 @@ contract cat is Utility {
             } else {
                 if (suppress_repeated_empty_lines && repeated_empty_line)
                     repeated_empty_line = false;
-                line_out.append(convert_tabs ? _translate(line_in, "\t", "^I") : line_in);
-                line_out = _if(line_out, show_nonprinting && len > 1 && line_in.substr(len - 2, 1) == "\x13", "^M");
+                line_out.append(convert_tabs ? stdio.translate(line_in, "\t", "^I") : line_in);
+                line_out = stdio.aif(line_out, show_nonprinting && len > 1 && line_in.substr(len - 2, 1) == "\x13", "^M");
             }
-            line_out = _if(line_out, dollar_at_line_end, "$");
+            line_out = stdio.aif(line_out, dollar_at_line_end, "$");
             out.append(line_out + "\n");
         }
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("cat", "concatenate files and print on the standard output", "[OPTION]... [FILE]...",
-            "Concatenate FILE(s) to standard output.",
-            "AbeEnstTuv", 1, M, [
-            "equivalent to -vET",
-            "number nonempty output lines, overrides -n",
-            "equivalent to -vE",
-            "display $ at end of each line",
-            "number all output lines",
-            "suppress repeated empty output lines",
-            "equivalent to -vT",
-            "display TAB characters as ^I",
-            "(ignored)",
-            "use ^ and M- notation, except for LFD and TAB"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

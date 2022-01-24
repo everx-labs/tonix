@@ -5,18 +5,18 @@ import "Shell.sol";
 contract source is Shell {
 
     function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
-        (string[] params, , ) = _get_args(args);
+        (string[] params, , ) = arg.get_args(args);
         ec = EXECUTE_SUCCESS;
 
         string file_contents = input;
-        string tosh_path = _val("TOSH", pool);
-        string s_args = _val("$@", pool);
-        string cmd = _val("$0", pool);
+        string tosh_path = vars.val("TOSH", pool);
+        string s_args = vars.val("$@", pool);
+        string cmd = vars.val("$0", pool);
         string exec_queue;
         string exec_cmd;
         string dbg;
 
-        (string[] lines, uint n_lines) = _split(file_contents, ";");
+        (string[] lines, uint n_lines) = stdio.split(file_contents, ";");
         for (uint i = 0; i < n_lines; i++) {
             string s_line = lines[i];
             if (s_line.empty())
@@ -26,8 +26,8 @@ contract source is Shell {
                 s_line = tosh_path + s_line.substr(1);
             uint len = s_line.byteLength();
             if (len > 2) {
-                s_line = _translate(s_line, "$@", s_args);
-                s_line = _translate(s_line, "$0", cmd);
+                s_line = stdio.translate(s_line, "$@", s_args);
+                s_line = stdio.translate(s_line, "$0", cmd);
             }
             string exec_line = s_line + "\n";
             exec_queue.append(format("[{}]=\"{}\"\n", i, s_line));

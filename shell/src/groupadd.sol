@@ -7,9 +7,9 @@ import "../lib/uadmin.sol";
 contract groupadd is Utility, libuadm {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, , string flags, ) = _get_env(args);
+        (, , string flags, ) = arg.get_env(args);
         out = "";
-        (bool force, bool use_group_id, bool is_system_group, , , , , ) = _flag_values("fgr", flags);
+        (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
 
         string target_group_name = _val("_", args);
         uint16 target_group_id;

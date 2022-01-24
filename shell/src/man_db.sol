@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "../lib/SyncFS.sol";
 import "../include/ICache.sol";
@@ -41,7 +41,7 @@ contract man is SyncFS, Utility {
             Page page = _pages[i];
             (string command, string purpose, string synopsis, string description, string option_list,
                 uint8 min_args, uint16 max_args, string[] option_descriptions) = page.unpack();
-            string contents = _join_fields([command, purpose, synopsis, description, option_list, _join_fields(option_descriptions, "\t"), format("{}\t{}", min_args, max_args)], "\n");
+            string contents = stdio.join_fields([command, purpose, synopsis, description, option_list, stdio.join_fields(option_descriptions, "\t"), format("{}\t{}", min_args, max_args)], "\n");
 
             (Inode cmd_inode, bytes cmd_data) = _get_any_node(FT_REG_FILE, SUPER_USER, SUPER_USER_GROUP, _device_id, uint16(contents.byteLength() / _block_size + 1),
                 command, contents);
@@ -97,7 +97,7 @@ contract man is SyncFS, Utility {
 
     function get_command_info_list() external view returns (string[] command_names, mapping (uint8 => CmdInfoS) command_info) {
         string etc_command_list = _get_file_contents_at_path("/etc/command_list", _inodes, _data);
-        (string[] commands, uint n_commands) = _split_line(etc_command_list, " ", "\n");
+        (string[] commands, uint n_commands) = stdio.split_line(etc_command_list, " ", "\n");
         uint16 bin_dir_index = _resolve_absolute_path("/usr", _inodes, _data);
         for (uint i = 0; i < n_commands; i++) {
             string command_name = commands[i];
@@ -107,17 +107,17 @@ contract man is SyncFS, Utility {
             uint8 min_args;
             uint16 max_args;
             uint flags;
-            (string[] command_data, uint len) = _split(command_file, "\n");
+            (string[] command_data, uint len) = stdio.split(command_file, "\n");
             if (len > 4) {
                 bytes opts = bytes(command_data[4]);
                 for (uint j = 0; j < opts.length; j++)
                     flags |= uint(1) << uint8(opts[j]);
                 if (len > 6) {
                     string s_n_args = command_data[6];
-                    (string[] min_max_args, uint n_fields) = _split(s_n_args, "\t");
+                    (string[] min_max_args, uint n_fields) = stdio.split(s_n_args, "\t");
                     if (n_fields > 1) {
-                        min_args = uint8(_atoi(min_max_args[0]));
-                        max_args = _atoi(min_max_args[1]);
+                        min_args = uint8(stdio.atoi(min_max_args[0]));
+                        max_args = stdio.atoi(min_max_args[1]);
                     }
                 }
             }
@@ -127,14 +127,14 @@ contract man is SyncFS, Utility {
 
     function get_command_info_file() external view returns (uint16 index, bytes contents) {
         string etc_command_list = _get_file_contents_at_path("/etc/command_list", _inodes, _data);
-        (string[] commands, uint n_commands) = _split(etc_command_list, " ");
+        (string[] commands, uint n_commands) = stdio.split(etc_command_list, " ");
         uint16 bin_dir_index = _resolve_absolute_path("/usr", _inodes, _data);
         index = _resolve_absolute_path("/etc/command_info", _inodes, _data);
         for (uint i = 0; i < n_commands; i++) {
             string command_name = commands[i];
             uint16 command_index = bin_dir_index + uint16(i) + 4;
             bytes command_file = _data[command_index];
-            (string[] command_data, uint len) = _split(command_file, "\n");
+            (string[] command_data, uint len) = stdio.split(command_file, "\n");
             if (len > 4) {
                 bytes opts = bytes(command_data[4]);
                 uint flags;
@@ -142,10 +142,10 @@ contract man is SyncFS, Utility {
                     flags |= uint(1) << uint8(opts[j]);
                 if (len > 6) {
                     string s_n_args = command_data[6];
-                    (string[] min_max_args, uint n_fields) = _split(s_n_args, "\t");
+                    (string[] min_max_args, uint n_fields) = split(s_n_args, "\t");
                     if (n_fields > 1) {
-                        uint u_min_args = _atoi(min_max_args[0]);
-                        uint u_max_args = _atoi(min_max_args[1]);
+                        uint u_min_args = stdio.atoi(min_max_args[0]);
+                        uint u_max_args = stdio.atoi(min_max_args[1]);
                         contents.append(format("{}\t{}\t{}\t{}\t{}\n", i + 1, command_name, u_min_args, u_max_args, flags));
                     }
                 }
@@ -218,9 +218,9 @@ contract man is SyncFS, Utility {
 
     function _get_command_page(string command) private view returns (string name, string purpose, string desc, string[] uses,
                 string option_names, string[] option_descriptions) {
-        (string[] command_data, uint n_fields) = _split(_get_file_contents_at_path("/usr/" + command, _inodes, _data), "\n");
+        (string[] command_data, uint n_fields) = stdio.split(_get_file_contents_at_path("/usr/" + command, _inodes, _data), "\n");
         if (n_fields > 5)
-            return (command_data[0], command_data[1], _join_fields(_get_tsv(command_data[3]), "\n"),
+            return (command_data[0], command_data[1], stdio.join_fields(_get_tsv(command_data[3]), "\n"),
                 _get_tsv(command_data[2]), command_data[4], _get_tsv(command_data[5]));
     }
 

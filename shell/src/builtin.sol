@@ -11,12 +11,12 @@ contract builtin is Shell {
     }
 
     function run_builtin(string args) external pure returns (string res) {
-        string flags = _val("FLAGS", args);
-        string cmd = _val("COMMAND", args);
-        string s_args = _val("@", args);
-        string params = _val("PARAMS", args);
-        string ec = _val("?", args);
-        string opterr = _val("OPTERR", args);
+        string flags = vars.val("FLAGS", args);
+        string cmd = vars.val("COMMAND", args);
+        string s_args = vars.val("@", args);
+        string params = vars.val("PARAMS", args);
+        string ec = vars.val("?", args);
+        string opterr = vars.val("OPTERR", args);
 
         if (ec == "1")
             return "echo error parsing command line";
@@ -30,7 +30,7 @@ contract builtin is Shell {
             return "./ty " + s_args;
 
         if (cmd == "declare" || cmd == "alias" || cmd == "readonly" || cmd == "export" || cmd == "set" || cmd == "complete") {
-            if (_flag_set("p", flags) || params.empty())
+            if (arg.flag_set("p", flags) || params.empty())
                 fn = "print";
             else
                 fn = "modify";
@@ -45,12 +45,12 @@ contract builtin is Shell {
         else if (cmd == "unset" || cmd == "unalias" || cmd == "shift")
             fn = "modify";
         else if (cmd == "command") {
-            if (_flag_set("v", flags) || _flag_set("V", flags))
+            if (arg.flag_set("v", flags) || arg.flag_set("V", flags))
                 fn = "print";
             else
                 fn = "execute_command";
         } else if (cmd == "ulimit") {
-            (bool v1, bool v2, bool v3, bool v4, bool v5, bool v6, bool v7, bool v8) = _flag_values("12345678", flags);
+            (bool v1, bool v2, bool v3, bool v4, bool v5, bool v6, bool v7, bool v8) = arg.flag_values("12345678", flags);
             if (params.empty()) fn = "print";
             else if (v1) fn = "v1";
             else if (v2) fn = "v2";
@@ -62,11 +62,11 @@ contract builtin is Shell {
             else if (v8) fn = "v8";
             else fn = "execute";
         } else if (cmd == "hash") {
-            if (params.empty() || _flag_set("l", flags))
+            if (params.empty() || arg.flag_set("l", flags))
                 fn = "print";
-            else if (_flag_set("d", flags) || _flag_set("r", flags) )
+            else if (arg.flag_set("d", flags) || arg.flag_set("r", flags) )
                 fn = "modify";
-            else if (_flag_set("t", flags) || flags.empty())
+            else if (arg.flag_set("t", flags) || flags.empty())
                 fn = "lookup";
         }
 
@@ -77,7 +77,7 @@ contract builtin is Shell {
         else if (cmd == "shift")
             page = "pos_params";
         else if (cmd == "declare" || cmd == "export" || cmd == "readonly") {
-            if (_flag_set("f", flags))
+            if (arg.flag_set("f", flags))
                 page = "functions";
             else if (fn == "print")
                 page = "pool";

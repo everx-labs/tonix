@@ -13,9 +13,9 @@ contract test is Shell {
         dbg.append(format("arg 1: {} op: {} arg 2: {}\n", arg_1, op, arg_2));
         bool res;
         if (arg_2.empty()) {
-            if (_strchr("aesbcdfhLpSgukrwxOGN", op) > 0)
+            if (stdio.strchr("aesbcdfhLpSgukrwxOGN", op) > 0)
                 res = _eval_file_unary(op, arg_1, e, inodes, data);
-            else if (_strchr("ovR", op) > 0)
+            else if (stdio.strchr("ovR", op) > 0)
                 res = _eval_option(op, arg_1, e);
         }
         wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
@@ -94,17 +94,17 @@ contract test is Shell {
             if (op == "s")
                 return file_size > 0;
 
-            if (_strchr("bcdfhLpStgku", op) > 0)
+            if (stdio.strchr("bcdfhLpStgku", op) > 0)
                 return _match_mode(op, mode);
 
-            if (_strchr("rwxOG", op) > 0)
+            if (stdio.strchr("rwxOG", op) > 0)
                 return _can_access(op, mode, owner_id, group_id);
 //        }
         return false;
     }
 
     function _parse_test_args(string s_args) internal pure returns (string arg_1, string op, string arg_2) {
-        (string[] fields, uint n_fields) = _split(s_args, " ");
+        (string[] fields, uint n_fields) = stdio.split(s_args, " ");
         string arg_op;
         if (n_fields > 0)
             arg_1 = fields[n_fields - 1];
@@ -175,16 +175,14 @@ contract test is Shell {
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(
-            "test",
-            "[expr]",
-            "Evaluate conditional expression.",
-            "\
-Exits with a status of 0 (true) or 1 (false) depending on the evaluation of EXPR.  Expressions may be unary or binary.  Unary\n\
+"test",
+"[expr]",
+"Evaluate conditional expression.",
+"Exits with a status of 0 (true) or 1 (false) depending on the evaluation of EXPR.  Expressions may be unary or binary.  Unary\n\
 expressions are often used to examine the status of a file.  There are string operators and numeric comparison operators as well.\n\
 The behavior of test depends on the number of arguments.  Read the manual page for the complete specification.\n\
 File operators:",
-            "\
--a FILE        True if file exists.\n\
+"-a FILE        True if file exists.\n\
 -b FILE        True if file is block special.\n\
 -c FILE        True if file is character special.\n\
 -d FILE        True if file is a directory.\n\
@@ -218,8 +216,7 @@ String operators:\n\
   STRING1 != STRING2 True if the strings are not equal.\n\
   STRING1 < STRING2  True if STRING1 sorts before STRING2 lexicographically.\n\
   STRING1 > STRING2  True if STRING1 sorts after STRING2 lexicographically.",
-            "\
-Other operators:\n\n\
+"Other operators:\n\n\
 -o OPTION      True if the shell option OPTION is enabled.\n\
 -v VAR         True if the shell variable VAR is set.\n\
 -R VAR         True if the shell variable VAR is set and is a name reference.\n\
@@ -229,6 +226,6 @@ EXPR1 -o EXPR2 True if either expr1 OR expr2 is true.\n\n\
 arg1 OP arg2   Arithmetic tests.  OP is one of -eq, -ne, -lt, -le, -gt, or -ge.\n\n\
 Arithmetic binary operators return true if ARG1 is equal, not-equal, less-than, less-than-or-equal,\n\
 greater-than, or greater-than-or-equal than ARG2.",
-            "Returns success if EXPR evaluates to true; fails if EXPR evaluates to false or an invalid argument is given.");
+"Returns success if EXPR evaluates to true; fails if EXPR evaluates to false or an invalid argument is given.");
     }
 }

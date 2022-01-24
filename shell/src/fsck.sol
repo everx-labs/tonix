@@ -31,23 +31,10 @@ contract fsck is Utility {
     }
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, mapping (uint16 => Inode) inodes_out, mapping (uint16 => bytes) data_out) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
-
-    /*function exec(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
-        return _fsck(session, pc, inodes_in, data_in);
-    }
-
-    function alter(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
-        return _fsck(session, pc, inodes_in, data_in);
-    }
-
-    function _fsck(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) internal pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
-        (, , string short_options, , , , , ) = pc.unpack();
-        bool auto_repair = _strchr(short_options, "p") > 0;
-        bool no_changes = _strchr(short_options, "n") > 0;*/
-        bool auto_repair = _flag_set("p", flags);
-        bool check_all = _flag_set("A", flags);
-        bool no_changes = _flag_set("n", flags);
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+        bool auto_repair = arg.flag_set("p", flags);
+        bool check_all = arg.flag_set("A", flags);
+        bool no_changes = arg.flag_set("n", flags);
         bool repair = auto_repair && !no_changes;
 
         inodes_out = inodes;
@@ -79,9 +66,9 @@ contract fsck is Utility {
         uint total_blocks_actual;
 
     if (check_all) {
-        out = libfs._display_sb(inodes, data);
+        out = libfs.display_sb(inodes, data);
 
-        SuperBlock sb = libfs._read_sb(inodes, data);
+        SuperBlock sb = libfs.read_sb(inodes, data);
 
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, /*uint32 last_write_time*/, uint16 mount_count,

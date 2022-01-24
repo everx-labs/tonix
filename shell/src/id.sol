@@ -7,20 +7,20 @@ contract id is Utility {
     function main(string argv) external pure returns (uint8 ec, string out, string err) {
         err = "";
 
-        ( , , string flags, ) = _get_env(argv);
+        ( , , string flags, ) = arg.get_env(argv);
 
-        bool effective_gid_only = _flag_set("g", flags);
-        bool name_not_number = _flag_set("n", flags);
-        bool real_id = _flag_set("r", flags);
-        bool effective_uid_only = _flag_set("u", flags);
-        bool all_group_ids = _flag_set("G", flags);
+        bool effective_gid_only = arg.flag_set("g", flags);
+        bool name_not_number = arg.flag_set("n", flags);
+        bool real_id = arg.flag_set("r", flags);
+        bool effective_uid_only = arg.flag_set("u", flags);
+        bool all_group_ids = arg.flag_set("G", flags);
         bool is_ugG = effective_uid_only || effective_gid_only || all_group_ids;
 
-        string user_name = _val("USER", argv);
-        string group_name = _val("USER", argv);
-        string uid = _val("UID", argv);
-        string eid = _val("EID", argv);
-        string gid = _val("UID", argv);
+        string user_name = vars.val("USER", argv);
+        string group_name = vars.val("USER", argv);
+        string uid = vars.val("UID", argv);
+        string eid = vars.val("EID", argv);
+        string gid = vars.val("UID", argv);
 
         if ((name_not_number || real_id) && !is_ugG) {
             err = "id: cannot print only names or real IDs in default format";
@@ -34,20 +34,6 @@ contract id is Utility {
             out = name_not_number ? user_name : format("{}", eid);
         else
             out = format("uid={}({}) gid={}({})", uid, user_name, gid, group_name);
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list,
-                        uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("id", "print real and effective user and group IDs", "[OPTION]... [USER]",
-            "Print user and group information for the specified USER, or (when USER omitted) for the current user.",
-            "agGnruz", 0, 1, [
-            "ignore, for compatibility with other versions",
-            "print only the effective group ID",
-            "print all group IDs",
-            "print a name instead of a number, for -ugG",
-            "print the real ID instead of the effective ID, with -ugG",
-            "print only the effective user ID",
-            "delimit entries with NUL characters, not whitespace"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

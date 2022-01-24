@@ -6,7 +6,7 @@ import "../lib/libuadm.sol";
 contract usermod is Utility, libuadm {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = _get_env(args);
+        (, string[] params, string flags, ) = arg.get_env(args);
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
 
@@ -21,8 +21,8 @@ contract usermod is Utility, libuadm {
             etc_group = _get_file_contents(group_index, inodes, data);
         string prev_entry;
 //        bool append_to_supp_groups = (flags & _a) > 0;
-        bool change_primary_group = _flag_set("g", flags);
-        bool supp_groups_list = _flag_set("G", flags);
+        bool change_primary_group = arg.flag_set("g", flags);
+        bool supp_groups_list = arg.flag_set("G", flags);
 
         uint n_args = params.length;
         string user_name = params[n_args - 1];
@@ -53,7 +53,7 @@ contract usermod is Utility, libuadm {
             group_name = groups[group_id].group_name;
         } else if (supp_groups_list && n_args > 1) {
             string supp_string = params[0];
-            (string[] supp_list, ) = _split(supp_string, ",");
+            (string[] supp_list, ) = stdio.split(supp_string, ",");
             for (string s: supp_list) {
                 uint16 gid_found = 0;
                 for ((uint16 gid, GroupInfo gi): groups)
@@ -67,7 +67,7 @@ contract usermod is Utility, libuadm {
         }
         if (errors.empty()) {
             string text = format("{}\t{}\t{}\t{}\t/home/{}\n", user_name, user_id, group_id, group_name, user_name);
-            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, prev_entry, text)));
+            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", stdio.translate(etc_passwd, prev_entry, text)));
             file_action = Action(UA_UPDATE_USER, 1);
         } else
             ec = EXECUTE_FAILURE;

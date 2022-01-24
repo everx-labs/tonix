@@ -1,6 +1,6 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
-import "Common.sol";
+//import "Common.sol";
 struct Session {
     uint16 pid;
     uint16 uid;
@@ -117,8 +117,18 @@ struct Ar {
     string text;
 }
 
+struct DeviceInfo {
+    uint8 major_id;
+    uint8 minor_id;
+    string name;
+    uint16 blk_size;
+    uint16 n_blocks;
+    address device_address;
+}
+
 /* Base functions and definitions */
-contract Base is Common {
+//contract Base is Common {
+contract Base {
 
     uint8 constant EXECUTE_SUCCESS  = 0;
     uint8 constant EXECUTE_FAILURE  = 1;
@@ -255,4 +265,10 @@ contract Base is Common {
     function reset_storage() external accept {
         tvm.resetStorage();
     }
+
+    modifier accept {
+        tvm.accept();
+        _;
+    }
+
 }

@@ -6,24 +6,24 @@ import "../lib/libuadm.sol";
 contract ls is Utility, libuadm {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, string cwd) = _get_env(argv);
+        (uint16 wd, string[] params, string flags, string cwd) = arg.get_env(argv);
         if (params.empty())
             params.push(cwd);
-        for (string arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
+        for (string s_arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
-                out.append(_ls(flags, Arg(arg, ft, index, parent, dir_index), inodes, data) + "\n");
+                out.append(_ls(flags, Arg(s_arg, ft, index, parent, dir_index), inodes, data) + "\n");
             else {
-                err.append("Failed to resolve relative path for" + arg + "\n");
+                err.append("Failed to resolve relative path for" + s_arg + "\n");
                 ec = EXECUTE_FAILURE;
             }
         }
     }
 
     function _ls_sort_rating(string f, Inode inode, string name, uint16 dir_idx) private pure returns (uint rating) {
-        (bool use_ctime, bool largest_first, bool unsorted, bool no_sort, bool newest_first, bool reverse_order, , ) = _flag_values("cSUftr", f);
+        (bool use_ctime, bool largest_first, bool unsorted, bool no_sort, bool newest_first, bool reverse_order, , ) = arg.flag_values("cSUftr", f);
         bool directory_order = unsorted || no_sort;
-        uint rating_lo = directory_order ? dir_idx : _alpha_rating(name, 8);
+        uint rating_lo = directory_order ? dir_idx : stdio.alpha_rating(name, 8);
         uint rating_hi;
 
         if (newest_first)
@@ -36,39 +36,43 @@ contract ls is Utility, libuadm {
     }
 
     function _ls_populate_line(string f, Inode inode, uint16 index, string name, uint8 file_type, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[] l) {
-        bool long_format = _flag_set("l", f) || _flag_set("n", f) || _flag_set("g", f) || _flag_set("o", f);
-        bool print_index_node = _flag_set("i", f);
-        bool no_owner = _flag_set("g", f);
-        bool no_group = _flag_set("o", f);
-        bool no_group_names = _flag_set("G", f);
-        bool numeric = _flag_set("n", f);
-        bool human_readable = _flag_set("h", f);
-        bool print_allocated_size = _flag_set("s", f);
-        bool double_quotes = _flag_set("Q", f) && !_flag_set("N", f);
-        bool append_slash_to_dirs = _flag_set("p", f) || _flag_set("F", f);
-        bool use_ctime = _flag_set("c", f);
+//        bool long_format = _flag_set("l", f) || _flag_set("n", f) || _flag_set("g", f) || _flag_set("o", f);
+//        bool print_index_node = _flag_set("i", f);
+//        bool no_owner = _flag_set("g", f);
+//        bool no_group = _flag_set("o", f);
+//        bool no_group_names = _flag_set("G", f);
+//        bool numeric = _flag_set("n", f);
+//        bool human_readable = _flag_set("h", f);
+//        bool print_allocated_size = _flag_set("s", f);
+        bool double_quotes = arg.flag_set("Q", f) && !arg.flag_set("N", f);
+        bool append_slash_to_dirs = arg.flag_set("p", f) || arg.flag_set("F", f);
+        bool use_ctime = arg.flag_set("c", f);
+
+        (bool long_fmt, bool numeric, bool group_only, bool owner_only, bool print_allocated_size, bool print_index_node, bool no_group_names,
+            bool human_readable) = arg.flag_values("lngosiGh", f);
+        bool long_format = long_fmt || numeric || group_only || owner_only;
 
         (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
         if (print_index_node)
-            l = [_itoa(index)];
+            l = [stdio.itoa(index)];
         if (print_allocated_size)
-            l.push(_itoa(n_blocks));
+            l.push(stdio.itoa(n_blocks));
 
         if (long_format) {
             l.push(_permissions(mode));
-            l.push(_itoa(n_links));
+            l.push(stdio.itoa(n_links));
             if (numeric) {
-                if (!no_owner)
-                    l.push(_itoa(owner_id));
-                if (!no_group)
-                    l.push(_itoa(group_id));
+                if (!group_only)
+                    l.push(stdio.itoa(owner_id));
+                if (!owner_only)
+                    l.push(stdio.itoa(group_id));
             } else {
                 string s_owner = _get_user_name(owner_id, inodes, data);
                 string s_group = _get_group_name(group_id, inodes, data);
 
-                if (!no_owner)
+                if (!group_only)
                     l.push(s_owner);
-                if (!no_group && !no_group_names)
+                if (!owner_only && !no_group_names)
                     l.push(s_group);
             }
 
@@ -76,9 +80,9 @@ contract ls is Utility, libuadm {
                 (string major, string minor) = _get_device_version(device_id);
                 l.push(format("{:4},{:4}", major, minor));
             } else
-                l.push(_scale(file_size, human_readable ? KILO : 1));
+                l.push(fmt.scale(file_size, human_readable ? KILO : 1));
 
-            l.push(_ts(use_ctime ? modified_at : last_modified));
+            l.push(fmt.ts(use_ctime ? modified_at : last_modified));
         }
         if (double_quotes)
             name = "\"" + name + "\"";
@@ -87,17 +91,17 @@ contract ls is Utility, libuadm {
         l.push(name);
     }
 
-    function _ls(string f, Arg arg, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out) {
-        (string s, uint8 ft, uint16 index, , ) = arg.unpack();
+    function _ls(string f, Arg ag, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out) {
+        (string s, uint8 ft, uint16 index, , ) = ag.unpack();
         Inode dir_inode = inodes[index];
         string[][] table;
         Arg[] sub_args;
-        if (ft == FT_REG_FILE || ft == FT_DIR && _flag_set("d", f)) {
+        if (ft == FT_REG_FILE || ft == FT_DIR && arg.flag_set("d", f)) {
             if (!_ls_should_skip(f, s))
                 table.push(_ls_populate_line(f, dir_inode, index, s, ft, inodes, data));
         } else if (ft == FT_DIR) {
             string ret;
-            (ret, sub_args) = _list_dir(f, arg, dir_inode, inodes, data);
+            (ret, sub_args) = _list_dir(f, ag, dir_inode, inodes, data);
             out.append(ret);
         }
 
@@ -105,10 +109,10 @@ contract ls is Utility, libuadm {
             out.append("\n" + sub_arg.path + ":\n" + _ls(f, sub_arg, inodes, data));
     }
 
-    function _list_dir(string f, Arg arg, Inode inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Arg[] sub_args) {
-        (string s, uint8 ft, uint16 index, , ) = arg.unpack();
+    function _list_dir(string f, Arg ag, Inode inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Arg[] sub_args) {
+        (string s, uint8 ft, uint16 index, , ) = ag.unpack();
         (bool recurse, bool long_fmt, bool numeric, bool group_only, bool owner_only, bool print_allocated_size,
-            bool delim_newline, bool delim_comma) = _flag_values("Rlngos1m", f);
+            bool delim_newline, bool delim_comma) = arg.flag_values("Rlngos1m", f);
         bool long_format = long_fmt || numeric || group_only || owner_only;
         string sp = long_format || delim_newline ? "\n" : delim_comma ? ", " : "  ";
         string[][] table;
@@ -117,7 +121,7 @@ contract ls is Utility, libuadm {
         bool count_totals = long_format || print_allocated_size;
         uint16 total_blocks;
 
-        if (ft == FT_REG_FILE || ft == FT_DIR && _flag_set("d", f)) {
+        if (ft == FT_REG_FILE || ft == FT_DIR && arg.flag_set("d", f)) {
             if (!_ls_should_skip(f, s))
                 table.push(_ls_populate_line(f, inode, index, s, ft, inodes, data));
         } else if (ft == FT_DIR) {
@@ -152,15 +156,15 @@ contract ls is Utility, libuadm {
                 p = ds.next(xk);
             }
         }
-        out = _if(out, count_totals, format("total {}\n", total_blocks));
-        out.append(_format_table(table, " ", sp, ALIGN_RIGHT));
+        out = stdio.aif(out, count_totals, format("total {}\n", total_blocks));
+        out.append(fmt.format_table(table, " ", sp, fmt.ALIGN_RIGHT));
     }
 
     /* Decides whether ls should skip this entry with the set of flags */
     function _ls_should_skip(string f, string name) private pure returns (bool) {
-        bool print_dot_starters = _flag_set("a", f) || _flag_set("f", f);
-        bool skip_dot_dots = _flag_set("A", f);
-        bool ignore_blackups = _flag_set("B", f);
+        bool print_dot_starters = arg.flag_set("a", f) || arg.flag_set("f", f);
+        bool skip_dot_dots = arg.flag_set("A", f);
+        bool ignore_blackups = arg.flag_set("B", f);
 
         uint len = name.byteLength();
         if (len == 0 || (skip_dot_dots && (name == "." || name == "..")))
@@ -169,47 +173,6 @@ contract ls is Utility, libuadm {
             (name.substr(len - 1, 1) == "~" && ignore_blackups))
             return true;
         return false;
-    }
-
-    function _command_info() internal override pure returns
-        (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("ls", "list directory contents", "[OPTION]... [FILE]...",
-            "List information about the FILE (the current directory by default).",
-            "aABcCdfFgGhHikLlmnNopqQrRsStuUvxX1", 1, M, [
-            "do not ignore entries starting with .",
-            "do not list implied . and ..",
-            "do not list implied entries ending with ~",
-            "with -lt: sort by, and show, ctime; with -l: show ctime and sort by name, otherwise: sort by ctime, newest first",
-            "list entries by columns",
-            "list directories themselves, not their contents",
-            "do not sort, enable -aU",
-            "append indicator (one of */=>@|) to entries",
-            "like -l, but do not list owner",
-            "in a long listing, don't print group names",
-            "with -l and -s, print sizes like 1K 234M 2G etc.",
-            "follow symbolic links listed on the command line",
-            "print the index number of each file",
-            "default to 1024-byte blocks for disk usage; used only with -s and per directory totals",
-            "for a symbolic link, show information for the file the link references rather than for the link itself",
-            "use a long listing format",
-            "fill width with a comma separated list of entries",
-            "like -l, but list numeric user and group IDs",
-            "print entry names without quoting",
-            "like -l, but do not list group information",
-            "append / indicator to directories",
-            "print ? instead of nongraphic characters",
-            "enclose entry names in double quotes",
-            "reverse order while sorting",
-            "list subdirectories recursively",
-            "print the allocated size of each file, in blocks",
-            "sort by file size, largest first",
-            "sort by modification time, newest first",
-            "with -lt: sort by, and show, access time; with -l: show access time and sort by name; otherwise: sort by access time, newest first",
-            "do not sort; list entries in directory order",
-            "natural sort of (version) numbers within text",
-            "list entries by lines instead of by columns",
-            "sort alphabetically by entry extension",
-            "list one file per line. Avoid \'\\n\' with -q or -b"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

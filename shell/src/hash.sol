@@ -5,9 +5,9 @@ import "Shell.sol";
 contract hash is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool print_tabbed = _flag_set("t", flags);
-        bool print_reusable = _flag_set("l", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool print_tabbed = arg.flag_set("t", flags);
+        bool print_reusable = arg.flag_set("l", flags);
         bool no_args = params.empty();
         if (no_args) {
             if (pool.empty())
@@ -15,15 +15,15 @@ contract hash is Shell {
             else {
                 if (!print_reusable)
                     out.append("hits\tcommand\n");
-                (string[] lines, ) = _split(pool, "\n");
+                (string[] lines, ) = stdio.split(pool, "\n");
                 for (string line: lines) {
-                    (, string path, string contents) = _split_var_record(line);
-                    (string[] bins, ) = _split(_trim_spaces(contents), " ");
+                    (, string path, string contents) = vars.split_var_record(line);
+                    (string[] bins, ) = stdio.split(_trim_spaces(contents), " ");
                     for (string bin: bins) {
-                        (string name, string value) = _item_value(bin);
+                        (string name, string value) = vars.item_value(bin);
                         out.append(print_reusable ?
                             "builtin hash -p " + path + "/" + name + " " + name + "\n" :
-                            _pad(value, 4, ALIGN_RIGHT) + "\t" + path + "/" + name + "\n");
+                            fmt.pad(value, 4, fmt.ALIGN_RIGHT) + "\t" + path + "/" + name + "\n");
                     }
                 }
             }
@@ -43,9 +43,9 @@ contract hash is Shell {
     }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool forget_some = _flag_set("d", flags);
-        bool forget_all = _flag_set("r", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool forget_some = arg.flag_set("d", flags);
+        bool forget_all = arg.flag_set("r", flags);
         string page = pool;
         if (forget_all)
             page = "";
@@ -53,7 +53,7 @@ contract hash is Shell {
             for (string arg: params) {
                 string path = _get_array_name(arg, pool);
                 if (!path.empty())
-                    page = _translate(page, arg + " ", "");
+                    page = stdio.translate(page, arg + " ", "");
                 else {
                     ec = EXECUTE_FAILURE;
 //                        out.append("-tosh: hash: " + arg + ": not found\n");
@@ -64,42 +64,40 @@ contract hash is Shell {
     }
 
     function lookup(string args, string page, string pool) external pure returns (uint8 ec, string out, string res) {
-        (string[] params, string flags, ) = _get_args(args);
+        (string[] params, string flags, ) = arg.get_args(args);
         string hashes = page;
-//        string path = _val("PATH", pool);
-        string commands = _get_map_value("command", pool);
-//        (string[] path_dirs, ) = _split(path, ":");
-        string bins = _get_map_value("/bin", hashes);
+        string commands = vars.get_map_value("command", pool);
+        string bins = vars.get_map_value("/bin", hashes);
         string init_bins = bins;
-        bool print_tabbed = _flag_set("t", flags);
+        bool print_tabbed = arg.flag_set("t", flags);
 
         for (string arg: params) {
-            string path_map = _get_pool_record(arg, page);
+            string path_map = vars.get_pool_record(arg, page);
             if (path_map.empty()) {
                 if (print_tabbed) {
                     ec = EXECUTE_FAILURE;
                     out.append("hash: " + arg + ": not found\n");
                 } else {
-                    if (_strstr(commands, arg) > 0)
+                    if (stdio.strstr(commands, arg) > 0)
                         bins = _set_item_value(arg, "0", bins);
                     else
                         ec = EXECUTE_FAILURE;
                 }
             } else {
                 if (print_tabbed) {
-                    (, string bin_path, ) = _split_var_record(path_map);
+                    (, string bin_path, ) = vars.split_var_record(path_map);
                     out.append(bin_path + "/" + arg);
-                    string s_hit_count = _val(arg, path_map);
-                    uint16 hc = _atoi(s_hit_count);
-                    string upd = _set_item_value(arg, _itoa(hc + 1), path_map);
-                    hashes = _translate(hashes, path_map, upd);
+                    string s_hit_count = vars.val(arg, path_map);
+                    uint16 hc = stdio.atoi(s_hit_count);
+                    string upd = _set_item_value(arg, stdio.itoa(hc + 1), path_map);
+                    hashes = stdio.translate(hashes, path_map, upd);
                 } else {
                     string upd = _set_item_value(arg, "0", path_map);
-                    hashes = _translate(hashes, path_map, upd);
+                    hashes = stdio.translate(hashes, path_map, upd);
                 }
             }
         }
-        hashes = _translate(hashes, init_bins, bins);
+        hashes = stdio.translate(hashes, init_bins, bins);
         res = hashes;
     }
 

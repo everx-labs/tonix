@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -43,7 +43,7 @@ contract ld is Utility {
                 mapping (uint16 => string[]) parent_dirs;
 
                 (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(out_file_path, session.wd, inodes, data);
-                (string dir_name, string file_name) = _dir(out_file_path);
+                (string dir_name, string file_name) = path.dir(out_file_path);
                 if (dir_index == 0) {
                     ars.push(Ar(IO_MKFILE, FT_REG_FILE, index, dir_index, file_name, binary_file));
                     parent_dirs[parent].push(_dir_entry_line(ic, file_name, FT_REG_FILE));
@@ -53,7 +53,7 @@ contract ld is Utility {
                 for ((uint16 dir_i, string[] added_dirents): parent_dirs) {
                     uint16 n_dirents = uint16(added_dirents.length);
                     if (n_dirents > 0)
-                        ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, dir_i, n_dirents, dir_name, _join_fields(added_dirents, "\n")));
+                        ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, dir_i, n_dirents, dir_name, stdio.join_fields(added_dirents, "\n")));
                 }
             }
 
@@ -88,7 +88,7 @@ contract ld is Utility {
     }
 
     function _tabulate(string text) internal pure returns (string out) {
-        (string[] lines, ) = _split(text, "\n");
+        (string[] lines, ) = stdio.split(text, "\n");
         for (string line: lines)
             out.append("\t" + line + "\n");
     }
@@ -99,23 +99,6 @@ contract ld is Utility {
 
     function _gen_comparison(string arg_1, string arg_2, string branch_1, string branch_2) internal pure returns (string) {
         return "if [ \"" + arg_1 + "\" = \"" + arg_2 + "\" ]; then\n\t" + branch_1 + "\nelse\n\t" + branch_2 + "\nfi";
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("ld", "link binaries", "[options] objfile ...",
-            "Combines a number of object and archive files, relocates their data and ties up symbol references.",
-            "MnNoOqrRsSv", 1, M, [
-            "print map file on standard output",
-            "do not page align data",
-            "do not page align data, do not make text readonly",
-            "set output file name",
-            "optimize output file",
-            "generate relocations in final output",
-            "generate relocatable output",
-            "just link symbols",
-            "strip all symbols",
-            "strip debugging symbols",
-            "print version information"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

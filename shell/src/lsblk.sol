@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
@@ -59,8 +59,8 @@ contract lsblk is Utility, libuadm {
             (uint16 dev_file_index, uint8 dev_file_ft) = _fetch_dir_entry(s, dev_dir, inodes, data);
             if (dev_file_ft == FT_BLKDEV || dev_file_ft == FT_CHRDEV) {
                 (uint16 mode, uint16 owner_id, uint16 group_id, , , , , , , ) = inodes[dev_file_index].unpack();
-                (string[] lines, ) = _split(data[dev_file_index], "\n");
-                string[] fields0 = _get_tsv(lines[0]);
+                (string[] lines, ) = stdio.split(data[dev_file_index], "\n");
+                string[] fields0 = stdio.get_tsv(lines[0]);
                 if (fields0.length < 4)
                     continue;
                 string name = (full_path ? "/dev/" : "") + fields0[2];
@@ -72,10 +72,10 @@ contract lsblk is Utility, libuadm {
                     name,
                     format("{}", fields0[0]),
                     format(":{}", fields0[1]),
-                    _scale(uint32(block_count) * block_size, human_readable ? KILO : 1),
+                    fmt.scale(uint32(block_count) * block_size, human_readable ? KILO : 1),
                     "0",
                     "disk",
-                    _scale(uint32(free_blocks) * block_size, human_readable ? KILO : 1),
+                    fmt.scale(uint32(free_blocks) * block_size, human_readable ? KILO : 1),
                     format("{}%", uint32(block_count) * 100 / (block_count + free_blocks)),
                     mount_path,
                     s_owner,
@@ -84,7 +84,7 @@ contract lsblk is Utility, libuadm {
             } else
                 errors.push(Err(not_a_block_device, 0, s));
         }
-        out = _format_table_ext(columns_format, table, " ", "\n");
+        out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }
 
     function _list_devices(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (DirEntry[] device_list) {
@@ -95,25 +95,6 @@ contract lsblk is Utility, libuadm {
                 if (de.file_type == FT_BLKDEV || de.file_type == FT_CHRDEV)
                     device_list.push(de);
         }
-    }
-
-    function _command_info() internal override pure returns
-        (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return (
-            "lsblk",
-            "list block devices",
-            "[options] [device...]",
-            "List information about all available or the specified block devices.",
-            "abfmnOp",
-            0,
-            M, [
-                "print all devices",
-                "print SIZE in bytes rather than in human readable format",
-                "output info about filesystems",
-                "output info about permissions",
-                "don't print headings",
-                "output all columns",
-                "print complete device path"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

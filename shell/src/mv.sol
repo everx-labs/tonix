@@ -5,18 +5,18 @@ import "Utility.sol";
 contract mv is Utility {
 
     function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(args);
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
-        for (string arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, wd, inodes, data);
-            arg_list.push(Arg(arg, ft, index, parent, dir_index));
+        for (string s_arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+            arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
         (out, file_action, ars, errors) = _mv(params, flags, wd, arg_list, _get_inode_count(inodes), inodes, data);
     }
 
     function _mv(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
         (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool recurse)
-            = _flag_values("vnbTtufR", flags);
+            = arg.flag_values("vnbTtufR", flags);
 
         bool to_dir = to_dir_flag;
         uint nargs = args.length;
@@ -50,7 +50,7 @@ contract mv is Utility {
         uint8 dirent_action_type;
         if (request_backup && overwrite_dest) {
             string t_backup_path = t_path + "~";
-            out = _if(out, verbose, "(backup:" + _quote(t_backup_path) + ")");
+            out = stdio.aif(out, verbose, "(backup:" + stdio.quote(t_backup_path) + ")");
 
             ars.push(Ar(IO_WR_COPY, FT_REG_FILE, 0, t_ino, t_backup_path, ""));
             dirents.append(_dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
@@ -76,17 +76,17 @@ contract mv is Utility {
             (string s_path, uint8 s_ft, uint16 s_ino, uint16 s_parent, uint16 s_dir_idx) = arg_list[i].unpack();
 
             if (s_ino < INODES) { errors.push(Err(0, s_ino, s_path)); break; }
-            if (verbose) {out.append("renamed" + _quote(s_path) + "=>" + _quote(t_path)); }
+            if (verbose) {out.append("renamed" + stdio.quote(s_path) + "=>" + stdio.quote(t_path)); }
 
             if (s_ft == FT_DIR && action_type == IO_COPY_FILES && !recurse)
                 errors.push(Err(omitting_directory, 0, s_path));
             else if (to_file_flag && to_dir && s_ft == FT_REG_FILE)
-                errors.push(Err(cant_overwrite_dir, 0, _quote(t_path)));
+                errors.push(Err(cant_overwrite_dir, 0, stdio.quote(t_path)));
             else if (collision && newer_only) {
                 if (inodes[t_ino].modified_at > inodes[s_ino].modified_at)
                     continue;
             } else {
-                (, string file_name) = _dir(to_dir ? s_path : t_path);
+                (, string file_name) = path.dir(to_dir ? s_path : t_path);
 
                 ars.push(Ar(action_item_type, s_ft, s_ino, s_dir_idx, file_name, ""));
                 dirents.append(_dir_entry_line(action_type == IO_HARDLINK_FILES ? s_ino : ic++, file_name, s_ft));
@@ -96,7 +96,7 @@ contract mv is Utility {
                 if (inodes[s_ino].n_links < 2) {
                     string victim_dirent_pattern = _dir_entry_line(s_ino, s_path, s_ft);
                     string dir_text = data[s_parent];
-                    string new_dir_contents = _translate(dir_text, victim_dirent_pattern, "");
+                    string new_dir_contents = stdio.translate(dir_text, victim_dirent_pattern, "");
                     ars.push(Ar(IO_UPDATE_DIR_ENTRY, FT_DIR, s_parent, s_dir_idx, s_path, new_dir_contents));
                 }
             }
@@ -107,19 +107,6 @@ contract mv is Utility {
 
         if (overwrite_dest && errors.empty())
             ars.push(Ar(IO_UNLINK, t_ft, t_ino, t_idx, t_path, ""));
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("mv", "move (rename) files", "[OPTION]... [-T] SOURCE DEST\t[OPTION]... SOURCE... DIRECTORY\t[OPTION]... -t DIRECTORY SOURCE...",
-            "Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY.",
-            "bfntTuv", 2, M, [
-            "make a backup of each existing destination file",
-            "do not prompt before overwriting",
-            "do not overwrite an existing file",
-            "move all SOURCE arguments into DIRECTORY",
-            "treat DEST as a normal file",
-            "move only when the SOURCE file is newer than the destination file or when the destination file is missing",
-            "explain what is being done"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

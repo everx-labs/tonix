@@ -5,21 +5,21 @@ import "Shell.sol";
 contract mapfile is Shell {
 
     function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
-        (string[] params, string flags, ) = _get_args(args);
+        (string[] params, string flags, ) = arg.get_args(args);
         ec = EXECUTE_SUCCESS;
         string dbg;
 
         string s_attrs = "-a";
-        string delimiter = _flag_set("d", flags) ? _opt_arg_value("d", args) : "\n";
-        uint count = _flag_set("n", flags) ? _atoi(_opt_arg_value("n", args)) : 0;
-        uint origin = _flag_set("O", flags) ? _atoi(_opt_arg_value("O", args)) : 0;
+        string delimiter = arg.flag_set("d", flags) ? arg.opt_arg_value("d", args) : "\n";
+        uint count = arg.flag_set("n", flags) ? stdio.atoi(arg.opt_arg_value("n", args)) : 0;
+        uint origin = arg.flag_set("O", flags) ? stdio.atoi(arg.opt_arg_value("O", args)) : 0;
         string array_name = params.empty() ? "MAPFILE" : params[params.length - 1];
-        string ofs = _flag_set("t", flags) ? " " : (delimiter + " ");
-        string ofs_2 = _flag_set("t", flags) ? "" : delimiter;
-        uint16 page_index = IS_STDIN;
-        if (_flag_set("u", flags)) {
-            string s_fd = _opt_arg_value("u", args);
-            uint16 fd = _atoi(s_fd);
+        string ofs = arg.flag_set("t", flags) ? " " : (delimiter + " ");
+        string ofs_2 = arg.flag_set("t", flags) ? "" : delimiter;
+        uint16 page_index = vars.IS_STDIN;
+        if (arg.flag_set("u", flags)) {
+            string s_fd = arg.opt_arg_value("u", args);
+            uint16 fd = stdio.atoi(s_fd);
             if (fd > 0)
                 page_index = fd;
             else
@@ -27,17 +27,17 @@ contract mapfile is Shell {
         }
 
         dbg.append(format("delim {} arr_name {} page_index {}\n", delimiter, array_name, page_index));
-        (string[] fields, uint n_lines) = _split(input, "\n");
+        (string[] fields, uint n_lines) = stdio.split(input, "\n");
         string[][2] entries;
         uint cap = count > 0 ? math.min(count, n_lines) : n_lines;
         for (uint i = origin; i < origin + cap; i++) {
             entries.push([format("{}", i), fields[i] + ofs_2]);
             out.append(format("[{}]={}{}", i, fields[i], ofs));
         }
-        out = _wrap(array_name, W_SQUARE) + "=" + _as_map(out);
+        out = vars.wrap(array_name, vars.W_SQUARE) + "=" + _as_map(out);
         out.append("======\n");
         string arr_val = array_name + "=" + _encode_items(entries, " ");
-        out.append(_wrap(array_name, W_SQUARE) + "=" + _encode_items(entries, "\n"));
+        out.append(vars.wrap(array_name, vars.W_SQUARE) + "=" + _encode_items(entries, "\n"));
         res = _set_var(s_attrs, arr_val, pool);
 //        dbg.append(format("{}=( {} )\n", array_name, _join_fields(fields, ";")));
     }

@@ -61,7 +61,7 @@ abstract contract compspec is Shell {
 
     function _comp_spec_attr(string p_option) internal pure returns (uint16) {
 //        if ()uint16 constant IS_UNKNOWN      = 0;
-        if (p_option == "b") return IS_BUILTIN;
+        /*if (p_option == "b") return IS_BUILTIN;
         if (p_option == "c") return IS_COMMAND;
         if (p_option == "d") return IS_DIRNAME;
         if (p_option == "f") return IS_FILENAME; // Names of file and functions
@@ -76,7 +76,7 @@ abstract contract compspec is Shell {
         if (p_option == "p") return IS_POSITIONAL;
         if (p_option == "l") return IS_LIMIT;
         if (p_option == "r") return IS_REDIRECT_OP;
-        if (p_option == "i") return IS_INDEX;
+        if (p_option == "i") return IS_INDEX;*/
     }
 
     function _option_map_name(string p_option) internal pure returns (string) {
@@ -139,7 +139,7 @@ abstract contract compspec is Shell {
     }
 
     function _map_index(string key) internal pure returns (uint16) {
-        if (key == "integer") return IS_INTEGER;
+        /*if (key == "integer") return IS_INTEGER;
         if (key == "builtin") return IS_BUILTIN;
         if (key == "command") return IS_COMMAND;
         if (key == "directory") return IS_DIRNAME;
@@ -155,7 +155,7 @@ abstract contract compspec is Shell {
         if (key == "option_list") return IS_OPTSTRING;
         if (key == "param_list") return IS_PARAM_LIST;
         if (key == "option_value") return IS_OPTION_VALUE;
-        if (key == "pipeline") return IS_PIPELINE;
+        if (key == "pipeline") return IS_PIPELINE;*/
     }
 
 }

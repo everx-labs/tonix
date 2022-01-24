@@ -5,7 +5,7 @@ import "Utility.sol";
 contract getent is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (, string[] params, , ) = _get_env(argv);
+        (, string[] params, , ) = arg.get_env(argv);
 
         uint n_args = params.length;
         if (n_args > 0) {

@@ -7,32 +7,23 @@ contract basename is Utility {
     function main(string argv) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (string[] params, string flags, ) = _get_args(argv);
+        (string[] params, string flags, ) = arg.get_args(argv);
 
         if (params.empty())
             return (EXECUTE_FAILURE, "", "basename: missing operand\n");
 
-        bool multiple_args = _flag_set("a", flags);
-        string line_terminator = _flag_set("z", flags) ? "\x00" : "\n";
+        bool multiple_args = arg.flag_set("a", flags);
+        string line_terminator = arg.flag_set("z", flags) ? "\x00" : "\n";
 
         if (multiple_args)
             for (string s: params) {
-                (, string not_dir) = _dir(s);
+                (, string not_dir) = path.dir(s);
                 out.append(not_dir + line_terminator);
             }
         else {
-            (, out) = _dir(params[0]);
+            (, out) = path.dir(params[0]);
             out.append(line_terminator);
         }
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("basename", "strip directory and suffix from filenames", "NAME",
-            "Print NAME with any leading directory components removed.",
-            "asz", 1, M, [
-            "support multiple arguments and treat each as a NAME",
-            "remove a trailing SUFFIX; implies -a",
-            "end each output line with NUL, not newline"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

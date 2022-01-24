@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.52.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -64,7 +64,7 @@ contract install is Utility {
         uint8 dirent_action_type;
         if (request_backup && overwrite_dest) {
             string t_backup_path = t_path + "~";
-            out = _if(out, verbose, "(backup:" + _quote(t_backup_path) + ")");
+            out = stdio.aif(out, verbose, "(backup:" + stdio.quote(t_backup_path) + ")");
 
             ars.push(Ar(IO_WR_COPY, FT_REG_FILE, 0, t_ino, t_backup_path, ""));
             dirents.append(_dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
@@ -82,15 +82,15 @@ contract install is Utility {
             (string s_path, uint8 s_ft, uint16 s_ino, , uint16 s_dir_idx) = arg_list[i].unpack();
 
             if (s_ino < INODES) { errors.push(Err(0, s_ino, s_path)); break; }
-            if (verbose) { out.append(_quote(s_path) + "=>" + _quote(t_path)); }
+            if (verbose) { out.append(stdio.quote(s_path) + "=>" + stdio.quote(t_path)); }
 
             else if (to_file_flag && to_dir && s_ft == FT_REG_FILE)
-                errors.push(Err(cant_overwrite_dir, 0, _quote(t_path)));
+                errors.push(Err(cant_overwrite_dir, 0, stdio.quote(t_path)));
             else if (collision && newer_only) {
                 if (inodes[t_ino].modified_at > inodes[s_ino].modified_at)
                     continue;
             } else {
-                (, string file_name) = _dir(to_dir ? s_path : t_path);
+                (, string file_name) = path.dir(to_dir ? s_path : t_path);
 
                 ars.push(Ar(action_item_type, s_ft, s_ino, s_dir_idx, file_name, ""));
                 dirents.append(_dir_entry_line(ic++, file_name, s_ft));
@@ -103,29 +103,6 @@ contract install is Utility {
 
         if (overwrite_dest && errors.empty())
             ars.push(Ar(IO_UNLINK, t_ft, t_ino, t_idx, t_path, ""));
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return (
-            "install",
-            "copy files and set attributes",
-            "[OPTION]... [-T] SOURCE DEST\t[OPTION]... SOURCE... DIRECTORY\t[OPTION]... -t DIRECTORY SOURCE...\t[OPTION]... -d DIRECTORY...",
-            "Copy files into destination locations you choose. In the first three forms, copy SOURCE to DEST or multiple SOURCE(s) to the existing DIRECTORY, while setting permission modes and owner/group.  In the 4th form, create all components of the given DIRECTORY(ies).",
-            "bcCdDgmopsStTv", 2, M, [
-                "make a backup of each existing destination file",
-                "(ignored)",
-                "compare each pair of source and destination files, and in some cases, do not modify the destination at all",
-                "treat all arguments as directory names; create all components of the specified directories",
-                "create all leading components of DEST except the last, or all components of --target-directory, then copy SOURCE to DEST",
-                "set group ownership, instead of process' current group",
-                "set permission mode (as in chmod), instead of rwxr-xr-x",
-                "set ownership (super-user only)",
-                "apply access/modification times of SOURCE files to corresponding destination files",
-                "strip symbol tables",
-                "override the usual backup suffix",
-                "copy all SOURCE arguments into DIRECTORY",
-                "treat DEST as a normal file",
-                "print the name of each directory as it is created"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

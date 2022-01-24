@@ -5,17 +5,17 @@ import "Shell.sol";
 contract unset is Shell {
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool unset_vars = _flag_set("v", flags);
-        bool unset_functions = _flag_set("f", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool unset_vars = arg.flag_set("v", flags);
+        bool unset_functions = arg.flag_set("f", flags);
         string s_attrs = unset_functions ? "-f" : unset_vars ? "+f" : "";
         string page = pool;
         for (string arg: params) {
-            string line = _get_pool_record(arg, pool);
+            string line = vars.get_pool_record(arg, pool);
             if (!line.empty()) {
-                (string attrs, ) = _strsplit(line, " ");
-                if (_match_attr_set(s_attrs, attrs)) {
-                    page = _translate(page, line + "\n", "");
+                (string attrs, ) = stdio.strsplit(line, " ");
+                if (vars.match_attr_set(s_attrs, attrs)) {
+                    page = stdio.translate(page, line + "\n", "");
                 }
             } else {
                 ec = EXECUTE_FAILURE;

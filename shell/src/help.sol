@@ -15,11 +15,11 @@ contract help is Shell {
 
     function _get_help_format(string flags) internal pure returns (uint8 command_format) {
         command_format = COMMAND_FORMAT_DEFAULT;
-        if (_flag_set("d", flags))
+        if (arg.flag_set("d", flags))
             command_format = COMMAND_FORMAT_DESCRIPTION;
-        if (_flag_set("s", flags))
+        if (arg.flag_set("s", flags))
             command_format = COMMAND_FORMAT_SYNOPSIS;
-        if (_flag_set("m", flags))
+        if (arg.flag_set("m", flags))
             command_format = COMMAND_FORMAT_PSEUDO_MAN_PAGE;
     }
 
@@ -39,7 +39,7 @@ contract help is Shell {
     }
 
     function display_help(string args, BuiltinHelp[] help_files) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
+        (string[] params, string flags, ) = arg.get_args(args);
         uint8 command_format = _get_help_format(flags);
 
         if (params.empty())
@@ -63,23 +63,23 @@ contract help is Shell {
         else if (command_format == COMMAND_FORMAT_SYNOPSIS)
             return name + ": " + name + " " + synopsis + "\n";
 
-        string help_text = _join_fields([
+        string help_text = stdio.join_fields([
             purpose + "\n",
             description + "\n",
-            _format_custom("Options:", options, 2, "\n"),
-            _format_line("", arguments),
-            _format_line("Exit Status:", exit_status)], "\n");
+            fmt.format_custom("Options:", options, 2, "\n"),
+            fmt.format_line("", arguments),
+            fmt.format_line("Exit Status:", exit_status)], "\n");
 
         if (command_format == COMMAND_FORMAT_DEFAULT)
-            return _format_list(name + ": " + name + " " + synopsis, help_text);
+            return fmt.format_list(name + ": " + name + " " + synopsis, help_text);
 
         if (command_format == COMMAND_FORMAT_PSEUDO_MAN_PAGE)
-            return _join_fields([
-                _format_list("NAME", name + " - " + purpose),
-                _format_list("SYNOPSIS", name + " " + synopsis),
-                _format_list("DESCRIPTION", help_text),
-                _format_list("SEE ALSO", "tosh(1)"),
-                _format_list("IMPLEMENTATION", "in progress")], "\n");
+            return stdio.join_fields([
+                fmt.format_list("NAME", name + " - " + purpose),
+                fmt.format_list("SYNOPSIS", name + " " + synopsis),
+                fmt.format_list("DESCRIPTION", help_text),
+                fmt.format_list("SEE ALSO", "tosh(1)"),
+                fmt.format_list("IMPLEMENTATION", "in progress")], "\n");
     }
 
     function _get_command_info(string c) internal pure returns (BuiltinHelp) {

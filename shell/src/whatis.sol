@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -25,25 +25,13 @@ contract whatis is Utility {
 
     function _get_command_page(string command, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string name, string purpose, string desc, string[] uses,
                 string option_names, string[] option_descriptions) {
-        (string[] command_data, uint n_fields) = _split(_get_file_contents_at_path("/usr/" + command, inodes, data), "\n");
+        (string[] command_data, uint n_fields) = stdio.split(_get_file_contents_at_path("/usr/" + command, inodes, data), "\n");
         if (n_fields > 5)
-            return (command_data[0], command_data[1], _join_fields(_get_tsv(command_data[3]), "\n"),
-                _get_tsv(command_data[2]), command_data[4], _get_tsv(command_data[5]));
+            return (command_data[0], command_data[1], stdio.join_fields(stdio.get_tsv(command_data[3]), "\n"),
+                stdio.get_tsv(command_data[2]), command_data[4], stdio.get_tsv(command_data[5]));
     }
 
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return (
-            "whatis",
-            "display one-line manual page descriptions",
-            "[-dlv] name ...",
-            "Searches the manual page names and displays the manual page descriptions of any name matched.",
-            "dlv", 0, M, [
-                "emit debugging messages",
-                "do not trim output to terminal width",
-                "print verbose warning messages"]);
-    }
-
-    function _command_help() internal override pure returns (CommandHelp) {
+     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
 "whatis",
 "[-dlv] name ...",

@@ -5,34 +5,34 @@ import "Shell.sol";
 contract declare is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool function_names_only = _flag_set("F", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool function_names_only = arg.flag_set("F", flags);
 
         string s_attrs;
         string[] a_attrs = ["a", "A", "x", "i", "r", "t", "n", "f"];
         for (string attr: a_attrs)
-            if (_flag_set(attr, flags))
+            if (arg.flag_set(attr, flags))
                 s_attrs.append(attr);
         if (function_names_only)
             s_attrs.append("-f");
         s_attrs = "-" + (s_attrs.empty() ? "-" : s_attrs);
 
         if (params.empty()) {
-            (string[] lines, ) = _split(pool, "\n");
+            (string[] lines, ) = stdio.split(pool, "\n");
             for (string line: lines) {
-                (string attrs, string name, string value) = _split_var_record(line);
-                if (_match_attr_set(s_attrs, attrs))
+                (string attrs, string name, string value) = vars.split_var_record(line);
+                if (vars.match_attr_set(s_attrs, attrs))
                     out.append(flags.empty() ?
                         (name + "=" + value + "\n") :
-                        _print_reusable(line));
+                        vars.print_reusable(line));
             }
         }
         for (string p: params) {
-            string cur_record = _get_pool_record(p, pool);
+            string cur_record = vars.get_pool_record(p, pool);
             if (!cur_record.empty()) {
-                (string cur_attrs, ) = _strsplit(cur_record, " ");
-                if (_match_attr_set(s_attrs, cur_attrs))
-                    out.append(_print_reusable(cur_record));
+                (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+                if (vars.match_attr_set(s_attrs, cur_attrs))
+                    out.append(vars.print_reusable(cur_record));
             } else {
                 ec = EXECUTE_FAILURE;
                 out.append("declare: " + p + " not found\n");
@@ -41,12 +41,12 @@ contract declare is Shell {
     }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = _get_args(args);
+        (string[] params, string flags, ) = arg.get_args(args);
         string page = pool;
         string s_attrs;
         string[] a_attrs = ["a", "A", "x", "i", "r", "t", "n", "f"];
         for (string attr: a_attrs)
-            if (_flag_set(attr, flags))
+            if (arg.flag_set(attr, flags))
                 s_attrs.append(attr);
         s_attrs = "-" + (s_attrs.empty() ? "-" : s_attrs);
         ec = EXECUTE_SUCCESS;

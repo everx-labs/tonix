@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -39,9 +39,9 @@ contract mountpoint is Utility {
 
         DirEntry[] device_list = _list_devices(inodes, data);
 
-        (string[] tab_lines, ) = _split(text, "\n");
+        (string[] tab_lines, ) = stdio.split(text, "\n");
         for (string line: tab_lines) {
-            (string[] fields, uint n_fields) = _split(line, "\t");
+            (string[] fields, uint n_fields) = stdio.split(line, "\t");
             if (n_fields > 3) {
                 if (fields[1] == arg) {
                     for (DirEntry de: device_list) {
@@ -54,7 +54,7 @@ contract mountpoint is Utility {
             }
         }
 
-        _if(out, out.empty(), path + " is not a mountpoint");
+        stdio.aif(out, out.empty(), path + " is not a mountpoint");
         if (quiet)
             out = "";
     }
@@ -67,15 +67,6 @@ contract mountpoint is Utility {
                 if (de.file_type == FT_BLKDEV || de.file_type == FT_CHRDEV)
                     device_list.push(de);
         }
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return("mountpoint", "see if a directory or file is a mountpoint", "[-d|-q] directory | file\t-x device",
-            "Checks whether the given directory or file is mentioned in the /proc/self/mountinfo file.",
-            "dqx", 1, 1, [
-            "quiet mode - don't print anything",
-            "print maj:min device number of the filesystem",
-            "print maj:min device number of the block device"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

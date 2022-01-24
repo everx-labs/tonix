@@ -5,26 +5,26 @@ import "Shell.sol";
 contract shift is Shell {
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, , ) = _get_args(args);
+        (string[] params, , ) = arg.get_args(args);
 
-        uint16 shift_count = params.empty() ? 1 : _atoi(params[0]);
+        uint16 shift_count = params.empty() ? 1 : stdio.atoi(params[0]);
         if (shift_count == 0)
             return (EXECUTE_SUCCESS, pool);
 
-        string cmd = _val("COMMAND", pool);
-        string pos_params= _val("PARAMS", pool);
-        string s_flags = _val("FLAGS", pool);
-        string input = _val("ARGV", pool);
-        string s_n_params = _val("#", pool);
-        string s_args = _val("@", pool);
-        string last_param = _val("_", pool);
-        string dbg_x = _val("OPT_ERR", pool);
-        string redir_in = _val("REDIR_IN", pool);
-        string redir_out = _val("REDIR_OUT", pool);
-        string pos_args = _val("POS_ARGS", pool);
-        string opt_args = _val("OPT_ARGS", pool);
+        string cmd = vars.val("COMMAND", pool);
+        string pos_params= vars.val("PARAMS", pool);
+        string s_flags = vars.val("FLAGS", pool);
+        string input = vars.val("ARGV", pool);
+        string s_n_params = vars.val("#", pool);
+        string s_args = vars.val("@", pool);
+        string last_param = vars.val("_", pool);
+        string dbg_x = vars.val("OPT_ERR", pool);
+        string redir_in = vars.val("REDIR_IN", pool);
+        string redir_out = vars.val("REDIR_OUT", pool);
+        string pos_args = vars.val("POS_ARGS", pool);
+        string opt_args = vars.val("OPT_ARGS", pool);
 
-        uint16 n_params = _atoi(s_n_params);
+        uint16 n_params = stdio.atoi(s_n_params);
         if (n_params < shift_count) {
             ec = EXECUTE_FAILURE;
             // can't shift that many
@@ -32,7 +32,7 @@ contract shift is Shell {
         }
 
         string new_pos_str = " ";
-        (string[] prev, uint n_prev) = _split(s_args, " ");
+        (string[] prev, uint n_prev) = stdio.split(s_args, " ");
         uint n_new = n_prev - shift_count;
         string argv = cmd;
         for (uint i = 0; i < n_new; i++) {
@@ -40,7 +40,7 @@ contract shift is Shell {
             new_pos_str.append(params[i] + " ");
             argv.append(" " + params[i]);
         }
-        new_pos_str = _unwrap(new_pos_str);
+        new_pos_str = vars.unwrap(new_pos_str);
         string pos_map = _as_indexed_array("POS_ARGS", new_pos_str.empty() ? cmd : cmd + " " + new_pos_str, " ");
         last_param = n_new > 0 ? params[n_new - 1] : cmd;
 
@@ -50,9 +50,9 @@ contract shift is Shell {
             ["PARAMS", pos_params],
             ["FLAGS", s_flags],
             ["ARGV", input],
-            ["#", _itoa(n_new)],
+            ["#", stdio.itoa(n_new)],
             ["@", new_pos_str],
-            ["?", _itoa(ec)],
+            ["?", stdio.itoa(ec)],
             ["_", last_param],
             ["OPT_ERR", dbg_x],
             ["REDIR_IN", redir_in],

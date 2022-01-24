@@ -6,7 +6,7 @@ import "../lib/libuadm.sol";
 contract groupmod is Utility, libuadm {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = _get_env(args);
+        (, string[] params, string flags, ) = arg.get_env(args);
         mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
 
         uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
@@ -16,8 +16,8 @@ contract groupmod is Utility, libuadm {
         if (group_file_type == FT_REG_FILE)
             etc_group = _get_file_contents(group_index, inodes, data);
         string prev_entry;
-        bool use_group_id = _flag_set("g", flags);
-        bool use_new_name = _flag_set("n", flags);
+        bool use_group_id = arg.flag_set("g", flags);
+        bool use_new_name = arg.flag_set("n", flags);
 
         uint n_args = params.length;
         string target_group_name = params[n_args - 1];
@@ -55,7 +55,7 @@ contract groupmod is Utility, libuadm {
         }
         if (errors.empty()) {
             string text = format("{}\t{}\n", use_new_name ? new_group_name : target_group_name, new_group_id);
-            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, prev_entry, text)));
+            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", stdio.translate(etc_group, prev_entry, text)));
             file_action = Action(use_group_id ? UA_CHANGE_GROUP_ID : UA_RENAME_GROUP, 1);
         } else
             ec = EXECUTE_FAILURE;

@@ -5,32 +5,18 @@ import "Utility.sol";
 contract df is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (, , string flags, ) = _get_env(argv);
-
-    /*function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, , uint flags) = input.unpack();
-        session.wd = session.wd;
-        out = _df(flags, inodes, data);      // 1k
-    }
-
-    function _df(uint flags, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out) {*/
+        (, , string flags, ) = arg.get_env(argv);
         (, , string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, , , , , , , , uint16 first_inode, ) = _get_sb(inodes, data).unpack();
-//        (, , string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, , , , , , , , uint16 first_inode, ) = _read_sb(inodes, data).unpack();
-        (bool human_readable, bool powers_of_1000, bool list_inodes, bool block_1k, bool posix_output, , , ) = _flag_values("hHikP", flags);
-        /*bool human_readable = (flags & _h) > 0;
-        bool powers_of_1000 = (flags & _H) > 0;
-        bool list_inodes = (flags & _i) > 0;
-        bool block_1k = (flags & _k) > 0;
-        bool posix_output = (flags & _P) > 0;*/
+        (bool human_readable, bool powers_of_1000, bool list_inodes, bool block_1k, bool posix_output, , , ) = arg.flag_values("hHikP", flags);
 
         string fs_name = file_system_OS_type;
         Column[] columns_format = [
-            Column(true, 20, ALIGN_LEFT),
-            Column(true, 11, ALIGN_RIGHT),
-            Column(true, 6, ALIGN_RIGHT),
-            Column(true, 9, ALIGN_RIGHT),
-            Column(true, 9, ALIGN_RIGHT),
-            Column(true, 15, ALIGN_LEFT)];
+            Column(true, 20, fmt.ALIGN_LEFT),
+            Column(true, 11, fmt.ALIGN_RIGHT),
+            Column(true, 6, fmt.ALIGN_RIGHT),
+            Column(true, 9, fmt.ALIGN_RIGHT),
+            Column(true, 9, fmt.ALIGN_RIGHT),
+            Column(true, 15, fmt.ALIGN_LEFT)];
 
         string s_units;
         string s_used;
@@ -64,31 +50,11 @@ contract df is Utility {
         }
 
         string[] header = ["Filesystem", s_units, s_used, s_avl, s_p_used, "Mounted on"];
-        string[] row0 = [
-                fs_name,
-                format("{}", u_units),
-                format("{}", u_used),
-                format("{}", u_avl),
-                format("{}%", u_p_used),
-                "/"];
+        string[] row0 = [fs_name, stdio.itoa(u_units), stdio.itoa(u_used), stdio.itoa(u_avl), stdio.itoa(u_p_used) + "%", "/"];
 
-        out = _format_table_ext(columns_format, [header, row0], " ", "\n");
+        out = fmt.format_table_ext(columns_format, [header, row0], " ", "\n");
         ec = EXECUTE_SUCCESS;
         err = "";
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return("df", "report file system disk space usage", "[OPTION]... [FILE]...",
-            "Displays the amount of disk space available on the file system containing each file name argument.",
-            "ahHiklPv", 1, M, [
-            "include pseudo, duplicate, inaccessible file systems",
-            "print sizes in powers of 1024 (e.g., 1023K)",
-            "print sizes in powers of 1000 (e.g., 1.1K)",
-            "list inode information instead of block usage",
-            "block size = 1K",
-            "limit listing to local file systems",
-            "use the POSIX output format",
-            "(ignored)"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

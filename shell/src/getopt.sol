@@ -1,17 +1,23 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../include/Commands.sol";
 
 contract getopt is Utility, Commands {
 
-//    function exec(string s_input, CommandInfo[] command_info) external pure returns (InputS input, ParsedCommand pc, string source, string target, Err[] parse_errors) {
+    struct CommandInfo {
+        uint8 min_args;
+        uint16 max_args;
+        string options;
+        string name;
+    }
+
     function exec(string s_input, CommandInfo command_info) external pure returns (InputS input, ParsedCommand pc, string source, string target, Err[] parse_errors) {
-        uint p = _strrchr(s_input, ">");
-        uint q = _strrchr(s_input, "<");
-        (string c, string s_args) = _strsplit(s_input, " ");
-        string out_redirect = p > 0 ? _strtok(s_input, p, " ") : "";
-        string in_redirect = q > 0 ? _strtok(s_input, q, " ") : "";
+        uint p = stdio.strrchr(s_input, ">");
+        uint q = stdio.strrchr(s_input, "<");
+        (string c, string s_args) = stdio.strsplit(s_input, " ");
+        string out_redirect = p > 0 ? stdio.strtok(s_input, p, " ") : "";
+        string in_redirect = q > 0 ? stdio.strtok(s_input, q, " ") : "";
         string[] args;
         string short_options;
         string[] long_options;
@@ -145,7 +151,7 @@ contract getopt is Utility, Commands {
     }
 
     function _parse_args(string s_args) internal pure returns (string[] args, string short_options, string[] long_options) {
-        (string[] tokens, ) = _split(s_args, " ");
+        (string[] tokens, ) = stdio.split(s_args, " ");
         bool discard_next = false;
 //        for (uint i = 0; i < count; i++) {
 //            string token = tokens[i];
@@ -176,7 +182,7 @@ contract getopt is Utility, Commands {
         string possible_options = ci.options;
         for (uint i = 0; i < short_options_len; i++) {
             string actual_option = short_options.substr(i, 1);
-            uint p = _strchr(possible_options, actual_option);
+            uint p = stdio.strchr(possible_options, actual_option);
             if (p == 0)
                 extra_flags.append(actual_option);
         }
@@ -195,18 +201,6 @@ contract getopt is Utility, Commands {
         bytes opts = bytes(short_options);
         for (uint i = 0; i < opts.length; i++)
             flags |= uint(1) << uint8(opts[i]);
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list,
-                        uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("getopt", "parse command options", "optstring parameters",
-            "Break up (parse) options in command lines for easy parsing by shell procedures.",
-            "oqQTu", 1, M, [
-            "the short options to be recognized",
-            "disable error reporting by getopt(3)",
-            "no normal output",
-            "test for getopt(1) version",
-            "do not quote the output"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

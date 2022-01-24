@@ -1,16 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "../include/Internal.sol";
-import "variables.sol";
-import "arguments.sol";
 import "../lib/stdio.sol";
-
-struct CommandInfo {
-    uint8 min_args;
-    uint16 max_args;
-    string options;
-    string name;
-}
+import "../lib/vars.sol";
+import "../lib/arg.sol";
 
 struct Job {
     uint16 id;
@@ -80,7 +73,7 @@ struct En {
     Item[] aliases;
 }
 
-abstract contract Shell is Internal, arguments {
+abstract contract Shell is Internal {
 
 //    uint8 constant EPERM   = 1;  // Operation not permitted
 //    uint8 constant ENOENT  = 2;  // No such file or directory
@@ -265,14 +258,14 @@ abstract contract Shell is Internal, arguments {
 
     function _as_var_list(string[][2] entries) internal pure returns (string res) {
         for (uint i = 0; i < entries.length; i++)
-            res.append("-- " + _wrap(entries[i][0], W_SQUARE) + (entries[i][1].empty() ? "" : ("=" + _wrap(entries[i][1], W_DQUOTE))) + "\n");
+            res.append("-- " + vars.wrap(entries[i][0], vars.W_SQUARE) + (entries[i][1].empty() ? "" : ("=" + vars.wrap(entries[i][1], vars.W_DQUOTE))) + "\n");
     }
 
     function _as_hashmap(string name, string[][2] entries) internal pure returns (string res) {
         string body;
         for (uint i = 0; i < entries.length; i++)
-            body.append(_wrap(entries[i][0], W_SQUARE) + "=" + _wrap(entries[i][1], W_DQUOTE) + " ");
-        res = "-A " + _wrap(name, W_SQUARE) + "=" + _wrap(body, W_HASHMAP);
+            body.append(vars.wrap(entries[i][0], vars.W_SQUARE) + "=" + vars.wrap(entries[i][1], vars.W_DQUOTE) + " ");
+        res = "-A " + vars.wrap(name, vars.W_SQUARE) + "=" + vars.wrap(body, vars.W_HASHMAP);
     }
 
     function _as_indexed_array(string name, string value, string ifs) internal pure returns (string res) {
@@ -280,7 +273,7 @@ abstract contract Shell is Internal, arguments {
         (string[] fields, uint n_fields) = stdio.split(value, ifs);
         for (uint i = 0; i < n_fields; i++)
             body.append(format("[{}]=\"{}\" ", i, fields[i]));
-        res = "-a " + _wrap(name, W_SQUARE) + "=" + _wrap(body, W_ARRAY);
+        res = "-a " + vars.wrap(name, vars.W_SQUARE) + "=" + vars.wrap(body, vars.W_ARRAY);
     }
 
 
@@ -290,21 +283,21 @@ abstract contract Shell is Internal, arguments {
     }
 
     function _encode_item(string key, string value) internal pure returns (string res) {
-        res = _wrap(key, W_SQUARE) + "=" + _wrap(value, W_DQUOTE);
+        res = vars.wrap(key, vars.W_SQUARE) + "=" + vars.wrap(value, vars.W_DQUOTE);
     }
 
     function _as_map(string value) internal pure returns (string res) {
-        res = _wrap(value, W_HASHMAP);
+        res = vars.wrap(value, vars.W_HASHMAP);
     }
 
     function _encode_item_2(string key, string value) internal pure returns (string res) {
-        res = _wrap(key, W_SQUARE);
+        res = vars.wrap(key, vars.W_SQUARE);
         if (!value.empty())
-            res.append("=" + (stdio.strchr(value, "(") > 0 ? value : _wrap(value, W_DQUOTE)));
+            res.append("=" + (stdio.strchr(value, "(") > 0 ? value : vars.wrap(value, vars.W_DQUOTE)));
     }
 
      function _flag(string name, string[] env_in) internal pure returns (bool) {
-        return stdio.strstr(env_in[IS_OPTION_VALUE], name + "=") > 0;
+        return stdio.strstr(env_in[vars.IS_OPTION_VALUE], name + "=") > 0;
     }
 
     function _trim_spaces(string s_arg) internal pure returns (string res) {
@@ -320,7 +313,7 @@ abstract contract Shell is Internal, arguments {
         string empty;
         if (name.empty())
             return empty;
-        string name_pattern = _wrap(name, W_SQUARE) + "=";
+        string name_pattern = vars.wrap(name, vars.W_SQUARE) + "=";
         (string[] lines, ) = stdio.split(page, "\n");
         for (string line: lines) {
             if (stdio.strstr(line, name_pattern) > 0) {
@@ -332,27 +325,27 @@ abstract contract Shell is Internal, arguments {
 
     function _get_array_name(string value, string context) internal pure returns (string name) {
         (string[] lines, ) = stdio.split(context, "\n");
-        string val_pattern = _wrap(value, W_SPACE);
+        string val_pattern = vars.wrap(value, vars.W_SPACE);
         for (string line: lines)
             if (stdio.strstr(line, val_pattern) > 0)
                 return stdio.strval(line, "[", "]");
     }
 
     function _set_item_value(string name, string value, string page) internal pure returns (string) {
-        string cur_value = _val(name, page);
+        string cur_value = vars.val(name, page);
         string new_record = _encode_item(name, value);
         return cur_value.empty() ? page + " " + new_record : stdio.translate(page, _encode_item(name, cur_value), new_record);
     }
 
     function _set_var(string attrs, string token, string pg) internal pure returns (string page) {
         (string name, string value) = stdio.strsplit(token, "=");
-        string cur_record = _get_pool_record(name, pg);
-        string new_record = _var_record(attrs, name, value);
+        string cur_record = vars.get_pool_record(name, pg);
+        string new_record = vars.var_record(attrs, name, value);
         if (!cur_record.empty()) {
             (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
             (, string cur_value) = stdio.strsplit(cur_record, "=");
-            string new_value = !value.empty() ? value : !cur_value.empty() ? _unwrap(cur_value) : "";
-            new_record = _var_record(_meld_attr_set(attrs, cur_attrs), name, new_value);
+            string new_value = !value.empty() ? value : !cur_value.empty() ? vars.unwrap(cur_value) : "";
+            new_record = vars.var_record(vars.meld_attr_set(attrs, cur_attrs), name, new_value);
             page = stdio.translate(pg, cur_record, new_record);
         } else
             page = pg + new_record + "\n";

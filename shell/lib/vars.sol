@@ -1,8 +1,8 @@
 pragma ton-solidity >= 0.55.0;
 
-import "../lib/Format.sol";
+import "fmt.sol";
 
-abstract contract variables is Format {
+library vars {
 
     // arrayvar commands
     // hashmaps [function] => command?
@@ -96,30 +96,30 @@ abstract contract variables is Format {
     uint16 constant ATTR_PROPAGATE  = 16384;// propagate to previous scope
     uint16 constant ATTR_MASK_SCOPE = 24576;
 
-    function _fetch_value(string key, uint16 delimiter, string page) internal pure returns (string value) {
-        string key_pattern = _wrap(key, W_SQUARE);
-        (string val_pattern_start, string val_pattern_end) = _wrap_symbols(delimiter);
+    function fetch_value(string key, uint16 delimiter, string page) internal returns (string value) {
+        string key_pattern = wrap(key, W_SQUARE);
+        (string val_pattern_start, string val_pattern_end) = wrap_symbols(delimiter);
         return stdio.strval(page, key_pattern + "=" + val_pattern_start, val_pattern_end);
     }
 
-    function _val(string key, string page) internal pure returns (string value) {
-        return _fetch_value(key, W_DQUOTE, page);
+    function val(string key, string page) internal returns (string value) {
+        return fetch_value(key, W_DQUOTE, page);
     }
 
-    function _function_body(string key, string page) internal pure returns (string value) {
-        return _fetch_value(key, W_BRACE, page);
+    function function_body(string key, string page) internal returns (string value) {
+        return fetch_value(key, W_BRACE, page);
     }
 
-    function _get_map_value(string map_name, string page) internal pure returns (string value) {
-        return _unwrap(_fetch_value(map_name, W_PAREN, page));
+    function get_map_value(string map_name, string page) internal returns (string value) {
+        return unwrap(fetch_value(map_name, W_PAREN, page));
     }
 
-    function _item_value(string item) internal pure returns (string, string) {
+    function item_value(string item) internal returns (string, string) {
         (string key, string value) = stdio.strsplit(item, "=");
-        return (_unwrap(key), _unwrap(value));
+        return (unwrap(key), unwrap(value));
     }
 
-    function _match_attr_set(string part_attrs, string cur_attrs) internal pure returns (bool) {
+    function match_attr_set(string part_attrs, string cur_attrs) internal returns (bool) {
         uint part_attrs_len = part_attrs.byteLength() / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
             string attr_sign = part_attrs.substr(i * 2, 1);
@@ -133,7 +133,7 @@ abstract contract variables is Format {
         return true;
     }
 
-    function _meld_attr_set(string part_attrs, string cur_attrs) internal pure returns (string res) {
+    function meld_attr_set(string part_attrs, string cur_attrs) internal returns (string res) {
         res = cur_attrs;
         uint part_attrs_len = part_attrs.byteLength() / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
@@ -165,7 +165,7 @@ abstract contract variables is Format {
     uint16 constant W_HASHMAP   = 10;
     uint16 constant W_FUNCTION  = 11;
 
-    function _strrstr(string text, string pattern) internal pure returns (uint) {
+    function strrstr(string text, string pattern) internal returns (uint) {
         uint text_len = text.byteLength();
         uint pattern_len = pattern.byteLength();
         if (text_len < pattern_len)
@@ -175,14 +175,14 @@ abstract contract variables is Format {
                 return i + 1;
     }
 
-    function _str_context(string text, string pattern, string delimiter) internal pure returns (string) {
+    function str_context(string text, string pattern, string delimiter) internal returns (string) {
         uint q = stdio.strstr(text, pattern);
         if (q > 0) {
             uint d_len = delimiter.byteLength();
             string s_head = text.substr(0, q - 1);
             string s_tail = text.substr(q - 1 + pattern.byteLength());
 
-            uint p = _strrstr(s_head, delimiter);
+            uint p = strrstr(s_head, delimiter);
             string s_before = p > 0 ? s_head.substr(p - 1 + d_len) : s_head;
             p = stdio.strstr(s_tail, delimiter);
             string s_after = p > 0 ? s_tail.substr(0, p - 1) : s_tail;
@@ -190,43 +190,43 @@ abstract contract variables is Format {
         }
     }
 
-    function _var_record(string attrs, string name, string value) internal pure returns (string) {
-        uint16 mask = _get_mask_ext(attrs);
+    function var_record(string attrs, string name, string value) internal returns (string) {
+        uint16 mask = get_mask_ext(attrs);
         if (attrs == "")
             attrs = "--";
         bool is_function = stdio.strchr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=";
         if (!value.empty())
-            var_value.append(_wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : W_DQUOTE));
+            var_value.append(wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : W_DQUOTE));
         return is_function ?
-            (name + " () " + _wrap(value, W_FUNCTION)) :
-            attrs + " " + _wrap(name, W_SQUARE) + var_value;
+            (name + " () " + wrap(value, W_FUNCTION)) :
+            attrs + " " + wrap(name, W_SQUARE) + var_value;
     }
 
-    function _split_var_record(string line) internal pure returns (string, string, string) {
+    function split_var_record(string line) internal returns (string, string, string) {
         (string decl, string value) = stdio.strsplit(line, "=");
         (string attrs, string name) = stdio.strsplit(decl, " ");
-        return (attrs, _unwrap(name), _unwrap(value));
+        return (attrs, unwrap(name), unwrap(value));
     }
 
-    function _get_pool_record(string name, string pool) internal pure returns (string) {
-        string pat = _wrap(name, W_SQUARE);
+    function get_pool_record(string name, string pool) internal returns (string) {
+        string pat = wrap(name, W_SQUARE);
         (string[] lines, ) = stdio.split(pool, "\n");
         for (string line: lines)
             if (stdio.strstr(line, pat) > 0)
                 return line;
     }
 
-    function _print_reusable(string line) internal pure returns (string) {
-        (string attrs, string name, string value) = _split_var_record(line);
+    function print_reusable(string line) internal returns (string) {
+        (string attrs, string name, string value) = split_var_record(line);
         bool is_function = stdio.strchr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=" + value;
         return is_function ?
-            (name + " ()" + _wrap(_indent(stdio.translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
+            (name + " ()" + wrap(fmt.indent(stdio.translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
             "declare " + attrs + " " + name + var_value + "\n";
     }
 
-    function _get_mask_ext(string s_attrs) internal pure returns (uint16 mask) {
+    function get_mask_ext(string s_attrs) internal returns (uint16 mask) {
         uint len = s_attrs.byteLength();
         for (uint i = 0; i < len; i++) {
             string c = s_attrs.substr(i, 1);
@@ -241,15 +241,15 @@ abstract contract variables is Format {
         }
     }
 
-    function _mask_base_type(uint16 mask) internal pure returns (string s_attrs) {
+    function mask_base_type(uint16 mask) internal returns (string s_attrs) {
         if ((mask & ATTR_ARRAY) > 0) return "a";
         if ((mask & ATTR_FUNCTION) > 0) return "f";
         if ((mask & ATTR_ASSOC) > 0) return "A";
         return "-";
     }
 
-    function _mask_str(uint16 mask) internal pure returns (string s_attrs) {
-        s_attrs = _mask_base_type(mask);
+    function mask_str(uint16 mask) internal returns (string s_attrs) {
+        s_attrs = mask_base_type(mask);
         if ((mask & ATTR_INTEGER) > 0) s_attrs.append("i");
         if ((mask & ATTR_EXPORTED) > 0) s_attrs.append("x");
         if ((mask & ATTR_READONLY) > 0) s_attrs.append("r");
@@ -258,7 +258,7 @@ abstract contract variables is Format {
         if (s_attrs == "-") s_attrs.append("-");
     }
 
-    function _wrap_symbols(uint16 to) internal pure returns (string start, string end) {
+    function wrap_symbols(uint16 to) internal returns (string start, string end) {
         if (to == W_COLON)
             return (":", ":");
         else if (to == W_DQUOTE)
@@ -283,7 +283,7 @@ abstract contract variables is Format {
             return ("", "\n");
     }
 
-    function _wrap(string s, uint16 to) internal pure returns (string res) {
+    function wrap(string s, uint16 to) internal returns (string res) {
         if (to == W_COLON)
             return ":" + s + ":";
         else if (to == W_DQUOTE)
@@ -308,7 +308,7 @@ abstract contract variables is Format {
             return "\n{\n" + s + "}\n";
     }
 
-    function _unwrap(string s) internal pure returns (string) {
+    function unwrap(string s) internal returns (string) {
         uint len = s.byteLength();
         return len > 2 ? s.substr(1, len - 2) : "";
     }

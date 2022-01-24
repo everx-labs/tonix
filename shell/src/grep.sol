@@ -6,35 +6,35 @@ contract grep is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
-        (uint16 wd, string[] v_args, string flags, ) = _get_env(argv);
+        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
         string[] params;
         string[] f_args;
         uint n_args = v_args.length;
 
         for (uint i = 0; i < n_args; i++) {
-            string arg = v_args[i];
-            (, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
+            string s_arg = v_args[i];
+            (, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
             if (ft == FT_UNKNOWN)
-                params.push(arg);
+                params.push(s_arg);
             else
-                f_args.push(arg);
+                f_args.push(s_arg);
         }
 
-        for (string arg: f_args) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, ROOT_DIR, inodes, data);
+        for (string s_arg: f_args) {
+            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, ROOT_DIR, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_grep(flags, _get_file_contents(index, inodes, data), params) + "\n");
             else {
-                err.append("Failed to resolve relative path for" + arg + "\n");
+                err.append("Failed to resolve relative path for" + s_arg + "\n");
                 ec = EXECUTE_FAILURE;
             }
         }
     }
 
     function _grep(string flags, string text, string[] params) private pure returns (string out) {
-        (string[] lines, uint n_lines) = _split(text, "\n");
-        bool invert_match = _flag_set("v", flags);
-        bool match_lines = _flag_set("x", flags);
+        (string[] lines, uint n_lines) = stdio.split(text, "\n");
+        bool invert_match = arg.flag_set("v", flags);
+        bool match_lines = arg.flag_set("x", flags);
         uint n_params = params.length;
 
         string pattern;
@@ -64,14 +64,6 @@ contract grep is Utility {
             if (found || p_len == 0)
                 out.append(line + "\n");
         }
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("grep", "print lines that match patterns", "[OPTION...] PATTERNS [FILE...]",
-            "Searches for PATTERNS in each FILE and prints each line that matches a pattern.",
-            "vx", 2, M, [
-            "invert the sense of matching, to select non-matching lines",
-            "select only those matches that exactly match the whole line"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

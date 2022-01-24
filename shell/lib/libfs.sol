@@ -1,8 +1,8 @@
 pragma ton-solidity >= 0.55.0;
 
 import "../include/Internal.sol";
-import "../lib/stdio.sol";
-import "../lib/libfmt.sol";
+import "stdio.sol";
+import "fmt.sol";
 
 library libfs {
 
@@ -18,7 +18,7 @@ library libfs {
     uint16 constant SB_JOURNAL  = SB_INFO + 7;
     uint16 constant SB_BACKUP   = SB_INFO + 8;
 
-    function _read_sb(mapping (uint16 => Inode) /*inodes*/, mapping (uint16 => bytes) data) internal returns (SuperBlock sb) {
+    function read_sb(mapping (uint16 => Inode) /*inodes*/, mapping (uint16 => bytes) data) internal returns (SuperBlock sb) {
         bytes sb_data = data[SB];
 
         (string[] fields, ) = stdio.split_line(sb_data, " ", "\n");
@@ -56,9 +56,9 @@ library libfs {
             block_size, created_at, last_mount_time, last_write_time, mount_count, max_mount_count, lifetime_writes, first_inode, inode_size);
     }
 
-    function _display_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
+    function display_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
 //        SuperBlock sb = _get_sb(inodes, data);
-        SuperBlock sb = libfs._read_sb(inodes, data);
+        SuperBlock sb = read_sb(inodes, data);
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();
@@ -73,15 +73,15 @@ library libfs {
             ["Free inodes:", stdio.itoa(free_inodes)],
             ["First block:", "0"],
             ["Block size:", stdio.itoa(block_size)],
-            ["Filesystem created:", libfmt._ts(created_at)],
-            ["Last mount time:", libfmt._ts(last_mount_time)],
-            ["Last write time:", libfmt._ts(last_write_time)],
+            ["Filesystem created:", fmt.ts(created_at)],
+            ["Last mount time:", fmt.ts(last_mount_time)],
+            ["Last write time:", fmt.ts(last_write_time)],
             ["Mount count:", stdio.itoa(mount_count)],
             ["Maximum mount count:", stdio.itoa(max_mount_count)],
             ["Lifetime writes:", stdio.itoa(lifetime_writes)],
             ["First inode:", stdio.itoa(first_inode)],
             ["Inode size:", stdio.itoa(inode_size)]];
-        return libfmt._format_table(table, "\t", "\n", libfmt.ALIGN_LEFT);
+        return fmt.format_table(table, "\t", "\n", fmt.ALIGN_LEFT);
     }
 
 }

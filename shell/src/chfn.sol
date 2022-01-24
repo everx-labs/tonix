@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 import "../lib/libuadm.sol";
@@ -17,9 +17,9 @@ contract chfn is Utility, libuadm {
         string field_separator;
         if ((flags & _c) > 0)
             field_separator = ":";
-        field_separator = _if(field_separator, (flags & _n) > 0, "\n");
-        field_separator = _if(field_separator, (flags & _r) > 0, " ");
-        field_separator = _if(field_separator, (flags & _z) > 0, "\x00");
+        field_separator = stdio.aif(field_separator, (flags & _n) > 0, "\n");
+        field_separator = stdio.aif(field_separator, (flags & _r) > 0, " ");
+        field_separator = stdio.aif(field_separator, (flags & _z) > 0, "\x00");
         if (field_separator.byteLength() > 1)
             return ("Mutually exclusive options\n", [Err(0, mutually_exclusive_options, "")]);
         bool formatted_table = field_separator.empty();
@@ -32,18 +32,18 @@ contract chfn is Utility, libuadm {
         if (formatted_table)
             table = [["UID", "USER", "GID", "GROUP"]];
         Column[] columns_format = print_all ? [
-                Column(print_all, 5, ALIGN_LEFT),
-                Column(print_all, 10, ALIGN_LEFT),
-                Column(print_all, 5, ALIGN_LEFT),
-                Column(print_all, 10, ALIGN_LEFT)] :
-               [Column(!print_all, 15, ALIGN_LEFT),
-                Column(!print_all, 20, ALIGN_LEFT)];
+                Column(print_all, 5, fmt.ALIGN_LEFT),
+                Column(print_all, 10, fmt.ALIGN_LEFT),
+                Column(print_all, 5, fmt.ALIGN_LEFT),
+                Column(print_all, 10, fmt.ALIGN_LEFT)] :
+               [Column(!print_all, 15, fmt.ALIGN_LEFT),
+                Column(!print_all, 20, fmt.ALIGN_LEFT)];
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
 
         if (args.empty() && session.uid < GUEST_USER) {
             for ((uint16 uid, UserInfo user_info): users) {
                 (uint16 gid, string s_owner, string s_group) = user_info.unpack();
-                    table.push([format("{}", uid), s_owner, format("{}", gid), s_group]);
+                    table.push([stdio.itoa(uid), s_owner, stdio.itoa(gid), s_group]);
             }
         } else {
             string user_name = args[0];
@@ -53,21 +53,14 @@ contract chfn is Utility, libuadm {
                     string home_dir = "/home/" + user_name;
                     table = [
                         ["Username:", user_name],
-                        ["UID:", format("{}", uid)],
+                        ["UID:", stdio.itoa(uid)],
                         ["Home directory:", home_dir],
                         ["Primary group:", s_group],
-                        ["GID:", format("{}", gid)]];
+                        ["GID:", stdio.itoa(gid)]];
                     break;
                 }
         }
-        out = _format_table_ext(columns_format, table, field_separator, "\n");
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("chfn", "change real user name and information", "[options] [LOGIN]",
-            "Changes user fullname for a user account.",
-            "f", 1, 2, [
-            "change the user's full name"]);
+        out = fmt.format_table_ext(columns_format, table, field_separator, "\n");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

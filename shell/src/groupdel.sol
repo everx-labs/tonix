@@ -9,7 +9,7 @@ contract groupdel is Utility {
         string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
         string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
 
-        string victim_group_name = _val("_", args);
+        string victim_group_name = vars.val("_", args);
         string victim_entry = uadmin.group_entry_by_name(victim_group_name, etc_group);
         if (victim_entry.empty())
             errors.push(Err(uadmin.E_NOTFOUND, 0, victim_group_name)); // specified group doesn't exist
@@ -26,7 +26,7 @@ contract groupdel is Utility {
             uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
             (uint16 group_index, , uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
             string text = format("{}\t{}\n", victim_group_name, victim_group_id);
-            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, text, "")));
+            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", stdio.translate(etc_group, text, "")));
             file_action = Action(UA_DELETE_GROUP, 1);
         } else
             ec = EXECUTE_FAILURE;

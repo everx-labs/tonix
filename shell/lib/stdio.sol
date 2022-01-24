@@ -99,6 +99,18 @@ library stdio {
     }
 
     function translate(string text, string pattern, string symbols) internal returns (string out) {
+        uint pattern_len = pattern.byteLength();
+        uint p = strstr(text, pattern);
+        string s_tail = text;
+        while (p > 0) {
+            out.append(s_tail.substr(0, p - 1) + symbols);
+            s_tail = s_tail.substr(p - 1 + pattern_len);
+            p = strstr(s_tail, pattern);
+        }
+        out.append(s_tail);
+    }
+
+    function translate_old(string text, string pattern, string symbols) internal returns (string out) {
         uint p = strstr(text, pattern);
         uint pattern_len = pattern.byteLength();
         if (p > 0) {
@@ -109,5 +121,52 @@ library stdio {
             return text;
     }
 
+    function join_fields(string[] fields, string separator) internal returns (string line) {
+        uint len = fields.length;
+        if (len > 0) {
+            line = fields[0];
+            for (uint i = 1; i < len; i++)
+                line.append(separator + fields[i]);
+        }
+    }
 
+    function aif(string s1, bool flag, string s2) internal returns (string) {
+        return flag ? s1 + s2 : s1;
+    }
+
+    function line_and_word_count(string[] text) internal returns (uint line_count, uint word_count, uint char_count, uint max_width, uint max_words_per_line) {
+        for (string line: text) {
+            uint line_len = line.byteLength();
+            (, uint n_words) = split(line, " ");
+            char_count += line_len;
+            word_count += n_words;
+            max_width = math.max(max_width, line_len);
+            max_words_per_line = math.max(max_words_per_line, n_words);
+            line_count++;
+        }
+    }
+
+    function quote(string s) internal returns (string) {
+        return " \'" + s + "\'";
+    }
+
+    /* Read tab-separated values into an array */
+    function get_tsv(string s) internal returns (string[] fields) {
+        if (!s.empty())
+            (fields, ) = split(s, "\t");
+    }
+
+    function trim_trailing(string s) internal returns (string) {
+        uint len = s.byteLength();
+        if (len > 0)
+            return s.substr(0, len - 1);
+    }
+
+    /* Assigns a rating to a string to sort alphabetically */
+    function alpha_rating(string s, uint len) internal returns (uint rating) {
+        bytes bts = bytes(s);
+        uint lim = math.min(len, bts.length);
+        for (uint i = 0; i < lim; i++)
+            rating += uint(uint8(bts[i])) << ((len - i - 1) * 8);
+    }
 }

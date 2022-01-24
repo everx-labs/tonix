@@ -26,13 +26,11 @@ contract shopt is Shell {
         string s_attrs = "--";
 
         if (print) {
-            (string[] items, ) = _split_line(page, "\n", "\n");
+            (string[] items, ) = stdio.split_line(page, "\n", "\n");
             for (string item: items) {
                 /*(string attrs, string name, string value);// = _parse_var(item);
-                bool is_on = _strchr(s_attrs, "n") == 0;
+                bool is_on = stdio.strchr(s_attrs, "n") == 0;
                 bool show = !filter || is_on && set_opt || !is_on && unset_opt;
-
-
                 if (!show)
                     continue;
                 if (print_reusable)
@@ -41,7 +39,7 @@ contract shopt is Shell {
                     out.append(name + "\t" + (is_on ? "on\n" : "off\n"));*/
             }
         } else {
-//            (string[] args, ) = _split(s_args, " ");
+//            (string[] args, ) = stdio.split(s_args, " ");
             for (string arg: params) {
                 /*uint arg_hash = tvm.hash(arg);
                 Item i = shell_options.exists(arg_hash) ? shell_options[arg_hash] : Item(arg, attrs, "");
@@ -62,31 +60,7 @@ contract shopt is Shell {
                     out.append(i.name + "\t" + (is_on ? "on\n" : "off\n"));
             }
             s_action = "print_out";
-        } else {
-            for (string arg: args) {
-                uint arg_hash = tvm.hash(arg);
-                Item i = shell_options.exists(arg_hash) ? shell_options[arg_hash] : Item(arg, attrs, "");
-                i.attrs = do_unset ? (i.attrs | ATTR_DISABLED) : (i.attrs & ~ATTR_DISABLED);
-                env_in[shell_options_key].value[arg_hash] = i;
-            }
-            s_action = "update_env";
-        }
-
-
-        if (print_reusable || s_args.empty()) {
-            (string[] items, ) = _split_line(page, "\n", "\n");
-            for (string item: items) {
-                (string attrs, ) = _strsplit(item, " ");
-                if (_strchr(attrs, "r") > 0)
-                    res.append("declare " + item + "\n");
-            }
-            env[IS_STDOUT] = res;
-        } else {
-            (string[] args, ) = _split(s_args, " ");
-            for (string arg: args)
-                page = _assign(s_attrs, arg, page);
-            env[page_index] = page;
-        }*/
+            }}*/
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

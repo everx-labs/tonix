@@ -6,7 +6,7 @@ import "../lib/libuadm.sol";
 contract userdel is Utility, libuadm {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = _get_env(args);
+        (, string[] params, string flags, ) = arg.get_env(args);
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
 
@@ -19,8 +19,8 @@ contract userdel is Utility, libuadm {
             etc_passwd = _get_file_contents(passwd_index, inodes, data);
         if (group_file_type == FT_REG_FILE)
             etc_group = _get_file_contents(group_index, inodes, data);
-        bool force = _flag_set("f", flags);
-        bool remove_home_dir = _flag_set("r", flags);
+        bool force = arg.flag_set("f", flags);
+        bool remove_home_dir = arg.flag_set("r", flags);
 
         string victim_user_name = params[0];
         uint16 victim_user_id;
@@ -51,23 +51,15 @@ contract userdel is Utility, libuadm {
             }
         if (errors.empty()) {
             string text = format("{}\t{}\t{}\t{}\t/home/{}\n", victim_user_name, victim_user_id, victim_group_id, victim_user_name, victim_user_name);
-            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", _translate(etc_passwd, text, "")));
+            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", stdio.translate(etc_passwd, text, "")));
             if (!removed_groups.empty()) {
                 text = format("{}\t{}\n", victim_user_name, victim_group_id);
-                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", _translate(etc_group, text, "")));
+                ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", stdio.translate(etc_group, text, "")));
             }
             file_action = Action(UA_DELETE_USER, 1);
         } else
             ec = EXECUTE_FAILURE;
         out = "";
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("userdel", "delete a user account and related files", "[options] LOGIN",
-            "A low level utility for removing users.",
-            "fr", 1, 1, [
-            "force removal of files, even if not owned by user",
-            "remove the user's home directory"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

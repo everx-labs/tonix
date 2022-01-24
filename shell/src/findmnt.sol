@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -24,15 +24,15 @@ contract findmnt is Utility {
         uint source_width = no_truncate ? 70 : 20;
 
         Column[] columns_format = [
-            Column(non_df_style, target_path_width, ALIGN_LEFT),
-            Column(true, source_width, ALIGN_LEFT),
-            Column(true, 6, ALIGN_LEFT),
-            Column(non_df_style, target_path_width, ALIGN_LEFT),
-            Column(df_style, 6, ALIGN_RIGHT),
-            Column(df_style, 6, ALIGN_RIGHT),
-            Column(df_style, 6, ALIGN_RIGHT),
-            Column(df_style, 4, ALIGN_RIGHT),
-            Column(df_style, target_path_width, ALIGN_LEFT)];
+            Column(non_df_style, target_path_width, fmt.ALIGN_LEFT),
+            Column(true, source_width, fmt.ALIGN_LEFT),
+            Column(true, 6, fmt.ALIGN_LEFT),
+            Column(non_df_style, target_path_width, fmt.ALIGN_LEFT),
+            Column(df_style, 6, fmt.ALIGN_RIGHT),
+            Column(df_style, 6, fmt.ALIGN_RIGHT),
+            Column(df_style, 6, fmt.ALIGN_RIGHT),
+            Column(df_style, 4, fmt.ALIGN_RIGHT),
+            Column(df_style, target_path_width, fmt.ALIGN_LEFT)];
 
         if (!no_headings)
             table = [["TARGET", "SOURCE", "FSTYPE", "OPTIONS", "SIZE", "USED", "AVAIL", "USE%", "TARGET"]];
@@ -50,45 +50,25 @@ contract findmnt is Utility {
         if (!flag_fstab_only)
             text.append(_get_file_contents_at_path("/etc/mtab", inodes, data));
 
-        (string[] tab_lines, ) = _split(text, "\n");
+        (string[] tab_lines, ) = stdio.split(text, "\n");
         for (string line: tab_lines) {
-            (string[] fields, uint n_fields) = _split(line, "\t");
+            (string[] fields, uint n_fields) = stdio.split(line, "\t");
             if (n_fields > 3) {
                 table.push([
                     fields[1],
                     fields[0],
                     fields[2],
                     fields[3],
-                    format("{}", u_units),
-                    format("{}", u_used),
-                    format("{}", u_avl),
-                    format("{}%", u_p_used),
+                    stdio.itoa(u_units),
+                    stdio.itoa(u_used),
+                    stdio.itoa(u_avl),
+                    stdio.itoa(u_p_used) + "%",
                     fields[1]]);
                 if (first_fs_only)
                     break;
             }
         }
-        out = _format_table_ext(columns_format, table, " ", "\n");
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return(
-            "findmnt",
-            "find a filesystem",
-            "[options]\t[options] device|mountpoint[options] [device...]",
-            "List all mounted filesystems or search for a filesystem.",
-            "smkAbDfnu",
-            0,
-            M, [
-                "search in static table of filesystems",
-                "search in table of mounted filesystems",
-                "search in kernel table of mounted filesystems (default)",
-                "disable all built-in filters, print all filesystems",
-                "print sizes in bytes rather than in human readable format",
-                "imitate the output of df(1)",
-                "print the first found filesystem only",
-                "don't print column headings",
-                "don't truncate text in columns"]);
+        out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

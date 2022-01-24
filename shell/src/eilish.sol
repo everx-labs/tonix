@@ -12,11 +12,11 @@ struct Command {
 contract eilish is Shell {
 
     function compound(string s_input, string aliases) external pure returns (Command[] res) {
-//        return _compound(s_input, aliases);
+        return _compound(s_input, aliases);
     }
 
     function _compound(string s_input, string aliases) internal pure returns (Command[] res) {
-        /*if (s_input.empty())
+        if (s_input.empty())
             return res;
         (string[] commands, ) = stdio.split(s_input, ";");
         for (string line: commands) {
@@ -40,7 +40,7 @@ contract eilish is Shell {
                 }
             }
             res.push(Command(cmd, s_args, redir_in, redir_out));
-        }*/
+        }
     }
 
     /*function set_args_simple(Command s_cmd, string opt_string, string index, string pool) external pure returns (Command[] res) {
@@ -114,7 +114,7 @@ contract eilish is Shell {
     function set_args(string s_input, string aliases, string opt_string, string index, string pool) external pure returns (uint8 ec, string out, string res, string redir_in, string redir_out) {
         if (s_input.empty())
             return (EXECUTE_FAILURE, "", "", "", "");
-        /*(string cmd_raw, string s_args) = stdio.strsplit(s_input, " ");
+        (string cmd_raw, string s_args) = stdio.strsplit(s_input, " ");
         string cmd_expanded = _val(cmd_raw, aliases);
         string input = cmd_expanded.empty() ? s_input : cmd_expanded + " " + s_args;
         string cmd;
@@ -192,11 +192,11 @@ contract eilish is Shell {
             ["REDIR_IN", redir_in],
             ["REDIR_OUT", redir_out]]);
         out.append(pos_map + "\n");
-        out.append(opt_args + "\n");*/
+        out.append(opt_args + "\n");
     }
 
     function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
-        /*ec = EXECUTE_SUCCESS;
+        ec = EXECUTE_SUCCESS;
         out = _as_var_list([
             ["_", _val("TOSH", profile)],
             ["-", _val("-", profile)],
@@ -207,7 +207,7 @@ contract eilish is Shell {
             ["TOSH_ALIASES", _val("TOSH_ALIASES", profile)],
             ["SHELLOPTS", "allexport:hashall"],
             ["TMPDIR", _val("TMPDIR", profile)],
-            ["SHLVL", _val("SHLVL", profile)]]);*/
+            ["SHLVL", _val("SHLVL", profile)]]);
     }
 
     // Possible states for the parser that require it to do special things.
@@ -224,7 +224,7 @@ contract eilish is Shell {
     uint16 constant PST_ARITHFOR	= 1024; // parsing an arithmetic for command
 
     function _parse_params(string[] params, string opt_string) internal pure returns (string s_flags, string[][2] opt_values, string err, string pos_params, string s_attrs) {
-        /*uint n_params = params.length;
+        uint n_params = params.length;
         uint opt_str_len = opt_string.byteLength();
         bool expect_options = true;
         for (uint i = 0; i < n_params; i++) {
@@ -282,16 +282,16 @@ contract eilish is Shell {
                 else
                     pos_params.append(" " + token);
             }
-        }*/
+        }
     }
 
     function _builtin_help() internal pure override returns  (BuiltinHelp bh) {
-        /*return BuiltinHelp("eilish",
+        return BuiltinHelp("eilish",
             "[command ...]",
             "Command shell",
             "Command shell",
             "",
             "",
-            "");*/
+            "");
     }
 }

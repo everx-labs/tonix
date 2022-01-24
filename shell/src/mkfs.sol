@@ -1,9 +1,8 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
-import "../lib/Format.sol";
 import "Utility.sol";
 
-contract mkfs is Format, Utility {
+contract mkfs is Utility {
 
     function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (SuperBlock sb) {
         (, string[] args, uint flags) = input.unpack();
@@ -20,7 +19,7 @@ contract mkfs is Format, Utility {
         for (string arg: args) {
 
         }
-        uint16 inode_size = use_inode_size ? _atoi(args[1]) : DEF_INODE_SIZE;
+        uint16 inode_size = use_inode_size ? stdio.atoi(args[1]) : DEF_INODE_SIZE;
         fs_type = args[0];
 
         /*return SuperBlock(true, true, fs_type, inode_count, block_count, MAX_INODES - inode_count - first_inode, MAX_BLOCKS - block_count,
@@ -44,24 +43,16 @@ contract mkfs is Format, Utility {
 
     function t_mkfs(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
         (inodes, data) = _get_system_init(config);
-//        return _mkfs(config);
     }
     function t_mkfs_2(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
         return _mkfs(config);
     }
     function _mkfs(string config) internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
-//        (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, string s_out) = _get_system_init_2(config);
         return _get_system_init_2(config);
-//        (c, out) = _store_inodes(inodes);
-//        (c, out) = _store_inodes_and_dirs(inodes, data);
     }
-/*
-m2:b:c:5 0 100 6000
-sysfs:-:c:11 100 6000 60 100
-/:d:d:bin dev etc mnt proc sys usr
-*/
+
     function _parse_config_line(string line) internal pure returns (string name, uint8 node_type, uint8 content_type, bytes content) {
-        (string[] fields, uint n_fields) = _split_line(line, ":", "\n");
+        (string[] fields, uint n_fields) = stdio.split_line(line, ":", "\n");
         if (n_fields > 3) {
             name = fields[0];
             node_type = _file_type(fields[1]);
@@ -92,7 +83,7 @@ sysfs:-:c:11 100 6000 60 100
     }
 
     function _parse_dir_entries(string contents) internal pure returns (string[] dirents, uint n_dirents) {
-        return _split(contents, " ");
+        return stdio.split(contents, " ");
     }
 
     function _process_config_line(string line) internal pure returns (TvmBuilder b) {
@@ -113,15 +104,9 @@ sysfs:-:c:11 100 6000 60 100
 
     }
 
-//    function _get_system_init_2(string config) internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, string out) {
     function _get_system_init_2(string config) internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
         uint8 n = 0;
-        (string[] config_lines, uint config_line_count) = _split(config, "\n");
-//        DeviceInfo host_device_info = _parse_device_info(config_lines[0]);
-        /*(string[] fields, uint n_fields) = _split_line(config_lines[0], ":", "\n");
-        string device_name;
-        if (n_fields > 0)
-            device_name = fields[0];*/
+        (string[] config_lines, uint config_line_count) = stdio.split(config, "\n");
 
         DeviceInfo host_device_info;
         uint16 host_device_id;
@@ -132,9 +117,6 @@ sysfs:-:c:11 100 6000 60 100
         uint16 n_dirs;
         uint16 n_reg_files;
         uint16 n_other;
-//        TvmBuilder b_main = _read(inodes[SB_INFO]);
-//        Inode def_inode = inodes[1];
-//        (uint16 def_mode, uint16 def_owner_id, uint16 def_group_id, , uint16 def_device_id, , , uint32 def_modified_at, uint32 def_last_modified, ) = def_inode.unpack();
 
         TvmBuilder b_dev = _process_config_line(config_lines[0]);
         TvmBuilder b_info = _process_config_line(config_lines[1]);
@@ -144,48 +126,11 @@ sysfs:-:c:11 100 6000 60 100
         b_main.store(b_dev);
         b_main.store(b_info);
         TvmBuilder b_dirs;// = _store_def_inode(inodes[ROOT_DIR]);
-//        TvmBuilder b_main = _def_inode(inodes[1]);
-//        TvmBuilder b_main = _read(inodes[SB_INFO]);
-//        out.append(_builder_string(0, b_main));
-//        out.append(_builder_string(1, b_dirs));
-//        out.append(_builder_string(1, b_dirs));
         TvmBuilder b_reg_files;// = _store_def_inode(inodes[5]);
         TvmBuilder b_dir_data;
         out.append(_builder_string(2, b_reg_files));
         TvmBuilder b_other;// = _store_def_inode(inodes[1]);
         out.append(_builder_string(3, b_other));
-        /*for ((uint16 i, Inode inode): inodes) {
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
-            if ((mode & S_IFMT) == S_IFDIR) {
-//                b_dirs.store(i, n_links, uint16(file_size));
-                bytes dir_data;// = data[i];
-                out.append(format("dir data: {}\n", dir_data.length));
-                n_dirs++;
-                (, uint n_items) = _split(dir_data, "\n");
-//                b_dirs.store(uint8(i), uint8(n_links), uint16(file_size));
-                b_dirs.store(uint8(n_dirs), uint8(n_items), uint16(dir_data.length));
-                out.append(_builder_string(1, b_dirs));
-//                b_dir_data.store(dir_data);
-                out.append(_builder_string(4, b_dir_data));
-            }
-            else if ((mode & S_IFMT) == S_IFREG) {
-                b_reg_files.store(uint8(i), uint16(file_size));
-                out.append(_builder_string(2, b_reg_files));
-                n_reg_files++;
-            } else {
-                b_other.store(mode, owner_id, group_id, n_links, device_id, n_blocks, file_size, modified_at, last_modified);
-                out.append(_builder_string(3, b_other));
-                n_other++;
-            }
-            /*inodes_in_cur_cell++;
-            if (inodes_in_cur_cell >= max_inodes_per_cell) {
-                TvmCell ref_c = ref_b.toCell();
-                b.store(ref_c);
-                delete ref_b;
-                inodes_in_cur_cell = 0;
-                cur_cells++;
-            }
-        }*/
 //        TvmBuilder b = _read(inode);
         b_main.store(n_dirs, n_reg_files, n_other);
         b_dirs.store(n_dirs);
@@ -209,24 +154,15 @@ sysfs:-:c:11 100 6000 60 100
         out.append(_size_string(c));
 
         for (uint j = 0; j < config_line_count; j++) {
-//            DeviceInfo host_device_info = _parse_device_info(config_lines[0]);
-            /*if (j == 0) {
-                (inodes[n], data[n]) = _get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, _get_dots(n, n));
-                continue;
-            }&*/
             string line = config_lines[j];
             (string node_file_name, uint8 node_type, uint8 content_type, bytes content) = _parse_config_line(line);
-            /*(string[] fields, uint n_fields) = _split(line, ":");
-            string node_file_name = fields[0];
-            uint8 node_type = _file_type(fields[1]);
-            uint8 content_type = _file_type(fields[2]);*/
             uint8 node_index = _get_parent_offset(node_file_name, file_list);
             uint8 parent_node_index = _get_parent_offset(file_list[node_index], file_list);
 
             if (content_type == FT_REG_FILE || content_type == FT_DIR) {
                 string dir_contents;
                 dir_contents = content; //fields[3];
-                (string[] files, uint n_files) = _split_line(dir_contents, " ", "\n");
+                (string[] files, uint n_files) = stdio.split_line(dir_contents, " ", "\n");
                 for (uint i = 0; i < n_files; i++) {
                     string file_name = files[i];
                     n++;
@@ -244,7 +180,7 @@ sysfs:-:c:11 100 6000 60 100
                 string dir_contents;
 //                dir_contents = fields[3];
                 dir_contents = content;
-                (string[] files, ) = _split_line(dir_contents, " ", "\n");
+                (string[] files, ) = stdio.split_line(dir_contents, " ", "\n");
 
                     for (string file_name: files) {
                         n++;
@@ -388,7 +324,7 @@ sysfs:-:c:11 100 6000 60 100
                 bytes dir_data = data[i];
                 out.append(format("dir data: {}\n", dir_data.length));
                 n_dirs++;
-                (, uint n_items) = _split(dir_data, "\n");
+                (, uint n_items) = stdio.split(dir_data, "\n");
 //                b_dirs.store(uint8(i), uint8(n_links), uint16(file_size));
                 b_dirs.store(uint8(n_dirs), uint8(n_items), uint16(dir_data.length));
                 out.append(_builder_string(1, b_dirs));
@@ -443,7 +379,7 @@ sysfs:-:c:11 100 6000 60 100
 
     function _get_device_fs(string devices) internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint16 n = DEVFS_DEV_DIR;
-        (string[] device_list, ) = _split(devices, "\n");
+        (string[] device_list, ) = stdio.split(devices, "\n");
 
         uint16 host_device_id = 0;//(uint16(host_device_info.major_id) << 8) + host_device_info.minor_id;
         uint16 block_size = 100;//host_device_info.blk_size;
@@ -454,7 +390,7 @@ sysfs:-:c:11 100 6000 60 100
         n++;
 
         for (string device_info: device_list) {
-            (string[] dev_fields, uint n_fields) = _split(device_info, "\t");
+            (string[] dev_fields, uint n_fields) = stdio.split(device_info, "\t");
             if (n_fields > 3) {
                 string file_name = dev_fields[2];
                 n++;
@@ -506,19 +442,19 @@ sysfs:-:c:11 100 6000 60 100
     }
 
     function _parse_values(string line) internal pure returns (uint[] values) {
-        (string[] fields, ) = _split(line, " ");
+        (string[] fields, ) = stdio.split(line, " ");
         for (string s: fields) {
-            values.push(_atoi(s));
+            values.push(stdio.atoi(s));
         }
     }
 
     function _parse_sb_inode(string line) internal pure returns (uint16 index, Inode inode) {
         string index_s = line.substr(0, DEF_INODE_SIZE);
-        (string[] fields, ) = _split(index_s, " ");
+        (string[] fields, ) = stdio.split(index_s, " ");
         uint[] values;
 
         for (string s: fields) {
-            values.push(_atoi(s));
+            values.push(stdio.atoi(s));
         }
         return (uint16(values[0]), Inode(uint16(values[1]), uint16(values[2]), uint16(values[3]), uint16(values[4]), uint16(values[5]), uint16(values[6]), uint32(values[7]),
             uint32(values[8]), uint32(values[9]), fields[10]));
@@ -526,7 +462,7 @@ sysfs:-:c:11 100 6000 60 100
 
     function _parsefs(string text_stream) internal pure returns (string out, mapping (uint16 => Inode) inodes) {
         uint len = text_stream.byteLength();
-        (string[] frs, uint frs_len) = _split(text_stream, "\x05");
+        (string[] frs, uint frs_len) = stdio.split(text_stream, "\x05");
         out.append(format("Parsing {} bytes, {} records\n", len, frs_len));
 
         for (uint i = 0; i < frs_len; i++) {
@@ -551,7 +487,7 @@ sysfs:-:c:11 100 6000 60 100
     }
 
     function _parse_device_info(string dev_info_s) internal pure returns (DeviceInfo dev_info) {
-        (uint[] values, string[] names, address[] addresses) = _parse_record(dev_info_s, "\t");
+        (uint[] values, string[] names, address[] addresses) = fmt.parse_record(dev_info_s, "\t");
         return DeviceInfo(uint8(values[0]), uint8(values[1]), names[0], uint16(values[2]), uint16(values[3]), addresses[0]);
     }
 
@@ -564,40 +500,16 @@ sysfs:-:c:11 100 6000 60 100
         }
     }
 
-    /*function _process_config_line(string line) internal pure returns (TvmBuilder b) {
-        (string name, uint8 node_type, uint8 content_type, bytes content) = _parse_config_line(line);
-        if (node_type == FT_BLKDEV) {
-            (uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks) = _parse_blkdev(content);
-            uint16 device_id = (uint16(major_id) << 8) + minor_id;
-            b.store(device_id, block_size, n_blocks);
-        } else if (node_type == FT_SOCK) {
-            (uint16 first_inode, uint16 block_size, uint16 n_blocks, uint16 inode_size, uint16 n_inodes) = _parse_sbinfo(content);
-            b.store(first_inode, block_size, n_blocks, inode_size, n_inodes);
-        } else if (node_type == FT_DIR) {
-            (string[] dirents, uint n_dirents) = _parse_dir_entries(content);
-            for (uint i = 0; i < n_dirents; i++) {
-                b.store(dirents[i]);
-            }
-        }
-    }*/
-
     function _get_system_init(string config) internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint8 n = 0;
         string[] file_list = ["sb_set"];
-        (string[] config_lines, uint config_line_count) = _split(config, "\n");
-//        DeviceInfo host_device_info = _parse_device_info(config_lines[0]);
+        (string[] config_lines, uint config_line_count) = stdio.split(config, "\n");
         (string dev_name, uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks, uint16 host_device_id) = _parse_device_info_2(config_lines[0]);
-//        uint16 host_device_id = (uint16(host_device_info.major_id) << 8) + host_device_info.minor_id;
-  //      uint16 block_size = host_device_info.blk_size;
         uint16 block_count;
 
         for (uint j = 1; j < config_line_count; j++) {
             string line = config_lines[j];
             (string node_file_name, uint8 node_type, uint8 content_type, bytes content) = _parse_config_line(line);
-            /*(string[] fields, uint n_fields) = _split(line, ":");
-            string node_file_name = fields[0];
-            uint8 node_type = _file_type(fields[1]);
-            uint8 content_type = _file_type(fields[2]);*/
             uint8 node_index = _get_parent_offset(node_file_name, file_list);
             uint8 parent_node_index = _get_parent_offset(file_list[node_index], file_list);
             bytes contents;
@@ -610,7 +522,7 @@ sysfs:-:c:11 100 6000 60 100
                         dir_contents = data[source_index];
                     } else
                         dir_contents = content; //fields[3];
-                    (string[] files, ) = _split_line(dir_contents, " ", "\n");
+                    (string[] files, ) = stdio.split_line(dir_contents, " ", "\n");
                     for (string file_name: files) {
                         n++;
                         file_list.push(file_name);
@@ -628,28 +540,7 @@ sysfs:-:c:11 100 6000 60 100
             } else if (node_type == FT_REG_FILE) {
                 if (content_type == FT_REG_FILE) {
                     contents.append(content);
-
-                    /*if (n_fields > 4) {
-                        /*string ifs = fields[3];
-                        string ofs = fields[4];
-                        bool translate = ifs != ofs;
-                        bool split_fields = ofs.byteLength() == 2 && ofs.substr(0, 1) == "\\" && ofs.substr(1, 1) == "n";
-                        for (uint i = 5; i < n_fields; i++) {
-                            string s = fields[i];
-                            if (translate) {
-                                if (split_fields) {
-                                    (string[] subs, ) = _split(s, ifs);
-                                    for (string sub: subs)
-                                        contents.append(sub + "\n");
-                                } else
-                                    contents.append(_translate(s, ifs, ofs) + "\n");
-                            } else
-                                contents.append(s + "\n");
-                        }
-                    }*/
                 } else if (content_type == FT_SOCK) {
-//                    if (node_file_name == "hostname") {
-//                        contents = format("{}\n{}\n", host_device_info.name, host_device_info.device_address);
                     if (node_file_name == "sb_device_info")
                         contents = config_lines[0];
                 } else if (content_type == FT_SYMLINK) {
@@ -669,9 +560,9 @@ sysfs:-:c:11 100 6000 60 100
         Inode info_inode = inodes[SB_INFO];
         bytes info = data[SB_INFO];
         uint16[] sb_info;
-        (string[] fields, ) = _split_line(info, " ", "\n");
+        (string[] fields, ) = stdio.split_line(info, " ", "\n");
         for (string s: fields)
-            sb_info.push(_atoi(s));
+            sb_info.push(stdio.atoi(s));
 
         uint16 total_inodes = sb_info[1];
         uint16 total_blocks = sb_info[2];
@@ -699,12 +590,6 @@ sysfs:-:c:11 100 6000 60 100
         inodes_data.append(blocks_data);
         inodes[SB_INODES] = inodes_inode;
         data[SB_INODES] = inodes_data;
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("mkfs", "build a Tonix filesystem", "[options] [fs-options] device [size]",
-            "Used to build a Tonix filesystem on a device. The device argument is either the device name, or a regular file that shall contain the filesystem. The size argument is the number of blocks to be used for the filesystem.",
-            "V", 1, M, ["produce verbose output, including all filesystem-specific commands that are executed"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

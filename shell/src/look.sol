@@ -7,28 +7,28 @@ contract look is Utility {
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (uint16 wd, string[] v_args, string flags, ) = _get_env(argv);
+        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
         string[] params;
-        for (string arg: v_args) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
+        for (string s_arg: v_args) {
+            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_look(flags, _get_file_contents(index, inodes, data), params) + "\n");
             else
-                params.push(arg);
+                params.push(s_arg);
         }
     }
 
     function _look(string flags, string texts, string[] params) private pure returns (string out) {
-        (string[] text, ) = _split(texts, "\n");
+        (string[] text, ) = stdio.split(texts, "\n");
 //        bool binary_search = (flags & _b) > 0;
 //        bool alphanum_set = (flags & _d) > 0;
 //        bool ignore_case = (flags & _f) > 0;
-        bool use_term_char = _flag_set("t", flags);
+        bool use_term_char = arg.flag_set("t", flags);
 
         string pattern = !params.empty() ? params[0] : "";
         string term_char = use_term_char && params.length > 1 ? params[1] : "\n";
 
-        uint p = _strchr(pattern, term_char);
+        uint p = stdio.strchr(pattern, term_char);
         if (p > 0)
             pattern = pattern.substr(0, p - 1);
 
@@ -39,17 +39,6 @@ contract look is Utility {
                 if (line.substr(0, pattern_len) == pattern)
                     out.append(line + "\n");
         }
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list,
-                        uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("look", "display lines beginning with a given string", "[-bdf] [-t termchar] string [file ...]",
-            "Displays any lines in file which contain string as a prefix.",
-            "bdft", 1, 3, [
-            "use a binary search on the given word list",
-            "dictionary character set and order, i.e., only alphanumeric characters are compared",
-            "ignore the case of alphabetic characters",
-            "specify a string termination character, i.e., only the characters in string up to and including the first occurrence of termchar are compared"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -5,44 +5,44 @@ import "Shell.sol";
 contract alias_ is Shell {
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, , string argv) = _get_args(args);
+        (string[] params, , string argv) = arg.get_args(args);
         string alias_page = pool;
 
         string initial_val = alias_page;
         string token = params[0];
         ec = EXECUTE_SUCCESS;
-        if (_strchr(argv, "=") > 0) {
-            (string name, ) = _strsplit(token, "=");
-            string value = _strval(argv, "=", "\n");
-            string new_value = _var_record("", name, value);
-            string cur_val = _val(name, alias_page);
+        if (stdio.strchr(argv, "=") > 0) {
+            (string name, ) = stdio.strsplit(token, "=");
+            string value = stdio.strval(argv, "=", "\n");
+            string new_value = vars.var_record("", name, value);
+            string cur_val = vars.val(name, alias_page);
             if (cur_val.empty())
                 alias_page.append(new_value + "\n");
             else
-                alias_page = _translate(alias_page, cur_val, new_value);
+                alias_page = stdio.translate(alias_page, cur_val, new_value);
         }
         if (initial_val != alias_page)
-            res = _translate(pool, initial_val, alias_page);
+            res = stdio.translate(pool, initial_val, alias_page);
     }
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         ec = EXECUTE_SUCCESS;
         out = "";
-        (string[] params, , ) = _get_args(args);
+        (string[] params, , ) = arg.get_args(args);
         if (params.empty()) {
-            (string[] aliases, ) = _split_line(pool, "\n", "\n");
+            (string[] aliases, ) = stdio.split_line(pool, "\n", "\n");
             for (string line: aliases) {
-                (, string name, string value) = _split_var_record(line);
-                out.append("alias " + name + "=" + _wrap(value, W_SQUOTE) + "\n");
+                (, string name, string value) = vars.split_var_record(line);
+                out.append("alias " + name + "=" + vars.wrap(value, vars.W_SQUOTE) + "\n");
             }
         } else {
             string token = params[0];
-            string cur_val = _val(token, pool);
+            string cur_val = vars.val(token, pool);
             if (cur_val.empty()) {
                 ec = EXECUTE_FAILURE;
                 out.append("-tosh: alias: " + token + ": not found\n");
             } else
-                out.append("alias " + token + "=" + _wrap(cur_val, W_SQUOTE) + "\n");
+                out.append("alias " + token + "=" + vars.wrap(cur_val, vars.W_SQUOTE) + "\n");
         }
     }
 

@@ -5,7 +5,7 @@ import "Utility.sol";
 contract realpath is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
         if (wd >= ROOT_DIR)
             (out, err) = _realpath(flags, params, wd, inodes, data);
         else {
@@ -16,12 +16,12 @@ contract realpath is Utility {
 
     function _realpath(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, string err) {
         (bool canon_existing, bool canon_missing, bool dont_expand_symlinks, bool no_errors, bool null_delimiter, /*bool logical*/, /*bool physical*/, )
-            = _flag_values("emsqzLP", flags);
+            = arg.flag_values("emsqzLP", flags);
         bool canon_existing_dir = !canon_existing && !canon_missing;
         string line_delimiter = null_delimiter ? "\x00" : "\n";
 
         for (string s_arg: s_args) {
-            (string arg_dir, string arg_base) = _dir(s_arg);
+            (string arg_dir, string arg_base) = path.dir(s_arg);
             bool is_abs_path = s_arg.substr(0, 1) == "/";
             string path = is_abs_path ? s_arg : _xpath(s_arg, wd, inodes, data);
             uint16 cur_dir = is_abs_path ? _resolve_absolute_path(arg_dir, inodes, data) : wd;
@@ -33,7 +33,7 @@ contract realpath is Utility {
                 if (!canon_missing && index < INODES) {
                     if (!no_errors)
                         //errors.push(Err(0, index, s_arg));
-                        err.append("realpath: missing " + s_arg + ", index " + _itoa(index) + "\n");
+                        err.append("realpath: missing " + s_arg + ", index " + stdio.itoa(index) + "\n");
                     continue;
                 }
             }
@@ -55,7 +55,7 @@ contract realpath is Utility {
 
     function _canonicalize(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string res, bool valid) {
         uint16 canon_mode = mode & 3;
-        (string arg_dir, string arg_base) = _dir(s_arg);
+        (string arg_dir, string arg_base) = path.dir(s_arg);
         bool is_abs_path = s_arg.substr(0, 1) == "/";
         valid = true;
 
@@ -80,19 +80,6 @@ contract realpath is Utility {
             (ft, s_arg, ino) = _get_symlink_target(inode, data[ino]).unpack();
         }
         return Arg(s_arg, ft, ino, parent, dir_index);
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("realpath", "print the resolved path", "[OPTION]... FILE...",
-            "Print the resolved absolute file name; all but the last component must exist.",
-            "emLPqsz", 1, M, [
-            "all components of the path must exist",
-            "no path components need exist or be a directory",
-            "resolve '..' components before symlinks",
-            "resolve symlinks as encountered (default)",
-            "suppress most error messages",
-            "don't expand symlinks",
-            "end each output line with NUL, not newline"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -52,10 +52,10 @@ abstract contract libuadm is Internal {
     }
 
     function _parse_group_entry_line(string line) internal pure returns (string name, uint16 gid, string members) {
-        (string[] fields, uint n_fields) = _split(line, ":");
+        (string[] fields, uint n_fields) = stdio.split(line, ":");
         if (n_fields > 2) {
             name = fields[0];
-            gid = _atoi(fields[2]);
+            gid = stdio.atoi(fields[2]);
             members = n_fields > 3 ? fields[3] : name;
         }
         if (gid == 0 && name != "root")
@@ -63,12 +63,12 @@ abstract contract libuadm is Internal {
     }
 
     function _user_groups(string user_name, string etc_group) internal pure returns (string primary, string[] supp) {
-        (string[] lines, ) = _split(etc_group, "\n");
+        (string[] lines, ) = stdio.split(etc_group, "\n");
         for (string line: lines) {
             (string group_name, , string member_list) = _parse_group_entry_line(line);
             if (user_name == group_name)
                 primary = group_name;
-            if (_strstr(member_list, user_name) > 0)
+            if (stdio.strstr(member_list, user_name) > 0)
                 supp.push(group_name);
         }
     }

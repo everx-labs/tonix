@@ -19,18 +19,18 @@ contract ulimit is Shell {
 
     function _table(TvmCell[] cls) internal pure returns (string out) {
         Column[] columns_format = [
-            Column(true, 3, ALIGN_LEFT),
-            Column(true, 5, ALIGN_LEFT),
-            Column(true, 6, ALIGN_LEFT),
-            Column(true, 5, ALIGN_LEFT)];
+            Column(true, 3, fmt.ALIGN_LEFT),
+            Column(true, 5, fmt.ALIGN_LEFT),
+            Column(true, 6, fmt.ALIGN_LEFT),
+            Column(true, 5, fmt.ALIGN_LEFT)];
 
         string[][] table = [["N", "cells", "bytes", "refs"]];
         for (uint i = 0; i < cls.length; i++) {
             (uint cells, uint bits, uint refs) = cls[i].dataSize(1000);
             uint bytess = bits / 8;
-            table.push([_itoa(i), _itoa(cells), _itoa(bytess), _itoa(refs)]);
+            table.push([stdio.itoa(i), stdio.itoa(cells), stdio.itoa(bytess), stdio.itoa(refs)]);
         }
-        out = _format_table_ext(columns_format, table, " ", "\n");
+        out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }
 
     function v1(string args, string pool) external pure returns (uint8 ec, string out) {
@@ -38,16 +38,16 @@ contract ulimit is Shell {
     }
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool soft_resource_limit = _flag_set("S", flags);
-        bool hard_resource_limit = _flag_set("H", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool soft_resource_limit = arg.flag_set("S", flags);
+        bool hard_resource_limit = arg.flag_set("H", flags);
         ec = EXECUTE_SUCCESS;
         string options;// = e[IS_VARIABLE];
 //        if (options.empty())
 //            options = "f";
 
         bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
-        bool print_all = _flag_set("a", flags);
+        bool print_all = arg.flag_set("a", flags);
 
 /*/proc/27196/limits
 Limit                     Soft Limit           Hard Limit           Units
@@ -91,7 +91,7 @@ Max realtime timeout      unlimited            unlimited            us*/
 //        string page = e[page_index];
 
         if (print_all) {
-            (string[] items, ) = _split_line(pool, "\n", "\n");
+            (string[] items, ) = stdio.split_line(pool, "\n", "\n");
             for (string item: items) {
 //                (string attrs, string name, string value) = _parse_var(item);
 //                out.append(name + " " + value + "\n");

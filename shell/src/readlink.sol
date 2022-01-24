@@ -5,7 +5,7 @@ import "Utility.sol";
 contract readlink is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
         Err[] errors;
         if (wd >= ROOT_DIR)
             (out, errors) = _readlink(flags, params, wd, inodes, data);
@@ -18,12 +18,11 @@ contract readlink is Utility {
             for (Err e: errors)
                 err.append("Failed to read link: " + e.arg + "\n");
         }
-
     }
 
     function _readlink(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
         (bool canon_existing_dir, bool canon_existing, bool canon_missing, bool no_newline, bool print_errors, bool null_delimiter, , )
-            = _flag_values("femsqz", flags);
+            = arg.flag_values("femsqz", flags);
         string line_delimiter = null_delimiter ? "\x00" : "\n";
 
         bool canon = canon_existing_dir || canon_existing || canon_missing;
@@ -48,13 +47,13 @@ contract readlink is Utility {
                 continue;
             }
             out.append(path);
-            out = _if(out, !no_newline, line_delimiter);
+            out = stdio.aif(out, !no_newline, line_delimiter);
         }
     }
 
     function _canonicalize(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string res, bool valid) {
         uint16 canon_mode = mode & 0x03;
-        (string arg_dir, string arg_base) = _dir(s_arg);
+        (string arg_dir, string arg_base) = path.dir(s_arg);
         bool is_abs_path = s_arg.substr(0, 1) == "/";
         valid = true;
 
@@ -79,20 +78,6 @@ contract readlink is Utility {
             (ft, s_arg, ino) = _get_symlink_target(inode, data[ino]).unpack();
         }
         return Arg(s_arg, ft, ino, parent, dir_index);
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("readlink", "print resolved symbolic links or canonical file names", "[OPTION]... FILE...",
-            "Print value of a symbolic link or canonical file name. Canonicalize by following every symlink in every component of the given name recursively.",
-            "femnqsvz", 1, M, [
-            "all but the last component must exist",
-            "all components must exist",
-            "without requirements on components existence",
-            "do not output the trailing delimiter",
-            "quiet",
-            "suppress most error messages (on by default)",
-            "report error messages",
-            "end each output line with NUL, not newline"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

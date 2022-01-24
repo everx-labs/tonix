@@ -6,14 +6,14 @@ import "../lib/libuadm.sol";
 contract useradd is Utility, libuadm {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = _get_env(args);
+        (, string[] params, string flags, ) = arg.get_env(args);
         mapping (uint16 => UserInfo) users = _get_login_info(inodes, data);
         mapping (uint16 => GroupInfo) groups = _get_group_info(inodes, data);
         bool create_user_group_def = _login_def_flag(USERGROUPS_ENAB);
         bool create_home_dir_def = _login_def_flag(CREATE_HOME);
 
         (bool is_system_account, bool create_home_flag, bool do_not_create_home_flag, bool create_user_group_flag, bool do_not_create_user_group_flag,
-            bool use_user_id, bool use_group_id, bool supp_groups_list) = _flag_values("rmMUNugG", flags);
+            bool use_user_id, bool use_group_id, bool supp_groups_list) = arg.flag_values("rmMUNugG", flags);
 
         bool create_home_dir = (create_home_dir_def || create_home_flag) && !do_not_create_home_flag;
         bool create_user_group = (create_user_group_def || create_user_group_flag) && !do_not_create_user_group_flag;
@@ -56,7 +56,7 @@ contract useradd is Utility, libuadm {
                 errors.push(Err(E_GID_IN_USE, 0, user_id_s)); // UID already in use (and no -o)
         } else if (supp_groups_list && n_args > 1) {
             string supp_string = params[0];
-            (string[] supp_list, ) = _split(supp_string, ",");
+            (string[] supp_list, ) = stdio.split(supp_string, ",");
             for (string s: supp_list) {
                 uint16 gid_found = 0;
                 for ((uint16 gid, GroupInfo gi): groups)

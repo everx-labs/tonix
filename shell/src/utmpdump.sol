@@ -12,11 +12,11 @@ contract utmpdump is Utility, libuadm {
 //        bool write_to_file = (flags & _o) > 0;
         string[][] table;
         Column[] columns_format = [
-            Column(true, 5, ALIGN_LEFT),
-            Column(true, 7, ALIGN_LEFT),
-            Column(true, 7, ALIGN_LEFT),
-            Column(!write_back, 5, ALIGN_LEFT),
-            Column(true, 30, ALIGN_LEFT)];
+            Column(true, 5, fmt.ALIGN_LEFT),
+            Column(true, 7, fmt.ALIGN_LEFT),
+            Column(true, 7, fmt.ALIGN_LEFT),
+            Column(!write_back, 5, fmt.ALIGN_LEFT),
+            Column(true, 30, fmt.ALIGN_LEFT)];
 
         uint16 var_log_dir = _resolve_absolute_path("/var/log", inodes, data);
         (uint16 wtmp_index, uint8 wtmp_file_type) = _lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
@@ -35,25 +35,9 @@ contract utmpdump is Utility, libuadm {
         if (write_back)
             for (LoginEvent le: wtmp) {
                 (uint8 letype, uint16 user_id, uint16 tty_id, , uint32 timestamp) = le.unpack();
-                table.push([format("{}", letype), format("{}", user_id), format("{}", tty_id), _ts(timestamp)]);
+                table.push([stdio.itoa(letype), stdio.itoa(user_id), stdio.itoa(tty_id), fmt.ts(timestamp)]);
             }
-        /*else
-            for ((uint16 l_id, Login l): utmp) {
-                (uint16 user_id, uint16 tty_id, uint16 process_id, uint32 login_time) = l.unpack();
-                table.push([format("{}", l_id), format("{}", user_id), format("{}", tty_id), format("{}", process_id), _ts(login_time)]);
-            }*/
-        out = _format_table_ext(columns_format, table, " ", "\n");
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return (
-            "utmpdump",
-            "dump UTMP and WTMP files in raw format",
-            "[options] [filename]",
-            "Dump UTMP and WTMP files in raw format, so they can be examined.",
-            "ro", 1, 1, [
-            "write back dumped data into utmp file",
-            "write to file instead of standard output"]);
+        out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
 
@@ -77,30 +77,16 @@ contract login is Utility {
             cwd = ROOT;
             wd = ROOT_DIR;
         }
-        (string[] lines, ) = _split(_get_file_contents_at_path("/etc/hosts", inodes, data), "\n");
+        (string[] lines, ) = stdio.split(_get_file_contents_at_path("/etc/hosts", inodes, data), "\n");
         string host_name;
         for (string s: lines) {
-            (string[] fields, uint n_fields) = _split(s, "\t");
+            (string[] fields, uint n_fields) = stdio.split(s, "\t");
             if (n_fields > 1 && fields[1] == i_host_name) {
                 host_name = i_host_name;
                 break;
             }
         }
         session_out = Session(pid, uid, gid, wd, user_name, group_name, host_name, cwd);*/
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return (
-            "login",
-            "begin session on the system",
-            "[-h host] [username] -r host",
-            "Establish a new session with the system.",
-            "fhr",
-            1,
-            1, [
-                "do not perform authentication, user is preauthenticated",
-                "name of the remote host for this login",
-                "perform autologin protocol for rlogin"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

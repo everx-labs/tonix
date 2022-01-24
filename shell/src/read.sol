@@ -5,14 +5,14 @@ import "Shell.sol";
 contract read is Shell {
 
     function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
-        (string[] params, string flags, ) = _get_args(args);
+        (string[] params, string flags, ) = arg.get_args(args);
         (ec, out, res) = _read(params, flags, input, pool);
     }
 
     function _read(string[] params, string flags, string input, string pool) internal pure returns (uint8 ec, string out, string res) {
-        bool assign_to_array = _flag_set("a", flags);
-        bool use_delimiter = _flag_set("d", flags);
-        bool echo_input = !_flag_set("s", flags);
+        bool assign_to_array = arg.flag_set("a", flags);
+        bool use_delimiter = arg.flag_set("d", flags);
+        bool echo_input = !arg.flag_set("s", flags);
 //        string delimiter = use_delimiter ? _get_option_param(s_arg, "d") : " ";
         string delimiter = " ";
         ec = EXECUTE_SUCCESS;
@@ -22,16 +22,16 @@ contract read is Shell {
 
         if (assign_to_array) {
             string array_name = "REPLY";
-            (string[] fields, ) = _split(input, delimiter);
-            page = _set_var(s_attrs, array_name + "=" + _join_fields(fields, " "), page);
+            (string[] fields, ) = stdio.split(input, delimiter);
+            page = _set_var(s_attrs, array_name + "=" + stdio.join_fields(fields, " "), page);
         } else {
             uint n_args = params.length;
-            string s_split = input;
+            string s_rem = input;
             for (uint i = 0; i < n_args - 1; i++) {
-                (string s_head, string s_tail) = _strsplit(s_split, delimiter);
+                (string s_head, string s_tail) = stdio.strsplit(s_rem, delimiter);
                 page = _set_var(s_attrs, params[i] + "=" + s_head, page);
                 if (i + 2 < n_args)
-                    s_split = s_tail;
+                    s_rem = s_tail;
                 else
                     page = _set_var(s_attrs, params[i + 1] + "=" + s_tail, page);
             }

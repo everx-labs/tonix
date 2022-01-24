@@ -5,27 +5,27 @@ import "Shell.sol";
 contract readonly is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool functions_only = _flag_set("f", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool functions_only = arg.flag_set("f", flags);
         string s_attrs = "-r";
         if (functions_only)
             s_attrs.append("-f");
 
         if (params.empty()) {
-            (string[] lines, ) = _split(pool, "\n");
+            (string[] lines, ) = stdio.split(pool, "\n");
             for (string line: lines) {
-                (string attrs, ) = _strsplit(line, " ");
-                if (_match_attr_set(s_attrs, attrs))
-                    out.append(_print_reusable(line));
+                (string attrs, ) = stdio.strsplit(line, " ");
+                if (vars.match_attr_set(s_attrs, attrs))
+                    out.append(vars.print_reusable(line));
             }
         }
         for (string p: params) {
-            (string name, ) = _strsplit(p, "=");
-            string cur_record = _get_pool_record(name, pool);
+            (string name, ) = stdio.strsplit(p, "=");
+            string cur_record = vars.get_pool_record(name, pool);
             if (!cur_record.empty()) {
-                (string cur_attrs, ) = _strsplit(cur_record, " ");
-                if (_match_attr_set(s_attrs, cur_attrs))
-                    out.append(_print_reusable(cur_record));
+                (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+                if (vars.match_attr_set(s_attrs, cur_attrs))
+                    out.append(vars.print_reusable(cur_record));
             } else {
                 ec = EXECUTE_FAILURE;
                 out.append("readonly: " + name + " not found\n");
@@ -34,8 +34,8 @@ contract readonly is Shell {
     }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool functions_only = _flag_set("f", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool functions_only = arg.flag_set("f", flags);
         string s_attrs = "-r";
         string page = pool;
         if (functions_only)

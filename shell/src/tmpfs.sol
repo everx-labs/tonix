@@ -184,14 +184,6 @@ contract tmpfs is Utility {
             data[index] = bts;
     }
 
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("tmpfs", "emporary file system", "[OPTION]... FILE...",
-            "Used for file system operations testing.",
-            "cm", 1, M, [
-            "do not create any files",
-            "change only the modification time"]);
-    }
-
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
 "tmpfs",

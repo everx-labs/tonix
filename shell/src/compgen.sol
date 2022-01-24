@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.55.0;
 
 import "Shell.sol";
 import "compspec.sol";
@@ -58,7 +58,7 @@ contract compgen is Shell, compspec {
         if (!process_all) {
             comp_exists = comp_spec.exists(tvm.hash(p_command));
             if (!comp_exists) {
-                uint q = _strrchr(p_command, "/");
+                uint q = stdio.strrchr(p_command, "/");
                 if (q > 0) {
                     string command_name_short = p_command.substr(q);
                     comp_exists = comp_spec.exists(tvm.hash(command_name_short));
@@ -66,7 +66,7 @@ contract compgen is Shell, compspec {
             }
         }
         if (comp_exists)
-            (completions, ) = _split(comp_spec[tvm.hash(p_command)].value, " ");
+            (completions, ) = stdio.split(comp_spec[tvm.hash(p_command)].value, " ");
         else
             ec = 1;
     }

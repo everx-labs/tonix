@@ -5,9 +5,9 @@ import "Shell.sol";
 contract echo is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool no_trailing_newline = _flag_set("n", flags);
-        out = _join_fields(params, " ");
+        (string[] params, string flags, ) = arg.get_args(args);
+        bool no_trailing_newline = arg.flag_set("n", flags);
+        out = stdio.join_fields(params, " ");
         if (!no_trailing_newline)
             out.append("\n");
         ec = EXECUTE_SUCCESS;

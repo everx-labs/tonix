@@ -5,20 +5,20 @@ import "Utility.sol";
 contract du is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = _get_env(argv);
-        for (string arg: params) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+        for (string s_arg: params) {
+            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
-                out.append(_du(flags, arg, ft, index, inodes, data) + "\n");
+                out.append(_du(flags, s_arg, ft, index, inodes, data) + "\n");
             else {
-                err.append("Failed to resolve relative path for" + arg + "\n");
+                err.append("Failed to resolve relative path for" + s_arg + "\n");
                 ec = EXECUTE_FAILURE;
             }
         }
     }
 
     function _du(string f, string path, uint8 ft, uint16 index, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string) {
-        (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, , , ) = _flag_values("0ahcs", f);
+        (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, , , ) = arg.flag_values("0ahcs", f);
 
         string line_end = null_line_end ? "\x00" : "\n";
 
@@ -29,16 +29,16 @@ contract du is Utility {
         uint32 file_size = inode.file_size;
 
         (string[][] table, uint32 total) = ft == FT_DIR ? _count_dir(f, path, inode, dir_data, inodes, data) :
-            ([[_scale(file_size, human_readable ? KILO : 1), path]], file_size);
+            ([[fmt.scale(file_size, human_readable ? KILO : 1), path]], file_size);
 
         if (produce_total)
             table.push([format("{}", total), "total"]);
 
-        return _format_table(table, "\t", line_end, ALIGN_LEFT);
+        return fmt.format_table(table, "\t", line_end, fmt.ALIGN_LEFT);
     }
 
     function _count_dir(string f, string dir_name, Inode inode, bytes dir_data, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[][] lines, uint32 total) {
-        (bool count_files, bool include_subdirs, bool human_readable, , , , , ) = _flag_values("aSh", f);
+        (bool count_files, bool include_subdirs, bool human_readable, , , , , ) = arg.flag_values("aSh", f);
 
         (DirEntry[] contents, int16 status) = _read_dir_data(dir_data);
 
@@ -62,34 +62,13 @@ contract du is Utility {
                     uint32 file_size = sub_inode.file_size;
                     total += file_size;
                     if (count_files)
-                        lines.push([_scale(file_size, human_readable ? KILO : 1), name]);
+                        lines.push([fmt.scale(file_size, human_readable ? KILO : 1), name]);
                 }
             }
             total += inode.file_size;
-            lines.push([_scale(total, human_readable ? KILO : 1), dir_name]);
+            lines.push([fmt.scale(total, human_readable ? KILO : 1), dir_name]);
         } else
             lines.push(["0", "?" + dir_name + "?"]);
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("du", "estimate disk usage", "[OPTION]... [FILE]...",
-            "Summarize disk usage of the set of FILEs, recursively for directories.",
-            "abcDhHkLlmPSsx0", 1, M, [
-            "write counts for all files, not just directories",
-            "block size = 1 byte",
-            "produce a grand total",
-            "dereference only symlinks that are listed on the command line",
-            "print sizes in human readable format (e.g., 12K 1M)",
-            "equivalent to -D",
-            "block size = 1K",
-            "dereference all symbolic links",
-            "count sizes many times if hard linked",
-            "block size = 1M",
-            "don't follow any symbolic links (this is the default)",
-            "for directories do not include size of subdirectories",
-            "display only a total for each argument",
-            "skip directories on different file systems",
-            "end each output line with NUL, not newline"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
