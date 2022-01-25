@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -6,8 +6,8 @@ contract useradd is Utility {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
-        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
-        string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
+        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
+        string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
         bool create_user_group_def = uadmin.login_def_flag(uadmin.USERGROUPS_ENAB);
         bool create_home_dir_def = uadmin.login_def_flag(uadmin.CREATE_HOME);
 
@@ -81,16 +81,15 @@ contract useradd is Utility {
         if (errors.empty()) {
             string text;
             uint16 n_files;
-            uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
-            (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
-            (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
-
-            uint16 ic = _get_inode_count(inodes);
+            uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
+            (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
+            (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
+            uint16 ic = sb.get_inode_count(inodes);
 
             text = uadmin.passwd_entry_line(user_name, user_id, group_id, user_name);
             if (passwd_file_type == FT_UNKNOWN || passwd_dir_idx == 0) {
                 ars.push(Ar(IO_MKFILE, FT_REG_FILE, ic, etc_dir, "passwd", text));
-                ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", _dir_entry_line(ic, "passwd", FT_REG_FILE)));
+                ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", dirent.dir_entry_line(ic, "passwd", FT_REG_FILE)));
                 ic++;
                 n_files++;
             } else
@@ -100,7 +99,7 @@ contract useradd is Utility {
                 string group_text = uadmin.group_entry_line(user_name, group_id);
                 if (group_file_type == FT_UNKNOWN || group_dir_idx == 0) {
                     ars.push(Ar(IO_MKFILE, FT_REG_FILE, ic, etc_dir, "group", group_text));
-                    ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", _dir_entry_line(ic, "group", FT_REG_FILE)));
+                    ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", dirent.dir_entry_line(ic, "group", FT_REG_FILE)));
                     ic++;
                     n_files++;
                 } else

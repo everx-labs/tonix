@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,9 +8,9 @@ contract paste is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
 
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN) {
-                string text = _get_file_contents(index, inodes, data);
+                string text = fs.get_file_contents(index, inodes, data);
                 (string[] lines, uint n_lines) = stdio.split(text, "\n");
 
                 string line_delimiter = arg.flag_set("z", flags) ? "\x00" : "\n";

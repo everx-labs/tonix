@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -7,15 +7,15 @@ contract usermod is Utility {
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
 
-        uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
-        (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
-        (uint16 group_index, uint8 group_file_type, ) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
+        uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
+        (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
+        (uint16 group_index, uint8 group_file_type, ) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
         string etc_passwd;
         string etc_group;
         if (passwd_file_type == FT_REG_FILE)
-            etc_passwd = _get_file_contents(passwd_index, inodes, data);
+            etc_passwd = fs.get_file_contents(passwd_index, inodes, data);
         if (group_file_type == FT_REG_FILE)
-            etc_group = _get_file_contents(group_index, inodes, data);
+            etc_group = fs.get_file_contents(group_index, inodes, data);
 //        bool append_to_supp_groups = (flags & _a) > 0;
         bool change_primary_group = arg.flag_set("g", flags);
         bool supp_groups_list = arg.flag_set("G", flags);

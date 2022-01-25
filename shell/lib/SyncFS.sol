@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.55.0;
 
 import "../include/Internal.sol";
 import "../include/Commands.sol";
@@ -20,15 +20,15 @@ abstract contract SyncFS is Internal, Commands {
         for (Arg arg: args) {
             if (arg.ft == FT_UNKNOWN)
                 continue;
-            texts.push(_get_file_contents(arg.idx, _inodes, _data));
+            texts.push(fs.get_file_contents(arg.idx, _inodes, _data));
         }
     }
 
     function init_fs(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external accept {
         _inodes = inodes;
         _data = data;
-        _device_id = inodes[SB_INFO].device_id;
-        _block_size = inodes[SB_INFO].n_blocks;
+        _device_id = inodes[sb.SB_INFO].device_id;
+        _block_size = inodes[sb.SB_INFO].n_blocks;
     }
 
     /*function _claim_inodes_and_blocks(Inode inodes_inode, uint inode_count, uint block_count) internal pure returns (Inode) {

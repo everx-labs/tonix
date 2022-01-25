@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -7,7 +7,7 @@ contract du is Utility {
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_du(flags, s_arg, ft, index, inodes, data) + "\n");
             else {
@@ -40,7 +40,7 @@ contract du is Utility {
     function _count_dir(string f, string dir_name, Inode inode, bytes dir_data, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[][] lines, uint32 total) {
         (bool count_files, bool include_subdirs, bool human_readable, , , , , ) = arg.flag_values("aSh", f);
 
-        (DirEntry[] contents, int16 status) = _read_dir_data(dir_data);
+        (DirEntry[] contents, int16 status) = dirent.read_dir_data(dir_data);
 
         if (status > 0) {
             uint len = uint(status);

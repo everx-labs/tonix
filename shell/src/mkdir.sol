@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,10 +8,10 @@ contract mkdir is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _mkdir(flags, arg_list, _get_inode_count(inodes));
+        (out, file_action, ars, errors) = _mkdir(flags, arg_list, sb.get_inode_count(inodes));
     }
 
     function _mkdir(string flags, Arg[] arg_list, uint16 ic) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
@@ -30,9 +30,9 @@ contract mkdir is Utility {
             (, string file_name) = path.dir(s_path);
             if (dir_index == 0) {
                 uint8 file_type = FT_DIR;
-                string contents = _get_dots(ic, parent);
+                string contents = inode.get_dots(ic, parent);
                 ars.push(Ar(action_item_type, file_type, index, dir_index, file_name, contents));
-                parent_dirs[parent].push(_dir_entry_line(ic, file_name, file_type));
+                parent_dirs[parent].push(dirent.dir_entry_line(ic, file_name, file_type));
                 ic++;
                 if (report_actions)
                     out.append("mkdir: created directory" + stdio.quote(file_name) + "\n");

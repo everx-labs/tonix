@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -32,7 +32,7 @@ contract lsblk is Utility {
             Column(print_permissions, 5, fmt.ALIGN_CENTER),
             Column(print_permissions, 10, fmt.ALIGN_LEFT)];
 
-        uint16 dev_dir = _resolve_absolute_path("/dev", inodes, data);
+        uint16 dev_dir = fs.resolve_absolute_path("/dev", inodes, data);
 
         string[] header = ["NAME", "MAJ", ":MIN", "SIZE", "RM", "TYPE", "FSAVAIL", "FSUSE%", "MOUNTPOINT", "OWNER", "GROUP", "MODE"];
 
@@ -40,7 +40,7 @@ contract lsblk is Utility {
             table = [header];
 
         if (args.empty()) {
-            (DirEntry[] contents, int16 status) = _read_dir(inodes[dev_dir], data[dev_dir]);
+            (DirEntry[] contents, int16 status) = dirent.read_dir(inodes[dev_dir], data[dev_dir]);
             if (status < 0) {
                 out.append(format("Error: {} \n", status));
 //                return (out, errors);
@@ -52,7 +52,7 @@ contract lsblk is Utility {
                     args.push(name);
             }
         }
-        (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size, , , , , , , , ) = _get_sb(inodes, data).unpack();
+        (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size, , , , , , , , ) = sb.get_sb(inodes, data).unpack();
 
         for (string s: args) {
             (uint16 dev_file_index, uint8 dev_file_ft) = _fetch_dir_entry(s, dev_dir, inodes, data);
@@ -64,8 +64,8 @@ contract lsblk is Utility {
                     continue;
                 string name = (full_path ? "/dev/" : "") + fields0[2];
                 string mount_path = dev_file_ft == FT_BLKDEV ? ROOT : "";
-                string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
-                string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
+                string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
+                string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
 
                 table.push([
                     name,
@@ -79,7 +79,7 @@ contract lsblk is Utility {
                     mount_path,
                     s_owner,
                     s_group,
-                    _permissions(mode)]);
+                    inode.permissions(mode)]);
             } else
                 errors.push(Err(not_a_block_device, 0, s));
         }
@@ -87,8 +87,8 @@ contract lsblk is Utility {
     }
 
     function _list_devices(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (DirEntry[] device_list) {
-        uint16 dev_dir = _resolve_absolute_path("/dev", inodes, data);
-        (DirEntry[] contents, int16 status) = _read_dir(inodes[dev_dir], data[dev_dir]);
+        uint16 dev_dir = fs.resolve_absolute_path("/dev", inodes, data);
+        (DirEntry[] contents, int16 status) = dirent.read_dir(inodes[dev_dir], data[dev_dir]);
         if (status >= 0) {
             for (DirEntry de: contents)
                 if (de.file_type == FT_BLKDEV || de.file_type == FT_CHRDEV)

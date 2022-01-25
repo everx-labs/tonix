@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -12,7 +12,7 @@ contract hostname is Utility {
         bool long_host_name = arg.flag_set("f", flags);
         bool addresses = arg.flag_set("i", flags);
 
-        (string[] f_hostname, uint n_fields) = stdio.split(_get_file_contents_at_path("/etc/hostname", inodes, data), "\n");
+        (string[] f_hostname, uint n_fields) = stdio.split(fs.get_file_contents_at_path("/etc/hostname", inodes, data), "\n");
         if (n_fields > 0) {
             string s_domain = "tonix";
             if (addresses && n_fields > 1)

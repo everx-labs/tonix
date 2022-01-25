@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -10,9 +10,9 @@ contract cut is Utility {
         (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
         string[] params;
         for (string s_arg: v_args) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
-                out.append(_cut(flags, _get_file_contents(index, inodes, data), params) + "\n");
+                out.append(_cut(flags, fs.get_file_contents(index, inodes, data), params) + "\n");
             else
                 params.push(s_arg);
         }

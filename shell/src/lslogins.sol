@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -13,7 +13,7 @@ contract lslogins is Utility {
         bool print_user = !flag_system || flag_user;
         string field_separator;
         uint16 uid = stdio.atoi(vars.val("UID", argv));
-        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
+        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
 
         if (colon)
             field_separator = ":";

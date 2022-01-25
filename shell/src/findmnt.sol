@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -33,7 +33,7 @@ contract findmnt is Utility {
         if (!no_headings)
             table = [["TARGET", "SOURCE", "FSTYPE", "OPTIONS", "SIZE", "USED", "AVAIL", "USE%", "TARGET"]];
 
-        (, , , , uint16 block_count, , uint16 free_blocks, , , , , , , , , ) = _get_sb(inodes, data).unpack();
+        (, , , , uint16 block_count, , uint16 free_blocks, , , , , , , , , ) = sb.get_sb(inodes, data).unpack();
 
         uint u_used = block_count;
         uint u_avl = free_blocks;
@@ -42,9 +42,9 @@ contract findmnt is Utility {
 
         string text;
         if (!flag_mtab_only)
-            text = _get_file_contents_at_path("/etc/fstab", inodes, data);
+            text = fs.get_file_contents_at_path("/etc/fstab", inodes, data);
         if (!flag_fstab_only)
-            text.append(_get_file_contents_at_path("/etc/mtab", inodes, data));
+            text.append(fs.get_file_contents_at_path("/etc/mtab", inodes, data));
 
         (string[] tab_lines, ) = stdio.split(text, "\n");
         for (string line: tab_lines) {

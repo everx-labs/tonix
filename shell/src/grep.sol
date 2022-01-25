@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -13,7 +13,7 @@ contract grep is Utility {
 
         for (uint i = 0; i < n_args; i++) {
             string s_arg = v_args[i];
-            (, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft == FT_UNKNOWN)
                 params.push(s_arg);
             else
@@ -21,9 +21,9 @@ contract grep is Utility {
         }
 
         for (string s_arg: f_args) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, ROOT_DIR, inodes, data);
+            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, ROOT_DIR, inodes, data);
             if (ft != FT_UNKNOWN)
-                out.append(_grep(flags, _get_file_contents(index, inodes, data), params) + "\n");
+                out.append(_grep(flags, fs.get_file_contents(index, inodes, data), params) + "\n");
             else {
                 err.append("Failed to resolve relative path for" + s_arg + "\n");
                 ec = EXECUTE_FAILURE;

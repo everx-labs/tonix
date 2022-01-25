@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,7 +8,7 @@ contract groups is Utility {
         (, string[] params, , ) = arg.get_env(argv);
 
         string user_name = vars.val("USER", argv);
-        string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
+        string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
 
         if (params.empty()) {
             (string primary, string[] supp) = uadmin.user_groups(user_name, etc_group);

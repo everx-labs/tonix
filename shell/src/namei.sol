@@ -1,7 +1,6 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract namei is Utility {
 
@@ -9,7 +8,7 @@ contract namei is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
 
         for (string s_arg: params) {
-            (, uint8 ft, uint16 parent, ) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (, uint8 ft, uint16 parent, ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_namei(flags, s_arg, parent, inodes, data) + "\n");
             else {
@@ -29,14 +28,14 @@ contract namei is Utility {
         uint16 cur_dir = parent;
         for (uint i = len; i > 0; i--) {
             string part = parts[i - 1];
-            (uint16 ino, uint8 ft) = _lookup_dir(inodes[cur_dir], data[cur_dir], part);
+            (uint16 ino, uint8 ft) = fs.lookup_dir(inodes[cur_dir], data[cur_dir], part);
             (uint16 mode, uint16 owner_id, uint16 group_id, , , , , , , ) = inodes[ino].unpack();
 //            string s_owner = _get_user_name(owner_id, inodes, data);
 //            string s_group = _get_group_name(group_id, inodes, data);
-            string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
-            string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
+            string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
+            string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
 
-            out.append(" " + (modes ? _permissions(mode) : _file_type_sign(ft)) + " " + (owners ? s_owner + " "  + s_group + " " : "") + part + "\n");
+            out.append(" " + (modes ? inode.permissions(mode) : dirent.file_type_sign(ft)) + " " + (owners ? s_owner + " "  + s_group + " " : "") + part + "\n");
             cur_dir = ino;
         }
     }

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -31,16 +31,16 @@ contract login is Utility {
         if (autologin) {
             session_out = Session(i_pid, i_uid, i_gid, ROOT_DIR, a_user_name, i_group_name, a_host_name, ROOT);
         } else {
-            uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
-            (uint16 passwd_index, uint8 passwd_file_type) = _lookup_dir(inodes[etc_dir], data[etc_dir], "passwd");
-            (uint16 group_index, uint8 group_file_type) = _lookup_dir(inodes[etc_dir], data[etc_dir], "group");
+            uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
+            (uint16 passwd_index, uint8 passwd_file_type) = fs.lookup_dir(inodes[etc_dir], data[etc_dir], "passwd");
+            (uint16 group_index, uint8 group_file_type) = fs.lookup_dir(inodes[etc_dir], data[etc_dir], "group");
             string etc_passwd;
             string etc_group;
             if (passwd_file_type == FT_REG_FILE) {
-                etc_passwd = _get_file_contents(passwd_index, inodes, data);
+                etc_passwd = fs.get_file_contents(passwd_index, inodes, data);
             }
             if (group_file_type == FT_REG_FILE)
-                etc_group = _get_file_contents(group_index, inodes, data);
+                etc_group = fs.get_file_contents(group_index, inodes, data);
             uint16 pid = i_pid;
             uint16 uid = i_uid;
             uint16 gid = i_gid;
@@ -69,7 +69,7 @@ contract login is Utility {
         uint16 pid = uint16(u_ord);
 
         string i_cwd = ROOT;
-        uint16 wd = _resolve_absolute_path(i_cwd, inodes, data);
+        uint16 wd = fs.resolve_absolute_path(i_cwd, inodes, data);
         string cwd;
         if (wd > INODES)
             cwd = i_cwd;
@@ -77,7 +77,7 @@ contract login is Utility {
             cwd = ROOT;
             wd = ROOT_DIR;
         }
-        (string[] lines, ) = stdio.split(_get_file_contents_at_path("/etc/hosts", inodes, data), "\n");
+        (string[] lines, ) = stdio.split(fs.get_file_contents_at_path("/etc/hosts", inodes, data), "\n");
         string host_name;
         for (string s: lines) {
             (string[] fields, uint n_fields) = stdio.split(s, "\t");

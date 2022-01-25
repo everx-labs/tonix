@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,7 +8,7 @@ contract mountpoint is Utility {
         (, string[] args, uint flags) = input.unpack();
         Arg[] arg_list;
         for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(arg, session.wd, inodes, data);
             arg_list.push(Arg(arg, ft, index, parent, dir_index));
         }
         (out, errors) = _mountpoint(flags, args, arg_list, inodes, data);// 500
@@ -28,14 +28,14 @@ contract mountpoint is Utility {
             if (ft != FT_BLKDEV)
                 errors = [Err(not_a_block_device, 0, path)];
             else {
-                (string major_id, string minor_id) = _get_device_version(inodes[index].device_id);
+                (string major_id, string minor_id) = inode.get_device_version(inodes[index].device_id);
                 out = major_id + ":" + minor_id;
             }
         }
 
         string text;
-        text = _get_file_contents_at_path("/etc/fstab", inodes, data);
-        text.append(_get_file_contents_at_path("/etc/mtab", inodes, data));
+        text = fs.get_file_contents_at_path("/etc/fstab", inodes, data);
+        text.append(fs.get_file_contents_at_path("/etc/mtab", inodes, data));
 
         DirEntry[] device_list = _list_devices(inodes, data);
 
@@ -46,7 +46,7 @@ contract mountpoint is Utility {
                 if (fields[1] == arg) {
                     for (DirEntry de: device_list) {
                         if (de.file_name == fields[0]) {
-                            (string major_id, string minor_id) = _get_device_version(inodes[de.index].device_id);
+                            (string major_id, string minor_id) = inode.get_device_version(inodes[de.index].device_id);
                             out.append(mounted_device ? format("{}:{}", major_id, minor_id) : (path + " is a mountpoint"));
                         }
                     }
@@ -60,8 +60,8 @@ contract mountpoint is Utility {
     }
 
     function _list_devices(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (DirEntry[] device_list) {
-        uint16 dev_dir = _resolve_absolute_path("/dev", inodes, data);
-        (DirEntry[] contents, int16 status) = _read_dir(inodes[dev_dir], data[dev_dir]);
+        uint16 dev_dir = fs.resolve_absolute_path("/dev", inodes, data);
+        (DirEntry[] contents, int16 status) = dirent.read_dir(inodes[dev_dir], data[dev_dir]);
         if (status >= 0) {
             for (DirEntry de: contents)
                 if (de.file_type == FT_BLKDEV || de.file_type == FT_CHRDEV)

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -29,7 +29,7 @@ contract readlink is Utility {
         uint16 mode = canon_existing ? 3 : canon_existing_dir ? 2 : canon_missing ? 1 : 0;
 
         for (string s_arg: s_args) {
-            (, uint8 ft, uint16 parent, ) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (, uint8 ft, uint16 parent, ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             string path;
             bool exists;
             if (canon)
@@ -58,24 +58,24 @@ contract readlink is Utility {
         valid = true;
 
         if (canon_mode >= CANON_DIRS) {
-            uint16 dir_index = is_abs_path ? _resolve_absolute_path(arg_dir, inodes, data) : wd;
-            (, uint8 ft) = _lookup_dir(inodes[dir_index], data[dir_index], arg_base);
+            uint16 dir_index = is_abs_path ? fs.resolve_absolute_path(arg_dir, inodes, data) : wd;
+            (, uint8 ft) = fs.lookup_dir(inodes[dir_index], data[dir_index], arg_base);
             if (ft == FT_UNKNOWN)
                 valid = false;
         }
 
         res = canon_mode == CANON_NONE || (canon_mode == CANON_MISS || canon_mode == CANON_EXISTS) && is_abs_path ?
-            s_arg : canon_mode == CANON_DIRS ? _xpath(arg_dir, _resolve_absolute_path(arg_dir, inodes, data), inodes, data) + "/" + arg_base : _xpath(s_arg, wd, inodes, data);
+            s_arg : canon_mode == CANON_DIRS ? fs.xpath(arg_dir, fs.resolve_absolute_path(arg_dir, inodes, data), inodes, data) + "/" + arg_base : fs.xpath(s_arg, wd, inodes, data);
     }
 
     function _dereference(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (Arg) {
         bool expand_symlinks = (mode & EXPAND_SYMLINKS) > 0;
-        (uint16 ino, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+        (uint16 ino, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
         Inode inode;
         if (ino > 0 && inodes.exists(ino))
             inode = inodes[ino];
         if (expand_symlinks && ft == FT_SYMLINK) {
-            (ft, s_arg, ino) = _get_symlink_target(inode, data[ino]).unpack();
+            (ft, s_arg, ino) = dirent.get_symlink_target(inode, data[ino]).unpack();
         }
         return Arg(s_arg, ft, ino, parent, dir_index);
     }

@@ -1,13 +1,12 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
-import "../lib/uadmin.sol";
 
 contract newgrp is Utility {
 
     function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] args, uint flags) = input.unpack();
-        string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
+        string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
 
         bool force = (flags & _f) > 0;
         bool use_group_id = (flags & _g) > 0;
@@ -47,14 +46,14 @@ contract newgrp is Utility {
         if (target_group_id == 0)
             target_group_id = is_system_group ? sys_groups_counter++ : reg_groups_counter++;
 
-        uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
-        (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
+        uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
+        (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
         if (errors.empty()) {
             string text = uadmin.group_entry_line(target_group_name, target_group_id);
             if (group_file_type == FT_UNKNOWN) {
-                uint16 ic = _get_inode_count(inodes);
+                uint16 ic = sb.get_inode_count(inodes);
                 ars.push(Ar(IO_MKFILE, FT_REG_FILE, ic, etc_dir, "group", text));
-                ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", _dir_entry_line(ic, "group", FT_REG_FILE)));
+                ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", dirent.dir_entry_line(ic, "group", FT_REG_FILE)));
             } else
                 ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", etc_group + text));
             file_action = Action(UA_ADD_GROUP, 1);

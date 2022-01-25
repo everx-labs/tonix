@@ -40,8 +40,8 @@ contract mke2fs is Utility {
         (string[] fields, uint n_fields) = stdio.split_line(line, ":", "\n");
         if (n_fields > 3) {
             name = fields[0];
-            node_type = _file_type(fields[1]);
-            content_type = _file_type(fields[2]);
+            node_type = dirent.file_type(fields[1]);
+            content_type = dirent.file_type(fields[2]);
             content = fields[3];
         }
     }
@@ -146,8 +146,8 @@ contract mke2fs is Utility {
                 for (uint i = 0; i < n_files; i++) {
                     string file_name = files[i];
                     n++;
-                    (inodes[n], data[n]) = _get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? _get_dots(n, node_index) : "");
-                    bytes dirent = _dir_entry_line(n, file_name, content_type);
+                    (inodes[n], data[n]) = inode.get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? inode.get_dots(n, node_index) : "");
+                    bytes dirent = dirent.dir_entry_line(n, file_name, content_type);
                     inodes[parent_node_index].file_size += uint32(dirent.length);
                     inodes[parent_node_index].n_links++;
                     data[parent_node_index].append(dirent);
@@ -164,8 +164,8 @@ contract mke2fs is Utility {
                         n++;
                         file_list.push(file_name);
                         if (file_name != ROOT) {
-                            (inodes[n], data[n]) = _get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? _get_dots(n, node_index) : "");
-                            bytes dirent = _dir_entry_line(n, file_name, content_type);
+                            (inodes[n], data[n]) = inode.get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? inode.get_dots(n, node_index) : "");
+                            bytes dirent = dirent.dir_entry_line(n, file_name, content_type);
                             inodes[parent_node_index].file_size += uint32(dirent.length);
                             inodes[parent_node_index].n_links++;
                             data[parent_node_index].append(dirent);
@@ -338,7 +338,7 @@ contract mke2fs is Utility {
         uint16 block_size = 100;//host_device_info.blk_size;
         uint16 block_count;
         string contents;
-        (inodes[n], data[n]) = _get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 0, "/dev", _get_dots(DEVFS_DEV_DIR, DEVFS_DEV_DIR));
+        (inodes[n], data[n]) = inode.get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 0, "/dev", inode.get_dots(DEVFS_DEV_DIR, DEVFS_DEV_DIR));
         uint16 node_index = n;
         n++;
 
@@ -347,8 +347,8 @@ contract mke2fs is Utility {
             if (n_fields > 3) {
                 string file_name = dev_fields[2];
                 n++;
-                (inodes[n], data[n]) = _get_any_node(FT_BLKDEV, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, device_info);
-                bytes dirent = _dir_entry_line(n, file_name, FT_BLKDEV);
+                (inodes[n], data[n]) = inode.get_any_node(FT_BLKDEV, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, device_info);
+                bytes dirent = dirent.dir_entry_line(n, file_name, FT_BLKDEV);
                 inodes[node_index].file_size += uint32(dirent.length);
                 inodes[node_index].n_links++;
                 data[node_index].append(dirent);
@@ -434,7 +434,7 @@ contract mke2fs is Utility {
         uint16 form = (mode >> 8) & 0xFF;
 //        (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config, devices);
         (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config);
-        return _dumpfs(level, form, inodes, data);
+        return fs.dumpfs(level, form, inodes, data);
     }
 
     function get_system_init(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
@@ -463,7 +463,7 @@ contract mke2fs is Utility {
         uint16 block_count;
 
         n = ROOT_DIR;
-        (inodes[n], data[n]) = _get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, ROOT, _get_dots(n, n));
+        (inodes[n], data[n]) = inode.get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, ROOT, inode.get_dots(n, n));
         block_count++;
 
         SuperBlock sb = _get_default_sb("bfs", DEF_BLOCK_SIZE, n, inodes, data);
@@ -501,13 +501,13 @@ contract mke2fs is Utility {
                         n++;
                         file_list.push(file_name);
                         if (file_name != ROOT) {
-                            (inodes[n], data[n]) = _get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? _get_dots(n, node_index) : "");
-                            bytes dirent = _dir_entry_line(n, file_name, content_type);
+                            (inodes[n], data[n]) = inode.get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? inode.get_dots(n, node_index) : "");
+                            bytes dirent = dirent.dir_entry_line(n, file_name, content_type);
                             inodes[parent_node_index].file_size += uint32(dirent.length);
                             inodes[parent_node_index].n_links++;
                             data[parent_node_index].append(dirent);
                         } else
-                            (inodes[n], data[n]) = _get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, _get_dots(n, n));
+                            (inodes[n], data[n]) = inode.get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, inode.get_dots(n, n));
                         block_count++;
                     }
                 }
@@ -587,7 +587,7 @@ contract mke2fs is Utility {
     }
 
     function _write_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bytes out) {
-        SuperBlock sb = _get_sb(inodes, data);
+        SuperBlock sb = sb.get_sb(inodes, data);
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();

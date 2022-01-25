@@ -1,12 +1,12 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
 contract groupdel is Utility {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
-        string etc_group = _get_file_contents_at_path("/etc/group", inodes, data);
-        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
+        string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
+        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
 
         string victim_group_name = vars.val("_", args);
         string victim_entry = uadmin.group_entry_by_name(victim_group_name, etc_group);
@@ -22,8 +22,8 @@ contract groupdel is Utility {
         }
 
         if (errors.empty()) {
-            uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
-            (uint16 group_index, , uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
+            uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
+            (uint16 group_index, , uint16 group_dir_idx) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
             string text = format("{}\t{}\n", victim_group_name, victim_group_id);
             ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", stdio.translate(etc_group, text, "")));
             file_action = Action(UA_DELETE_GROUP, 1);

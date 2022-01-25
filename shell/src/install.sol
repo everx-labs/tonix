@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -16,10 +16,10 @@ contract install is Utility {
         (, string[] args, uint flags) = input.unpack();
         Arg[] arg_list;
         for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(arg, session.wd, inodes, data);
             arg_list.push(Arg(arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _install(args, flags, session.wd, arg_list, _get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _install(args, flags, session.wd, arg_list, sb.get_inode_count(inodes), inodes, data);
     }
 
     function _install(string[] args, uint flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
@@ -67,7 +67,7 @@ contract install is Utility {
             out = stdio.aif(out, verbose, "(backup:" + stdio.quote(t_backup_path) + ")");
 
             ars.push(Ar(IO_WR_COPY, FT_REG_FILE, 0, t_ino, t_backup_path, ""));
-            dirents.append(_dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
+            dirents.append(dirent.dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
             dirent_action_type = IO_ADD_DIR_ENTRY;
             ic++;
         }
@@ -93,7 +93,7 @@ contract install is Utility {
                 (, string file_name) = path.dir(to_dir ? s_path : t_path);
 
                 ars.push(Ar(action_item_type, s_ft, s_ino, s_dir_idx, file_name, ""));
-                dirents.append(_dir_entry_line(ic++, file_name, s_ft));
+                dirents.append(dirent.dir_entry_line(ic++, file_name, s_ft));
                 dirent_action_type = IO_ADD_DIR_ENTRY;
             }
         }

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -17,18 +17,18 @@ contract utmpdump is Utility {
             Column(!write_back, 5, fmt.ALIGN_LEFT),
             Column(true, 30, fmt.ALIGN_LEFT)];
 
-        uint16 var_log_dir = _resolve_absolute_path("/var/log", inodes, data);
-        (uint16 wtmp_index, uint8 wtmp_file_type) = _lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
+        uint16 var_log_dir = fs.resolve_absolute_path("/var/log", inodes, data);
+        (uint16 wtmp_index, uint8 wtmp_file_type) = fs.lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
         string wtmp_contents;
         if (wtmp_file_type == FT_REG_FILE)
-            wtmp_contents = _get_file_contents(wtmp_index, inodes, data);
+            wtmp_contents = fs.get_file_contents(wtmp_index, inodes, data);
         LoginEvent[] wtmp;
 
-        uint16 var_run_dir = _resolve_absolute_path("/var/run", inodes, data);
-        (uint16 utmp_index, uint8 utmp_file_type) = _lookup_dir(inodes[var_run_dir], data[var_run_dir], "utmp");
+        uint16 var_run_dir = fs.resolve_absolute_path("/var/run", inodes, data);
+        (uint16 utmp_index, uint8 utmp_file_type) = fs.lookup_dir(inodes[var_run_dir], data[var_run_dir], "utmp");
         string utmp_contents;
         if (utmp_file_type == FT_REG_FILE)
-            utmp_contents = _get_file_contents(utmp_index, inodes, data);
+            utmp_contents = fs.get_file_contents(utmp_index, inodes, data);
 //        mapping (uint16 => Login) utmp;
 
         if (write_back)

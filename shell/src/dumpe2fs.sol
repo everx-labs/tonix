@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Utility.sol";
-import "../lib/libfs.sol";
 
 contract dumpe2fs is Utility {
 
@@ -29,8 +28,7 @@ contract dumpe2fs is Utility {
     }
 
     function _display_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
-//        SuperBlock sb = _get_sb(inodes, data);
-        SuperBlock sb = libfs.read_sb(inodes, data);
+        SuperBlock sb = sb.read_sb(inodes, data);
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();

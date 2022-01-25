@@ -1,123 +1,12 @@
 pragma ton-solidity >= 0.55.0;
 
 import "Base.sol";
+//import "fs_types.sol";
 import "../lib/fmt.sol";
-
-struct Inode {
-    uint16 mode;
-    uint16 owner_id;
-    uint16 group_id;
-    uint16 n_links;
-    uint16 device_id;
-    uint16 n_blocks;
-    uint32 file_size;
-    uint32 modified_at;
-    uint32 last_modified;
-    string file_name;
-}
-
-struct SuperBlock {
-    bool file_system_state;
-    bool errors_behavior;
-    string file_system_OS_type;
-    uint16 inode_count;
-    uint16 block_count;
-    uint16 free_inodes;
-    uint16 free_blocks;
-    uint16 block_size;
-    uint32 created_at;
-    uint32 last_mount_time;
-    uint32 last_write_time;
-    uint16 mount_count;
-    uint16 max_mount_count;
-    uint16 lifetime_writes;
-    uint16 first_inode;
-    uint16 inode_size;
-}
-
-struct SBS {
-    uint16 inode_size;
-    uint16 inode_count;
-    uint16 free_inodes;
-    uint16 first_inode;
-    uint16 block_size;
-    uint16 block_count;
-    uint16 free_blocks;
-    uint16 first_block;
-    uint32 created_at;
-    uint32 last_write_time;
-    bytes32 file_system_OS_type;
-}
-
-struct DirEntry {
-    uint8 file_type;
-    string file_name;
-    uint16 index;
-}
-
-struct MountInfo {
-    uint8 source_dev_id;
-    uint16 source_id;
-    uint16 target_mount_point;
-    string target_path;
-    uint16 options;
-}
-
-struct FileMapS {
-    uint16 storage_type;
-    uint16 start;
-    uint16 count;
-}
-
-struct FileS {
-    uint16 mode;
-    uint16 inode;
-    uint16 state;
-    uint16 bc;
-    uint16 n_blk;
-    uint32 pos;
-    uint32 fize;
-    string name;
-}
-
-struct ProcessInfo {
-    uint16 owner_id;
-    uint16 self_id;
-    uint16 umask;
-    mapping (uint16 => FileS) fd_table;
-    string cwd;
-}
-
-struct UserInfo {
-    uint16 gid;
-    string user_name;
-    string primary_group;
-}
-
-struct GroupInfo {
-    string group_name;
-    bool is_system;
-}
-
-struct Login {
-    uint16 user_id;
-    uint16 tty_id;
-    uint16 process_id;
-    uint32 login_time;
-}
-
-struct TTY {
-    uint8 device_id;
-    uint16 user_id;
-    uint16 login_id;
-}
-
-struct TextDataFile {
-    uint8 file_type;
-    uint8 n_links;
-    string file_name;
-    string contents;
-}
+import "../lib/dirent.sol";
+import "../lib/sb.sol";
+import "../lib/inode.sol";
+import "../lib/fs.sol";
 
 /* Base contract to work with index nodes */
 abstract contract Internal is Base {
@@ -305,31 +194,8 @@ abstract contract Internal is Base {
     uint constant _y = 1 << 121;
     uint constant _z = 1 << 122;
 
-    function _get_inode_size(mapping (uint16 => Inode) inodes) internal pure returns (uint16) {
-        return inodes[SB_INFO].n_links;
-    }
-
-    function _get_inode_count(mapping (uint16 => Inode) inodes) internal pure returns (uint16) {
-        return inodes[SB_INODES].owner_id + 1;
-    }
-
-    function _claim_inodes_and_blocks(Inode inodes_inode, uint inode_count, uint block_count) internal pure returns (Inode) {
-        uint16 i_count = uint16(inode_count);
-        uint16 b_count = uint16(block_count);
-        if (i_count > 0) {
-            inodes_inode.owner_id += i_count;
-            inodes_inode.modified_at = now;
-        }
-        if (b_count > 0) {
-            inodes_inode.group_id += b_count;
-            inodes_inode.last_modified = now;
-        }
-        inodes_inode.n_links++;
-        return inodes_inode;
-    }
-
     /* Looks for a file name in the directory entry. Return file index and file type */
-    function _fetch_dir_entry(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (uint16 ino, uint8 ft) {
+/*    function _fetch_dir_entry(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (uint16 ino, uint8 ft) {
         if (name == "/")
             return (ROOT_DIR, FT_DIR);
         if (!inodes.exists(dir))
@@ -399,15 +265,6 @@ abstract contract Internal is Base {
         return data[file_index];
     }
 
-    function _get_block_size(mapping (uint16 => Inode) inodes) internal pure returns (uint16) {
-        return inodes[SB_INFO].n_blocks;
-    }
-
-    function _get_device_id(mapping (uint16 => Inode) inodes) internal pure returns (uint16) {
-        return inodes[SB_INFO].device_id;
-    }
-
-    /* Looks for a file name in the directory entry. Returns file index */
     function _resolve_relative_path(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns
             (uint16 index, uint8 file_type, uint16 parent, uint16 dir_index) {
         if (name == "/")
@@ -430,9 +287,8 @@ abstract contract Internal is Base {
         (index, file_type, dir_index) = _lookup_dir_ext(inodes[parent], data[parent], base_name);
     }
 
-    /* File system helpers */
     function _dump_fs(uint8 level, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
-        SuperBlock sb = _get_sb(inodes, data);
+        SuperBlock sb = sb.get_sb(inodes, data);
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();
@@ -450,7 +306,7 @@ abstract contract Internal is Base {
     }
 
     function _dumpfs(uint16 level, uint16 form, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
-        SuperBlock sb = _get_sb(inodes, data);
+        SuperBlock sb = sb.get_sb(inodes, data);
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();
@@ -481,7 +337,7 @@ abstract contract Internal is Base {
                         inode_size, fmt.ALIGN_LEFT);
                 else if (form == DUMP_AS_TEXT)
                     inode_s = format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size);
-                else if (form == DUMP_AS_TAR_HEADER)
+                /*else if (form == DUMP_AS_TAR_HEADER)
                     inode_s = _write_tar_index_entry_bin(ino);
             }
             uint inode_len = inode_s.byteLength();
@@ -512,7 +368,7 @@ abstract contract Internal is Base {
     function _lookup_dir_ext(Inode inode, bytes data, string file_name) internal pure returns (uint16 index, uint8 file_type, uint16 dir_idx) {
         if ((inode.mode & S_IFMT) != S_IFDIR)
             return (ENOTDIR, FT_UNKNOWN, 0);
-        (DirEntry[] contents, int16 status) = _read_dir(inode, data);
+        (DirEntry[] contents, int16 status) = dirent.read_dir(inode, data);
         if (status < 0)
             return (uint16(-status), FT_UNKNOWN, 0);
         else {
@@ -525,43 +381,6 @@ abstract contract Internal is Base {
         }
     }
 
-    function _parse_entry(string s) internal pure returns (DirEntry dirent) {
-        uint p = stdio.strchr(s, "\t");
-        if (p > 1) {
-            optional(int) index_u = stoi(s.substr(p));
-            if (index_u.hasValue())
-                dirent = DirEntry(_file_type(s.substr(0, 1)), s.substr(1, p - 2), uint16(index_u.get()));
-            else
-                dirent = DirEntry(_file_type(s.substr(0, 1)), s.substr(1, p - 2) + " ?" + s.substr(p) + "? ", ENOENT);
-        }
-    }
-
-    function _read_dir_data(bytes dir_data) internal pure returns (DirEntry[] contents, int16 status) {
-        (string[] lines, ) = stdio.split(dir_data, "\n");
-        for (string s: lines)
-            contents.push(_parse_entry(s));
-        status = int16(contents.length);
-    }
-
-    function _read_dir(Inode inode, bytes data) internal pure returns (DirEntry[] contents, int16 status) {
-        if ((inode.mode & S_IFMT) != S_IFDIR)
-            status = -ENOTDIR;
-        else
-            return _read_dir_data(data);
-    }
-
-    function _get_symlink_target(Inode inode, bytes node_data) internal pure returns (DirEntry target) {
-        if ((inode.mode & S_IFMT) != S_IFLNK)
-            target.index = ENOSYS;
-        else
-            return _parse_entry(node_data);
-    }
-
-    function _dir_entry_line(uint16 index, string file_name, uint8 file_type) internal pure returns (string) {
-        return _file_type_sign(file_type) + file_name + format("\t{}\n", index);
-    }
-
-    /* Index node, file and directory entry types helpers */
     function _get_device_version(uint16 device_id) internal pure returns (string major, string minor) {
         return (format("{}", device_id >> 8), format("{}", device_id & 0xFF));
     }
@@ -575,7 +394,7 @@ abstract contract Internal is Base {
     }
 
     function _mode(string s) internal pure returns (uint16 mode) {
-        mode = _get_def_mode(_file_type(s.substr(0, 1)));
+        mode = _get_def_mode(dirent.file_type(s.substr(0, 1)));
         mode += _string_to_octet(s.substr(1, 3)) << 6;
         mode += _string_to_octet(s.substr(4, 3)) << 3;
         mode += _string_to_octet(s.substr(7, 3));
@@ -617,38 +436,6 @@ abstract contract Internal is Base {
         return FT_UNKNOWN;
     }
 
-    function _mode_to_typeflag(uint16 mode) internal pure returns (uint8) {
-        if ((mode & S_IFMT) == S_IFBLK)  return TF_BLKDEV;
-        if ((mode & S_IFMT) == S_IFCHR)  return TF_CHRDEV;
-        if ((mode & S_IFMT) == S_IFREG)  return TF_REG_FILE;
-        if ((mode & S_IFMT) == S_IFDIR)  return TF_DIR;
-        if ((mode & S_IFMT) == S_IFLNK)  return TF_SYMLINK;
-        if ((mode & S_IFMT) == S_IFSOCK) return TF_SOCK;
-        if ((mode & S_IFMT) == S_IFIFO)  return TF_FIFO;
-    }
-
-    function _file_type_sign(uint8 ft) internal pure returns (string) {
-        if (ft == FT_BLKDEV)    return "b";
-        if (ft == FT_CHRDEV)    return "c";
-        if (ft == FT_REG_FILE)  return "-";
-        if (ft == FT_DIR)       return "d";
-        if (ft == FT_SYMLINK)   return "l";
-        if (ft == FT_SOCK)      return "s";
-        if (ft == FT_FIFO)      return "p";
-        return "?";
-    }
-
-    function _file_type(string s) internal pure returns (uint8) {
-        if (s == "b") return FT_BLKDEV;
-        if (s == "c") return FT_CHRDEV;
-        if (s == "-") return FT_REG_FILE;
-        if (s == "d") return FT_DIR;
-        if (s == "l") return FT_SYMLINK;
-        if (s == "s") return FT_SOCK;
-        if (s == "p") return FT_FIFO;
-        return FT_UNKNOWN;
-    }
-
     function _file_type_description(uint16 mode) internal pure returns (string) {
         if ((mode & S_IFMT) == S_IFBLK)  return "block special";
         if ((mode & S_IFMT) == S_IFCHR)  return "character special";
@@ -675,84 +462,11 @@ abstract contract Internal is Base {
             return (Inode(_get_def_mode(ft), owner, group, ft == FT_DIR ? 2 : 1, device_id, n_blocks, uint32(text.byteLength()),  now, now, file_name), text);
     }
 
-    /* Getting an index node of a particular type */
     function _get_dots(uint16 this_dir, uint16 parent_dir) internal pure returns (string) {
         return format("d.\t{}\nd..\t{}\n", this_dir, parent_dir);
     }
 
     function _get_dir_node(uint16 this_dir, uint16 parent_dir, uint16 owner, uint16 group, uint16 device_id, string dir_name) internal pure returns (Inode, bytes) {
         return _get_any_node(FT_DIR, owner, group, device_id, 1, dir_name, _get_dots(this_dir, parent_dir));
-    }
-
-    function _get_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (SuperBlock sb) {
-        Inode info_inode = inodes[SB_INFO];
-        uint16[] sb_info = _get_sb_data(data[SB_INFO]);
-        uint16 total_inodes = info_inode.owner_id; //sb_info[1];
-        uint16 total_blocks = info_inode.group_id; // sb_info[2];
-        uint32 created_at = info_inode.modified_at;
-        uint16 first_inode = ROOT_DIR;// = sb_info[0];
-        uint16 inode_size = info_inode.n_links;
-        uint16 block_size = info_inode.n_blocks;
-        uint16 max_mount_count = 10;
-
-        if (sb_info.length > 5) {
-            first_inode = sb_info[0];
-            max_mount_count = sb_info[5];
-        }
-
-        Inode inodes_inode = inodes[SB_INODES];
-        uint16 inode_count = inodes_inode.owner_id;
-        uint16 free_inodes = total_inodes - inode_count;
-        uint32 last_write_time = inodes_inode.modified_at;
-        uint16 lifetime_writes = inodes_inode.n_links;
-        uint16 block_count = inodes_inode.group_id;
-        uint16 free_blocks = total_blocks - block_count;
-
-        Inode mounts_inode = inodes[SB_MOUNTS];
-        uint16[] sb_mounts = _get_sb_data(data[SB_MOUNTS]);
-        uint16 mount_count = 0;
-        if (!sb_mounts.empty())
-            mount_count = sb_mounts[0];
-        uint32 last_mount_time = mounts_inode.modified_at;
-
-        (string[] sb_state, ) = _get_sb_text(data[SB_STATE]);
-        bool file_system_state = true;
-        bool errors_behavior = true;
-        string file_system_OS_type;
-        if (sb_state.length > 2) {
-            file_system_state = sb_state[0] == "Y";
-            errors_behavior = sb_state[1] == "Y";
-            file_system_OS_type = sb_state[2];
-        }
-
-        sb = SuperBlock(file_system_state, errors_behavior, file_system_OS_type, inode_count, block_count, free_inodes, free_blocks,
-            block_size, created_at, last_mount_time, last_write_time, mount_count, max_mount_count, lifetime_writes, first_inode, inode_size);
-    }
-
-    function _get_sb_text(bytes data) internal pure returns (string[] values, uint n_fields) {
-        return stdio.split_line(data, " ", "\n");
-    }
-
-    function _get_sb_data(bytes data) internal pure returns (uint16[] values) {
-        (string[] fields, ) = stdio.split_line(data, " ", "\n");
-        for (string s: fields)
-            values.push(stdio.atoi(s));
-    }
-
-    function _write_tar_index_entry_bin(Inode inode) internal pure returns (string line) {
-        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, , , uint32 file_size, uint32 modified_at, , string file_name) = inode.unpack();
-        uint8 typeflag = _mode_to_typeflag(mode);
-        mode = mode & 0xFFFF;
-        uint checksum;// = _byte_sum([mode, owner_id, group_id, file_size, modified_at]);
-
-        line = fmt.pad(file_name, 100, fmt.ALIGN_LEFT) + fmt.dec_to_oct(mode, 7) + fmt.dec_to_oct(owner_id, 7) + fmt.dec_to_oct(group_id, 7) +
-            fmt.dec_to_oct(file_size, 14) + fmt.dec_to_oct(modified_at, 14) + fmt.dec_to_oct(checksum, 6) + fmt.dec_to_oct(n_links, 1);
-
-        string res; // = _v0(mode);
-
-        uint[] values = [mode, owner_id, group_id, file_size, modified_at, checksum, typeflag];
-        uint8[] widths = [8, 8, 8, 12, 12, 8, 1];
-        string res2 = fmt.octal_dump(widths, values);
-        return res + "\n" + res2;
-    }
+    }*/
 }

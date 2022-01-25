@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -7,12 +7,12 @@ contract groupmod is Utility {
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
 
-        uint16 etc_dir = _resolve_absolute_path("/etc", inodes, data);
-        (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = _lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
+        uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
+        (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
 
         string etc_group;
         if (group_file_type == FT_REG_FILE)
-            etc_group = _get_file_contents(group_index, inodes, data);
+            etc_group = fs.get_file_contents(group_index, inodes, data);
         string prev_entry;
         bool use_group_id = arg.flag_set("g", flags);
         bool use_new_name = arg.flag_set("n", flags);

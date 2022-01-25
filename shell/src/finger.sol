@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -18,7 +18,7 @@ contract finger is Utility {
             string[][] table;
             if (short_format)
                 table = [["Login", "Tty", "Idle", "Login Time"]];
-            string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
+            string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
             string line = uadmin.passwd_entry_by_name(user_name, etc_passwd);
             if (!line.empty())
                 table.push(short_format ? [user_name, "*", "*", "No logins"] : ["Login: " + user_name, "Directory: /home/" + user_name]);

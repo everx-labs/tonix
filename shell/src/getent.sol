@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -13,12 +13,12 @@ contract getent is Utility {
             string key;
             if (n_args > 1)
                 key = params[1];
-            uint16 db_inode = _resolve_absolute_path("/etc/" + db_name, inodes, data);
+            uint16 db_inode = fs.resolve_absolute_path("/etc/" + db_name, inodes, data);
             if (db_inode < INODES) {
                 err = "Unknown database: " + db_name + "\n Try `getent --help' or `getent --usage' for more information.";
                 ec = EXECUTE_FAILURE;
             } else {
-                string text = _get_file_contents(db_inode, inodes, data);
+                string text = fs.get_file_contents(db_inode, inodes, data);
                 (string[] lines, ) = stdio.split(text, "\n");
                 for (string line: lines) {
                     if (key.empty())

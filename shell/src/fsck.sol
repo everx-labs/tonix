@@ -1,7 +1,6 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
-import "../lib/libfs.sol";
 
 contract fsck is Utility {
 
@@ -15,7 +14,7 @@ contract fsck is Utility {
     uint8 constant SHARED_LIBRARY_ERROR     = 128;
 
     function _print_dir_contents(uint16 start_dir_index, mapping (uint16 => bytes) data) internal pure returns (uint8 ec, string out) {
-        (DirEntry[] contents, int16 status) = _read_dir_data(data[start_dir_index]);
+        (DirEntry[] contents, int16 status) = dirent.read_dir_data(data[start_dir_index]);
         if (status < 0) {
             out.append(format("Error: {} \n", status));
             ec = EXECUTE_FAILURE;
@@ -25,7 +24,7 @@ contract fsck is Utility {
                 (uint8 ft, string name, uint16 index) = contents[j].unpack();
                 if (ft == FT_UNKNOWN)
                     continue;
-                out.append(_dir_entry_line(index, name, ft));
+                out.append(dirent.dir_entry_line(index, name, ft));
             }
         }
     }
@@ -42,9 +41,9 @@ contract fsck is Utility {
 
         string start_dir = params.empty() ? "/" : params[0];
 
-        uint16 start_dir_index = _resolve_absolute_path(start_dir, inodes, data);
+        uint16 start_dir_index = fs.resolve_absolute_path(start_dir, inodes, data);
         if (start_dir_index >= ROOT_DIR) {
-            (DirEntry[] contents, int16 status) = _read_dir_data(data[start_dir_index]);
+            (DirEntry[] contents, int16 status) = dirent.read_dir_data(data[start_dir_index]);
             if (status < 0) {
                 out.append(format("Error: {} \n", status));
                 ec = EXECUTE_FAILURE;
@@ -54,7 +53,7 @@ contract fsck is Utility {
                     (uint8 ft, string name, uint16 index) = contents[j].unpack();
                     if (ft == FT_UNKNOWN)
                         continue;
-                    out.append(_dir_entry_line(index, name, ft));
+                    out.append(dirent.dir_entry_line(index, name, ft));
                 }
             }
         }
@@ -66,9 +65,9 @@ contract fsck is Utility {
         uint total_blocks_actual;
 
     if (check_all) {
-        out = libfs.display_sb(inodes, data);
+        out = sb.display_sb(inodes, data);
 
-        SuperBlock sb = libfs.read_sb(inodes, data);
+        SuperBlock sb = sb.read_sb(inodes, data);
 
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, /*uint32 last_write_time*/, uint16 mount_count,
@@ -100,14 +99,14 @@ contract fsck is Utility {
                 out.append(format("Inode dir: {}\n", i));
                 out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
                 out.append(bts);
-                (DirEntry[] contents, int status) = _read_dir_data(bts);
+                (DirEntry[] contents, int status) = dirent.read_dir_data(bts);
                 out.append(format("status {}\n", status));
                 if (status < 0)
                     out.append(format("Error! status {}\n", status));
                 else {
                     for (DirEntry de: contents) {
                         (uint8 sub_ft, string sub_name, uint16 sub_index) = de.unpack();
-                        out.append(_dir_entry_line(sub_index, sub_name, sub_ft));
+                        out.append(dirent.dir_entry_line(sub_index, sub_name, sub_ft));
                     }
                 }
             }

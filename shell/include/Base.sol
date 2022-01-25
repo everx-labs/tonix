@@ -235,21 +235,6 @@ contract Base {
     uint8 constant AR_APPEND_FILES  = 3;
     uint8 constant AR_EXTRACT       = 4;
 
-    uint16 constant DUMP_SB             = 1;
-    uint16 constant DUMP_INDEX_HEADERS  = 2;
-    uint16 constant DUMP_TEXT_DIRS      = 4;
-    uint16 constant DUMP_TEXT_ALL       = 8;
-    uint16 constant DUMP_SB_INODES      = 16;
-    uint16 constant DUMP_USER_INODES    = 32;
-    uint16 constant DUMP_ALL_INODES     = 48;
-    uint16 constant DUMP_FILE_MAPPING   = 64;
-    uint16 constant DUMP_INODE_ALL      = DUMP_SB + DUMP_INDEX_HEADERS + DUMP_ALL_INODES + DUMP_TEXT_ALL;
-
-    uint16 constant DUMP_AS_TEXT        = 1;
-    uint16 constant DUMP_COMPACT        = 2;
-    uint16 constant DUMP_AS_TAR_HEADER  = 3;
-    uint16 constant DUMP_AS_TAR_BYTES   = 4;
-
     /* Upgrade */
     function upgrade(TvmCell c) external {
 //        TvmCell newcode = c.toSlice().loadRef();

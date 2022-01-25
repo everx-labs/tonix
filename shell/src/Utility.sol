@@ -5,6 +5,7 @@ import "../lib/stdio.sol";
 import "../lib/arg.sol";
 import "../lib/vars.sol";
 import "../lib/uadmin.sol";
+//import "../lib/dirent.sol";
 
 struct CommandHelp {
     string name;

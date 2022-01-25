@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -37,16 +37,16 @@ contract ld is Utility {
             string binary_file = header + _gen_binary(object_file_name);
             out.append(binary_file);
             if (n_args > 1 && use_out_file_name) {
-                uint16 ic = _get_inode_count(inodes);
+                uint16 ic = sb.get_inode_count(inodes);
                 string out_file_path = args[1];
                 file_action = Action(IO_CREATE_FILES, 1);
                 mapping (uint16 => string[]) parent_dirs;
 
-                (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(out_file_path, session.wd, inodes, data);
+                (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(out_file_path, session.wd, inodes, data);
                 (string dir_name, string file_name) = path.dir(out_file_path);
                 if (dir_index == 0) {
                     ars.push(Ar(IO_MKFILE, FT_REG_FILE, index, dir_index, file_name, binary_file));
-                    parent_dirs[parent].push(_dir_entry_line(ic, file_name, FT_REG_FILE));
+                    parent_dirs[parent].push(dirent.dir_entry_line(ic, file_name, FT_REG_FILE));
                     ars.push(Ar(IO_MKBIN, FT_REG_FILE, index, dir_index, out_file_path, binary_file));
                     ic++;
                 }

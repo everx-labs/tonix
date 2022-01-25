@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -7,9 +7,9 @@ contract cat is Utility {
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
-                out.append(_cat(flags, _get_file_contents(index, inodes, data)) + "\n");
+                out.append(_cat(flags, fs.get_file_contents(index, inodes, data)) + "\n");
             else {
                 err.append("Failed to resolve relative path for" + s_arg + "\n");
                 ec = EXECUTE_FAILURE;

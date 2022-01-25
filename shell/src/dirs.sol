@@ -5,7 +5,7 @@ import "Shell.sol";
 contract dirs is Shell {
 
     function _print_dir_contents(uint16 start_dir_index, mapping (uint16 => bytes) data) internal pure returns (uint8 ec, string out) {
-        (DirEntry[] contents, int16 status) = _read_dir_data(data[start_dir_index]);
+        (DirEntry[] contents, int16 status) = dirent.read_dir_data(data[start_dir_index]);
         if (status < 0) {
             out.append(format("Error: {} \n", status));
             ec = EXECUTE_FAILURE;
@@ -15,36 +15,23 @@ contract dirs is Shell {
                 (uint8 ft, string name, uint16 index) = contents[j].unpack();
                 if (ft == FT_UNKNOWN)
                     continue;
-                out.append(_dir_entry_line(index, name, ft));
+                out.append(dirent.dir_entry_line(index, name, ft));
             }
         }
     }
 
     function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = _get_args(args);
-        (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, , , , ) = _flag_values("clpv", flags);
+        (string[] params, string flags, ) = arg.get_args(args);
+        (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, , , , ) = arg.flag_values("clpv", flags);
         bool print = expand_tilde || entry_per_line || pos_entry_per_line || params.empty();
         string page = pool;
         string out;
         string s_attrs = "--";
-        string home_dir = _val("HOME", page);
+        string home_dir = vars.val("HOME", page);
 
         uint16 root_dir_index = _resolve_absolute_path("/", inodes, data);
         if (root_dir_index >= ROOT_DIR) {
             (ec, out) = _print_dir_contents(root_dir_index, data);
-            /*(DirEntry[] contents, int16 status) = _read_dir_data(data[root_dir_index]);
-            if (status < 0) {
-                out.append(format("Error: {} \n", status));
-                ec = EXECUTE_FAILURE;
-            } else {
-                uint len = uint(status);
-                for (uint16 j = 0; j < len; j++) {
-                    (uint8 ft, string name, uint16 index) = contents[j].unpack();
-                    if (ft == FT_UNKNOWN)
-                        continue;
-                    out.append(_dir_entry_line(index, name, ft));
-                }
-            }*/
         }
         res = out;
     }

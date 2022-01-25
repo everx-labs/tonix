@@ -6,7 +6,7 @@ contract df is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (, , string flags, ) = arg.get_env(argv);
-        (, , string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, , , , , , , , uint16 first_inode, ) = _get_sb(inodes, data).unpack();
+        (, , string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, , , , , , , , uint16 first_inode, ) = sb.get_sb(inodes, data).unpack();
         (bool human_readable, bool powers_of_1000, bool list_inodes, bool block_1k, bool posix_output, , , ) = arg.flag_values("hHikP", flags);
 
         string fs_name = file_system_OS_type;

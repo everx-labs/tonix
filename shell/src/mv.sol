@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,10 +8,10 @@ contract mv is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _mv(params, flags, wd, arg_list, _get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _mv(params, flags, wd, arg_list, sb.get_inode_count(inodes), inodes, data);
     }
 
     function _mv(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
@@ -53,7 +53,7 @@ contract mv is Utility {
             out = stdio.aif(out, verbose, "(backup:" + stdio.quote(t_backup_path) + ")");
 
             ars.push(Ar(IO_WR_COPY, FT_REG_FILE, 0, t_ino, t_backup_path, ""));
-            dirents.append(_dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
+            dirents.append(dirent.dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
             dirent_action_type = IO_ADD_DIR_ENTRY;
             ic++;
         }
@@ -89,12 +89,12 @@ contract mv is Utility {
                 (, string file_name) = path.dir(to_dir ? s_path : t_path);
 
                 ars.push(Ar(action_item_type, s_ft, s_ino, s_dir_idx, file_name, ""));
-                dirents.append(_dir_entry_line(action_type == IO_HARDLINK_FILES ? s_ino : ic++, file_name, s_ft));
+                dirents.append(dirent.dir_entry_line(action_type == IO_HARDLINK_FILES ? s_ino : ic++, file_name, s_ft));
                 dirent_action_type = IO_ADD_DIR_ENTRY;
 
                 ars.push(Ar(IO_UNLINK, s_ft, s_ino, s_dir_idx, s_path, ""));
                 if (inodes[s_ino].n_links < 2) {
-                    string victim_dirent_pattern = _dir_entry_line(s_ino, s_path, s_ft);
+                    string victim_dirent_pattern = dirent.dir_entry_line(s_ino, s_path, s_ft);
                     string dir_text = data[s_parent];
                     string new_dir_contents = stdio.translate(dir_text, victim_dirent_pattern, "");
                     ars.push(Ar(IO_UPDATE_DIR_ENTRY, FT_DIR, s_parent, s_dir_idx, s_path, new_dir_contents));

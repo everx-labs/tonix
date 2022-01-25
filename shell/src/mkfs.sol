@@ -55,8 +55,8 @@ contract mkfs is Utility {
         (string[] fields, uint n_fields) = stdio.split_line(line, ":", "\n");
         if (n_fields > 3) {
             name = fields[0];
-            node_type = _file_type(fields[1]);
-            content_type = _file_type(fields[2]);
+            node_type = dirent.file_type(fields[1]);
+            content_type = dirent.file_type(fields[2]);
             content = fields[3];
         }
     }
@@ -166,8 +166,8 @@ contract mkfs is Utility {
                 for (uint i = 0; i < n_files; i++) {
                     string file_name = files[i];
                     n++;
-                    (inodes[n], data[n]) = _get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? _get_dots(n, node_index) : "");
-                    bytes dirent = _dir_entry_line(n, file_name, content_type);
+                    (inodes[n], data[n]) = inode.get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? inode.get_dots(n, node_index) : "");
+                    bytes dirent = dirent.dir_entry_line(n, file_name, content_type);
                     inodes[parent_node_index].file_size += uint32(dirent.length);
                     inodes[parent_node_index].n_links++;
                     data[parent_node_index].append(dirent);
@@ -186,8 +186,8 @@ contract mkfs is Utility {
                         n++;
                         file_list.push(file_name);
                         if (file_name != ROOT) {
-                            (inodes[n], data[n]) = _get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? _get_dots(n, node_index) : "");
-                            bytes dirent = _dir_entry_line(n, file_name, content_type);
+                            (inodes[n], data[n]) = inode.get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? inode.get_dots(n, node_index) : "");
+                            bytes dirent = dirent.dir_entry_line(n, file_name, content_type);
                             inodes[parent_node_index].file_size += uint32(dirent.length);
                             inodes[parent_node_index].n_links++;
                             data[parent_node_index].append(dirent);
@@ -302,16 +302,8 @@ contract mkfs is Utility {
         uint16 n_dirs;
         uint16 n_reg_files;
         uint16 n_other;
-//        TvmBuilder b_main = _read(inodes[SB_INFO]);
-//        Inode def_inode = inodes[1];
-//        (uint16 def_mode, uint16 def_owner_id, uint16 def_group_id, , uint16 def_device_id, , , uint32 def_modified_at, uint32 def_last_modified, ) = def_inode.unpack();
         TvmBuilder b_main = _store_def_inode(inodes[0]);
         TvmBuilder b_dirs = _store_def_inode(inodes[ROOT_DIR]);
-//        TvmBuilder b_main = _def_inode(inodes[1]);
-//        TvmBuilder b_main = _read(inodes[SB_INFO]);
-//        out.append(_builder_string(0, b_main));
-//        out.append(_builder_string(1, b_dirs));
-//        out.append(_builder_string(1, b_dirs));
         TvmBuilder b_reg_files = _store_def_inode(inodes[5]);
         TvmBuilder b_dir_data;
         out.append(_builder_string(2, b_reg_files));
@@ -320,12 +312,10 @@ contract mkfs is Utility {
         for ((uint16 i, Inode inode): inodes) {
             (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
             if ((mode & S_IFMT) == S_IFDIR) {
-//                b_dirs.store(i, n_links, uint16(file_size));
                 bytes dir_data = data[i];
                 out.append(format("dir data: {}\n", dir_data.length));
                 n_dirs++;
                 (, uint n_items) = stdio.split(dir_data, "\n");
-//                b_dirs.store(uint8(i), uint8(n_links), uint16(file_size));
                 b_dirs.store(uint8(n_dirs), uint8(n_items), uint16(dir_data.length));
                 out.append(_builder_string(1, b_dirs));
 //                b_dir_data.store(dir_data);
@@ -343,14 +333,11 @@ contract mkfs is Utility {
         }
         b_main.store(n_dirs, n_reg_files, n_other);
         b_dirs.store(n_dirs);
-//        b_dirs.store(def_dir_mode, def_owner_id, def_group_id, def_group_n_links, def_device_id, def_dir_n_blocks, def_dir_file_size, def_modified_at, def_last_modified);
         b_dirs.storeRef(b_dir_data);
 
         b_reg_files.store(n_reg_files);
-//        b_reg_files.store(def_reg_file_mode, def_owner_id, def_group_id, def_reg_file_n_links, def_device_id, def_reg_file_n_blocks, def_reg_file_file_size, def_modified_at, def_last_modified);
 
         b_other.store(n_other);
-//        b_other.store(def_other_mode, def_owner_id, def_group_id, def_other_n_links, def_device_id, def_other_n_blocks, def_other_file_size, def_modified_at, def_last_modified);
 
         out.append(_builder_string(0, b_main));
         b_main.storeRef(b_dirs);
@@ -385,7 +372,7 @@ contract mkfs is Utility {
         uint16 block_size = 100;//host_device_info.blk_size;
         uint16 block_count;
         string contents;
-        (inodes[n], data[n]) = _get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 0, "/dev", _get_dots(DEVFS_DEV_DIR, DEVFS_DEV_DIR));
+        (inodes[n], data[n]) = inode.get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 0, "/dev", inode.get_dots(DEVFS_DEV_DIR, DEVFS_DEV_DIR));
         uint16 node_index = n;
         n++;
 
@@ -394,8 +381,8 @@ contract mkfs is Utility {
             if (n_fields > 3) {
                 string file_name = dev_fields[2];
                 n++;
-                (inodes[n], data[n]) = _get_any_node(FT_BLKDEV, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, device_info);
-                bytes dirent = _dir_entry_line(n, file_name, FT_BLKDEV);
+                (inodes[n], data[n]) = inode.get_any_node(FT_BLKDEV, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, device_info);
+                bytes dirent = dirent.dir_entry_line(n, file_name, FT_BLKDEV);
                 inodes[node_index].file_size += uint32(dirent.length);
                 inodes[node_index].n_links++;
                 data[node_index].append(dirent);
@@ -479,7 +466,7 @@ contract mkfs is Utility {
         uint16 form = (mode >> 8) & 0xFF;
 //        (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config, devices);
         (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config);
-        return _dumpfs(level, form, inodes, data);
+        return fs.dumpfs(level, form, inodes, data);
     }
 
     function get_system_init(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
@@ -527,13 +514,13 @@ contract mkfs is Utility {
                         n++;
                         file_list.push(file_name);
                         if (file_name != ROOT) {
-                            (inodes[n], data[n]) = _get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? _get_dots(n, node_index) : "");
-                            bytes dirent = _dir_entry_line(n, file_name, content_type);
+                            (inodes[n], data[n]) = inode.get_any_node(content_type, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == FT_DIR ? inode.get_dots(n, node_index) : "");
+                            bytes dirent = dirent.dir_entry_line(n, file_name, content_type);
                             inodes[parent_node_index].file_size += uint32(dirent.length);
                             inodes[parent_node_index].n_links++;
                             data[parent_node_index].append(dirent);
                         } else
-                            (inodes[n], data[n]) = _get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, _get_dots(n, n));
+                            (inodes[n], data[n]) = inode.get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, inode.get_dots(n, n));
                         block_count++;
                     }
                 }

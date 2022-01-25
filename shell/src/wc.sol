@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 import "../include/Commands.sol";
@@ -41,12 +41,12 @@ contract wc is Utility, Commands {
             Column(true, 32, fmt.ALIGN_LEFT)];
 
         for (string arg: params) {
-            (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
+            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(arg, wd, inodes, data);
             if (ft == FT_UNKNOWN) {
                 ec = EXECUTE_FAILURE;
                 err.append(arg + " not found\n");
             } else {
-                string texts = _get_file_contents(index, inodes, data);
+                string texts = fs.get_file_contents(index, inodes, data);
                 (string[] text, uint n_fields) = stdio.split(texts, "\n");
                 if (n_fields == 0)
                     continue;

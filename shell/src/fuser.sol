@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -10,7 +10,7 @@ contract fuser is Utility {
         ec = EXECUTE_SUCCESS;
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
             , bool users_logged_in) = arg.flag_values("bHlqsTwu", flags);
-        string etc_passwd = _get_file_contents_at_path("/etc/passwd", inodes, data);
+        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
 
         mapping (uint16 => Login) utmp;
 

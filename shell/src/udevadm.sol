@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,10 +8,10 @@ contract udevadm is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _udevadm(params, flags, wd, arg_list, _get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _udevadm(params, flags, wd, arg_list, sb.get_inode_count(inodes), inodes, data);
         ec = EXECUTE_SUCCESS;
     }
 

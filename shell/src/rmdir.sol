@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -14,7 +14,7 @@ contract rmdir is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
         (out, file_action, ars, errors) = _rmdir(flags, arg_list, inodes, data);
@@ -34,7 +34,7 @@ contract rmdir is Utility {
                 if (ft == FT_DIR) {
                     if (inodes[iop].n_links < 3) {
                         ars.push(Ar(IO_UNLINK, ft, iop, dir_idx, s, ""));
-                        victims[parent].push(_dir_entry_line(iop, s, ft));
+                        victims[parent].push(dirent.dir_entry_line(iop, s, ft));
                     } else
                         errors.push(Err(0, ENOTEMPTY, s));
                 } else

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -9,7 +9,7 @@ contract ls is Utility {
         if (params.empty())
             params.push(cwd);
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_ls(flags, Arg(s_arg, ft, index, parent, dir_index), inodes, data) + "\n");
             else {
@@ -34,7 +34,7 @@ contract ls is Utility {
             rating = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF - rating;
     }
 
-    function _ls_populate_line(string f, Inode inode, uint16 index, string name, uint8 file_type, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[] l) {
+    function _ls_populate_line(string f, Inode ino, uint16 index, string name, uint8 file_type, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[] l) {
         bool double_quotes = arg.flag_set("Q", f) && !arg.flag_set("N", f);
         bool append_slash_to_dirs = arg.flag_set("p", f) || arg.flag_set("F", f);
         bool use_ctime = arg.flag_set("c", f);
@@ -43,14 +43,14 @@ contract ls is Utility {
             bool human_readable) = arg.flag_values("lngosiGh", f);
         bool long_format = long_fmt || numeric || group_only || owner_only;
 
-        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
+        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
         if (print_index_node)
             l = [stdio.itoa(index)];
         if (print_allocated_size)
             l.push(stdio.itoa(n_blocks));
 
         if (long_format) {
-            l.push(_permissions(mode));
+            l.push(inode.permissions(mode));
             l.push(stdio.itoa(n_links));
             if (numeric) {
                 if (!group_only)
@@ -60,8 +60,8 @@ contract ls is Utility {
             } else {
 //                string s_owner = _get_user_name(owner_id, inodes, data);
 //                string s_group = _get_group_name(group_id, inodes, data);
-                string s_owner = uadmin.user_name_by_id(owner_id, _get_file_contents_at_path("/etc/passwd", inodes, data));
-                string s_group = uadmin.group_name_by_id(group_id, _get_file_contents_at_path("/etc/group", inodes, data));
+                string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
+                string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
 
                 if (!group_only)
                     l.push(s_owner);
@@ -70,7 +70,7 @@ contract ls is Utility {
             }
 
             if (file_type == FT_CHRDEV || file_type == FT_BLKDEV) {
-                (string major, string minor) = _get_device_version(device_id);
+                (string major, string minor) = inode.get_device_version(device_id);
                 l.push(format("{:4},{:4}", major, minor));
             } else
                 l.push(fmt.scale(file_size, human_readable ? KILO : 1));
@@ -118,7 +118,7 @@ contract ls is Utility {
             if (!_ls_should_skip(f, s))
                 table.push(_ls_populate_line(f, inode, index, s, ft, inodes, data));
         } else if (ft == FT_DIR) {
-            (DirEntry[] contents, int16 status) = _read_dir_data(data[index]);
+            (DirEntry[] contents, int16 status) = dirent.read_dir_data(data[index]);
             if (status < 0) {
                 out.append(format("Error: {} \n", status));
                 return (out, sub_args);

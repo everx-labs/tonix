@@ -212,6 +212,22 @@ struct TarEntry {
         data.append(h_prefix);
 //        return bytes(str);
     }
+    /*function _write_tar_index_entry_bin(Inode inode) internal pure returns (string line) {
+        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, , , uint32 file_size, uint32 modified_at, , string file_name) = inode.unpack();
+        uint8 typeflag = dirent.mode_to_typeflag(mode);
+        mode = mode & 0xFFFF;
+        uint checksum;// = _byte_sum([mode, owner_id, group_id, file_size, modified_at]);
+
+        line = fmt.pad(file_name, 100, fmt.ALIGN_LEFT) + fmt.dec_to_oct(mode, 7) + fmt.dec_to_oct(owner_id, 7) + fmt.dec_to_oct(group_id, 7) +
+            fmt.dec_to_oct(file_size, 14) + fmt.dec_to_oct(modified_at, 14) + fmt.dec_to_oct(checksum, 6) + fmt.dec_to_oct(n_links, 1);
+
+        string res; // = _v0(mode);
+
+        uint[] values = [mode, owner_id, group_id, file_size, modified_at, checksum, typeflag];
+        uint8[] widths = [8, 8, 8, 12, 12, 8, 1];
+        string res2 = fmt.octal_dump(widths, values);
+        return res + "\n" + res2;
+    }*/
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
         return ("tar", "an archiving utility", "-A [OPTIONS] ARCHIVE ARCHIVE\t-cdru [-f ARCHIVE] [OPTIONS] [FILE...]\t-tx [-f ARCHIVE] [OPTIONS] [MEMBER...]",

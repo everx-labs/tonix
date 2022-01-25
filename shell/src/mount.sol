@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,11 +8,11 @@ contract mount is Utility {
         (, string[] args, uint flags) = input.unpack();
         Arg[] arg_list;
         for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(arg, session.wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(arg, session.wd, inodes, data);
             arg_list.push(Arg(arg, ft, index, parent, dir_index));
         }
 
-        (out, file_action, ars, errors) = _mount(args, flags, session.wd, arg_list, _get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _mount(args, flags, session.wd, arg_list, sb.get_inode_count(inodes), inodes, data);
     }
 
     /* File manipulation operations - cp, ln and mv */

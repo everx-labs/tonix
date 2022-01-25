@@ -43,10 +43,10 @@ contract man is SyncFS, Utility {
                 uint8 min_args, uint16 max_args, string[] option_descriptions) = page.unpack();
             string contents = stdio.join_fields([command, purpose, synopsis, description, option_list, stdio.join_fields(option_descriptions, "\t"), format("{}\t{}", min_args, max_args)], "\n");
 
-            (Inode cmd_inode, bytes cmd_data) = _get_any_node(FT_REG_FILE, SUPER_USER, SUPER_USER_GROUP, _device_id, uint16(contents.byteLength() / _block_size + 1),
+            (Inode cmd_inode, bytes cmd_data) = inode.get_any_node(FT_REG_FILE, SUPER_USER, SUPER_USER_GROUP, _device_id, uint16(contents.byteLength() / _block_size + 1),
                 command, contents);
 
-            (uint16 idx, ) = _lookup_dir(_inodes[ROOT_DIR + 1], _data[ROOT_DIR + 1], command);
+            (uint16 idx, ) = fs.lookup_dir(_inodes[ROOT_DIR + 1], _data[ROOT_DIR + 1], command);
             if (idx > INODES) {
                 inodes[idx] = cmd_inode;
                 data[idx] = cmd_data;
@@ -56,8 +56,8 @@ contract man is SyncFS, Utility {
 
     function convert_pages(Page[] pages) external view returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint n_pages = pages.length;
-        uint16 usr_dir_index = _resolve_absolute_path("/usr", _inodes, _data);
-        uint16 ic = _get_inode_count(_inodes);
+        uint16 usr_dir_index = fs.resolve_absolute_path("/usr", _inodes, _data);
+        uint16 ic = sb.get_inode_count(_inodes);
         bytes dirents;
         uint total_blocks;
         uint total_inodes;
@@ -68,16 +68,16 @@ contract man is SyncFS, Utility {
             Page page = pages[i];
             (string command, string purpose, string synopsis, string description, string option_list,
                 uint8 min_args, uint16 max_args, string[] option_descriptions) = page.unpack();
-            string contents = _join_fields([command, purpose, synopsis, description, option_list, _join_fields(option_descriptions, "\t"), format("{}\t{}", min_args, max_args)], "\n");
+            string contents = stdio.join_fields([command, purpose, synopsis, description, option_list, stdio.join_fields(option_descriptions, "\t"), format("{}\t{}", min_args, max_args)], "\n");
             uint16 n_blocks = uint16(contents.byteLength() / _block_size + 1);
 
-            (uint16 idx, uint8 ft) = _lookup_dir(_inodes[usr_dir_index], _data[usr_dir_index], command);
-            (Inode cmd_inode, bytes cmd_data) = _get_any_node(FT_REG_FILE, SUPER_USER, SUPER_USER_GROUP, _device_id, n_blocks, command, contents);
+            (uint16 idx, uint8 ft) = fs.lookup_dir(_inodes[usr_dir_index], _data[usr_dir_index], command);
+            (Inode cmd_inode, bytes cmd_data) = inode.get_any_node(FT_REG_FILE, SUPER_USER, SUPER_USER_GROUP, _device_id, n_blocks, command, contents);
 
             if (ft == FT_UNKNOWN) {
                 idx = ic++;
                 total_inodes++;
-                dirents.append(_dir_entry_line(idx, command, FT_REG_FILE));
+                dirents.append(dirent.dir_entry_line(idx, command, FT_REG_FILE));
             }
             inodes[idx] = cmd_inode;
             data[idx] = cmd_data;
@@ -85,20 +85,20 @@ contract man is SyncFS, Utility {
         }
         if (!dirents.empty()) {
             usr_dir_inode.file_size += uint32(dirents.length);
-            usr_dir_inode.n_links += ic - _get_inode_count(_inodes);
+            usr_dir_inode.n_links += ic - sb.get_inode_count(_inodes);
             usr_dir_inode.modified_at = now;
             usr_dir_inode.last_modified = now;
             inodes[usr_dir_index] = usr_dir_inode;
             usr_dir_data.append(dirents);
             data[usr_dir_index] = usr_dir_data;
-            inodes[SB_INODES] = _claim_inodes_and_blocks(_inodes[SB_INODES], uint16(total_inodes), uint16(total_blocks));
+            inodes[SB_INODES] = sb.claim_inodes_and_blocks(_inodes[SB_INODES], uint16(total_inodes), uint16(total_blocks));
         }
     }
 
     function get_command_info_list() external view returns (string[] command_names, mapping (uint8 => CmdInfoS) command_info) {
-        string etc_command_list = _get_file_contents_at_path("/etc/command_list", _inodes, _data);
+        string etc_command_list = fs.get_file_contents_at_path("/etc/command_list", _inodes, _data);
         (string[] commands, uint n_commands) = stdio.split_line(etc_command_list, " ", "\n");
-        uint16 bin_dir_index = _resolve_absolute_path("/usr", _inodes, _data);
+        uint16 bin_dir_index = fs.resolve_absolute_path("/usr", _inodes, _data);
         for (uint i = 0; i < n_commands; i++) {
             string command_name = commands[i];
             command_names.push(command_name);
@@ -126,10 +126,10 @@ contract man is SyncFS, Utility {
     }
 
     function get_command_info_file() external view returns (uint16 index, bytes contents) {
-        string etc_command_list = _get_file_contents_at_path("/etc/command_list", _inodes, _data);
+        string etc_command_list = fs.get_file_contents_at_path("/etc/command_list", _inodes, _data);
         (string[] commands, uint n_commands) = stdio.split(etc_command_list, " ");
-        uint16 bin_dir_index = _resolve_absolute_path("/usr", _inodes, _data);
-        index = _resolve_absolute_path("/etc/command_info", _inodes, _data);
+        uint16 bin_dir_index = fs.resolve_absolute_path("/usr", _inodes, _data);
+        index = fs.resolve_absolute_path("/etc/command_info", _inodes, _data);
         for (uint i = 0; i < n_commands; i++) {
             string command_name = commands[i];
             uint16 command_index = bin_dir_index + uint16(i) + 4;
@@ -160,7 +160,7 @@ contract man is SyncFS, Utility {
 
     /* Print an internal debugging information about the file system state */
     function dump_fs(uint8 level) external view returns (string) {
-        return _dump_fs(level, _inodes, _data);
+        return fs.dump_fs(level, _inodes, _data);
     }
 
     function assign_pages(address[] pages) external pure accept {
@@ -176,8 +176,8 @@ contract man is SyncFS, Utility {
 
     /* Imports helpers */
     function _get_imported_file_contents(string path, string file_name) internal view returns (string text) {
-        uint16 dir_idx = _resolve_absolute_path(path, _inodes, _data);
-        (uint16 file_index, uint8 ft) = _lookup_dir(_inodes[dir_idx], _data[dir_idx], file_name);
+        uint16 dir_idx = fs.resolve_absolute_path(path, _inodes, _data);
+        (uint16 file_index, uint8 ft) = fs.lookup_dir(_inodes[dir_idx], _data[dir_idx], file_name);
         if (ft > FT_UNKNOWN)
             return _data[file_index];
         return "Failed to read file " + file_name + " at path " + path + "\n";
@@ -211,17 +211,17 @@ contract man is SyncFS, Utility {
     }
 
     function _is_command_page_available(string command_name) private view returns (bool) {
-        uint16 usr_dir_index = _resolve_absolute_path("/usr", _inodes, _data);
-        (uint16 command_index, uint8 ft) = _lookup_dir(_inodes[usr_dir_index], _data[usr_dir_index], command_name);
+        uint16 usr_dir_index = fs.resolve_absolute_path("/usr", _inodes, _data);
+        (uint16 command_index, uint8 ft) = fs.lookup_dir(_inodes[usr_dir_index], _data[usr_dir_index], command_name);
         return ft > FT_UNKNOWN && _inodes.exists(command_index) && _data.exists(command_index);
     }
 
     function _get_command_page(string command) private view returns (string name, string purpose, string desc, string[] uses,
                 string option_names, string[] option_descriptions) {
-        (string[] command_data, uint n_fields) = stdio.split(_get_file_contents_at_path("/usr/" + command, _inodes, _data), "\n");
+        (string[] command_data, uint n_fields) = stdio.split(fs.get_file_contents_at_path("/usr/" + command, _inodes, _data), "\n");
         if (n_fields > 5)
-            return (command_data[0], command_data[1], stdio.join_fields(_get_tsv(command_data[3]), "\n"),
-                _get_tsv(command_data[2]), command_data[4], _get_tsv(command_data[5]));
+            return (command_data[0], command_data[1], stdio.join_fields(stdio.get_tsv(command_data[3]), "\n"),
+                stdio.get_tsv(command_data[2]), command_data[4], stdio.get_tsv(command_data[5]));
     }
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {

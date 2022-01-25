@@ -11,17 +11,17 @@ contract tmpfs is Utility {
         inodes = inodes_in;
         data = data_in;
         (, uint16 uid, uint16 gid, , , , , ) = session.unpack();
-        (, , uint16 parent, uint16 dir_index) = _resolve_relative_path(path, session.wd, inodes_in, data_in);
+        (, , uint16 parent, uint16 dir_index) = fs.resolve_relative_path(path, session.wd, inodes_in, data_in);
         if (dir_index == 0) {
-            ic = _get_inode_count(inodes);
-            (inodes[ic], data[ic]) = _get_any_node(FT_REG_FILE, uid, gid, device_id, 0, path, "");
-            string dirent = _dir_entry_line(ic, path, FT_REG_FILE);
+            ic = sb.get_inode_count(inodes);
+            (inodes[ic], data[ic]) = inode.get_any_node(FT_REG_FILE, uid, gid, device_id, 0, path, "");
+            string dirent = dirent.dir_entry_line(ic, path, FT_REG_FILE);
             data[parent].append(dirent);
             Inode parent_dir_node = inodes[parent];
             parent_dir_node.file_size = dirent.byteLength();
             parent_dir_node.n_links++;
             inodes[parent] = parent_dir_node;
-            inodes[SB_INODES] = _claim_inodes_and_blocks(inodes[SB_INODES], 1, 0);
+            inodes[SB_INODES] = sb.claim_inodes_and_blocks(inodes[SB_INODES], 1, 0);
         }
     }
 
@@ -44,19 +44,19 @@ contract tmpfs is Utility {
         inode.modified_at = now;
         inode.last_modified = now;
         inodes[ic] = inode;
-        inodes[SB_INODES] = _claim_inodes_and_blocks(inodes[SB_INODES], 0, n_blocks);
+        inodes[SB_INODES] = sb.claim_inodes_and_blocks(inodes[SB_INODES], 0, n_blocks);
     }
 
     function handle_action(string env, Action file_action, Ar[] ars, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint16 device_id;
         uint16 block_size = 100;
-        (uint16 uid, uint16 gid) = _get_user_data(env);
+        (uint16 uid, uint16 gid) = arg.get_user_data(env);
         (uint8 at, uint16 n_files) = file_action.unpack();
         inodes = inodes_in;
         data = data_in;
         mapping (uint16 => Inode) inodes_diff;
         mapping (uint16 => bytes) data_diff;
-        uint16 inode_count = _get_inode_count(inodes);
+        uint16 inode_count = sb.get_inode_count(inodes);
         uint16 counter = inode_count;
 
         uint total_blocks;
@@ -70,12 +70,12 @@ contract tmpfs is Utility {
                 (uint8 ar_type, , uint16 index, /*uint16 dir_index*/, string path, string text) = ars[i].unpack();
                 if (ar_type == IO_MKFILE) {
                     uint16 n_blocks = uint16(text.byteLength() / block_size + 1);
-                    (inodes_diff[counter], data[counter]) = _get_any_node(FT_REG_FILE, uid, gid, device_id, n_blocks, path, text);
+                    (inodes_diff[counter], data[counter]) = inode.get_any_node(FT_REG_FILE, uid, gid, device_id, n_blocks, path, text);
                     counter++;
                     total_blocks += n_blocks;
                 }
                 else if (ar_type == IO_MKDIR) {
-                    (inodes_diff[counter], data[counter]) = _get_any_node(FT_DIR, uid, gid, device_id, 1, path, text);
+                    (inodes_diff[counter], data[counter]) = inode.get_any_node(FT_DIR, uid, gid, device_id, 1, path, text);
                     total_blocks++;
                     counter++;
                 } else if (ar_type == IO_SET_ARCHIVE_HEADER) {
@@ -149,7 +149,7 @@ contract tmpfs is Utility {
                 }
             }
         }
-        inodes_diff[SB_INODES] = _claim_inodes_and_blocks(inodes[SB_INODES], n_files, uint16(total_blocks));
+        inodes_diff[SB_INODES] = sb.claim_inodes_and_blocks(inodes[SB_INODES], n_files, uint16(total_blocks));
 
         for ((uint16 index, Inode inode): inodes_diff)
             inodes[index] = inode;
@@ -161,7 +161,7 @@ contract tmpfs is Utility {
     function mount_dir(uint16 mount_point_index, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         mapping (uint16 => Inode) inn = inodes_in;
         mapping (uint16 => bytes) b_data = data_in;
-        uint16 inode_count = _get_inode_count(inodes_in);
+        uint16 inode_count = sb.get_inode_count(inodes_in);
         uint16 block_size;// = block_size;
         uint16 counter = inode_count;
         uint total_blocks;

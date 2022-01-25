@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -31,7 +31,7 @@ contract mknod is Utility {
                 file_type = FT_CHRDEV;
             else if (node_type == "p")
                 file_type = FT_FIFO;
-            (out, file_action, ars, errors) = _mknod(file_type, node_name, flags,  _get_inode_count(inodes), inodes, data);
+            (out, file_action, ars, errors) = _mknod(file_type, node_name, flags, sb.get_inode_count(inodes), inodes, data);
         }
     }
 
@@ -43,15 +43,15 @@ contract mknod is Utility {
         action = Action(action_type, 1);
         mapping (uint16 => string[]) parent_dirs;
 
-        uint16 dev_dir_index = _resolve_absolute_path("/dev", inodes, data);
-        (uint16 index, uint8 ft) = _lookup_dir(inodes[dev_dir_index], data[dev_dir_index], file_name);
+        uint16 dev_dir_index = fs.resolve_absolute_path("/dev", inodes, data);
+        (uint16 index, uint8 ft) = fs.lookup_dir(inodes[dev_dir_index], data[dev_dir_index], file_name);
 
 //            (string path, , uint16 index, uint16 parent, uint16 dir_index) = arg.unpack();
 //            (, string file_name) = _dir(path);
             if (ft == FT_UNKNOWN) {
                 string contents;// = _get_dots(ic, parent);
                 ars.push(Ar(action_item_type, file_type, index, 0, file_name, contents));
-                parent_dirs[dev_dir_index].push(_dir_entry_line(ic, file_name, file_type));
+                parent_dirs[dev_dir_index].push(dirent.dir_entry_line(ic, file_name, file_type));
                 ic++;
             } else
                 errors.push(Err(0, EEXIST, file_name));

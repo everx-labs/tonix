@@ -22,7 +22,7 @@ contract tfs is SyncFS, Utility {
     function dump_fs_out(uint16 mode) external view returns (string out) {
         uint16 level = mode & 0xFF;
         uint16 form = (mode >> 8) & 0xFF;
-        return _dumpfs(level, form, _inodes, _data);
+        return fs.dumpfs(level, form, _inodes, _data);
     }
 
     function _handle_action(Session session, Action file_action, Ar[] ars) internal {
@@ -30,7 +30,7 @@ contract tfs is SyncFS, Utility {
         (uint8 at, uint16 n_files) = file_action.unpack();
         mapping (uint16 => Inode) inn;
         mapping (uint16 => bytes) data;
-        uint16 inode_count = _get_inode_count(_inodes);
+        uint16 inode_count = sb.get_inode_count(_inodes);
         uint16 counter = inode_count;
 
         uint total_blocks;
@@ -43,11 +43,11 @@ contract tfs is SyncFS, Utility {
             for (uint i = 0; i < n_ars; i++) {
                 (uint8 ar_type, , uint16 index, /*uint16 dir_index*/, string path, string text) = ars[i].unpack();
                 if (ar_type == IO_MKFILE) {
-                    (inn[counter], data[counter]) = _get_any_node(FT_REG_FILE, uid, gid, _device_id, uint16(text.byteLength() / _block_size), path, text);
+                    (inn[counter], data[counter]) = inode.get_any_node(FT_REG_FILE, uid, gid, _device_id, uint16(text.byteLength() / _block_size), path, text);
                     counter++;
                 }
                 else if (ar_type == IO_MKDIR) {
-                    (inn[counter], data[counter]) = _get_any_node(FT_DIR, uid, gid, _device_id, 1, path, text);
+                    (inn[counter], data[counter]) = inode.get_any_node(FT_DIR, uid, gid, _device_id, 1, path, text);
                     counter++;
                 } else if (ar_type == IO_SET_ARCHIVE_HEADER) {
                     Inode archive_node = _inodes[index];
@@ -113,7 +113,7 @@ contract tfs is SyncFS, Utility {
                 }
             }
         }
-        inn[SB_INODES] = _claim_inodes_and_blocks(_inodes[SB_INODES], n_files, uint16(total_blocks));
+        inn[SB_INODES] = sb.claim_inodes_and_blocks(_inodes[SB_INODES], n_files, uint16(total_blocks));
 
         for ((uint16 index, Inode inode): inn)
             _inodes[index] = inode;
@@ -125,7 +125,7 @@ contract tfs is SyncFS, Utility {
     function mount_dir(uint16 mount_point_index, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external accept {
         mapping (uint16 => Inode) inn;
         mapping (uint16 => bytes) b_data;
-        uint16 inode_count = _get_inode_count(_inodes);
+        uint16 inode_count = sb.get_inode_count(_inodes);
         uint16 block_size = _block_size;
         uint16 counter = inode_count;
         uint total_blocks;
@@ -140,7 +140,7 @@ contract tfs is SyncFS, Utility {
             total_blocks += bts.length / block_size + 1;
         }
         inn[mount_point_index] = inodes[ROOT_DIR];
-        inn[SB_INODES] = _claim_inodes_and_blocks(_inodes[SB_INODES], n_inodes, total_blocks);
+        inn[SB_INODES] = sb.claim_inodes_and_blocks(_inodes[SB_INODES], n_inodes, total_blocks);
 
         for ((uint16 index, Inode inode): inn)
             _inodes[index] = inode;
@@ -150,9 +150,9 @@ contract tfs is SyncFS, Utility {
 
     function write_to_file(Session session, string path, string text) external accept {
         (uint16 uid, uint16 gid, ) = (session.uid, session.gid, session.wd);
-        uint16 counter = _get_inode_count(_inodes);
+        uint16 counter = sb.get_inode_count(_inodes);
 
-        (_inodes[counter], _data[counter]) = _get_any_node(FT_REG_FILE, uid, gid, _device_id, uint16(text.byteLength() / _block_size), path, text);
+        (_inodes[counter], _data[counter]) = inode.get_any_node(FT_REG_FILE, uid, gid, _device_id, uint16(text.byteLength() / _block_size), path, text);
 //        _append_dir_entry(wd, counter, path, FT_REG_FILE);
     }
 
@@ -165,7 +165,7 @@ contract tfs is SyncFS, Utility {
 
     /* Print an internal debugging information about the file system state */
     function dump_fs(uint8 level) external view returns (string) {
-        return _dump_fs(level, _inodes, _data);
+        return fs.dump_fs(level, _inodes, _data);
     }
 
     /* Index node operations helpers */
@@ -175,14 +175,6 @@ contract tfs is SyncFS, Utility {
 
     function _is_update(uint8 t) internal pure returns (bool) {
         return t == IO_CHATTR || t == IO_ACCESS || t == IO_PERMISSION || t == IO_UPDATE_TIME || t == IO_UNLINK || t == IO_HARDLINK || t == IO_TRUNCATE || t == IO_UPDATE_TEXT_DATA;
-    }
-
-    function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("tfs", "test file system", "[OPTION]... FILE...",
-            "Used for file system operations testing.",
-            "cm", 1, M, [
-            "do not create any files",
-            "change only the modification time"]);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

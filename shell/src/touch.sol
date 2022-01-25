@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,10 +8,10 @@ contract touch is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        uint16 ic = _get_inode_count(inodes);
+        uint16 ic = sb.get_inode_count(inodes);
         bool create_files = !arg.flag_set("c", flags);
         bool update_if_exists = !arg.flag_set("m", flags);
 
@@ -26,7 +26,7 @@ contract touch is Utility {
                 uint8 file_type = FT_REG_FILE;
                 string contents;
                 ars.push(Ar(IO_MKFILE, file_type, index, dir_index, file_name, contents));
-                parent_dirs[parent].push(_dir_entry_line(ic, file_name, file_type));
+                parent_dirs[parent].push(dirent.dir_entry_line(ic, file_name, file_type));
                 ic++;
             } else
                 if (update_if_exists)
