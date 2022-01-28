@@ -1,21 +1,8 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
 contract ulimit is Shell {
-
-    /*function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = _get_args(args);
-        bool soft_resource_limit = _flag_set("S", flags);
-        bool hard_resource_limit = _flag_set("H", flags);
-        ec = EXECUTE_SUCCESS;
-        string options;// = e[IS_VARIABLE];
-//        if (options.empty())
-//            options = "f";
-
-        bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
-        bool print_all = _flag_set("a", flags);
-    }*/
 
     function _table(TvmCell[] cls) internal pure returns (string out) {
         Column[] columns_format = [
@@ -38,16 +25,15 @@ contract ulimit is Shell {
     }
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        bool soft_resource_limit = arg.flag_set("S", flags);
-        bool hard_resource_limit = arg.flag_set("H", flags);
+        /*(string[] params, string flags, ) = arg.get_args(args);
+        (bool socket_buffer_size, bool core_file_size, bool data_seg_size, bool scheduling_priority, bool file_size, bool pending_signals,
+            bool max_locked_memory, bool max_memory_size) = arg.flag_values("bcdefilm", flags);
+        (bool open_files, bool pipe_size, bool POSIX_message_queues, bool real_time_priority, bool stack_size, bool cpu_time,
+            bool max_user_processes, bool virtual_memory) = arg.flag_values("npqrstuv", flags);
+        (bool file_locks, bool max_pseudoterminals, bool max_user_threads, bool soft_resource_limit, bool hard_resource_limit, bool print_all, , ) =
+            arg.flag_values("xPTSHa", flags);
+        bool use_hard_limit = hard_resource_limit && !soft_resource_limit;*/
         ec = EXECUTE_SUCCESS;
-        string options;// = e[IS_VARIABLE];
-//        if (options.empty())
-//            options = "f";
-
-        bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
-        bool print_all = arg.flag_set("a", flags);
 
 /*/proc/27196/limits
 Limit                     Soft Limit           Hard Limit           Units
@@ -67,45 +53,13 @@ Max msgqueue size         819200               819200               bytes
 Max nice priority         0                    0
 Max realtime priority     0                    0
 Max realtime timeout      unlimited            unlimited            us*/
-        /*bool socket_buffer_size = _flag("b", env_in);
-        bool core_file_size = _flag("c", env_in);
-        bool data_seg_size = _flag("d", env_in);
-        bool scheduling_priority = _flag("e", env_in);
-        bool file_size = _flag("f", env_in);
-        bool pending_signals = _flag("i", env_in);
-        bool max_locked_memory = _flag("l", env_in);
-        bool max_memory_size = _flag("m", env_in);
-        bool open_files = _flag("n", env_in);
-        bool pipe_size = _flag("p", env_in);
-        bool POSIX_message_queues = _flag("q", env_in);
-        bool real_time_priority = _flag("r", env_in);
-        bool stack_size = _flag("s", env_in);
-        bool cpu_time = _flag("t", env_in);
-        bool max_user_processes = _flag("u", env_in);
-        bool virtual_memory = _flag("v", env_in);
-        bool file_locks = _flag("x", env_in);
-        bool max_pseudoterminals = _flag("P", env_in);
-        bool max_user_threads = _flag("T", env_in);*/
-
-//        uint16 page_index = IS_LIMIT;
-//        string page = e[page_index];
-
-        if (print_all) {
+//        if (print_all) {
             (string[] items, ) = stdio.split_line(pool, "\n", "\n");
             for (string item: items) {
 //                (string attrs, string name, string value) = _parse_var(item);
 //                out.append(name + " " + value + "\n");
             }
-        }/*} else {
-            if (s_args.empty())
-                out.append(lim.value + "\n");
-            else
-                env_in[lim_map_key].value[lim_key].value = args[0];
-            env = env_in;
-
-            for ((, Item i): limits)
-                out.append(i.name + " " + i.value + "\n");
-        }*/
+//        }
     }
 
 

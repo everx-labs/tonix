@@ -1,14 +1,8 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
 contract builtin is Shell {
-
-    function _item_val(string name, Item[] coll) internal pure returns (string) {
-        for (Item i: coll)
-            if (i.name == name)
-                return i.value;
-    }
 
     function run_builtin(string args) external pure returns (string res) {
         string flags = vars.val("FLAGS", args);
@@ -18,6 +12,8 @@ contract builtin is Shell {
         string ec = vars.val("?", args);
         string opterr = vars.val("OPTERR", args);
 
+        (bool f_p, bool f_v, bool f_V, bool f_l, bool f_d, bool f_r, bool f_t, bool f_f) = arg.flag_values("pvVldrtf", flags);
+        bool p_e = params.empty();
         if (ec == "1")
             return "echo error parsing command line";
         else if (ec == "2")
@@ -29,12 +25,9 @@ contract builtin is Shell {
         if (cmd == "builtin")
             return "./ty " + s_args;
 
-        if (cmd == "declare" || cmd == "alias" || cmd == "readonly" || cmd == "export" || cmd == "set" || cmd == "complete") {
-            if (arg.flag_set("p", flags) || params.empty())
-                fn = "print";
-            else
-                fn = "modify";
-        } else if (cmd == "type" || cmd == "echo" || cmd == "pwd")
+        if (cmd == "declare" || cmd == "alias" || cmd == "readonly" || cmd == "export" || cmd == "set" || cmd == "complete" || cmd == "shopt")
+            fn = f_p || p_e ? "print" : "modify";
+        else if (cmd == "type" || cmd == "echo" || cmd == "pwd" || cmd == "compgen")
             fn = "print";
         else if (cmd == "exec")
             fn = "print";
@@ -46,12 +39,9 @@ contract builtin is Shell {
             fn = "read_input";
         else if (cmd == "unset" || cmd == "unalias" || cmd == "shift")
             fn = "modify";
-        else if (cmd == "command") {
-            if (arg.flag_set("v", flags) || arg.flag_set("V", flags))
-                fn = "print";
-            else
-                fn = "execute_command";
-        } else if (cmd == "ulimit") {
+        else if (cmd == "command")
+            fn = f_v || f_V ? "print" : "execute_command";
+        else if (cmd == "ulimit") {
             (bool v1, bool v2, bool v3, bool v4, bool v5, bool v6, bool v7, bool v8) = arg.flag_values("12345678", flags);
             if (params.empty()) fn = "print";
             else if (v1) fn = "v1";
@@ -63,14 +53,10 @@ contract builtin is Shell {
             else if (v7) fn = "v7";
             else if (v8) fn = "v8";
             else fn = "execute";
-        } else if (cmd == "hash") {
-            if (params.empty() || arg.flag_set("l", flags))
-                fn = "print";
-            else if (arg.flag_set("d", flags) || arg.flag_set("r", flags) )
-                fn = "modify";
-            else if (arg.flag_set("t", flags) || flags.empty())
-                fn = "lookup";
-        }
+        } else if (cmd == "hash")
+            fn = p_e || f_l ? "print" : f_d || f_r ? "modify" : f_t || flags.empty() ? "lookup" : "";
+        else
+            return "echo builtin: " + cmd + ": not a shell builtin";
 
         if (cmd == "alias" || cmd == "unalias")
             page = "aliases";
@@ -78,20 +64,32 @@ contract builtin is Shell {
             page = "hashes";
         else if (cmd == "shift")
             page = "pos_params";
-        else if (cmd == "declare" || cmd == "export" || cmd == "readonly") {
-            if (arg.flag_set("f", flags))
-                page = "functions";
-            else if (fn == "print")
-                page = "pool";
-            else
-                page = "vars";
-        } else if (cmd == "type")
+        else if (cmd == "declare" || cmd == "export" || cmd == "readonly")
+            page = f_f ? "functions" : fn == "print" ? "pool" : "vars";
+        else if (cmd == "type")
             page = "pool";
+        else if (cmd == "shopt")
+            page = "shell_opts";
         else if (cmd == "echo" || cmd == "pwd" || cmd == "cd")
             page = "vars";
         else if (cmd == "dirs" || cmd == "pushd" || cmd == "popd")
             page = "dir_stack";
-
+        else if (cmd == "complete" || cmd == "compgen") {
+            (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = arg.flag_values("abcdefgj", flags);
+            (bool fk, bool fs, bool fu, bool fv, , , , ) = arg.flag_values("ksuv", flags);
+            page =  fa ? "aliases" :
+                    fb ? "builtins" :
+                    fc ? "comp_spec" :
+                    fd ? "dir_cache" :
+                    fe ? "export" :
+                    ff ? "filenames" :
+                    fg ? "groups" :
+                    fj ? "jobs" :
+                    fk ? "keywords" :
+                    fs ? "services" :
+                    fu ? "users" :
+                    fv ? "vars" : "";
+        }
         res = "./builtin " + cmd + " " + fn + " " + page + " " + s_args;
     }
 

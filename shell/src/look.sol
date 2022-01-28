@@ -20,9 +20,6 @@ contract look is Utility {
 
     function _look(string flags, string texts, string[] params) private pure returns (string out) {
         (string[] text, ) = stdio.split(texts, "\n");
-//        bool binary_search = (flags & _b) > 0;
-//        bool alphanum_set = (flags & _d) > 0;
-//        bool ignore_case = (flags & _f) > 0;
         bool use_term_char = arg.flag_set("t", flags);
 
         string pattern = !params.empty() ? params[0] : "";

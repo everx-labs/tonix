@@ -164,6 +164,16 @@ library stdio {
             return s.substr(0, len - 1);
     }
 
+    function trim_spaces(string s_arg) internal returns (string res) {
+        res = tr_squeeze(s_arg, " ");
+        uint len = res.byteLength();
+        if (len > 0 && strrchr(res, " ") == len)
+            res = res.substr(0, len - 1);
+        len = res.byteLength();
+        if (len > 0 && res.substr(0, 1) == " ")
+            res = res.substr(1);
+    }
+
     /* Assigns a rating to a string to sort alphabetically */
     function alpha_rating(string s, uint len) internal returns (uint rating) {
         bytes bts = bytes(s);

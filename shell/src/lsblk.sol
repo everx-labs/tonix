@@ -5,18 +5,13 @@ import "Utility.sol";
 contract lsblk is Utility {
 
     /* Query devices and file systems status */
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-        uint16 pid = session.pid;
-        pid = pid;
-//        bool print_all_devices = (flags & _a) > 0;
-        bool human_readable = (flags & _b) == 0;
-        bool print_header = (flags & _n) == 0;
-        bool print_fsinfo = (flags & _f) > 0;
-        bool print_permissions = (flags & _m) > 0;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
+        (bool print_all_devices, bool human_readable, bool print_header, bool print_fsinfo, bool print_permissions, bool full_path, , ) =
+            arg.flag_values("abnfmp", flags);
         bool print_device_info = !print_fsinfo && !print_permissions;
-        bool full_path = (flags & _p) > 0;
-
         string[][] table;
         Column[] columns_format = [
             Column(true, 15, fmt.ALIGN_LEFT), // Name

@@ -1,21 +1,16 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
-import "compspec.sol";
 
-contract type_ is Shell, compspec {
+contract type_ is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
-
-//        bool all_locations = _flag("a", env_in);
-//        bool func_lookup = _flag("f", env_in);
+//        (bool all_locations, bool func_lookup, bool disk_file_name, bool path_search, , , , ) = arg.flag_values("afpP", flags);
         bool f_terse = arg.flag_set("t", flags);
-//        bool disk_file_name = _flag("p", env_in);
-//        bool path_search = _flag("P", env_in);
 
         for (string arg: params) {
-            string t = _get_array_name(arg, pool);
+            string t = vars.get_array_name(arg, pool);
             string value;
             if (t == "keyword")
                 value = f_terse ? "keyword" : (arg + " is a shell keyword");

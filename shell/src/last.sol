@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -8,16 +8,8 @@ contract last is Utility {
         err = "";
         ( , , string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
-
-//    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-//        (, , uint flags) = input.unpack();
-//        bool host_names = (flags & _a) > 0;
-//        bool translate_address = (flags & _d) > 0;
-//        bool full_dates = (flags & _F) > 0;
-//        bool numeric_addresses = (flags & _i) > 0;
-//        bool no_host_names = (flags & _R) > 0;
-//        bool full_domain_names = (flags & _w) > 0;
-//        bool shutdown_entries = (flags & _x) > 0;
+//        (bool host_names, bool translate_address, bool full_dates, bool numeric_addresses, bool numeric_addresses, bool numeric_addresses,
+//            bool shutdown_entries, ) = arg.flag_values("adFiRwx", flags);
         bool shutdown_entries = arg.flag_set("x", flags);
         string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
 

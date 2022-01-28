@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -31,7 +31,7 @@ contract enable is Shell {
             }
         } else {
             for (string arg: params)
-                page = _set_var(s_attrs, arg, page);
+                page = vars.set_var(s_attrs, arg, page);
             res = page;
         }
     }

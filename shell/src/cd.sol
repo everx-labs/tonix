@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -14,20 +14,20 @@ contract cd is Shell {
         string home_dir = vars.val("HOME", page);
         string arg = params.empty() ? home_dir : params[0];
 
-        uint16 wd = _resolve_absolute_path(cur_dir, inodes, data);
+        uint16 wd = fs.resolve_absolute_path(cur_dir, inodes, data);
 
         if (arg == "~")
             arg = home_dir;
         else if (arg == "-")
             arg = old_wd;
 
-        (uint16 index, uint8 ft, , ) = _resolve_relative_path(arg, wd, inodes, data);
+        (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(arg, wd, inodes, data);
 
         if (ft == FT_DIR) {
-            string new_dir = _get_absolute_path(index, inodes, data);
-            page = _set_var(s_attrs, "OLDPWD=" + cur_dir, page);
-            page = _set_var(s_attrs, "PWD=" + new_dir, page);
-            page = _set_var(s_attrs, "WD=" + format("{}", index), page);
+            string new_dir = fs.get_absolute_path(index, inodes, data);
+            page = vars.set_var(s_attrs, "OLDPWD=" + cur_dir, page);
+            page = vars.set_var(s_attrs, "PWD=" + new_dir, page);
+            page = vars.set_var(s_attrs, "WD=" + format("{}", index), page);
 
             res = page;
         } else if (ft == FT_UNKNOWN) {
@@ -39,12 +39,12 @@ contract cd is Shell {
 
     function _dereference(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (Arg) {
         bool expand_symlinks = (mode & EXPAND_SYMLINKS) > 0;
-        (uint16 ino, uint8 ft, uint16 parent, uint16 dir_index) = _resolve_relative_path(s_arg, wd, inodes, data);
+        (uint16 ino, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
         Inode inode;
         if (ino > 0 && inodes.exists(ino))
             inode = inodes[ino];
         if (expand_symlinks && ft == FT_SYMLINK) {
-            (ft, s_arg, ino) = _get_symlink_target(inode, data[ino]).unpack();
+            (ft, s_arg, ino) = dirent.get_symlink_target(inode, data[ino]).unpack();
         }
         return Arg(s_arg, ft, ino, parent, dir_index);
     }

@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.55.0;
 
 import "../include/fs_types.sol";
-import "../lib/stdio.sol";
+import "stdio.sol";
 
 library dirent {
 
@@ -125,7 +125,6 @@ library dirent {
     }
 
     function dir_entry_line(uint16 index, string file_name, uint8 file_type) internal returns (string) {
-//        return file_type_sign(file_type) + file_name + format("\t{}\n", index);
         return format("{}{}\t{}\n", file_type_sign(file_type), file_name, index);
     }
 

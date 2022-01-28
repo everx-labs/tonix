@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -45,14 +45,13 @@ contract getopts is Shell {
             (opt_index, opt_sym, opt_arg) = _next_option(s_args, opt_string);
             dbg.append(format("{} {} -> {} {} {}\n", s_args, opt_string, opt_index, opt_sym, opt_arg));
             if (!opt_sym.empty()) {
-                opt_values.append(_encode_item(opt_sym, opt_arg));
+                opt_values.append(vars.encode_item(opt_sym, opt_arg));
                 s_flags.append(opt_sym);
                 s_args = s_args.substr(opt_index);
             } else
                 break;
         }*/
 
-//        env[IS_SPEC] = opt_values;
         /*for (uint i = 0; i < opt_str_len; i++) {
             string o = opt_string.substr(i, 1);
             uint p = stdio.strstr(s_args, "-"

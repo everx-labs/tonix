@@ -1,24 +1,24 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
 contract dumpe2fs is Utility {
 
-    function exec(InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, , uint flags) = input.unpack();
-
-        bool sb_only = (flags & _h) > 0;
-        bool image_fs = (flags & _i) > 0;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
+        (bool sb_only, bool image_fs, , , , , , ) = arg.flag_values("hi", flags);
 
         if (sb_only)
-            return _display_sb(inodes, data);
+            out = _display_sb(inodes, data);
 
         if (image_fs) {
             string s1 = _dump_e2fs(2, inodes, data);
             string s2 = _dump_e2fs(2, _read_inode_table(data), data);
-            return s1 + "\n\n\n" + s2;
+            out = s1 + "\n\n\n" + s2;
         }
-        return _dump_e2fs(2, inodes, data);
+        out = _dump_e2fs(2, inodes, data);
     }
 
     function _get_parent_offset(string parent, string[] file_list) internal pure returns (uint8 offset) {

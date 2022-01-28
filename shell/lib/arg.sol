@@ -1,8 +1,5 @@
 pragma ton-solidity >= 0.55.0;
 
-//import "variables.sol";
-
-//abstract contract arguments is variables {
 import "vars.sol";
 
 library arg {

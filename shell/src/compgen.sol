@@ -5,70 +5,31 @@ import "compspec.sol";
 
 contract compgen is Shell, compspec {
 
-    function read_fs_to_env(Job job_in, mapping (uint => ItemHashMap) env_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (Job job, mapping (uint => ItemHashMap) env) {
-        job = job_in;
-        env = env_in;
-        (, , , , , , , , , , string s_arg, string[] args, string short_options, , , , , , ) = job_in.unpack();
-//            (uint16 ec, string out, mapping (uint => ItemHashMap) env_x, string s_action) = _cd(args, short_options, env_in, inodes, data);
-        uint n_options = short_options.byteLength();
-        string out;
-//        string last_arg = _get_last_arg(s_arg);
-        uint n_args = args.length;
-        string last_arg = n_args > 0 ? args[n_args - 1] : "";
+    // Flag values that control parameter pattern substitution
+    uint8 constant MATCH_ANY        = 0;
+    uint8 constant MATCH_BEG        = 1;
+    uint8 constant MATCH_END        = 2;
+    uint8 constant MATCH_TYPEMASK   = 3;
+    uint8 constant MATCH_GLOBREP    = 16;
+    uint8 constant MATCH_QUOTED     = 32;
 
-        for (uint i = 0; i < n_options; i++) {
-            string o = short_options.substr(i, 1);
-            string[] comp = _gen_comp(o, last_arg, env_in);
-            for (string s: comp)
-                out.append(s + "\n");
-            /*string o_map_name = _option_map_name(o);
-            if (!o_map_name.empty()) {
-                uint o_map_key = tvm.hash(o_map_name);
-                if (env.exists(o_map_key)) {
-                    for ((, Item item): env[o_map_key].value)
-                        out.append(item.name + "\n");
-                }
-            }*/
-        }
-//        string p_command = _get_option_param(s_arg, "C");
-//        mapping (uint => Item) comp_spec = env[tvm.hash("compspec")].value;
-//        (uint16 ec, string[] completions) = _compgen(p_command, short_options, comp_spec);
-        job.stdout.append(out);
-        job.s_action = "print_out";
-    }
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = arg.get_args(args);
+        (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = arg.flag_values("abcdefgj", flags);
+        (bool fk, bool fs, bool fu, bool fv, , , , ) = arg.flag_values("ksuv", flags);
+        bool print_names = fa || fb || fe || fv;
+        bool print_values = fc || fd || ff || fg || fj || fk || fs || fu;
+        ec = EXECUTE_SUCCESS;
 
-    function _compgen(string p_command, string short_options, mapping (uint => Item) comp_spec) internal pure returns (uint16 ec, string[] completions) {
-        /*string p_option = _get_option_param(s_arg, "o");
-        string p_action = _get_option_param(s_arg, "A"); // The action may be one of the following to generate a list of possible completions: (see links)
-        string p_globpat = _get_option_param(s_arg, "G"); // The filename expansion pattern globpat is expanded to generate the possible completions.
-        string p_wordlist = _get_option_param(s_arg, "W");
-        string p_function = _get_option_param(s_arg, "F");
-
-        string p_filterpat = _get_option_param(s_arg, "X");
-        string p_prefix = _get_option_param(s_arg, "P");
-        string p_suffix = _get_option_param(s_arg, "S");
-
-        string o_map_name = _option_map_name(p_option);
-        string a_map_name = _action_map_name(p_action);*/
-
-//        env = env_in;
-        bool process_all = p_command.empty();
-//        mapping (uint => Item) comp_spec = env[tvm.hash("compspec")].value;
-        bool comp_exists;
-        if (!process_all) {
-            comp_exists = comp_spec.exists(tvm.hash(p_command));
-            if (!comp_exists) {
-                uint q = stdio.strrchr(p_command, "/");
-                if (q > 0) {
-                    string command_name_short = p_command.substr(q);
-                    comp_exists = comp_spec.exists(tvm.hash(command_name_short));
-                }
+        string param = params.empty() ? "" : params[0];
+        uint p_len = param.byteLength();
+        (string[] lines, ) = stdio.split(pool, "\n");
+        for (string line: lines) {
+            (string attrs, string name, string value) = vars.split_var_record(line);
+            if (name.byteLength() >= p_len && name.substr(0, p_len) == param) {
+                out.append((print_names ? name : print_values ? value : "") + "\n");
             }
         }
-        if (comp_exists)
-            (completions, ) = stdio.split(comp_spec[tvm.hash(p_command)].value, " ");
-        else
-            ec = 1;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -1,77 +1,10 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "fmt.sol";
 
 library vars {
 
-    // arrayvar commands
-    // hashmaps [function] => command?
-    // complete -C ? => hash db
-    // hash -l => command path database
-    // => hash, tosh, type, complete, command
-
-    uint16 constant IS_STDIN        = 0;
-    uint16 constant IS_STDOUT       = 1;
-    uint16 constant IS_STDERR       = 2;
-    uint16 constant IS_VARIABLE     = 3;    // - -
-    uint16 constant IS_TOSH_VAR     = 4;    // - -
-    uint16 constant IS_REDIRECT_OP  = 5;
-    uint16 constant IS_ARGS         = 5;    // set: tosh read: others
-    uint16 constant IS_SPEC         = 6;    // set: tosh read: - ???
-    uint16 constant IS_BUILTIN      = 8;    // enable
-    uint16 constant IS_COMMAND      = 9;    // - -
-    uint16 constant IS_INDEX        = 10;    // used in: hash, tosh, type, complete, command => command type lookup
-    uint16 constant IS_DECL         = 11;    // ? ?
-    uint16 constant IS_INTEGER      = 16;   // - -
-    uint16 constant IS_POOL         = 17;   // - -
-    uint16 constant IS_USER         = 18;   // not yet
-    uint16 constant IS_BLTN_IN      = 20;   // - -
-    uint16 constant IS_BLTN_LINE    = 21;   // - -
-    uint16 constant IS_CMD_QUEUE    = 25;
-    uint16 constant IS_PIPELINE     = 26;
-    uint16 constant IS_FD_TABLE     = 27;
-    uint16 constant IS_OPTION_VALUE = 28;
-    uint16 constant IS_ERROR_LOG    = 29;
-    uint16 constant IS_OPTSTRING    = 30;
-    uint16 constant IS_COMP_SPEC    = 31;   // tosh? others? -> binpath?
-    uint16 constant IS_BINPATH      = 32;   // command, hash, type -> command lookup => index?
-    uint16 constant IS_SHELL_OPTION = 33;
-    uint16 constant IS_FILENAME     = 34;
-    uint16 constant IS_DIRNAME      = 35;
-    uint16 constant IS_POSITIONAL   = 36;
-    uint16 constant IS_GROUP        = 37;
-    uint16 constant IS_JOB          = 38;
-    uint16 constant IS_SERVICE      = 39;
-    uint16 constant IS_READONLY     = 40;
-    uint16 constant IS_USER_FD      = 40;
-    uint16 constant IS_LIMIT        = 41;
-    uint16 constant IS_HISTORY      = 42;
-    uint16 constant IS_SPECIAL_VAR  = 43;
-    uint16 constant IS_HELP_TOPIC   = 44;
-    uint16 constant IS_PARAM_LIST   = 45;
-    uint16 constant IS_RESERVED_WORD= 46;
-
-    uint8 constant UNDEFINED        = 0;
-    uint8 constant DEFAULT_EMPTY    = 1;
-    uint8 constant BUILTIN_PRINT    = 2;
-    uint8 constant PRINT_REUSABLE   = 3;
-    uint8 constant BUILTIN_ADD      = 4;
-    uint8 constant BUILTIN_REMOVE   = 5;
-    uint8 constant SET_ATTRS        = 6;
-    uint8 constant UNSET_ATTRS      = 7;
-    uint8 constant APPLY_TO_ALL     = 32;
-
-    // Flags for var_context->flags
-    uint16 constant VC_HASLOCAL = 1;
-    uint16 constant VC_HASTMPVAR= 2;
-    uint16 constant VC_FUNCENV  = 4;	// also function if name != NULL
-    uint16 constant VC_BLTNENV  = 8;	// builtin_env
-    uint16 constant VC_TEMPENV  = 16;	// temporary_env
-
-    uint16 constant VC_TEMPFLAGS = VC_FUNCENV + VC_BLTNENV + VC_TEMPENV;
-
-    // The various attributes that a given variable can have.
-    // First, the user-visible attributes
+    // The various attributes that a given variable can have
     uint16 constant ATTR_EXPORTED   = 1; // export to environment
     uint16 constant ATTR_READONLY   = 2; // cannot change
     uint16 constant ATTR_ARRAY      = 4; // value is an array
@@ -80,21 +13,29 @@ library vars {
     uint16 constant ATTR_LOCAL      = 32;// variable is local to a function
     uint16 constant ATTR_ASSOC      = 64;// variable is an associative array
     uint16 constant ATTR_TRACE  	= 128;// function is traced with DEBUG trap
-
     uint16 constant ATTR_MASK_USER  = 255;
-
-    // Internal attributes used for bookkeeping
     uint16 constant ATTR_INVISIBLE  = 256;  // cannot see
     uint16 constant ATTR_NO_UNSET   = 512;	// cannot unset
     uint16 constant ATTR_NO_ASSIGN  = 1024;	// assignment not allowed
     uint16 constant ATTR_IMPORTED   = 2048;	// came from environment
     uint16 constant ATTR_SPECIAL    = 4096;	// requires special handling
     uint16 constant ATTR_MASK_INT   = 0xFF00;
-
-    // Internal attributes used for variable scoping.
     uint16 constant ATTR_TEMP_VAR	= 8192;	// variable came from the temp environment
     uint16 constant ATTR_PROPAGATE  = 16384;// propagate to previous scope
     uint16 constant ATTR_MASK_SCOPE = 24576;
+
+    uint16 constant W_NONE      = 0;
+    uint16 constant W_COLON     = 1;
+    uint16 constant W_DQUOTE    = 2;
+    uint16 constant W_PAREN     = 3;
+    uint16 constant W_BRACE     = 4;
+    uint16 constant W_SQUARE    = 5;
+    uint16 constant W_SPACE     = 6;
+    uint16 constant W_NEWLINE   = 7;
+    uint16 constant W_SQUOTE    = 8;
+    uint16 constant W_ARRAY     = 9;
+    uint16 constant W_HASHMAP   = 10;
+    uint16 constant W_FUNCTION  = 11;
 
     function fetch_value(string key, uint16 delimiter, string page) internal returns (string value) {
         string key_pattern = wrap(key, W_SQUARE);
@@ -152,44 +93,6 @@ library vars {
             return res.substr(1);
     }
 
-    uint16 constant W_NONE      = 0;
-    uint16 constant W_COLON     = 1;
-    uint16 constant W_DQUOTE    = 2;
-    uint16 constant W_PAREN     = 3;
-    uint16 constant W_BRACE     = 4;
-    uint16 constant W_SQUARE    = 5;
-    uint16 constant W_SPACE     = 6;
-    uint16 constant W_NEWLINE   = 7;
-    uint16 constant W_SQUOTE    = 8;
-    uint16 constant W_ARRAY     = 9;
-    uint16 constant W_HASHMAP   = 10;
-    uint16 constant W_FUNCTION  = 11;
-
-    function strrstr(string text, string pattern) internal returns (uint) {
-        uint text_len = text.byteLength();
-        uint pattern_len = pattern.byteLength();
-        if (text_len < pattern_len)
-            return 0;
-        for (uint i = text_len - pattern_len; i > pattern_len; i--)
-            if (text.substr(i, pattern_len) == pattern)
-                return i + 1;
-    }
-
-    function str_context(string text, string pattern, string delimiter) internal returns (string) {
-        uint q = stdio.strstr(text, pattern);
-        if (q > 0) {
-            uint d_len = delimiter.byteLength();
-            string s_head = text.substr(0, q - 1);
-            string s_tail = text.substr(q - 1 + pattern.byteLength());
-
-            uint p = strrstr(s_head, delimiter);
-            string s_before = p > 0 ? s_head.substr(p - 1 + d_len) : s_head;
-            p = stdio.strstr(s_tail, delimiter);
-            string s_after = p > 0 ? s_tail.substr(0, p - 1) : s_tail;
-            return s_before + pattern + s_after;
-        }
-    }
-
     function var_record(string attrs, string name, string value) internal returns (string) {
         uint16 mask = get_mask_ext(attrs);
         if (attrs == "")
@@ -224,6 +127,62 @@ library vars {
         return is_function ?
             (name + " ()" + wrap(fmt.indent(stdio.translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
             "declare " + attrs + " " + name + var_value + "\n";
+    }
+
+    function as_var_list(string[][2] entries) internal returns (string res) {
+        for (uint i = 0; i < entries.length; i++)
+            res.append("-- " + wrap(entries[i][0], W_SQUARE) + (entries[i][1].empty() ? "" : ("=" + wrap(entries[i][1], W_DQUOTE))) + "\n");
+    }
+
+    function as_hashmap(string name, string[][2] entries) internal returns (string res) {
+        string body;
+        for (uint i = 0; i < entries.length; i++)
+            body.append(wrap(entries[i][0], W_SQUARE) + "=" + wrap(entries[i][1], W_DQUOTE) + " ");
+        res = "-A " + wrap(name, W_SQUARE) + "=" + wrap(body, W_HASHMAP);
+    }
+
+    function as_indexed_array(string name, string value, string ifs) internal returns (string res) {
+        string body;
+        (string[] fields, uint n_fields) = stdio.split(value, ifs);
+        for (uint i = 0; i < n_fields; i++)
+            body.append(format("[{}]=\"{}\" ", i, fields[i]));
+        res = "-a " + wrap(name, W_SQUARE) + "=" + wrap(body, W_ARRAY);
+    }
+
+    function encode_item(string key, string value) internal returns (string res) {
+        res = wrap(key, W_SQUARE) + "=" + wrap(value, W_DQUOTE);
+    }
+
+    function as_map(string value) internal returns (string res) {
+        res = wrap(value, W_HASHMAP);
+    }
+
+    function get_array_name(string value, string context) internal returns (string name) {
+        (string[] lines, ) = stdio.split(context, "\n");
+        string val_pattern = wrap(value, vars.W_SPACE);
+        for (string line: lines)
+            if (stdio.strstr(line, val_pattern) > 0)
+                return stdio.strval(line, "[", "]");
+    }
+
+    function set_item_value(string name, string value, string page) internal returns (string) {
+        string cur_value = val(name, page);
+        string new_record = encode_item(name, value);
+        return cur_value.empty() ? page + " " + new_record : stdio.translate(page, encode_item(name, cur_value), new_record);
+    }
+
+    function set_var(string attrs, string token, string pg) internal returns (string page) {
+        (string name, string value) = stdio.strsplit(token, "=");
+        string cur_record = get_pool_record(name, pg);
+        string new_record = var_record(attrs, name, value);
+        if (!cur_record.empty()) {
+            (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+            (, string cur_value) = stdio.strsplit(cur_record, "=");
+            string new_value = !value.empty() ? value : !cur_value.empty() ? unwrap(cur_value) : "";
+            new_record = var_record(meld_attr_set(attrs, cur_attrs), name, new_value);
+            page = stdio.translate(pg, cur_record, new_record);
+        } else
+            page = pg + new_record + "\n";
     }
 
     function get_mask_ext(string s_attrs) internal returns (uint16 mask) {
@@ -312,5 +271,30 @@ library vars {
         uint len = s.byteLength();
         return len > 2 ? s.substr(1, len - 2) : "";
     }
+
+    /*function strrstr(string text, string pattern) internal returns (uint) {
+        uint text_len = text.byteLength();
+        uint pattern_len = pattern.byteLength();
+        if (text_len < pattern_len)
+            return 0;
+        for (uint i = text_len - pattern_len; i > pattern_len; i--)
+            if (text.substr(i, pattern_len) == pattern)
+                return i + 1;
+    }
+
+    function str_context(string text, string pattern, string delimiter) internal returns (string) {
+        uint q = stdio.strstr(text, pattern);
+        if (q > 0) {
+            uint d_len = delimiter.byteLength();
+            string s_head = text.substr(0, q - 1);
+            string s_tail = text.substr(q - 1 + pattern.byteLength());
+
+            uint p = strrstr(s_head, delimiter);
+            string s_before = p > 0 ? s_head.substr(p - 1 + d_len) : s_head;
+            p = stdio.strstr(s_tail, delimiter);
+            string s_after = p > 0 ? s_tail.substr(0, p - 1) : s_tail;
+            return s_before + pattern + s_after;
+        }
+    }*/
 
 }

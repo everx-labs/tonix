@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -13,7 +13,6 @@ contract read is Shell {
         bool assign_to_array = arg.flag_set("a", flags);
         bool use_delimiter = arg.flag_set("d", flags);
         bool echo_input = !arg.flag_set("s", flags);
-//        string delimiter = use_delimiter ? _get_option_param(s_arg, "d") : " ";
         string delimiter = " ";
         ec = EXECUTE_SUCCESS;
         string s_attrs = assign_to_array ? "-a" : "--";
@@ -23,17 +22,17 @@ contract read is Shell {
         if (assign_to_array) {
             string array_name = "REPLY";
             (string[] fields, ) = stdio.split(input, delimiter);
-            page = _set_var(s_attrs, array_name + "=" + stdio.join_fields(fields, " "), page);
+            page = vars.set_var(s_attrs, array_name + "=" + stdio.join_fields(fields, " "), page);
         } else {
             uint n_args = params.length;
             string s_rem = input;
             for (uint i = 0; i < n_args - 1; i++) {
                 (string s_head, string s_tail) = stdio.strsplit(s_rem, delimiter);
-                page = _set_var(s_attrs, params[i] + "=" + s_head, page);
+                page = vars.set_var(s_attrs, params[i] + "=" + s_head, page);
                 if (i + 2 < n_args)
                     s_rem = s_tail;
                 else
-                    page = _set_var(s_attrs, params[i + 1] + "=" + s_tail, page);
+                    page = vars.set_var(s_attrs, params[i + 1] + "=" + s_tail, page);
             }
         }
         res = page;

@@ -11,11 +11,9 @@ contract chfn is Utility {
     }
 
     function _chfn(uint flags, string[] args, Session session, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
-        /*bool print_system = (flags & _s) > 0 || (flags & _u) == 0;
-        bool print_user = (flags & _u) > 0 || (flags & _s) == 0;
+        /*bool print_system;
+        bool print_user;
         string field_separator;
-        if ((flags & _c) > 0)
-            field_separator = ":";
         field_separator = stdio.aif(field_separator, (flags & _n) > 0, "\n");
         field_separator = stdio.aif(field_separator, (flags & _r) > 0, " ");
         field_separator = stdio.aif(field_separator, (flags & _z) > 0, "\x00");

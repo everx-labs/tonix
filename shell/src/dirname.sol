@@ -24,7 +24,7 @@ contract dirname is Utility {
 "",
 "Written by Boris",
 "",
-"",
+"basename, readlink",
 "0.01");
     }
 }

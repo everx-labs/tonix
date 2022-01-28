@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -18,7 +18,7 @@ contract hash is Shell {
                 (string[] lines, ) = stdio.split(pool, "\n");
                 for (string line: lines) {
                     (, string path, string contents) = vars.split_var_record(line);
-                    (string[] bins, ) = stdio.split(_trim_spaces(contents), " ");
+                    (string[] bins, ) = stdio.split(stdio.trim_spaces(contents), " ");
                     for (string bin: bins) {
                         (string name, string value) = vars.item_value(bin);
                         out.append(print_reusable ?
@@ -29,7 +29,7 @@ contract hash is Shell {
             }
         }
         for (string arg: params) {
-            string path = _get_array_name(arg, pool);
+            string path = vars.get_array_name(arg, pool);
             if (!path.empty()) {
                 out.append(print_tabbed ?
                     arg + "\t" + path + "/" + arg + "\n" :
@@ -51,7 +51,7 @@ contract hash is Shell {
             page = "";
         else if (forget_some) {
             for (string arg: params) {
-                string path = _get_array_name(arg, pool);
+                string path = vars.get_array_name(arg, pool);
                 if (!path.empty())
                     page = stdio.translate(page, arg + " ", "");
                 else {
@@ -79,7 +79,7 @@ contract hash is Shell {
                     out.append("hash: " + arg + ": not found\n");
                 } else {
                     if (stdio.strstr(commands, arg) > 0)
-                        bins = _set_item_value(arg, "0", bins);
+                        bins = vars.set_item_value(arg, "0", bins);
                     else
                         ec = EXECUTE_FAILURE;
                 }
@@ -89,10 +89,10 @@ contract hash is Shell {
                     out.append(bin_path + "/" + arg);
                     string s_hit_count = vars.val(arg, path_map);
                     uint16 hc = stdio.atoi(s_hit_count);
-                    string upd = _set_item_value(arg, stdio.itoa(hc + 1), path_map);
+                    string upd = vars.set_item_value(arg, stdio.itoa(hc + 1), path_map);
                     hashes = stdio.translate(hashes, path_map, upd);
                 } else {
-                    string upd = _set_item_value(arg, "0", path_map);
+                    string upd = vars.set_item_value(arg, "0", path_map);
                     hashes = stdio.translate(hashes, path_map, upd);
                 }
             }

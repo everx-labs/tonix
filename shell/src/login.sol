@@ -11,9 +11,9 @@ contract login is Utility {
 
         uint n_args = args.length;
 
-//        bool force = (flags & _f) > 0;
-        bool use_hostname = (flags & _h) > 0;
-        bool autologin = (flags & _r) > 0;
+        bool force;
+        bool use_hostname;
+        bool autologin;
         string a_host_name;
         string a_user_name;
 
@@ -49,7 +49,7 @@ contract login is Utility {
             string user_name = a_user_name;
             string group_name = i_group_name;
             string cwd = i_cwd;
-            session_out = Session(pid, uid, gid, wd, user_name, group_name, host_name, cwd);
+/            session_out = Session(pid, uid, gid, wd, user_name, group_name, host_name, cwd);
         }
 
         /*uint16 uid;

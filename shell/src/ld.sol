@@ -4,28 +4,12 @@ import "Utility.sol";
 
 contract ld is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
 
-    function induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function _induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-
-        bool output_map_file = (flags & _M) > 0;
-        bool no_page_align_flag = (flags & _n) > 0;
-        bool no_page_align_no_ro_flag = (flags & _N) > 0;
-        bool use_out_file_name = (flags & _o) > 0;
-        bool optimize = (flags & _O) > 0;
-        bool gen_relocations = (flags & _q) > 0;
-        bool relocatable_output = (flags & _r) > 0;
-        bool just_link = (flags & _R) > 0;
-        bool strip_all = (flags & _s) > 0;
-        bool strip_debug = (flags & _S) > 0;
-        bool print_version = (flags & _v) > 0;
+        (bool output_map_file, bool no_page_align_flag, bool no_page_align_no_ro_flag, bool use_out_file_name, bool optimize,
+            bool gen_relocations, bool relocatable_output, bool just_link) = arg.flag_values("MnNoOqrR", flags);
+        (bool strip_all, bool strip_debug, bool print_version, , , , , , ) = arg.flag_values("sSv", flags);
 
         uint n_args = args.length;
         string object_file_name;

@@ -4,33 +4,19 @@ import "Utility.sol";
 
 contract install is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        return _induce(session, input, inodes, data);
-    }
-
-    function _induce(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(arg, session.wd, inodes, data);
-            arg_list.push(Arg(arg, ft, index, parent, dir_index));
+        for (string s_arg: params) {
+            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
+            arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _install(args, flags, session.wd, arg_list, sb.get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _install(params, flags, wd, arg_list, sb.get_inode_count(inodes), inodes, data);
     }
 
-    function _install(string[] args, uint flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
-        bool verbose = (flags & _v) > 0;
-        bool preserve = (flags & _n) > 0;
-        bool request_backup = (flags & _b) > 0;
-        bool to_file_flag = (flags & _T) > 0;
-        bool to_dir_flag = (flags & _t) > 0;
-        bool newer_only = (flags & _C) > 0;
-        bool force = (flags & _f) > 0;
-        bool recurse = (flags & _r + _R) > 0;
+    function _install(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+        (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool recurse)
+            = arg.flag_values("vnbTtufr", flags);
 
         bool to_dir = to_dir_flag;
         uint nargs = args.length;

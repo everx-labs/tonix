@@ -1,36 +1,27 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
 contract test is Shell {
 
-    function builtin_read_fs(string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Write[] wr) {
-//        (, , string argv) = _get_args(e[IS_ARGS]);
-        string s_args = _val("@", e[IS_TOSH_VAR]);
-//        string s_args = argv;
+    function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
+        (string[] params, , ) = arg.get_args(args);
+        string page = pool;
+        string s_args = vars.val("@", args);
         string dbg;
         (string arg_1, string op, string arg_2) = _parse_test_args(s_args);
         dbg.append(format("arg 1: {} op: {} arg 2: {}\n", arg_1, op, arg_2));
-        bool res;
+        bool result;
         if (arg_2.empty()) {
             if (stdio.strchr("aesbcdfhLpSgukrwxOGN", op) > 0)
-                res = _eval_file_unary(op, arg_1, e, inodes, data);
-            else if (stdio.strchr("ovR", op) > 0)
-                res = _eval_option(op, arg_1, e);
+                result = _eval_file_unary(op, arg_1, args, pool, inodes, data);
+//            else if (stdio.strchr("ovR", op) > 0)
+//                result = _eval_option(op, arg_1, e);
+            else
+                result = false;
         }
-        wr.push(Write(IS_STDERR, dbg, O_WRONLY + O_APPEND));
-        out = "";
-        ec = res ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
-    }
-
-    function _eval_option(string op, string name, string[] e) internal pure returns (bool res) {
-//        uint arg_hash = tvm.hash(name);
-//        uint16 page_index = op == "o" ? IS_OPTION : op == "v" ? IS_VARIABLE : op == "R" ? IS_ALIAS : 0;
-//        string page = e[page_index];
-//        (, , string line) = _fetch_var(name, page);
-//        if (!line.empty())
-//            return true;
-        return false;
+        res = result ? "true\n" : "false\n";
+        ec = result ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _match_mode(string op, uint16 mode) internal pure returns (bool res) {
@@ -57,33 +48,29 @@ contract test is Shell {
         return false;
     }
 
-    function _can_access(string op, uint16 mode, uint16 user_id, uint16 group_id) internal pure returns (bool) {
-
-        if (op == "r" && user_id == user_id)
-            return (mode & S_IRUSR) > 0;
-        if (op == "w" && user_id == user_id)
-            return (mode & S_IWUSR) > 0;
-        if (op == "x" && user_id == user_id)
-            return (mode & S_IXUSR) > 0;
-
+    function _can_access(string op, uint16 mode, uint16 user_id, uint16 group_id, uint16 uid, uint16 gid) internal pure returns (bool) {
+        bool user_owned = user_id == uid;
+        bool group_owned = group_id == gid;
         if (op == "O")
-            return user_id == user_id; // uid;
+            return user_owned;
         if (op == "G")
-            return group_id == group_id; // uid;
+            return group_owned;
+
+        if (op == "r")
+            return (user_owned && (mode & S_IRUSR) > 0) || (group_owned && (mode & S_IRGRP) > 0) || (mode & S_IROTH) > 0;
+        if (op == "w")
+            return (user_owned && (mode & S_IWUSR) > 0) || (group_owned && (mode & S_IWGRP) > 0) || (mode & S_IWOTH) > 0;
+        if (op == "x")
+            return (user_owned && (mode & S_IXUSR) > 0) || (group_owned && (mode & S_IXGRP) > 0) || (mode & S_IXOTH) > 0;
 
         return false;
     }
 
-    function _eval_file_unary(string op, string path, string[] e, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
-//        string cached_wd = _lookup_value("shell_vars", "PWD", env);
-        (uint16 index, uint8 file_type, , ) = _resolve_relative_path(path, ROOT_DIR, inodes, data);
-//        string cached_wd = _value_of("PWD", e[IS_VARIABLE]);
-//        string cached_wd = _val("PWD", e[IS_POOL]);
-//        uint16 pwd_index = _resolve_absolute_path(cached_wd, inodes, data);
-//        if (pwd_index > INODES) {
-//        if (file_index >= ROOT_DIR) {
-//            string abs_path = _get_absolute_path(pwd_index, inodes, data);
-//            (uint16 index, uint8 file_type, ) = _lookup_dir_ext(inodes[pwd_index], data[pwd_index], path);
+    function _eval_file_unary(string op, string path, string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
+        uint16 wd_index = stdio.atoi(vars.val("WD", pool));
+//        (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, ROOT_DIR, inodes, data);
+        (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, wd_index, inodes, data);
+//        string cached_wd = vars.val("PWD", pool);
 
             if (file_type == FT_UNKNOWN)
                 return false;
@@ -97,9 +84,11 @@ contract test is Shell {
             if (stdio.strchr("bcdfhLpStgku", op) > 0)
                 return _match_mode(op, mode);
 
-            if (stdio.strchr("rwxOG", op) > 0)
-                return _can_access(op, mode, owner_id, group_id);
-//        }
+            if (stdio.strchr("rwxOG", op) > 0) {
+                uint16 uid = stdio.atoi(vars.val("UID", pool));
+                uint16 gid = stdio.atoi(vars.val("GID", pool));
+                return _can_access(op, mode, owner_id, group_id, uid, gid);
+            }
         return false;
     }
 
@@ -115,63 +104,6 @@ contract test is Shell {
 
         op = !arg_op.empty() && arg_op.substr(0, 1) == "-" ? arg_op.substr(1) : arg_op;
     }
-
-    /*function _test(string[] args, string short_options, mapping (uint => ItemHashMap) env_in) internal pure returns (uint16 ec, string out, mapping (uint => ItemHashMap) env, string s_action) {
-
-        bool file_exists = _get_option_value(short_options, "a") || _get_option_value(short_options, "e");
-        bool file_exists_and_not_empty = _get_option_value(short_options, "s");
-
-        bool file_is_block = _get_option_value(short_options, "b");
-        bool file_is_char = _get_option_value(short_options, "c");
-        bool file_is_dir = _get_option_value(short_options, "d");
-        bool file_is_reg = _get_option_value(short_options, "f");
-        bool file_is_symlink = _get_option_value(short_options, "h") || _get_option_value(short_options, "L");
-        bool file_is_pipe = _get_option_value(short_options, "p");
-        bool file_is_socket = _get_option_value(short_options, "S");
-
-        bool file_is_set_gid = _get_option_value(short_options, "g"); // ??
-        bool file_is_set_uid = _get_option_value(short_options, "u");
-        bool file_has_sticky_bit = _get_option_value(short_options, "k");
-
-        bool file_is_user_readable = _get_option_value(short_options, "r");
-        bool file_is_user_writable = _get_option_value(short_options, "w");
-        bool file_is_user_executable = _get_option_value(short_options, "x");
-
-        bool file_is_effectively_owned = _get_option_value(short_options, "O");
-        bool file_is_effectively_group_owned = _get_option_value(short_options, "G");
-        bool file_has_been_modified = _get_option_value(short_options, "N");
-
-        bool file_opened_on_terminal = _get_option_value(short_options, "t");
-
-        bool file_is_newer = _get_option_value(short_options, "nt");
-        bool file_is_older = _get_option_value(short_options, "ot");
-        bool file_is_hardlink = _get_option_value(short_options, "ef");
-
-        bool string_is_empty = _get_option_value(short_options, "z");
-        bool string_is_not_empty = _get_option_value(short_options, "n") || short_options.empty();
-
-        bool strings_equal = _get_option_value(short_options, "=");
-        bool strings_not_equal = _get_option_value(short_options, "!=");
-        bool strings_lex_before = _get_option_value(short_options, "<");
-        bool strings_lex_after = _get_option_value(short_options, ">");
-
-        bool option_enabled = _get_option_value(short_options, "o");
-        bool shell_var_set = _get_option_value(short_options, "v");
-        bool shell_var_set_and_reference = _get_option_value(short_options, "R");
-
-        bool expr_logical_false = _get_option_value(short_options, "!");
-        bool expr_logical_and = _get_option_value(short_options, "a");
-        bool expr_logical_or = _get_option_value(short_options, "o");
-
-        bool expr_arithmetic_eq = _get_option_value(short_options, "eq");
-        bool expr_arithmetic_ne = _get_option_value(short_options, "ne");
-        bool expr_arithmetic_lt = _get_option_value(short_options, "lt");
-        bool expr_arithmetic_le = _get_option_value(short_options, "le");
-        bool expr_arithmetic_gt = _get_option_value(short_options, "gt");
-        bool expr_arithmetic_ge = _get_option_value(short_options, "ge");
-
-        env = env_in;
-    }*/
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(

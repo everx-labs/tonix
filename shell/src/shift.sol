@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -41,11 +41,11 @@ contract shift is Shell {
             argv.append(" " + params[i]);
         }
         new_pos_str = vars.unwrap(new_pos_str);
-        string pos_map = _as_indexed_array("POS_ARGS", new_pos_str.empty() ? cmd : cmd + " " + new_pos_str, " ");
+        string pos_map = vars.as_indexed_array("POS_ARGS", new_pos_str.empty() ? cmd : cmd + " " + new_pos_str, " ");
         last_param = n_new > 0 ? params[n_new - 1] : cmd;
 
         ec = EXECUTE_SUCCESS;
-        res = _as_var_list([
+        res = vars.as_var_list([
             ["COMMAND", cmd],
             ["PARAMS", pos_params],
             ["FLAGS", s_flags],

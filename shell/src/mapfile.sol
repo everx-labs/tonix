@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -16,7 +16,7 @@ contract mapfile is Shell {
         string array_name = params.empty() ? "MAPFILE" : params[params.length - 1];
         string ofs = arg.flag_set("t", flags) ? " " : (delimiter + " ");
         string ofs_2 = arg.flag_set("t", flags) ? "" : delimiter;
-        uint16 page_index = vars.IS_STDIN;
+        uint16 page_index;
         if (arg.flag_set("u", flags)) {
             string s_fd = arg.opt_arg_value("u", args);
             uint16 fd = stdio.atoi(s_fd);
@@ -27,19 +27,19 @@ contract mapfile is Shell {
         }
 
         dbg.append(format("delim {} arr_name {} page_index {}\n", delimiter, array_name, page_index));
-        (string[] fields, uint n_lines) = stdio.split(input, "\n");
+        /*(string[] fields, uint n_lines) = stdio.split(input, "\n");
         string[][2] entries;
         uint cap = count > 0 ? math.min(count, n_lines) : n_lines;
         for (uint i = origin; i < origin + cap; i++) {
             entries.push([format("{}", i), fields[i] + ofs_2]);
             out.append(format("[{}]={}{}", i, fields[i], ofs));
         }
-        out = vars.wrap(array_name, vars.W_SQUARE) + "=" + _as_map(out);
+        out = vars.wrap(array_name, vars.W_SQUARE) + "=" + vars.as_map(out);
         out.append("======\n");
-        string arr_val = array_name + "=" + _encode_items(entries, " ");
-        out.append(vars.wrap(array_name, vars.W_SQUARE) + "=" + _encode_items(entries, "\n"));
-        res = _set_var(s_attrs, arr_val, pool);
-//        dbg.append(format("{}=( {} )\n", array_name, _join_fields(fields, ";")));
+//        string arr_val = array_name + "=" + vars.encode_items(entries, " ");
+//        out.append(vars.wrap(array_name, vars.W_SQUARE) + "=" + _encode_items(entries, "\n"));*/
+        string arr_val = vars.as_indexed_array(array_name, input, "\n");
+        res = vars.set_var(s_attrs, arr_val, pool);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

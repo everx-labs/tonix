@@ -1,19 +1,15 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
 contract mke2fs is Utility {
 
-    function exec(string config) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
-
-        /*bool use_block_size = (flags & _b) > 0;
-        bool use_root_dir = (flags & _d) > 0;
-        bool use_inode_size = (flags & _I) > 0;
-        bool ext3_journal = (flags & _j) > 0;
-        bool dry_run = (flags & _n) > 0;
-        bool sb_only = (flags & _S) > 0;*/
-
-        (inodes, data) = _get_system_init(config);
+//    function main(string argv) external pure returns (uint8 ec, string out, string err) {
+    function exec(string argv) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+        (string[] params, string flags, ) = arg.get_args(argv);
+//    function exec(string config) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+//        (bool use_block_size, bool use_root_dir, bool use_inode_size, bool ext3_journal, bool dry_run, bool sb_only, , ) = arg.flag_values("bdIjnS", flags);
+        (inodes, data) = _get_system_init(argv);
     }
 
     function _get_parent_offset(string parent, string[] file_list) internal pure returns (uint8 offset) {
@@ -434,7 +430,7 @@ contract mke2fs is Utility {
         uint16 form = (mode >> 8) & 0xFF;
 //        (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config, devices);
         (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config);
-        return fs.dumpfs(level, form, inodes, data);
+        return inode.dumpfs(level, form, inodes, data);
     }
 
     function get_system_init(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {

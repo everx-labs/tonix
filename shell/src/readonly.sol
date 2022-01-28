@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -42,7 +42,7 @@ contract readonly is Shell {
             s_attrs.append("-f");
         ec = EXECUTE_SUCCESS;
         for (string p: params)
-            page = _set_var(s_attrs, p, page);
+            page = vars.set_var(s_attrs, p, page);
         res = page;
     }
 

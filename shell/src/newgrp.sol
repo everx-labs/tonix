@@ -4,16 +4,17 @@ import "Utility.sol";
 
 contract newgrp is Utility {
 
-    function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+        (, string[] params, string flags, ) = arg.get_env(args);
+        out = "";
+        (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
+
+//    function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+//        (, string[] args, uint flags) = input.unpack();
         string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
 
-        bool force = (flags & _f) > 0;
-        bool use_group_id = (flags & _g) > 0;
-        bool is_system_group = (flags & _r) > 0;
-
-        uint n_args = args.length;
-        string target_group_name = args[n_args - 1];
+        uint n_args = params.length;
+        string target_group_name = params[n_args - 1];
         uint16 target_group_id;
         uint16 options = is_system_group ? UAO_SYSTEM : 0;
         uint16[] added_groups;
@@ -25,7 +26,7 @@ contract newgrp is Utility {
                 errors.push(Err(uadmin.E_NAME_IN_USE, 0, target_group_name));
         }
         if (use_group_id && n_args > 1) {
-            string group_id_s = args[0];
+            string group_id_s = params[0];
             optional(int) val = stoi(group_id_s);
             uint16 n_gid;
             if (!val.hasValue())

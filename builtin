@@ -1,4 +1,4 @@
-set -x
+#set -x
 builtin=$1
 shift
 fn=$1

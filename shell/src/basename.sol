@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -29,7 +29,7 @@ contract basename is Utility {
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
 "basename",
-"NAME",
+"OPTION... NAME...",
 "strip directory and suffix from filenames",
 "Print NAME with any leading directory components removed.",
 "-a      support multiple arguments and treat each as a NAME\n\
@@ -37,8 +37,8 @@ contract basename is Utility {
 -z      end each output line with NUL, not newline",
 "",
 "Written by Boris",
-"",
-"",
+"Suffix removal is not yet supported",
+"dirname, readlink",
 "0.01");
     }
 

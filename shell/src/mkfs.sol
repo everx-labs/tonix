@@ -1,26 +1,19 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
 contract mkfs is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (SuperBlock sb) {
-        (, string[] args, uint flags) = input.unpack();
-
-        bool use_fs_type = (flags & _t) > 0;
-        bool use_root_dir = (flags & _d) > 0;
-        bool use_inode_size = (flags & _I) > 0;
-        bool ext3_journal = (flags & _j) > 0;
-        bool dry_run = (flags & _n) > 0;
-        bool sb_only = (flags & _S) > 0;
-
+    function main(string argv) external pure returns (uint8 ec, string out, string err) {
+        (string[] params, string flags, ) = arg.get_args(argv);
+        (bool use_fs_type, bool use_root_dir, bool use_inode_size, bool ext3_journal, bool dry_run, bool sb_only, , ) = arg.flag_values("tdIjnS", flags);
         string fs_type;
 
-        for (string arg: args) {
+        for (string param: params) {
 
         }
-        uint16 inode_size = use_inode_size ? stdio.atoi(args[1]) : DEF_INODE_SIZE;
-        fs_type = args[0];
+        uint16 inode_size = use_inode_size ? stdio.atoi(params[1]) : DEF_INODE_SIZE;
+        fs_type = params[0];
 
         /*return SuperBlock(true, true, fs_type, inode_count, block_count, MAX_INODES - inode_count - first_inode, MAX_BLOCKS - block_count,
             block_size, now, 0, now, 0, 0, 1, 0, inode_size);*/
@@ -466,7 +459,7 @@ contract mkfs is Utility {
         uint16 form = (mode >> 8) & 0xFF;
 //        (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config, devices);
         (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) = _get_system_init(config);
-        return fs.dumpfs(level, form, inodes, data);
+        return inode.dumpfs(level, form, inodes, data);
     }
 
     function get_system_init(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {

@@ -1,11 +1,10 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "../include/Internal.sol";
 import "../lib/stdio.sol";
 import "../lib/arg.sol";
 import "../lib/vars.sol";
 import "../lib/uadmin.sol";
-//import "../lib/dirent.sol";
 
 struct CommandHelp {
     string name;

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 import "compspec.sol";
@@ -17,14 +17,13 @@ contract complete is Shell, compspec {
         bool add = !xprint && !remove;
         bool add_function = arg.flag_set("F", flags);
         bool apply_to_command = arg.flag_set("C", flags);
-//        string comp_specs_page = e[IS_COMP_SPEC];
         string comp_specs_page = pool;
 
         if (xprint || params.empty()) {
             (string[] comp_specs, ) = stdio.split(comp_specs_page, "\n");
             for (string cs: comp_specs) {
                 (string comp_func, string command_list) = vars.item_value(cs);
-                (string[] items, ) = stdio.split(_trim_spaces(command_list), " ");
+                (string[] items, ) = stdio.split(stdio.trim_spaces(command_list), " ");
                 for (string item: items)
                     out.append("complete -F " + comp_func + " " + item + "\n");
             }

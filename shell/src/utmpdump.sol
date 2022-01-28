@@ -4,11 +4,11 @@ import "Utility.sol";
 
 contract utmpdump is Utility {
 
-    function ustat(Session /*session*/, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out) {
-        (, , uint flags) = input.unpack();
-
-        bool write_back = (flags & _r) > 0;
-//        bool write_to_file = (flags & _o) > 0;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
+        bool write_back = arg.flag_set("r", flags);
         string[][] table;
         Column[] columns_format = [
             Column(true, 5, fmt.ALIGN_LEFT),

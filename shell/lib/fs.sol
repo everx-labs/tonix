@@ -41,6 +41,14 @@ library fs {
     uint8 constant ENOSYS       = 13; // "Operation not applicable"
     uint8 constant ENAMETOOLONG = 14; // pathname is too long.
 
+    // Some defines for calling file status functions.
+    uint16 constant FS_EXISTS	    = 1;
+    uint16 constant FS_EXECABLE     = 2;
+    uint16 constant FS_EXEC_PREF    = 4;
+    uint16 constant FS_EXEC_ONLY    = 8;
+    uint16 constant FS_DIRECTORY	= 16;
+    uint16 constant FS_NODIRS       = 32;
+
     /* Look for a file name in the directory entry. Return file index and file type */
     function fetch_dir_entry(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint16, uint8) {
         if (name == "/")
@@ -157,7 +165,6 @@ library fs {
     }
 
     function lookup_dir_ext(Inode ino, bytes data, string file_name) internal returns (uint16 index, uint8 file_type, uint16 dir_idx) {
-//        if ((inode.mode & S_IFMT) != S_IFDIR)
         if (inode.mode_to_file_type(ino.mode) != FT_DIR)
             return (ENOTDIR, FT_UNKNOWN, 0);
         (DirEntry[] contents, int16 status) = dirent.read_dir(ino, data);

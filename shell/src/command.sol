@@ -1,15 +1,23 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
 contract command is Shell {
+
+    uint16 constant CDESC_ALL       = 1; // type -a
+    uint16 constant CDESC_SHORTDESC = 2; // command -V
+    uint16 constant CDESC_REUSABLE  = 4; // command -v
+    uint16 constant CDESC_TYPE      = 8; // type -t
+    uint16 constant CDESC_PATH_ONLY = 16; // type -p
+    uint16 constant CDESC_FORCE_PATH= 32; // type -ap or type -P
+    uint16 constant CDESC_NOFUNCS   = 64; // type -f
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
         bool descr = arg.flag_set("v", flags);
         bool verbose = arg.flag_set("V", flags);
         for (string arg: params) {
-            string t = _get_array_name(arg, pool);
+            string t = vars.get_array_name(arg, pool);
             string value;
             if (t == "keyword")
                 value = descr ? arg : (arg + " is a shell keyword");
@@ -48,14 +56,14 @@ contract command is Shell {
             if (stdio.strstr(commands, " " + cmd + " ") > 0) {
                 fn_name = "main";
                 fn_map = vars.get_map_value(fn_name, comp_spec);
-                string upd = _set_item_value(cmd, "0", fn_map);
+                string upd = vars.set_item_value(cmd, "0", fn_map);
                 cs_res = stdio.translate(comp_spec, fn_map, upd);
             } else
                 ec = EXECUTE_FAILURE;
         } else {
             (, fn_name, ) = vars.split_var_record(fn_map);
             uint16 hc = stdio.atoi(vars.val(cmd, fn_map));
-            string upd = _set_item_value(cmd, stdio.itoa(hc + 1), fn_map);
+            string upd = vars.set_item_value(cmd, stdio.itoa(hc + 1), fn_map);
             cs_res = stdio.translate(comp_spec, fn_map, upd);
         }
     }

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -21,7 +21,7 @@ contract eilish is Shell {
         (string[] commands, ) = stdio.split(s_input, ";");
         for (string line: commands) {
             (string cmd_raw, string s_args) = stdio.strsplit(line, " ");
-            string cmd_expanded = _val(cmd_raw, aliases);
+            string cmd_expanded = vars.val(cmd_raw, aliases);
             string input = cmd_expanded.empty() ? line : cmd_expanded + " " + s_args;
             string cmd;
             (cmd, s_args) = stdio.strsplit(input, " ");
@@ -31,12 +31,12 @@ contract eilish is Shell {
                 uint p = stdio.strrchr(s_args, ">");
                 if (p > 0) {
                     redir_out = stdio.strtok(s_args, p, " ");
-                    s_args = _trim_spaces(s_args.substr(0, p - 1));
+                    s_args = stdio.trim_spaces(s_args.substr(0, p - 1));
                 }
                 uint q = stdio.strrchr(s_args, "<");
                 if (q > 0) {
                     redir_in = stdio.strtok(s_args, q, " ");
-                    s_args = _trim_spaces(s_args.substr(0, q - 1));
+                    s_args = stdio.trim_spaces(s_args.substr(0, q - 1));
                 }
             }
             res.push(Command(cmd, s_args, redir_in, redir_out));
@@ -45,7 +45,7 @@ contract eilish is Shell {
 
     /*function set_args_simple(Command s_cmd, string opt_string, string index, string pool) external pure returns (Command[] res) {
         (string cmd, string s_args, string redir_in, string redir_out) = s_cmd.unpack();
-        string cmd_opt_string = _val(cmd, opt_string);
+        string cmd_opt_string = vars.val(cmd, opt_string);
 
         string s_flags;
         string[][2] opt_values;
@@ -65,14 +65,14 @@ contract eilish is Shell {
                 if (stdio.strchr(arg, "$") > 0) {
                     string ref = stdio.strval(arg, "$", " ");
                     if (stdio.strchr(ref, "{") > 0)
-                        ref = _unwrap(ref);
-                    string ref_val = _val(ref, pool);
+                        ref = vars.unwrap(ref);
+                    string ref_val = vars.val(ref, pool);
                     pos_params = stdio.translate(pos_params, arg, ref_val);
                     s_args = stdio.translate(s_args, arg, ref_val);
                 }
             }
-            opt_args = _as_hashmap("OPT_ARGS", opt_values);
-            if (!_val("help", opt_args).empty() || !_val("version", opt_args).empty()) {
+            opt_args = vars.as_hashmap("OPT_ARGS", opt_values);
+            if (!vars.val("help", opt_args).empty() || !vars.val("version", opt_args).empty()) {
                 s_args = cmd;
                 pos_params = cmd;
                 params = [cmd];
@@ -80,7 +80,7 @@ contract eilish is Shell {
                 cmd = "man";
             }
         }
-        string cmd_type = _get_array_name(cmd, index);
+        string cmd_type = vars.get_array_name(cmd, index);
         string exec_line;
         if (cmd_type == "builtin")
             exec_line = "./tosh run_builtin " + input;
@@ -93,9 +93,9 @@ contract eilish is Shell {
             ec = EXECUTE_FAILURE;
         }
         res = exec_line;
-        pos_map = _as_indexed_array("POS_ARGS", s_args.empty() ? cmd : (cmd + " " + s_args), " ");
+        pos_map = vars.as_indexed_array("POS_ARGS", s_args.empty() ? cmd : (cmd + " " + s_args), " ");
         last_param = s_args.empty() ? cmd : params[n_params - 1];
-        out = _as_var_list([
+        out = vars.as_var_list([
             ["COMMAND", cmd],
             ["PARAMS", pos_params],
             ["FLAGS", s_flags],
@@ -115,11 +115,11 @@ contract eilish is Shell {
         if (s_input.empty())
             return (EXECUTE_FAILURE, "", "", "", "");
         (string cmd_raw, string s_args) = stdio.strsplit(s_input, " ");
-        string cmd_expanded = _val(cmd_raw, aliases);
+        string cmd_expanded = vars.val(cmd_raw, aliases);
         string input = cmd_expanded.empty() ? s_input : cmd_expanded + " " + s_args;
         string cmd;
         (cmd, s_args) = stdio.strsplit(input, " ");
-        string cmd_opt_string = _val(cmd, opt_string);
+        string cmd_opt_string = vars.val(cmd, opt_string);
 
         string s_flags;
         string[][2] opt_values;
@@ -149,14 +149,14 @@ contract eilish is Shell {
                 if (stdio.strchr(arg, "$") > 0) {
                     string ref = stdio.strval(arg, "$", " ");
                     if (stdio.strchr(ref, "{") > 0)
-                        ref = _unwrap(ref);
-                    string ref_val = _val(ref, pool);
+                        ref = vars.unwrap(ref);
+                    string ref_val = vars.val(ref, pool);
                     pos_params = stdio.translate(pos_params, arg, ref_val);
                     s_args = stdio.translate(s_args, arg, ref_val);
                 }
             }
-            opt_args = _as_hashmap("OPT_ARGS", opt_values);
-            if (!_val("help", opt_args).empty() || !_val("version", opt_args).empty()) {
+            opt_args = vars.as_hashmap("OPT_ARGS", opt_values);
+            if (!vars.val("help", opt_args).empty() || !vars.val("version", opt_args).empty()) {
                 s_args = cmd;
                 pos_params = cmd;
                 params = [cmd];
@@ -164,7 +164,7 @@ contract eilish is Shell {
                 cmd = "man";
             }
         }
-        string cmd_type = _get_array_name(cmd, index);
+        string cmd_type = vars.get_array_name(cmd, index);
         string exec_line;
         if (cmd_type == "builtin")
             exec_line = "./tosh run_builtin " + input;
@@ -177,9 +177,9 @@ contract eilish is Shell {
             ec = EXECUTE_FAILURE;
         }
         res = exec_line;
-        pos_map = _as_indexed_array("POS_ARGS", s_args.empty() ? cmd : (cmd + " " + s_args), " ");
+        pos_map = vars.as_indexed_array("POS_ARGS", s_args.empty() ? cmd : (cmd + " " + s_args), " ");
         last_param = s_args.empty() ? cmd : params[n_params - 1];
-        out = _as_var_list([
+        out = vars.as_var_list([
             ["COMMAND", cmd],
             ["PARAMS", pos_params],
             ["FLAGS", s_flags],
@@ -197,17 +197,17 @@ contract eilish is Shell {
 
     function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
         ec = EXECUTE_SUCCESS;
-        out = _as_var_list([
-            ["_", _val("TOSH", profile)],
-            ["-", _val("-", profile)],
-            ["TOSH", _val("TOSH", profile)],
-            ["TOSHOPTS", _as_map("expand_aliases")],
-            ["TOSHPID", _val("TOSHPID", profile)],
-            ["TOSH_SUBSHELL", _val("TOSH_SUBSHELL", profile)],
-            ["TOSH_ALIASES", _val("TOSH_ALIASES", profile)],
+        out = vars.as_var_list([
+            ["_", vars.val("TOSH", profile)],
+            ["-", vars.val("-", profile)],
+            ["TOSH", vars.val("TOSH", profile)],
+            ["TOSHOPTS", vars.as_map("expand_aliases")],
+            ["TOSHPID", vars.val("TOSHPID", profile)],
+            ["TOSH_SUBSHELL", vars.val("TOSH_SUBSHELL", profile)],
+            ["TOSH_ALIASES", vars.val("TOSH_ALIASES", profile)],
             ["SHELLOPTS", "allexport:hashall"],
-            ["TMPDIR", _val("TMPDIR", profile)],
-            ["SHLVL", _val("SHLVL", profile)]]);
+            ["TMPDIR", vars.val("TMPDIR", profile)],
+            ["SHLVL", vars.val("SHLVL", profile)]]);
     }
 
     // Possible states for the parser that require it to do special things.
