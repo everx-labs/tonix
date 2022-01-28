@@ -1,42 +1,51 @@
-pragma ton-solidity >= 0.52.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 import "compspec.sol";
 
 contract compopt is Shell, compspec {
 
-    function _compopt(string s_arg, string[] args, string short_options, mapping (uint => ItemHashMap) env_in) internal pure returns (uint16 ec, string out, mapping (uint => ItemHashMap) env, string s_action) {
-        bool print_enabled = _get_option_value(short_options, "p");
-        bool remove = _get_option_value(short_options, "r");
-//        bool print = print_enabled || print_reusable;
-        bool apply_default = _get_option_value(short_options, "D");
-        bool apply_empty = _get_option_value(short_options, "E");
-        bool apply_initial = _get_option_value(short_options, "I");
-
-        bool use_option = _get_option_value(short_options, "o");
-
-        mapping (uint => Item) comp_spec = env[tvm.hash("compspec")].value;
-
-        env = env_in;
-
-        if (use_option) {
-            (string p_option, bool sign) = _get_dual_option_param(s_arg, "o");
-            string s_option = sign ? " +o " : " -o ";
-            s_option.append(p_option);
-            for (string arg: args) {
-                uint arg_hash = tvm.hash(arg);
-                if (comp_spec.exists(arg_hash))
-                    comp_spec[arg_hash].value.append(s_option);
-            }
-            s_action = "update_env";
-        } else {
-            for (string arg: args) {
-                uint arg_hash = tvm.hash(arg);
-                if (comp_spec.exists(arg_hash)) {
-                    out.append("compopt " + comp_spec[arg_hash].value + " " + arg + "\n");
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = arg.get_args(args);
+        (bool apply_default, bool apply_empty, bool apply_initial, , , , , ) = arg.flag_values("DEI", flags);
+        for (string p: params) {
+            string cur_record = vars.get_pool_record(name, pool);
+            if (!cur_record.empty()) {
+                (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+                if (apply_default) {
+                    out.append("compopt ");
+                    out.append(curr_attrs + "\n");
+                    ec = EXECUTE_SUCCESS;
+                } else if (apply_empty) {
+                    out.append("compopt: _EmptycmD_: no completion specification\n");
+                    ec = EXECUTE_FAILURE;
+                } else if (apply_initial) {
+                    out.append("compopt: _InitialWorD_: no completion specification\n");
+                    ec = EXECUTE_FAILURE;
                 }
             }
-            s_action = "print_out";
+        }
+    }
+
+    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
+        (string[] params, string flags, ) = arg.get_args(args);
+        (bool apply_default, bool apply_empty, bool apply_initial, , , , , ) = arg.flag_values("DEI", flags);
+        for (string p: params) {
+            string cur_record = vars.get_pool_record(name, pool);
+            if (!cur_record.empty()) {
+                (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+                if (apply_default) {
+                    res.append("compopt ");
+                    res.append(curr_attrs + "\n");
+                    ec = EXECUTE_SUCCESS;
+                } else if (apply_empty) {
+                    res.append("compopt: _EmptycmD_: no completion specification\n");
+                    ec = EXECUTE_FAILURE;
+                } else if (apply_initial) {
+                    res.append("compopt: _InitialWorD_: no completion specification\n");
+                    ec = EXECUTE_FAILURE;
+                }
+            }
         }
     }
 
@@ -45,9 +54,8 @@ contract compopt is Shell, compspec {
 "compopt",
 "[-o|+o option] [-DEI] [name ...]",
 "Modify or display completion options.",
-"Modify the completion options for each NAME, or, if no NAMEs are supplied,\n\
-the completion currently being executed.  If no OPTIONs are given, print\n\
-the completion options for each NAME or the current completion specification.",
+"Modify the completion options for each NAME, or, if no NAMEs are supplied, the completion currently being\n\
+executed.  If no OPTIONs are given, print the completion options for each NAME or the current completion specification.",
 "-o option       Set completion option OPTION for each NAME\n\
 -D              Change options for the \"default\" command completion\n\
 -E              Change options for the \"empty\" command completion\n\

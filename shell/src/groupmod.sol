@@ -19,14 +19,10 @@ contract groupmod is Utility {
 
         uint n_args = params.length;
         string target_group_name = params[n_args - 1];
-        uint16 target_group_id;
         uint16 new_group_id;
         string new_group_name;
-        string g_line = uadmin.group_entry_by_name(target_group_name, etc_group);
-        if (!g_line.empty())
-            (, target_group_id, ) = uadmin.parse_group_entry_line(g_line);
-
-        if (target_group_id == 0)
+        (string group_name, uint16 target_group_id, ) = uadmin.getgrnam(target_group_name, etc_group);
+        if (group_name.empty())
             errors.push(Err(uadmin.E_NOTFOUND, 0, target_group_name)); // specified group doesn't exist
 
         prev_entry = format("{}\t{}\n", target_group_name, target_group_id);
@@ -39,14 +35,15 @@ contract groupmod is Utility {
                 errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
                 n_gid = uint16(val.get());
-            if (!uadmin.group_name_by_id(n_gid, etc_group).empty())
+            (group_name, , ) = uadmin.getgrgid(n_gid, etc_group);
+            if (!group_name.empty())
                 errors.push(Err(uadmin.E_GID_IN_USE, 0, group_id_s));
             else
                 new_group_id = n_gid;
         } else if (use_new_name && n_args > 1) {
             new_group_name = params[0];
-            g_line = uadmin.group_entry_by_name(new_group_name, etc_group);
-            if (!g_line.empty())
+            (group_name, , ) = uadmin.getgrnam(new_group_name, etc_group);
+            if (!group_name.empty())
                 errors.push(Err(uadmin.E_NAME_IN_USE, 0, new_group_name));
         }
         if (errors.empty()) {

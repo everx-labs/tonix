@@ -24,7 +24,8 @@ contract groupadd is Utility {
                 errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else
                 target_group_id = uint16(n_gid);
-            if (!uadmin.group_name_by_id(target_group_id, etc_group).empty()) {
+            (string group_name, , ) = uadmin.getgrgid(target_group_id, etc_group);
+            if (!group_name.empty()) {
                 if (force)
                     target_group_id = 0;
                 else
@@ -50,7 +51,6 @@ contract groupadd is Utility {
         }
         ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
-
 
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(

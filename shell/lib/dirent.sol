@@ -79,6 +79,37 @@ library dirent {
         status = int16(contents.length);
     }
 
+    function read_dir_verbose(bytes dir_data) internal returns (DirEntry[] contents, int16 status, string out) {
+        (string[] lines, ) = stdio.split(dir_data, "\n");
+        for (string s: lines) {
+            if (s.empty())
+                out.append("Empty dir entry line\n");
+            else {
+                (string s_head, string s_tail) = stdio.strsplit(s, "\t");
+                if (s_head.empty())
+                    out.append("Empty file type and name: " + s + "\n");
+                else if (s_tail.empty())
+                    out.append("Empty inode reference: " + s + "\n");
+                else {
+                    uint h_len = s_head.byteLength();
+                    if (h_len < 2)
+                        out.append("File type and name too short: " + s_head + "\n");
+                    else {
+                        DirEntry de = DirEntry(dirent.file_type(s_head.substr(0, 1)), s_head.substr(1), stdio.atoi(s_tail));
+                        contents.push(de);
+                        out.append(dirent.print(de));
+                    }
+                }
+            }
+        }
+        status = int16(contents.length);
+    }
+
+    function print(DirEntry de) internal returns (string) {
+        (uint8 file_type, string file_name, uint16 index) = de.unpack();
+        return dir_entry_line(index, file_name, file_type);
+    }
+
     function read_dir(Inode inode, bytes data) internal returns (DirEntry[] contents, int16 status) {
         if ((inode.mode & S_IFMT) != S_IFDIR)
             status = -ENOTDIR;
@@ -94,7 +125,8 @@ library dirent {
     }
 
     function dir_entry_line(uint16 index, string file_name, uint8 file_type) internal returns (string) {
-        return file_type_sign(file_type) + file_name + format("\t{}\n", index);
+//        return file_type_sign(file_type) + file_name + format("\t{}\n", index);
+        return format("{}{}\t{}\n", file_type_sign(file_type), file_name, index);
     }
 
     function file_type_sign(uint8 ft) internal returns (string) {

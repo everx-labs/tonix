@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 import "compspec.sol";
@@ -73,12 +73,12 @@ contract compgen is Shell, compspec {
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(
-            "compgen",
-            "[-abcdefgjksuv] [-o option] [-A action] [-G globpat] [-W wordlist]  [-F function] [-C command] [-X filterpat] [-P prefix] [-S suffix] [word]",
-            "Display possible completions depending on the options.",
-            "Intended to be used from within a shell function generating possible completions. If the optional WORD argument is supplied, matches against WORD are generated.",
-            "",
-            "",
-            "Returns success unless an invalid option is supplied or an error occurs.");
+"compgen",
+"[-abcdefgjksuv] [-o option] [-A action] [-G globpat] [-W wordlist]  [-F function] [-C command] [-X filterpat] [-P prefix] [-S suffix] [word]",
+"Display possible completions depending on the options.",
+"Intended to be used from within a shell function generating possible completions. If the optional WORD argument is supplied, matches against WORD are generated.",
+"",
+"",
+"Returns success unless an invalid option is supplied or an error occurs.");
     }
 }

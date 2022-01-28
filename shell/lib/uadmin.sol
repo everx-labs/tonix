@@ -77,6 +77,24 @@ library uadmin {
         }
     }
 
+    function getgrgid(uint16 gid, string etc_group) internal returns (string, uint16, string) {
+        (string[] lines, ) = stdio.split(etc_group, "\n");
+        for (string line: lines) {
+            (string group_name, uint16 id, string members) = parse_group_entry_line(line);
+            if (id == gid)
+                return (group_name, id, members);
+        }
+    }
+
+    function getgrnam(string name, string etc_group) internal returns (string, uint16, string) {
+        (string[] lines, ) = stdio.split(etc_group, "\n");
+        for (string line: lines) {
+            (string group_name, uint16 id, string members) = parse_group_entry_line(line);
+            if (name == group_name)
+                return (group_name, id, members);
+        }
+    }
+
     function user_name_by_id(uint16 uid, string etc_passwd) internal returns (string) {
         (string[] lines, ) = stdio.split(etc_passwd, "\n");
         for (string line: lines) {

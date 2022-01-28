@@ -1,16 +1,16 @@
-pragma ton-solidity >= 0.53.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
 contract exec is Shell {
 
-    function b_exec(string[] e) external pure returns (uint8 ec, string out, Write[] wr) {
-        (string[] params, string flags, string argv) = _get_args(e[IS_ARGS]);
-        uint n_params = params.length;
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags, ) = arg.get_args(args);
+        (bool substitute_command, bool empty_env, bool prepend_dash, bool f1, bool f2, bool f3, bool f4, bool f5) = arg.flag_values("acl12345", flags);
+        uint16 pos;
+        if (!params.empty())
+            pos = stdio.atoi(params[0]);
         ec = EXECUTE_SUCCESS;
-        bool substitute_command = _flag("a", e);
-        bool empty_env = _flag("c", e);
-        bool prepend_dash = _flag("l", e);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -62,10 +62,16 @@ filter() {
             jq -rj '.res' $1 >run/res
             jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/page_changed
 #            if [ -s run/res ]; then
-            if [ -s tmp/page_changed ]; then
-                cp run/res run/$page
-                cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
-            fi;;
+            case $builtin in
+                cd)
+                    if [ -s tmp/page_changed ]; then
+                        cp run/res run/$page
+                        cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
+                    fi;;
+                *)
+                    jq -rj '.res' $1;;
+            esac
+            ;;
         read_input)
 #            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/script;
             jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/in_out;

@@ -4,25 +4,11 @@ import "../include/fs_types.sol";
 import "fmt.sol";
 import "dirent.sol";
 import "sb.sol";
+import "inode.sol";
 
 library fs {
 
     uint16 constant ROOT_DIR = 11;
-
-    uint16 constant DUMP_SB             = 1;
-    uint16 constant DUMP_INDEX_HEADERS  = 2;
-    uint16 constant DUMP_TEXT_DIRS      = 4;
-    uint16 constant DUMP_TEXT_ALL       = 8;
-    uint16 constant DUMP_SB_INODES      = 16;
-    uint16 constant DUMP_USER_INODES    = 32;
-    uint16 constant DUMP_ALL_INODES     = 48;
-    uint16 constant DUMP_FILE_MAPPING   = 64;
-    uint16 constant DUMP_INODE_ALL      = DUMP_SB + DUMP_INDEX_HEADERS + DUMP_ALL_INODES + DUMP_TEXT_ALL;
-
-    uint16 constant DUMP_AS_TEXT        = 1;
-    uint16 constant DUMP_COMPACT        = 2;
-    uint16 constant DUMP_AS_TAR_HEADER  = 3;
-    uint16 constant DUMP_AS_TAR_BYTES   = 4;
 
     uint8 constant FT_UNKNOWN   = 0;
     uint8 constant FT_REG_FILE  = 1;
@@ -55,24 +41,41 @@ library fs {
     uint8 constant ENOSYS       = 13; // "Operation not applicable"
     uint8 constant ENAMETOOLONG = 14; // pathname is too long.
 
-    /* Looks for a file name in the directory entry. Return file index and file type */
-    function fetch_dir_entry(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint16 ino, uint8 ft) {
+    /* Look for a file name in the directory entry. Return file index and file type */
+    function fetch_dir_entry(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint16, uint8) {
         if (name == "/")
             return (ROOT_DIR, FT_DIR);
         if (!inodes.exists(dir))
+            return (ENOENT, FT_UNKNOWN);
+        Inode ino = inodes[dir];
+        if (inode.mode_to_file_type(ino.mode) != FT_DIR)
             return (ENOTDIR, FT_UNKNOWN);
-        Inode inode = inodes[dir];
-        if ((inode.mode & S_IFMT) != S_IFDIR)
-            return (ENOTDIR, FT_UNKNOWN);
-        (ino, ft) = lookup_dir(inode, data[dir], name);
+        return lookup_dir(ino, data[dir], name);
+    }
+
+    function resolve_abs_path(string s_path, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint16) {
+        if (s_path == "/")
+            return ROOT_DIR;
+        (string s_dir, string s_not_dir) = path.dir(s_path);
+        (uint16 ino, ) = fetch_dir_entry(s_not_dir, resolve_abs_path(s_dir, inodes, data), inodes, data);
+        return ino;
     }
 
     function resolve_absolute_path(string s_path, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint16) {
         if (s_path == "/")
             return ROOT_DIR;
-        (string s_dir, string s_not_dir) = path.dir(s_path);
-        (uint16 ino, ) = fetch_dir_entry(s_not_dir, resolve_absolute_path(s_dir, inodes, data), inodes, data);
-        return ino;
+        string s = "." + s_path;
+        (string[] parts, uint n_parts) = stdio.split(s, "/");
+        uint16 cur_dir = ROOT_DIR;
+        for (uint i = 0; i < n_parts; i++) {
+            (uint16 index, uint8 ft, uint16 dir_idx) = lookup_dir_ext(inodes[cur_dir], data[cur_dir], parts[i]);
+            if (dir_idx == 0)
+                return ENOENT;
+            if (ft != FT_DIR)
+                return index;
+            cur_dir = index;
+        }
+        return cur_dir;
     }
 
     function xpath(string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string) {
@@ -149,89 +152,15 @@ library fs {
         (index, file_type, dir_index) = lookup_dir_ext(inodes[parent], data[parent], base_name);
     }
 
-    /* File system helpers */
-    function dump_fs(uint8 level, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
-        SuperBlock sblk = sb.get_sb(inodes, data);
-        (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
-            uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
-            uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sblk.unpack();
-        out = format("{} IC {} BC {} FI {} FB {} BS {} MC {} MMC {} WR {} FI {} IS {} FSS {} EB {}\n",
-            file_system_OS_type, inode_count, block_count, free_inodes, free_blocks, block_size,
-            mount_count, max_mount_count, lifetime_writes, first_inode, inode_size, file_system_state ? "Y" : "N", errors_behavior ? "Y" : "N");
-        out.append(format("CT {} LMT {} LWT {}\n", fmt.ts(created_at), fmt.ts(last_mount_time), fmt.ts(last_write_time)));
-
-        for ((uint16 i, Inode ino): inodes) {
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();
-            out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
-            if (level > 0 && ((mode & S_IFMT) == S_IFDIR || (mode & S_IFMT) == S_IFLNK) || level > 1)
-                out.append(data[i]);
-        }
-    }
-
-    function dumpfs(uint16 level, uint16 form, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
-        SuperBlock sblk = sb.get_sb(inodes, data);
-        (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
-            uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
-            uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sblk.unpack();
-        if ((level & DUMP_SB) > 0) {
-            if (form == DUMP_COMPACT)
-                out = format("{} {} {} {} {} {} {} {} {} {} {} {} {} {} {} {}\n",
-                    file_system_state ? "Y" : "N", errors_behavior ? "Y" : "N", file_system_OS_type,
-                    inode_count, block_count, free_inodes, free_blocks, block_size, created_at,
-                    last_mount_time, last_write_time, mount_count, max_mount_count, lifetime_writes, first_inode, inode_size);
-            else if (form == DUMP_AS_TEXT) {
-                out = format("{} IC {} BC {} FI {} FB {} BS {} MC {} MMC {} WR {} FI {} IS {} FSS {} EB {}\n",
-                    file_system_OS_type, inode_count, block_count, free_inodes, free_blocks, block_size,
-                    mount_count, max_mount_count, lifetime_writes, first_inode, inode_size, file_system_state ? "Y" : "N", errors_behavior ? "Y" : "N");
-                out.append(format("CT {} LMT {} LWT {}\n", fmt.ts(created_at), fmt.ts(last_mount_time), fmt.ts(last_write_time)));
-            }
-        }
-        uint pos = 0;
-        for ((uint16 i, Inode ino): inodes) {
-            if (i < ROOT_DIR && (level & DUMP_SB_INODES) == 0 ||
-                i > ROOT_DIR && (level & DUMP_USER_INODES) == 0)
-                    continue;
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, string file_name) = ino.unpack();
-            bytes text = data[i];
-            string inode_s;
-            if ((level & DUMP_INDEX_HEADERS) > 0) {
-                if (form == DUMP_COMPACT)
-                    inode_s = fmt.pad(format("{} {} {} {} {} {} {} {} {} {} {}", i, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size, modified_at, last_modified, file_name),
-                        inode_size, fmt.ALIGN_LEFT);
-                else if (form == DUMP_AS_TEXT)
-                    inode_s = format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size);
-                /*else if (form == DUMP_AS_TAR_HEADER)
-                    inode_s = _write_tar_index_entry_bin(ino);*/
-            }
-            uint inode_len = inode_s.byteLength();
-            uint count = text.length;
-            if ((level & DUMP_FILE_MAPPING) > 0) {
-                string index_s;
-                if (inode_len > 0) {
-                    index_s = format("{} {} {} {}\n", i, pos, inode_len, count);
-                    pos += inode_len + count;
-                    out.append(index_s);
-                }
-            }
-            if (!inode_s.empty())
-                out.append(inode_s);
-            if ((level & DUMP_TEXT_DIRS) > 0 && (mode & S_IFMT) == S_IFDIR || (level & DUMP_TEXT_ALL) > 0) {
-                out.append(text);
-                out.append("\x05");
-                if (data.exists(i))
-                    out.append(data[i]);
-            }
-        }
-    }
-
     function lookup_dir(Inode inode, bytes data, string file_name) internal returns (uint16 index, uint8 file_type) {
         (index, file_type, ) = lookup_dir_ext(inode, data, file_name);
     }
 
-    function lookup_dir_ext(Inode inode, bytes data, string file_name) internal returns (uint16 index, uint8 file_type, uint16 dir_idx) {
-        if ((inode.mode & S_IFMT) != S_IFDIR)
+    function lookup_dir_ext(Inode ino, bytes data, string file_name) internal returns (uint16 index, uint8 file_type, uint16 dir_idx) {
+//        if ((inode.mode & S_IFMT) != S_IFDIR)
+        if (inode.mode_to_file_type(ino.mode) != FT_DIR)
             return (ENOTDIR, FT_UNKNOWN, 0);
-        (DirEntry[] contents, int16 status) = dirent.read_dir(inode, data);
+        (DirEntry[] contents, int16 status) = dirent.read_dir(ino, data);
         if (status < 0)
             return (uint16(-status), FT_UNKNOWN, 0);
         else {

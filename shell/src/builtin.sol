@@ -36,6 +36,8 @@ contract builtin is Shell {
                 fn = "modify";
         } else if (cmd == "type" || cmd == "echo" || cmd == "pwd")
             fn = "print";
+        else if (cmd == "exec")
+            fn = "print";
         else if (cmd == "help")
             fn = "display_help";
         else if (cmd == "cd" || cmd == "test" || cmd == "dirs" || cmd == "pushd" || cmd == "popd")

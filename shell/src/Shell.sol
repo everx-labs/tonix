@@ -375,20 +375,6 @@ abstract contract Shell is Internal {
                 return fields[i + 1];
     }
 
-    function _get_dual_option_param(string s_args, string short_option) internal pure returns (string, bool) {
-        if (s_args.empty())
-            return ("", false);
-        (string[] fields, uint n_fields) = stdio.split(s_args, " ");
-        string opt_arg_dash = "-" + short_option;
-        string opt_arg_plus = "+" + short_option;
-        for (uint i = 0; i < n_fields - 1; i++) {
-            if (fields[i] == opt_arg_dash)
-                return (fields[i + 1], false);
-            else if (fields[i] == opt_arg_plus)
-                return (fields[i + 1], true);
-        }
-    }
-
     function builtin_help() external pure returns (BuiltinHelp bh) {
         return _builtin_help();
     }

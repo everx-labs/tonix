@@ -38,7 +38,9 @@ library stdio {
                 }
                 cur++;
             }
-            fields.push(text.substr(prev));
+            string s_tail = text.substr(prev);
+            if (!s_tail.empty() && s_tail != delimiter)
+                fields.push(s_tail);
             n_fields = fields.length;
         }
     }

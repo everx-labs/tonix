@@ -1,6 +1,7 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
+import "../lib/fs.sol";
 
 contract dirs is Shell {
 
@@ -22,18 +23,23 @@ contract dirs is Shell {
 
     function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
         (string[] params, string flags, ) = arg.get_args(args);
-        (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, , , , ) = arg.flag_values("clpv", flags);
+        (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, bool res_abs_path, bool dirent_stack, bool dump_dirs, ) =
+            arg.flag_values("clpvrsd", flags);
         bool print = expand_tilde || entry_per_line || pos_entry_per_line || params.empty();
         string page = pool;
         string out;
         string s_attrs = "--";
         string home_dir = vars.val("HOME", page);
-
-        uint16 root_dir_index = _resolve_absolute_path("/", inodes, data);
+        if (res_abs_path) {
+            string s_path = params[0];
+            uint16 dir_index = fs.resolve_abs_path(s_path, inodes, data);
+            res.append(s_path + ": " + stdio.itoa(dir_index) + "\n");
+        }
+        uint16 root_dir_index = fs.resolve_absolute_path("/", inodes, data);
         if (root_dir_index >= ROOT_DIR) {
             (ec, out) = _print_dir_contents(root_dir_index, data);
         }
-        res = out;
+        res.append(out);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {
