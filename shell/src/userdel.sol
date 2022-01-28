@@ -25,8 +25,8 @@ contract userdel is Utility {
         uint16[] removed_groups;
         bool remove_empty_user_group = uadmin.login_def_flag(uadmin.USERGROUPS_ENAB);
 
-        uint16 options = remove_home_dir ? UAO_REMOVE_HOME_DIR : 0;
-        options |= remove_empty_user_group ? UAO_REMOVE_EMPTY_GROUPS : 0;
+        uint16 options = remove_home_dir ? uadmin.UAO_REMOVE_HOME_DIR : 0;
+        options |= remove_empty_user_group ? uadmin.UAO_REMOVE_EMPTY_GROUPS : 0;
 
         string victim_entry = uadmin.passwd_entry_by_name(victim_user_name, etc_passwd);
         if (victim_entry.empty())

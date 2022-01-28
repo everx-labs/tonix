@@ -4,11 +4,10 @@ import "Utility.sol";
 
 contract login is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (Session session_out) {
-        /* Validate session info: uid and wd */
-        (, string[] args, uint flags) = input.unpack();
-        (uint16 i_pid, uint16 i_uid, uint16 i_gid, , string i_user_name, string i_group_name, string i_host_name, string i_cwd) = session.unpack();
-
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
         uint n_args = args.length;
 
         bool force;

@@ -1,20 +1,28 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
-import "../lib/SyncFS.sol";
-import "../include/ICache.sol";
 import "Utility.sol";
 
 interface IPages {
     function query_pages() external view;
 }
 
-/* Base contract for the devices exporting command manuals */
-contract man is SyncFS, Utility {
+struct Page {
+    string command;
+    string purpose;
+    string synopsis;
+    string description;
+    string option_list;
+    uint8 min_args;
+    uint16 max_args;
+    string[] option_descriptions;
+}
 
-    function exec(Session /*session*/, InputS input) external view returns (string out) {
-        (, string[] args, ) = input.unpack();
-        for (string s: args)
-            out.append(_is_command_page_available(s) ? _get_man_text(s) : "No manual entry for " + s + "\n");
+contract man_db is Utility {
+
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
     }
 
     Page[] public _pages;
@@ -166,12 +174,6 @@ contract man is SyncFS, Utility {
     function assign_pages(address[] pages) external pure accept {
         for (address addr: pages)
             IPages(addr).query_pages();
-    }
-
-    function read_page(InputS input) external view returns (string out) {
-        (, string[] args, ) = input.unpack();
-        for (string s: args)
-            out.append(_is_command_page_available(s) ? _get_man_text(s) : "No manual entry for " + s + "\n");
     }
 
     /* Imports helpers */

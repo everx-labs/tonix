@@ -65,7 +65,6 @@ contract cp is Utility {
 
         uint8 action_type;
         uint8 action_item_type;
-
         if (!hardlink) {
             action_type = IO_COPY_FILES;
             action_item_type = IO_WR_COPY;

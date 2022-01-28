@@ -18,7 +18,7 @@ TST:=tests
 DBG:=debug
 
 DIRS:=bin $(VFS) $(TMP) $(PROC) $(DEV) $(VAR) $(USR) $(USH) $(TSBIN) $(UBIN) $(HOM) $(TSH) $(LOG)
-
+UBIN:=
 PHONY += all dirs cc tty tt deploy clean
 all: cc
 
@@ -77,10 +77,10 @@ $(BLD)/%.abi.json: shell/$(SRC)/%.sol
 	$(SOLC) $< --tvm-abi -o $(BLD)
 
 $(USH)/%.help: $(TSBIN)/%.boc $(BLD)/%.abi.json
-	./$(UBIN)/tosh builtin_help $*
+	.$(UBIN)/tosh builtin_help $*
 
 $(USH)/%.man: $(TSBIN)/%.boc $(BLD)/%.abi.json
-	./$(UBIN)/tosh command_help $*
+	.$(UBIN)/tosh command_help $*
 
 $(USH)/builtin_help: $(patsubst %,$(USH)/%.help,$(HELP_TOPICS))
 	jq 'add' $^ >$@

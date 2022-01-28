@@ -8,7 +8,6 @@ contract finger is Utility {
         (, string[] params, string flags, ) = arg.get_env(argv);
 
         bool flag_multi_line = arg.flag_set("l", flags);
-//        bool no_names_matching = (flags & _m) > 0;
         bool flag_short_format = arg.flag_set("s", flags);
         bool short_format = flag_short_format && !flag_multi_line;
         if (params.empty())

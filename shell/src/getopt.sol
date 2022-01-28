@@ -1,9 +1,8 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
-import "../include/Commands.sol";
 
-contract getopt is Utility, Commands {
+contract getopt is Utility {
 
     struct CommandInfo {
         uint8 min_args;
@@ -12,7 +11,10 @@ contract getopt is Utility, Commands {
         string name;
     }
 
-    function exec(string s_input, CommandInfo command_info) external pure returns (InputS input, ParsedCommand pc, string source, string target, Err[] parse_errors) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
         uint p = stdio.strrchr(s_input, ">");
         uint q = stdio.strrchr(s_input, "<");
         (string c, string s_args) = stdio.strsplit(s_input, " ");
@@ -40,7 +42,6 @@ contract getopt is Utility, Commands {
 
             parse_errors = _check_args(c, command_info, short_options, args);
 
-            input = InputS(0, args, flags);
             source = in_redirect;
             target = out_redirect;
 
@@ -51,37 +52,10 @@ contract getopt is Utility, Commands {
                 if (s == "help") action = ACT_PRINT_USAGE;
                 if (s == "version") action = ACT_PRINT_VERSION;
             }
-            if (action == 0) {
-                if (_op_session_s(c)) action = ACT_RUN_SESSION;
-                if (_op_stat_s(c)) action = ACT_PRINT_STATUS;
-                if (_op_file_s(c) || _op_access_s(c)) action = ACT_FILE_ACTION;
-                if (_is_pure_s(c)) action = ACT_PROCESS_COMMAND;
-                if (_op_dev_stat_s(c)) action = ACT_DEVICE_STATUS;
-                if (_op_format_s(c)) action = ACT_READ_INDEX;
-                if (_op_user_admin_s(c)) action = ACT_USER_ADMIN_OP;
-                if (_op_user_stats_s(c)) action = ACT_USER_STATS_OP;
-                if (_op_user_access_s(c)) action = ACT_USER_ACCESS_OP;
-                if (_reads_file_fixed_s(c)) action = ACT_READ_PAGE;
-
-                if (_op_dev_admin_s(c)) action |= ACT_UPDATE_DEVICES;
-            }
-            pc = ParsedCommand(c, args, short_options, long_options, in_redirect, out_redirect, action, _action_function(action));
         }
     }
 
     function _action_function(uint16 action) internal pure returns (string) {
-        /*if (action == ACT_PRINT_ERRORS) return "error";
-        if (action == ACT_RUN_SESSION) return "shell";
-        if (action == ACT_PRINT_STATUS) return "stat";
-        if (action == ACT_FILE_ACTION) return "induce";
-        if (action == ACT_PROCESS_COMMAND) return "??";
-        if (action == ACT_DEVICE_STATUS) return "devstat";
-        if (action == ACT_READ_INDEX) return "iread";
-        if (action == ACT_USER_ADMIN_OP) return "uadm";
-        if (action == ACT_USER_STATS_OP) return "ustat";
-        if (action == ACT_USER_ACCESS_OP) return "??";
-        if (action == ACT_READ_PAGE) return "fread";
-        if (action == ACT_UPDATE_DEVICES) return "devadm";*/
         if (action == ACT_PRINT_USAGE) return "usage";
         if (action == ACT_PRINT_VERSION) return "version";
         return "exec";

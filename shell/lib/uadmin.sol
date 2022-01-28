@@ -1,11 +1,26 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "stdio.sol";
+
+struct LoginEvent {
+    uint8 letype;
+    uint16 user_id;
+    uint16 tty_id;
+    uint16 device_id;
+    uint32 timestamp;
+}
 
 library uadmin {
 
     uint16 constant S_IWUSR = 1 << 7;
     uint16 constant S_IRUSR = 1 << 8;
+
+    uint16 constant UAO_SYSTEM              = 16;
+    uint16 constant UAO_CREATE_HOME_DIR     = 32;
+    uint16 constant UAO_CREATE_USER_GROUP   = 64;
+    uint16 constant UAO_ADD_SUPP_GROUPS     = 128;
+    uint16 constant UAO_REMOVE_HOME_DIR     = 1024;
+    uint16 constant UAO_REMOVE_EMPTY_GROUPS = 2048;
 
     function get_counters(string etc_passwd) internal returns (uint16 reg_users_counter, uint16 sys_users_counter, uint16 reg_groups_counter, uint16 sys_groups_counter) {
         uint16 uid_min = login_def_value(UID_MIN);

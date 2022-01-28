@@ -1,9 +1,8 @@
 pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
-import "../include/Commands.sol";
 
-contract wc is Utility, Commands {
+contract wc is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);

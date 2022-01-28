@@ -30,13 +30,13 @@ contract readlink is Utility {
 
         for (string s_arg: s_args) {
             (, uint8 ft, uint16 parent, ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
-            string path;
+            string s_path;
             bool exists;
             if (canon)
-                (path, exists) = _canonicalize(mode, s_arg, parent, inodes, data);
+                (s_path, exists) = _canonicalize(mode, s_arg, parent, inodes, data);
             else if (ft == FT_SYMLINK) {
-                Arg arg = _dereference(mode + EXPAND_SYMLINKS, s_arg, wd, inodes, data);
-                (path, ft, , , ) = arg.unpack();
+                Arg arg = _dereference(mode + path.EXPAND_SYMLINKS, s_arg, wd, inodes, data);
+                (s_path, ft, , , ) = arg.unpack();
                 exists = ft > FT_UNKNOWN;
             } else
                 continue;
@@ -46,7 +46,7 @@ contract readlink is Utility {
                     errors.push(Err(0, ENOENT, s_arg));
                 continue;
             }
-            out.append(path);
+            out.append(s_path);
             out = stdio.aif(out, !no_newline, line_delimiter);
         }
     }
@@ -57,19 +57,19 @@ contract readlink is Utility {
         bool is_abs_path = s_arg.substr(0, 1) == "/";
         valid = true;
 
-        if (canon_mode >= CANON_DIRS) {
+        if (canon_mode >= path.CANON_DIRS) {
             uint16 dir_index = is_abs_path ? fs.resolve_absolute_path(arg_dir, inodes, data) : wd;
             (, uint8 ft) = fs.lookup_dir(inodes[dir_index], data[dir_index], arg_base);
             if (ft == FT_UNKNOWN)
                 valid = false;
         }
 
-        res = canon_mode == CANON_NONE || (canon_mode == CANON_MISS || canon_mode == CANON_EXISTS) && is_abs_path ?
-            s_arg : canon_mode == CANON_DIRS ? fs.xpath(arg_dir, fs.resolve_absolute_path(arg_dir, inodes, data), inodes, data) + "/" + arg_base : fs.xpath(s_arg, wd, inodes, data);
+        res = canon_mode == path.CANON_NONE || (canon_mode == path.CANON_MISS || canon_mode == path.CANON_EXISTS) && is_abs_path ?
+            s_arg : canon_mode == path.CANON_DIRS ? fs.xpath(arg_dir, fs.resolve_absolute_path(arg_dir, inodes, data), inodes, data) + "/" + arg_base : fs.xpath(s_arg, wd, inodes, data);
     }
 
     function _dereference(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (Arg) {
-        bool expand_symlinks = (mode & EXPAND_SYMLINKS) > 0;
+        bool expand_symlinks = (mode & path.EXPAND_SYMLINKS) > 0;
         (uint16 ino, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
         Inode inode;
         if (ino > 0 && inodes.exists(ino))

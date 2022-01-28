@@ -24,6 +24,7 @@ contract test is Shell {
         ec = result ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
+
     function _match_mode(string op, uint16 mode) internal pure returns (bool res) {
         if (op == "b")
             return (mode & S_IFMT) == S_IFBLK;

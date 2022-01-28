@@ -9,20 +9,16 @@ contract newgrp is Utility {
         out = "";
         (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
 
-//    function uadm(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-//        (, string[] args, uint flags) = input.unpack();
         string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
 
         uint n_args = params.length;
         string target_group_name = params[n_args - 1];
         uint16 target_group_id;
-        uint16 options = is_system_group ? UAO_SYSTEM : 0;
+        uint16 options = is_system_group ? uadmin.UAO_SYSTEM : 0;
         uint16[] added_groups;
 
         string g_line = uadmin.group_entry_by_name(target_group_name, etc_group);
         if (!g_line.empty()) {
-//        for ((, GroupInfo gi): groups)
-//            if (gi.group_name == target_group_name)
                 errors.push(Err(uadmin.E_NAME_IN_USE, 0, target_group_name));
         }
         if (use_group_id && n_args > 1) {
@@ -34,7 +30,6 @@ contract newgrp is Utility {
             else
                 n_gid = uint16(val.get());
             target_group_id = uint16(n_gid);
-//            if (groups.exists(target_group_id))
             if (!uadmin.group_name_by_id(target_group_id, etc_group).empty())
                 errors.push(Err(uadmin.E_GID_IN_USE, 0, group_id_s));
                 if (force)

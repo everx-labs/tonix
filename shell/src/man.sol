@@ -1,24 +1,24 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
 contract man is Utility {
 
-    function display_man_page(string args, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags,) = _get_args(args);
-        string opt_args = _get_map_value("OPT_ARGS", args);
+    function display_man_page(string argv, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
+        (string[] params, string flags,) = arg.get_args(argv);
+        string opt_args = vars.get_map_value("OPT_ARGS", argv);
         uint8 command_format = 1;
-        if (!_val("help", opt_args).empty())
+        if (!vars.val("help", opt_args).empty())
             command_format = 2;
-        else if (!_val("version", opt_args).empty())
+        else if (!vars.val("version", opt_args).empty())
             command_format = 3;
 
         if (params.empty())
-            out.append("What manual page do you want?\nFor example, try 'man man'.");
-        for (string arg: params) {
-            (uint8 t_ec, CommandHelp help_file) = _get_man_file(arg, help_files);
+            out.append("What manual page do you want?\nFor example, try 'man man'.\n");
+        for (string param: params) {
+            (uint8 t_ec, CommandHelp help_file) = _get_man_file(param, help_files);
             ec = t_ec;
-            out.append(t_ec == EXECUTE_SUCCESS ? _get_man_text(command_format, help_file) : ("No manual entry for " + arg + ".\n"));
+            out.append(t_ec == EXECUTE_SUCCESS ? _get_man_text(command_format, help_file) : ("No manual entry for " + param + ".\n"));
         }
     }
 
@@ -43,7 +43,6 @@ contract man is Utility {
         }
 
         if (command_format == 1)
-//            return _join_fields([
             return fmt.format_custom(name + "(1)", stdio.join_fields([
                 fmt.format_list("NAME", name + " - " + purpose),
                 fmt.format_list("SYNOPSIS", name + " " + synopsis),
@@ -54,7 +53,6 @@ contract man is Utility {
                 fmt.format_list("REPORTING BUGS", bugs),
                 fmt.format_list("SEE ALSO", see_also),
                 fmt.format_line("Version ", version)], "\n"),
-//                "\n");
                 0, "\n");
     }
 

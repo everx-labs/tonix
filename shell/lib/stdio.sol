@@ -112,17 +112,6 @@ library stdio {
         out.append(s_tail);
     }
 
-    function translate_old(string text, string pattern, string symbols) internal returns (string out) {
-        uint p = strstr(text, pattern);
-        uint pattern_len = pattern.byteLength();
-        if (p > 0) {
-            string s_head = text.substr(0, p - 1) + symbols;
-            string s_tail = translate(text.substr(p - 1 + pattern_len), pattern, symbols);
-            return s_head + s_tail;
-        } else
-            return text;
-    }
-
     function join_fields(string[] fields, string separator) internal returns (string line) {
         uint len = fields.length;
         if (len > 0) {

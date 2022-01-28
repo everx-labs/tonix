@@ -79,7 +79,7 @@ $(TSBIN)/acc/%.boc: etc/hosts.shell
 	$(eval aa!=grep -w $* $< | cut -f 1)
 	$(TOC) account $(aa) -b $@
 
-hb:
+report:
 	$($I_r) models {} | jq -j '.out'
 
 # SH processing start

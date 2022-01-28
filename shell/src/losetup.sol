@@ -4,17 +4,10 @@ import "Utility.sol";
 
 contract losetup is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-        Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(arg, session.wd, inodes, data);
-            arg_list.push(Arg(arg, ft, index, parent, dir_index));
-        }
-        out.append(_losetup(flags, args, inodes, data));      // 0
-    }
-
-    function _losetup(uint flags, string[] args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

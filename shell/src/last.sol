@@ -4,6 +4,10 @@ import "Utility.sol";
 
 contract last is Utility {
 
+    uint8 constant AE_LOGIN         = 1;
+    uint8 constant AE_LOGOUT        = 2;
+    uint8 constant AE_SHUTDOWN      = 3;
+
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
         ( , , string flags, ) = arg.get_env(argv);

@@ -58,8 +58,6 @@ contract ls is Utility {
                 if (!owner_only)
                     l.push(stdio.itoa(group_id));
             } else {
-//                string s_owner = _get_user_name(owner_id, inodes, data);
-//                string s_group = _get_group_name(group_id, inodes, data);
                 string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
                 string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
 

@@ -4,19 +4,10 @@ import "Utility.sol";
 
 contract mount is Utility {
 
-    function exec(Session session, InputS input, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (, string[] args, uint flags) = input.unpack();
-        Arg[] arg_list;
-        for (string arg: args) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(arg, session.wd, inodes, data);
-            arg_list.push(Arg(arg, ft, index, parent, dir_index));
-        }
-
-        (out, file_action, ars, errors) = _mount(args, flags, session.wd, arg_list, sb.get_inode_count(inodes), inodes, data);
-    }
-
-    /* File manipulation operations - cp, ln and mv */
-    function _mount(string[] args, uint flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+        err = "";
+        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ec = EXECUTE_SUCCESS;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

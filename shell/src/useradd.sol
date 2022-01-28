@@ -21,9 +21,9 @@ contract useradd is Utility {
         string user_name = params[n_args - 1];
         uint16 group_id;
         uint16 user_id;
-        uint16 options = is_system_account ? UAO_SYSTEM : 0;
-        options |= create_home_dir ? UAO_CREATE_HOME_DIR : 0;
-        options |= create_user_group ? UAO_CREATE_USER_GROUP : 0;
+        uint16 options = is_system_account ? uadmin.UAO_SYSTEM : 0;
+        options |= create_home_dir ? uadmin.UAO_CREATE_HOME_DIR : 0;
+        options |= create_user_group ? uadmin.UAO_CREATE_USER_GROUP : 0;
 
         uint16[] new_group_ids;
 

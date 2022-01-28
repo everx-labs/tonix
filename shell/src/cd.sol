@@ -28,25 +28,9 @@ contract cd is Shell {
             page = vars.set_var(s_attrs, "OLDPWD=" + cur_dir, page);
             page = vars.set_var(s_attrs, "PWD=" + new_dir, page);
             page = vars.set_var(s_attrs, "WD=" + format("{}", index), page);
-
             res = page;
-        } else if (ft == FT_UNKNOWN) {
-            ec = ENOENT;
-        } else {
-            ec = ENOTDIR;
-        }
-    }
-
-    function _dereference(uint16 mode, string s_arg, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (Arg) {
-        bool expand_symlinks = (mode & EXPAND_SYMLINKS) > 0;
-        (uint16 ino, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
-        Inode inode;
-        if (ino > 0 && inodes.exists(ino))
-            inode = inodes[ino];
-        if (expand_symlinks && ft == FT_SYMLINK) {
-            (ft, s_arg, ino) = dirent.get_symlink_target(inode, data[ino]).unpack();
-        }
-        return Arg(s_arg, ft, ino, parent, dir_index);
+        } else
+            ec = ft == FT_UNKNOWN ? ENOENT : ENOTDIR;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

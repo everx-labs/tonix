@@ -1,7 +1,18 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "../lib/SyncFS.sol";
 import "Utility.sol";
+
+struct ParsedCommand {
+    string command;
+    string[] args;
+    string short_options;
+    string[] long_options;
+    string stdin_redirect;
+    string stdout_redirect;
+    uint16 action;
+    string s_action;
+}
 
 contract tmpfs is Utility {
 

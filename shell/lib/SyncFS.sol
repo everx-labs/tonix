@@ -1,10 +1,9 @@
 pragma ton-solidity >= 0.55.0;
 
 import "../include/Internal.sol";
-import "../include/Commands.sol";
 
 /* Common functions and definitions for file system handling and synchronization */
-abstract contract SyncFS is Internal, Commands {
+abstract contract SyncFS is Internal {
 
     mapping (uint16 => Inode) _inodes;
     mapping (uint16 => bytes) public _data;
@@ -30,21 +29,6 @@ abstract contract SyncFS is Internal, Commands {
         _device_id = inodes[sb.SB_INFO].device_id;
         _block_size = inodes[sb.SB_INFO].n_blocks;
     }
-
-    /*function _claim_inodes_and_blocks(Inode inodes_inode, uint inode_count, uint block_count) internal pure returns (Inode) {
-        uint16 i_count = uint16(inode_count);
-        uint16 b_count = uint16(block_count);
-        if (i_count > 0) {
-            inodes_inode.owner_id += i_count;
-            inodes_inode.modified_at = now;
-        }
-        if (b_count > 0) {
-            inodes_inode.group_id += b_count;
-            inodes_inode.last_modified = now;
-        }
-        inodes_inode.n_links++;
-        return inodes_inode;
-    }*/
 
     function apply_changes(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external accept {
         for ((uint16 index, Inode inode): inodes)

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "stdio.sol";
 import "fmt.sol";

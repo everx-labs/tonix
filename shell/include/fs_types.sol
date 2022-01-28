@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 struct Inode {
     uint16 mode;
@@ -32,44 +32,11 @@ struct SuperBlock {
     uint16 inode_size;
 }
 
-struct SBS {
-    uint16 inode_size;
-    uint16 inode_count;
-    uint16 free_inodes;
-    uint16 first_inode;
-    uint16 block_size;
-    uint16 block_count;
-    uint16 free_blocks;
-    uint16 first_block;
-    uint32 created_at;
-    uint32 last_write_time;
-    bytes32 file_system_OS_type;
-}
-
 struct DirEntry {
     uint8 file_type;
     string file_name;
     uint16 index;
 }
-
-struct FileS {
-    uint16 mode;
-    uint16 inode;
-    uint16 state;
-    uint16 bc;
-    uint16 n_blk;
-    uint32 pos;
-    uint32 fize;
-    string name;
-}
-
-/*struct ProcessInfo {
-    uint16 owner_id;
-    uint16 self_id;
-    uint16 umask;
-    mapping (uint16 => FileS) fd_table;
-    string cwd;
-}*/
 
 struct UserInfo {
     uint16 gid;

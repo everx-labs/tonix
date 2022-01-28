@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "../include/fs_types.sol";
 import "stdio.sol";
@@ -42,12 +42,6 @@ library dirent {
     uint8 constant FT_SOCK      = 6;
     uint8 constant FT_SYMLINK   = 7;
     uint8 constant FT_LAST      = FT_SYMLINK;
-
-    uint16 constant DEF_BLOCK_SIZE = 100;
-    uint16 constant MAX_MOUNT_COUNT = 1024;
-    uint16 constant DEF_INODE_SIZE = 60;
-    uint16 constant MAX_BLOCKS = 4000;
-    uint16 constant MAX_INODES = 600;
 
     uint8 constant ENOENT       = 1; // "No such file or directory" A component of pathname does not exist or is a dangling symbolic link; pathname is an empty string and AT_EMPTY_PATH was not specified in flags.
     uint8 constant EEXIST       = 2; // "File exists"
