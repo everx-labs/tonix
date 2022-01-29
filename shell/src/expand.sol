@@ -30,7 +30,7 @@ contract expand is Utility {
         uint16 tab_size = 8;
 
         if (!params.empty() && use_tab_size) {
-            tab_size = stdio.atoi(params[0]);
+            tab_size = str.toi(params[0]);
             if (tab_size < 1)
                 return (out, "error");
         }

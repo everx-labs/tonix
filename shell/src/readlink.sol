@@ -47,7 +47,7 @@ contract readlink is Utility {
                 continue;
             }
             out.append(s_path);
-            out = stdio.aif(out, !no_newline, line_delimiter);
+            out = str.aif(out, !no_newline, line_delimiter);
         }
     }
 

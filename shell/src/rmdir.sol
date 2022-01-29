@@ -29,7 +29,7 @@ contract rmdir is Utility {
 
         for (Arg a: arg_list) {
             (string s, uint8 ft, uint16 iop, uint16 parent, uint16 dir_idx) = a.unpack();
-            out = stdio.aif(out, verbose, "rmdir: removing directory," + stdio.quote(s) + "\n");
+            out = str.aif(out, verbose, "rmdir: removing directory," + str.quote(s) + "\n");
             if (iop >= INODES) {
                 if (ft == FT_DIR) {
                     if (inodes[iop].n_links < 3) {

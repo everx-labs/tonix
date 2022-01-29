@@ -101,7 +101,7 @@ library sb {
     function get_sb_data(bytes data) internal returns (uint16[] values) {
         (string[] fields, ) = stdio.split_line(data, " ", "\n");
         for (string s: fields)
-            values.push(stdio.atoi(s));
+            values.push(str.toi(s));
     }
 
     function read_sb(mapping (uint16 => Inode) /*inodes*/, mapping (uint16 => bytes) data) internal returns (SuperBlock) {
@@ -151,20 +151,20 @@ library sb {
             ["Filesystem state:", file_system_state ? "clean" : "dirty"],
             ["Errors behavior:", errors_behavior ? "Continue" : "Stop"],
             ["Filesystem OS type:", file_system_OS_type],
-            ["Inode count:", stdio.itoa(inode_count)],
-            ["Block count:", stdio.itoa(block_count)],
-            ["Free blocks:", stdio.itoa(free_blocks)],
-            ["Free inodes:", stdio.itoa(free_inodes)],
+            ["Inode count:", str.toa(inode_count)],
+            ["Block count:", str.toa(block_count)],
+            ["Free blocks:", str.toa(free_blocks)],
+            ["Free inodes:", str.toa(free_inodes)],
             ["First block:", "0"],
-            ["Block size:", stdio.itoa(block_size)],
+            ["Block size:", str.toa(block_size)],
             ["Filesystem created:", fmt.ts(created_at)],
             ["Last mount time:", fmt.ts(last_mount_time)],
             ["Last write time:", fmt.ts(last_write_time)],
-            ["Mount count:", stdio.itoa(mount_count)],
-            ["Maximum mount count:", stdio.itoa(max_mount_count)],
-            ["Lifetime writes:", stdio.itoa(lifetime_writes)],
-            ["First inode:", stdio.itoa(first_inode)],
-            ["Inode size:", stdio.itoa(inode_size)]];
+            ["Mount count:", str.toa(mount_count)],
+            ["Maximum mount count:", str.toa(max_mount_count)],
+            ["Lifetime writes:", str.toa(lifetime_writes)],
+            ["First inode:", str.toa(first_inode)],
+            ["Inode size:", str.toa(inode_size)]];
         return fmt.format_table(table, "\t", "\n", fmt.ALIGN_LEFT);
     }
 

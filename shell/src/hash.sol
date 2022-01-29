@@ -78,7 +78,7 @@ contract hash is Shell {
                     ec = EXECUTE_FAILURE;
                     out.append("hash: " + arg + ": not found\n");
                 } else {
-                    if (stdio.strstr(commands, arg) > 0)
+                    if (str.sstr(commands, arg) > 0)
                         bins = vars.set_item_value(arg, "0", bins);
                     else
                         ec = EXECUTE_FAILURE;
@@ -88,8 +88,8 @@ contract hash is Shell {
                     (, string bin_path, ) = vars.split_var_record(path_map);
                     out.append(bin_path + "/" + arg);
                     string s_hit_count = vars.val(arg, path_map);
-                    uint16 hc = stdio.atoi(s_hit_count);
-                    string upd = vars.set_item_value(arg, stdio.itoa(hc + 1), path_map);
+                    uint16 hc = str.toi(s_hit_count);
+                    string upd = vars.set_item_value(arg, str.toa(hc + 1), path_map);
                     hashes = stdio.translate(hashes, path_map, upd);
                 } else {
                     string upd = vars.set_item_value(arg, "0", path_map);

@@ -15,11 +15,11 @@ contract getopt is Utility {
         err = "";
         ( , string[] params, string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
-        uint p = stdio.strrchr(s_input, ">");
-        uint q = stdio.strrchr(s_input, "<");
-        (string c, string s_args) = stdio.strsplit(s_input, " ");
-        string out_redirect = p > 0 ? stdio.strtok(s_input, p, " ") : "";
-        string in_redirect = q > 0 ? stdio.strtok(s_input, q, " ") : "";
+        uint p = str.rchr(s_input, ">");
+        uint q = str.rchr(s_input, "<");
+        (string c, string s_args) = str.split(s_input, " ");
+        string out_redirect = p > 0 ? str.tok(s_input, p, " ") : "";
+        string in_redirect = q > 0 ? str.tok(s_input, q, " ") : "";
         string[] args;
         string short_options;
         string[] long_options;
@@ -156,7 +156,7 @@ contract getopt is Utility {
         string possible_options = ci.options;
         for (uint i = 0; i < short_options_len; i++) {
             string actual_option = short_options.substr(i, 1);
-            uint p = stdio.strchr(possible_options, actual_option);
+            uint p = str.chr(possible_options, actual_option);
             if (p == 0)
                 extra_flags.append(actual_option);
         }

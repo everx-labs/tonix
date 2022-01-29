@@ -53,7 +53,7 @@ contract command is Shell {
         string fn_map = vars.get_pool_record(cmd, comp_spec);
         if (fn_map.empty()) {
             string commands = vars.get_map_value("command", pool);
-            if (stdio.strstr(commands, " " + cmd + " ") > 0) {
+            if (str.sstr(commands, " " + cmd + " ") > 0) {
                 fn_name = "main";
                 fn_map = vars.get_map_value(fn_name, comp_spec);
                 string upd = vars.set_item_value(cmd, "0", fn_map);
@@ -62,8 +62,8 @@ contract command is Shell {
                 ec = EXECUTE_FAILURE;
         } else {
             (, fn_name, ) = vars.split_var_record(fn_map);
-            uint16 hc = stdio.atoi(vars.val(cmd, fn_map));
-            string upd = vars.set_item_value(cmd, stdio.itoa(hc + 1), fn_map);
+            uint16 hc = str.toi(vars.val(cmd, fn_map));
+            string upd = vars.set_item_value(cmd, str.toa(hc + 1), fn_map);
             cs_res = stdio.translate(comp_spec, fn_map, upd);
         }
     }
@@ -72,7 +72,7 @@ contract command is Shell {
         string s_attrs = "-x";
         (string[] lines, ) = stdio.split(pool, "\n");
         for (string line: lines) {
-            (string attrs, ) = stdio.strsplit(line, " ");
+            (string attrs, ) = str.split(line, " ");
             if (vars.match_attr_set(s_attrs, attrs))
                 exports.append(line + "\n");
         }

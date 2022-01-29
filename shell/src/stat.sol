@@ -47,7 +47,7 @@ contract stat is Utility {
                 }
                 out.append(format("   File: {}\n   Size: {}\t\tBlocks: {}\tIO Block: {}\t", name, file_size, n_blocks, blk_size));
                 out.append(ft == FT_REG_FILE && file_size == 0 ? "regular empty" : inode.file_type_description(mode));
-                out = stdio.aif(out, ft == FT_REG_FILE || ft == FT_BLKDEV || ft == FT_CHRDEV, " file");
+                out = str.aif(out, ft == FT_REG_FILE || ft == FT_BLKDEV || ft == FT_CHRDEV, " file");
                 out.append(format("\nDevice: {:x}h/{}d\tInode: {}\tLinks: {}", device_id, device_id, index, n_links));
                 if (ft == FT_BLKDEV || ft == FT_CHRDEV)
                     out.append(format("\tDevice type: {},{}\n", major, minor));

@@ -124,8 +124,8 @@ contract man_db is Utility {
                     string s_n_args = command_data[6];
                     (string[] min_max_args, uint n_fields) = stdio.split(s_n_args, "\t");
                     if (n_fields > 1) {
-                        min_args = uint8(stdio.atoi(min_max_args[0]));
-                        max_args = stdio.atoi(min_max_args[1]);
+                        min_args = uint8(str.toi(min_max_args[0]));
+                        max_args = str.toi(min_max_args[1]);
                     }
                 }
             }
@@ -152,8 +152,8 @@ contract man_db is Utility {
                     string s_n_args = command_data[6];
                     (string[] min_max_args, uint n_fields) = split(s_n_args, "\t");
                     if (n_fields > 1) {
-                        uint u_min_args = stdio.atoi(min_max_args[0]);
-                        uint u_max_args = stdio.atoi(min_max_args[1]);
+                        uint u_min_args = str.toi(min_max_args[0]);
+                        uint u_max_args = str.toi(min_max_args[1]);
                         contents.append(format("{}\t{}\t{}\t{}\t{}\n", i + 1, command_name, u_min_args, u_max_args, flags));
                     }
                 }
@@ -222,8 +222,8 @@ contract man_db is Utility {
                 string option_names, string[] option_descriptions) {
         (string[] command_data, uint n_fields) = stdio.split(fs.get_file_contents_at_path("/usr/" + command, _inodes, _data), "\n");
         if (n_fields > 5)
-            return (command_data[0], command_data[1], stdio.join_fields(stdio.get_tsv(command_data[3]), "\n"),
-                stdio.get_tsv(command_data[2]), command_data[4], stdio.get_tsv(command_data[5]));
+            return (command_data[0], command_data[1], stdio.join_fields(fmt.get_tsv(command_data[3]), "\n"),
+                fmt.get_tsv(command_data[2]), command_data[4], fmt.get_tsv(command_data[5]));
     }
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {

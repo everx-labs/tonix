@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "stdio.sol";
 import "path.sol";
@@ -178,7 +178,12 @@ library fmt {
         return format("{} {:02} {:02}:{:02}:{:02}", month, day, hour, minute, second);
     }
 
-    /* Network helpers */
+    /* Read tab-separated values into an array */
+    function get_tsv(string s) internal returns (string[] fields) {
+        if (!s.empty())
+            (fields, ) = stdio.split(s, "\t");
+    }
+
     function to_address(string s_addr) internal returns (address addr) {
         uint len = s_addr.byteLength();
         if (len > 60) {

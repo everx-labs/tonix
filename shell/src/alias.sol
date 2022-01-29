@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -11,9 +11,9 @@ contract alias_ is Shell {
         string initial_val = alias_page;
         string token = params[0];
         ec = EXECUTE_SUCCESS;
-        if (stdio.strchr(argv, "=") > 0) {
-            (string name, ) = stdio.strsplit(token, "=");
-            string value = stdio.strval(argv, "=", "\n");
+        if (str.chr(argv, "=") > 0) {
+            (string name, ) = str.split(token, "=");
+            string value = str.val(argv, "=", "\n");
             string new_value = vars.var_record("", name, value);
             string cur_val = vars.val(name, alias_page);
             if (cur_val.empty())

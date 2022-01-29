@@ -5,29 +5,29 @@ import "Shell.sol";
 contract getopts is Shell {
 
     function _next_option(string s_args, string opt_string) internal pure returns (uint opt_index, string opt_sym, string opt_arg) {
-        opt_index = stdio.strstr(" " + s_args, " -");
+        opt_index = str.sstr(" " + s_args, " -");
         if (opt_index > 0) {
-            opt_sym = stdio.strval(s_args, " -", " ");
+            opt_sym = str.val(s_args, " -", " ");
             uint opt_string_len = opt_string.byteLength();
             uint sym_len = opt_sym.byteLength();
             if (sym_len > 1) {
                 if (opt_sym.substr(0, 1) == "-") { // long option
-                    uint q = stdio.strstr(opt_string, opt_sym);
+                    uint q = str.sstr(opt_string, opt_sym);
                     if (q > 0) {
                         if (q + 1 < opt_string_len) {
                             if (opt_string.substr(q, 1) == ":")
-                                opt_arg = stdio.strval(s_args, " -" + opt_sym, " ");
+                                opt_arg = str.val(s_args, " -" + opt_sym, " ");
                         }
                     }
                 } else {
                     // short opts combo
                 }
             } else {
-                uint q = stdio.strchr(opt_string, opt_sym);
+                uint q = str.chr(opt_string, opt_sym);
                 if (q > 0) {
                     if (q + 1 < opt_string_len) {
                         if (opt_string.substr(q, 1) == ":")
-                            opt_arg = stdio.strval(s_args, " -" + opt_sym, " ");
+                            opt_arg = str.val(s_args, " -" + opt_sym, " ");
                     }
                 }
             }
@@ -54,7 +54,7 @@ contract getopts is Shell {
 
         /*for (uint i = 0; i < opt_str_len; i++) {
             string o = opt_string.substr(i, 1);
-            uint p = stdio.strstr(s_args, "-"
+            uint p = str.sstr(s_args, "-"
         }*/
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

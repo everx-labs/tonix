@@ -22,7 +22,7 @@ contract ls is Utility {
     function _ls_sort_rating(string f, Inode inode, string name, uint16 dir_idx) private pure returns (uint rating) {
         (bool use_ctime, bool largest_first, bool unsorted, bool no_sort, bool newest_first, bool reverse_order, , ) = arg.flag_values("cSUftr", f);
         bool directory_order = unsorted || no_sort;
-        uint rating_lo = directory_order ? dir_idx : stdio.alpha_rating(name, 8);
+        uint rating_lo = directory_order ? dir_idx : str.alpha_rating(name, 8);
         uint rating_hi;
 
         if (newest_first)
@@ -45,18 +45,18 @@ contract ls is Utility {
 
         (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
         if (print_index_node)
-            l = [stdio.itoa(index)];
+            l = [str.toa(index)];
         if (print_allocated_size)
-            l.push(stdio.itoa(n_blocks));
+            l.push(str.toa(n_blocks));
 
         if (long_format) {
             l.push(inode.permissions(mode));
-            l.push(stdio.itoa(n_links));
+            l.push(str.toa(n_links));
             if (numeric) {
                 if (!group_only)
-                    l.push(stdio.itoa(owner_id));
+                    l.push(str.toa(owner_id));
                 if (!owner_only)
-                    l.push(stdio.itoa(group_id));
+                    l.push(str.toa(group_id));
             } else {
                 string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
                 string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
@@ -147,7 +147,7 @@ contract ls is Utility {
                 p = ds.next(xk);
             }
         }
-        out = stdio.aif(out, count_totals, format("total {}\n", total_blocks));
+        out = str.aif(out, count_totals, format("total {}\n", total_blocks));
         out.append(fmt.format_table(table, " ", sp, fmt.ALIGN_RIGHT));
     }
 

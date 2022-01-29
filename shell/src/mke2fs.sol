@@ -272,9 +272,9 @@ contract mke2fs is Utility {
         out.append(_builder_string(2, b_reg_files));
         TvmBuilder b_other = _store_def_inode(inodes[1]);
         out.append(_builder_string(3, b_other));
-        for ((uint16 i, Inode inode): inodes) {
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
-            if ((mode & S_IFMT) == S_IFDIR) {
+        for ((uint16 i, Inode ino): inodes) {
+            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
+            if (inode.is_dir(mode)) {
                 bytes dir_data = data[i];
                 out.append(format("dir data: {}\n", dir_data.length));
                 n_dirs++;
@@ -283,7 +283,7 @@ contract mke2fs is Utility {
                 out.append(_builder_string(1, b_dirs));
                 out.append(_builder_string(4, b_dir_data));
             }
-            else if ((mode & S_IFMT) == S_IFREG) {
+            else if (inode.is_reg(mode)) {
                 b_reg_files.store(uint8(i), uint16(file_size));
                 out.append(_builder_string(2, b_reg_files));
                 n_reg_files++;
@@ -364,28 +364,6 @@ contract mke2fs is Utility {
         inodes[DEVFS_INODES_INODE] = inodes_inode;
     }
 
-    function _get_user_id(string user_name) internal pure returns (uint16) {
-        if (user_name == "root")
-            return SUPER_USER;
-        if (user_name == "boris")
-            return REG_USER;
-        if (user_name == "ivan")
-            return REG_USER + 1;
-        if (user_name == "guest")
-            return GUEST_USER;
-    }
-
-    function _get_group_id(string group_name) internal pure returns (uint16) {
-        if (group_name == "root")
-            return SUPER_USER_GROUP;
-        if (group_name == "staff")
-            return REG_USER_GROUP;
-        if (group_name == "boris")
-            return REG_USER_GROUP;
-        if (group_name == "guest")
-            return GUEST_USER_GROUP;
-    }
-
     function parse_fs(string text) external pure returns (string out, mapping (uint16 => Inode) inodes) {
         return _parsefs(text);
     }
@@ -399,7 +377,7 @@ contract mke2fs is Utility {
     }
 
     function _parse_sb_inode(string line) internal pure returns (uint16 index, Inode inode) {
-        string index_s = line.substr(0, DEF_INODE_SIZE);
+        string index_s = line.substr(0, fs.DEF_INODE_SIZE);
         (string[] fields, ) = stdio.split(index_s, " ");
         uint[] values;
 
@@ -419,7 +397,7 @@ contract mke2fs is Utility {
         for (uint i = 0; i < frs_len; i++) {
             string line = frs[i];
             uint line_len = line.byteLength();
-            if (line_len > DEF_INODE_SIZE) {
+            if (line_len > fs.DEF_INODE_SIZE) {
                 (uint16 index, Inode inode) = _parse_sb_inode(line);
                 inodes[index] = inode;
             }
@@ -453,8 +431,8 @@ contract mke2fs is Utility {
 
     function _get_bare_fs() internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint16 n = 0;
-        uint16 block_size = DEF_BLOCK_SIZE;
-        uint16 n_blocks = MAX_BLOCKS;
+        uint16 block_size = fs.DEF_BLOCK_SIZE;
+        uint16 n_blocks = fs.MAX_BLOCKS;
         uint16 host_device_id = 0;
         uint16 block_count;
 
@@ -462,7 +440,7 @@ contract mke2fs is Utility {
         (inodes[n], data[n]) = inode.get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, ROOT, inode.get_dots(n, n));
         block_count++;
 
-        SuperBlock sb = _get_default_sb("bfs", DEF_BLOCK_SIZE, n, inodes, data);
+        SuperBlock sb = _get_default_sb("bfs", fs.DEF_BLOCK_SIZE, n, inodes, data);
         bytes inodes_dump = _write_inodes(inodes, data);
 
         data[SB_INODES_TABLE] = inodes_dump;
@@ -534,7 +512,7 @@ contract mke2fs is Utility {
         uint16[] sb_info;
         (string[] fields, ) = stdio.split_line(info, " ", "\n");
         for (string s: fields)
-            sb_info.push(uint16(stdio.atoi(s)));
+            sb_info.push(uint16(str.toi(s)));
 
         uint16 total_inodes = sb_info[1];
         uint16 total_blocks = sb_info[2];
@@ -578,8 +556,8 @@ contract mke2fs is Utility {
         for ((uint16 i, bytes bts): data)
             block_count += uint16(bts.length / block_size) + 1;
 
-        return SuperBlock(true, true, name, inode_count, block_count, MAX_INODES - inode_count - first_inode, MAX_BLOCKS - block_count,
-            block_size, now, 0, now, 0, 0, 1, first_inode, DEF_INODE_SIZE);
+        return SuperBlock(true, true, name, inode_count, block_count, fs.MAX_INODES - inode_count - first_inode, fs.MAX_BLOCKS - block_count,
+            block_size, now, 0, now, 0, 0, 1, first_inode, fs.DEF_INODE_SIZE);
     }
 
     function _write_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bytes out) {

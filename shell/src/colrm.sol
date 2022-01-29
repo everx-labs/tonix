@@ -31,11 +31,11 @@ contract colrm is Utility {
         bool second_cut = false;
 
         if (n_params > 0)
-            start = stdio.atoi(params[0]);
+            start = str.toi(params[0]);
         if (start < 1)
             return (out, "error");
         if (n_params > 1) {
-            stop = stdio.atoi(params[1]);
+            stop = str.toi(params[1]);
             if (stop < start)
                 return (out, "also an error");
             second_cut = true;

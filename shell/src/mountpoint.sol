@@ -43,7 +43,7 @@ contract mountpoint is Utility {
             }
         }
 
-        stdio.aif(out, out.empty(), s_path + " is not a mountpoint");
+        str.aif(out, out.empty(), s_path + " is not a mountpoint");
         if (quiet)
             out = "";
     }

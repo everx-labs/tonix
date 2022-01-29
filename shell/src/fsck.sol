@@ -121,7 +121,7 @@ contract fsck is Utility {
                 total_blocks_actual += n_data_blocks;
                 total_inodes++;
 
-                if ((mode & S_IFMT) == S_IFDIR) {
+                if (inode.is_dir(mode)) {
                     out.append(format("Inode dir: {}\n", i));
                     out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
                     out.append(bts);

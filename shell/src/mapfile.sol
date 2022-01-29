@@ -11,15 +11,15 @@ contract mapfile is Shell {
 
         string s_attrs = "-a";
         string delimiter = arg.flag_set("d", flags) ? arg.opt_arg_value("d", args) : "\n";
-        uint count = arg.flag_set("n", flags) ? stdio.atoi(arg.opt_arg_value("n", args)) : 0;
-        uint origin = arg.flag_set("O", flags) ? stdio.atoi(arg.opt_arg_value("O", args)) : 0;
+        uint count = arg.flag_set("n", flags) ? str.toi(arg.opt_arg_value("n", args)) : 0;
+        uint origin = arg.flag_set("O", flags) ? str.toi(arg.opt_arg_value("O", args)) : 0;
         string array_name = params.empty() ? "MAPFILE" : params[params.length - 1];
         string ofs = arg.flag_set("t", flags) ? " " : (delimiter + " ");
         string ofs_2 = arg.flag_set("t", flags) ? "" : delimiter;
         uint16 page_index;
         if (arg.flag_set("u", flags)) {
             string s_fd = arg.opt_arg_value("u", args);
-            uint16 fd = stdio.atoi(s_fd);
+            uint16 fd = str.toi(s_fd);
             if (fd > 0)
                 page_index = fd;
             else

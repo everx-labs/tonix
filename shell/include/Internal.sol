@@ -29,15 +29,6 @@ abstract contract Internal is Base {
     uint16 constant S_ISGID = 1 << 10; //   set-group-ID bit
     uint16 constant S_ISUID = 1 << 11; //   set-user-ID bit
 
-    uint16 constant S_IFIFO = 1 << 12;
-    uint16 constant S_IFCHR = 1 << 13;
-    uint16 constant S_IFDIR = 1 << 14;
-    uint16 constant S_IFBLK = S_IFDIR + S_IFCHR;
-    uint16 constant S_IFREG = 1 << 15;
-    uint16 constant S_IFLNK = S_IFREG + S_IFCHR;
-    uint16 constant S_IFSOCK = S_IFREG + S_IFDIR;
-    uint16 constant S_IFMT  = 0xF000; //   bit mask for the file type bit field
-
     uint8 constant FT_UNKNOWN   = 0;
     uint8 constant FT_REG_FILE  = 1;
     uint8 constant FT_DIR       = 2;

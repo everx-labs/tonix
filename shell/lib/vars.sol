@@ -40,7 +40,7 @@ library vars {
     function fetch_value(string key, uint16 delimiter, string page) internal returns (string value) {
         string key_pattern = wrap(key, W_SQUARE);
         (string val_pattern_start, string val_pattern_end) = wrap_symbols(delimiter);
-        return stdio.strval(page, key_pattern + "=" + val_pattern_start, val_pattern_end);
+        return str.val(page, key_pattern + "=" + val_pattern_start, val_pattern_end);
     }
 
     function val(string key, string page) internal returns (string value) {
@@ -56,7 +56,7 @@ library vars {
     }
 
     function item_value(string item) internal returns (string, string) {
-        (string key, string value) = stdio.strsplit(item, "=");
+        (string key, string value) = str.split(item, "=");
         return (unwrap(key), unwrap(value));
     }
 
@@ -66,7 +66,7 @@ library vars {
             string attr_sign = part_attrs.substr(i * 2, 1);
             string attr_sym = part_attrs.substr(i * 2 + 1, 1);
 
-            bool flag_cur = stdio.strchr(cur_attrs, attr_sym) > 0;
+            bool flag_cur = str.chr(cur_attrs, attr_sym) > 0;
             bool flag_match = (flag_cur && attr_sign == "-");
             if (!flag_match)
                 return false;
@@ -81,7 +81,7 @@ library vars {
             string attr_sign = part_attrs.substr(i * 2, 1);
             string attr_sym = part_attrs.substr(i * 2 + 1, 1);
 
-            bool flag_cur = stdio.strchr(cur_attrs, attr_sym) > 0;
+            bool flag_cur = str.chr(cur_attrs, attr_sym) > 0;
             if (!flag_cur && attr_sign == "-")
                 res.append(attr_sym);
             else if (flag_cur && attr_sign == "+")
@@ -97,7 +97,7 @@ library vars {
         uint16 mask = get_mask_ext(attrs);
         if (attrs == "")
             attrs = "--";
-        bool is_function = stdio.strchr(attrs, "f") > 0;
+        bool is_function = str.chr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=";
         if (!value.empty())
             var_value.append(wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : W_DQUOTE));
@@ -107,8 +107,8 @@ library vars {
     }
 
     function split_var_record(string line) internal returns (string, string, string) {
-        (string decl, string value) = stdio.strsplit(line, "=");
-        (string attrs, string name) = stdio.strsplit(decl, " ");
+        (string decl, string value) = str.split(line, "=");
+        (string attrs, string name) = str.split(decl, " ");
         return (attrs, unwrap(name), unwrap(value));
     }
 
@@ -116,13 +116,13 @@ library vars {
         string pat = wrap(name, W_SQUARE);
         (string[] lines, ) = stdio.split(pool, "\n");
         for (string line: lines)
-            if (stdio.strstr(line, pat) > 0)
+            if (str.sstr(line, pat) > 0)
                 return line;
     }
 
     function print_reusable(string line) internal returns (string) {
         (string attrs, string name, string value) = split_var_record(line);
-        bool is_function = stdio.strchr(attrs, "f") > 0;
+        bool is_function = str.chr(attrs, "f") > 0;
         string var_value = value.empty() ? "" : "=" + value;
         return is_function ?
             (name + " ()" + wrap(fmt.indent(stdio.translate(value, ";", "\n"), 4, "\n"), W_FUNCTION)) :
@@ -161,8 +161,8 @@ library vars {
         (string[] lines, ) = stdio.split(context, "\n");
         string val_pattern = wrap(value, vars.W_SPACE);
         for (string line: lines)
-            if (stdio.strstr(line, val_pattern) > 0)
-                return stdio.strval(line, "[", "]");
+            if (str.sstr(line, val_pattern) > 0)
+                return str.val(line, "[", "]");
     }
 
     function set_item_value(string name, string value, string page) internal returns (string) {
@@ -172,12 +172,12 @@ library vars {
     }
 
     function set_var(string attrs, string token, string pg) internal returns (string page) {
-        (string name, string value) = stdio.strsplit(token, "=");
+        (string name, string value) = str.split(token, "=");
         string cur_record = get_pool_record(name, pg);
         string new_record = var_record(attrs, name, value);
         if (!cur_record.empty()) {
-            (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
-            (, string cur_value) = stdio.strsplit(cur_record, "=");
+            (string cur_attrs, ) = str.split(cur_record, " ");
+            (, string cur_value) = str.split(cur_record, "=");
             string new_value = !value.empty() ? value : !cur_value.empty() ? unwrap(cur_value) : "";
             new_record = var_record(meld_attr_set(attrs, cur_attrs), name, new_value);
             page = stdio.translate(pg, cur_record, new_record);

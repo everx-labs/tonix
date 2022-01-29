@@ -18,7 +18,7 @@ contract shopt is Shell {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(s_attrs, attrs))
                     out.append(print_reusable ? "shopt " + attrs + " " + name + "\n" :
-                    name + "\t" + (stdio.strchr(attrs, "s") > 0 ? "on" : "off") + "\n");
+                    name + "\t" + (str.chr(attrs, "s") > 0 ? "on" : "off") + "\n");
             }
         }
         for (string p: params) {
@@ -26,9 +26,8 @@ contract shopt is Shell {
             if (!line.empty()) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(s_attrs, attrs))
-//                    out.append(print_reusable ? vars.print_reusable(line) : (name + "\t" + (set_opt ? "on" : "off") + "\n"));
                     out.append(print_reusable ? "shopt " + attrs + " " + name + "\n" :
-                    name + "\t" + (stdio.strchr(attrs, "s") > 0 ? "on" : "off") + "\n");
+                    name + "\t" + (str.chr(attrs, "s") > 0 ? "on" : "off") + "\n");
             } else {
                 ec = EXECUTE_FAILURE;
                 out.append("shopt: " + p + " not found\n");

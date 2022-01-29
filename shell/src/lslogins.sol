@@ -12,14 +12,14 @@ contract lslogins is Utility {
         bool print_system = flag_system || !flag_user;
         bool print_user = !flag_system || flag_user;
         string field_separator;
-        uint16 uid = stdio.atoi(vars.val("UID", argv));
+        uint16 uid = str.toi(vars.val("UID", argv));
         string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
 
         if (colon)
             field_separator = ":";
-        field_separator = stdio.aif(field_separator, newline, "\n");
-        field_separator = stdio.aif(field_separator, raw, " ");
-        field_separator = stdio.aif(field_separator, nulll, "\x00");
+        field_separator = str.aif(field_separator, newline, "\n");
+        field_separator = str.aif(field_separator, raw, " ");
+        field_separator = str.aif(field_separator, nulll, "\x00");
         if (field_separator.byteLength() > 1)
             return (EXECUTE_FAILURE, "", "Mutually exclusive options\n");
         bool formatted_table = field_separator.empty();
@@ -39,7 +39,7 @@ contract lslogins is Utility {
             (string[] lines, ) = stdio.split(etc_passwd, "\n");
             for (string line: lines) {
                 (string s_owner, uint16 t_uid, uint16 t_gid, ) = uadmin.parse_passwd_entry_line(line);
-                table.push([stdio.itoa(t_uid), s_owner, stdio.itoa(t_gid), s_owner]);
+                table.push([str.toa(t_uid), s_owner, str.toa(t_gid), s_owner]);
             }
         } else {
             string user_name = params[0];
@@ -48,10 +48,10 @@ contract lslogins is Utility {
                 (, uint16 t_uid, uint16 t_gid, string home_dir) = uadmin.parse_passwd_entry_line(line);
                     table = [
                         ["Username:", user_name],
-                        ["UID:", stdio.itoa(t_uid)],
+                        ["UID:", str.toa(t_uid)],
                         ["Home directory:", home_dir],
                         ["Primary group:", user_name],
-                        ["GID:", stdio.itoa(t_gid)]];
+                        ["GID:", str.toa(t_gid)]];
 //                    break;
                 }
         }

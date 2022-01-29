@@ -5,14 +5,14 @@ import "vars.sol";
 library arg {
 
     function flag_set(string name, string flags) internal returns (bool) {
-        return flags.empty() ? false : stdio.strchr(flags, name) > 0;
+        return flags.empty() ? false : str.chr(flags, name) > 0;
     }
 
     function flag_values(string flags_query, string flags_set) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
         uint len = flags_query.byteLength();
         bool[] tmp;
         for (uint i = 0; i < len; i++)
-            tmp.push(stdio.strchr(flags_set, flags_query.substr(i, 1)) > 0);
+            tmp.push(str.chr(flags_set, flags_query.substr(i, 1)) > 0);
         return (len > 0 ? tmp[0] : false,
                 len > 1 ? tmp[1] : false,
                 len > 2 ? tmp[2] : false,
@@ -33,7 +33,7 @@ library arg {
 
     function get_env(string env) internal returns (uint16 wd, string[] args, string flags, string cwd) {
         string s_wd = vars.val("WD", env);
-        wd = stdio.atoi(s_wd);
+        wd = str.toi(s_wd);
         cwd = vars.val("PWD", env);
         flags = vars.val("FLAGS", env);
         string s_args = vars.val("PARAMS", env);
@@ -43,9 +43,9 @@ library arg {
 
     function get_user_data(string env) internal returns (uint16 uid, uint16 gid) {
         string s_uid = vars.val("UID", env);
-        uid = stdio.atoi(s_uid);
+        uid = str.toi(s_uid);
         string s_gid = vars.val("GID", env);
-        gid = stdio.atoi(s_gid);
+        gid = str.toi(s_gid);
     }
 
     function get_opts(string s_arg) internal returns (string flags, string opt_args) {

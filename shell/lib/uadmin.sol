@@ -53,7 +53,7 @@ library uadmin {
             (string group_name, , string member_list) = parse_group_entry_line(line);
             if (user_name == group_name)
                 primary = group_name;
-            if (stdio.strstr(member_list, user_name) > 0)
+            if (str.sstr(member_list, user_name) > 0)
                 supp.push(group_name);
         }
     }
@@ -62,7 +62,7 @@ library uadmin {
         (string[] fields, uint n_fields) = stdio.split(line, ":");
         if (n_fields > 2) {
             name = fields[0];
-            gid = stdio.atoi(fields[2]);
+            gid = str.toi(fields[2]);
             members = n_fields > 3 ? fields[3] : name;
         }
         if (gid == 0 && name != "root")
@@ -73,8 +73,8 @@ library uadmin {
         (string[] fields, uint n_fields) = stdio.split(line, ":");
         if (n_fields > 5) {
             name = fields[0];
-            uid = stdio.atoi(fields[2]);
-            primary_gid = stdio.atoi(fields[3]);
+            uid = str.toi(fields[2]);
+            primary_gid = str.toi(fields[3]);
             home_dir = fields[4];
         }
         if (primary_gid == 0 && name != "root")

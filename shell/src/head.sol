@@ -35,7 +35,7 @@ contract head is Utility {
         uint n_params = params.length;
 
         if (num_lines && n_params > 0) {
-            n_lines = stdio.atoi(params[0]);
+            n_lines = str.toi(params[0]);
             if (n_lines < 1)
                 return (out, "error");
         }

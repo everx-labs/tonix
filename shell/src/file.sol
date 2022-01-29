@@ -28,11 +28,11 @@ contract file is Utility {
         (uint16 mode, , , , , uint16 device_id, uint32 file_size, , , ) = ino.unpack();
 
         if (!brief_mode)
-            out = stdio.aif(name, add_null, "\x00") + stdio.aif(": ", !dont_pad, "\t");
+            out = str.aif(name, add_null, "\x00") + str.aif(": ", !dont_pad, "\t");
         if (ft == FT_REG_FILE) {
-            out = stdio.aif(out, file_size == 0, "empty");
-            out = stdio.aif(out, file_size == 1, "very short file (no magic)");
-            out = stdio.aif(out, file_size > 1, "ASCII text");
+            out = str.aif(out, file_size == 0, "empty");
+            out = str.aif(out, file_size == 1, "very short file (no magic)");
+            out = str.aif(out, file_size > 1, "ASCII text");
         } else
             out.append(inode.file_type_description(mode));
         if (ft == FT_CHRDEV || ft == FT_BLKDEV) {

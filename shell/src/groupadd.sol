@@ -19,7 +19,7 @@ contract groupadd is Utility {
             errors.push(Err(uadmin.E_NAME_IN_USE, 0, target_group_name));
         if (use_group_id) {
             string group_id_s = arg.opt_arg_value("g", args);
-            uint16 n_gid = stdio.atoi(group_id_s);
+            uint16 n_gid = str.toi(group_id_s);
             if (n_gid == 0)
                 errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
             else

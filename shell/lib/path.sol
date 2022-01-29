@@ -1,6 +1,7 @@
 pragma ton-solidity >= 0.56.0;
 
 import "stdio.sol";
+import "str.sol";
 
 library path {
 
@@ -26,25 +27,25 @@ library path {
     uint16 constant O_NONBLOCK  = 8192;
     uint16 constant O_DSYNC     = 16384;
     uint16 constant FASYNC      = 32768;
-    
+
     /* Separates a pathname to directory-part and not-a-directory path */
-    function dir(string str) internal returns (string, string) {
-        if (str.empty())
+    function dir(string s) internal returns (string, string) {
+        if (s.empty())
             return (".", "");
-        if (str == "/")
+        if (s == "/")
             return ("/", "/");
-        uint q = stdio.strrchr(str, "/");
+        uint q = str.rchr(s, "/");
         if (q == 0)
-            return (".", str);
+            return (".", s);
         if (q == 1)
-            return ("/", str.substr(1));
-        return (str.substr(0, q - 1), str.substr(q));
+            return ("/", s.substr(1));
+        return (s.substr(0, q - 1), s.substr(q));
     }
 
     function strip_path(string s_path) internal returns (string res) {
         res = stdio.tr_squeeze(s_path, "/");
         uint len = res.byteLength();
-        if (len > 0 && stdio.strrchr(res, "/") == len)
+        if (len > 0 && str.rchr(res, "/") == len)
             res = res.substr(0, len - 1);
     }
 

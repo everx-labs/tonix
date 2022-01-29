@@ -42,9 +42,9 @@ contract cat is Utility {
                 if (suppress_repeated_empty_lines && repeated_empty_line)
                     repeated_empty_line = false;
                 line_out.append(convert_tabs ? stdio.translate(line_in, "\t", "^I") : line_in);
-                line_out = stdio.aif(line_out, show_nonprinting && len > 1 && line_in.substr(len - 2, 1) == "\x13", "^M");
+                line_out = str.aif(line_out, show_nonprinting && len > 1 && line_in.substr(len - 2, 1) == "\x13", "^M");
             }
-            line_out = stdio.aif(line_out, dollar_at_line_end, "$");
+            line_out = str.aif(line_out, dollar_at_line_end, "$");
             out.append(line_out + "\n");
         }
     }

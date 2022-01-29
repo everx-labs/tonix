@@ -1,6 +1,7 @@
 pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
+import "../lib/inode.sol";
 
 contract test is Shell {
 
@@ -13,9 +14,9 @@ contract test is Shell {
         dbg.append(format("arg 1: {} op: {} arg 2: {}\n", arg_1, op, arg_2));
         bool result;
         if (arg_2.empty()) {
-            if (stdio.strchr("aesbcdfhLpSgukrwxOGN", op) > 0)
+            if (str.chr("aesbcdfhLpSgukrwxOGN", op) > 0)
                 result = _eval_file_unary(op, arg_1, args, pool, inodes, data);
-//            else if (stdio.strchr("ovR", op) > 0)
+//            else if (str.chr("ovR", op) > 0)
 //                result = _eval_option(op, arg_1, e);
             else
                 result = false;
@@ -27,25 +28,25 @@ contract test is Shell {
 
     function _match_mode(string op, uint16 mode) internal pure returns (bool res) {
         if (op == "b")
-            return (mode & S_IFMT) == S_IFBLK;
+            return inode.is_block_dev(mode);
         if (op == "c")
-            return (mode & S_IFMT) == S_IFCHR;
+            return inode.is_char_dev(mode);
         if (op == "d")
-            return (mode & S_IFMT) == S_IFDIR;
+            return inode.is_dir(mode);
         if (op == "f")
-            return (mode & S_IFMT) == S_IFREG;
+            return inode.is_reg(mode);
         if (op == "h" || op == "L")
-            return (mode & S_IFMT) == S_IFLNK;
+            return inode.is_symlink(mode);
         if (op == "p")
-            return (mode & S_IFMT) == S_IFIFO;
+            return inode.is_pipe(mode);
         if (op == "S")
-            return (mode & S_IFMT) == S_IFSOCK;
+            return inode.is_socket(mode);
         if (op == "g")
-            return (mode & S_ISGID) > 0;
+            return (mode & inode.S_ISGID) > 0;
         if (op == "u")
-            return (mode & S_ISUID) > 0;
+            return (mode & inode.S_ISUID) > 0;
         if (op == "k")
-            return (mode & S_ISVTX) > 0;
+            return (mode & inode.S_ISVTX) > 0;
         return false;
     }
 
@@ -58,17 +59,17 @@ contract test is Shell {
             return group_owned;
 
         if (op == "r")
-            return (user_owned && (mode & S_IRUSR) > 0) || (group_owned && (mode & S_IRGRP) > 0) || (mode & S_IROTH) > 0;
+            return (user_owned && (mode & inode.S_IRUSR) > 0) || (group_owned && (mode & inode.S_IRGRP) > 0) || (mode & inode.S_IROTH) > 0;
         if (op == "w")
-            return (user_owned && (mode & S_IWUSR) > 0) || (group_owned && (mode & S_IWGRP) > 0) || (mode & S_IWOTH) > 0;
+            return (user_owned && (mode & inode.S_IWUSR) > 0) || (group_owned && (mode & inode.S_IWGRP) > 0) || (mode & inode.S_IWOTH) > 0;
         if (op == "x")
-            return (user_owned && (mode & S_IXUSR) > 0) || (group_owned && (mode & S_IXGRP) > 0) || (mode & S_IXOTH) > 0;
+            return (user_owned && (mode & inode.S_IXUSR) > 0) || (group_owned && (mode & inode.S_IXGRP) > 0) || (mode & inode.S_IXOTH) > 0;
 
         return false;
     }
 
     function _eval_file_unary(string op, string path, string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
-        uint16 wd_index = stdio.atoi(vars.val("WD", pool));
+        uint16 wd_index = str.toi(vars.val("WD", pool));
 //        (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, ROOT_DIR, inodes, data);
         (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, wd_index, inodes, data);
 //        string cached_wd = vars.val("PWD", pool);
@@ -82,12 +83,12 @@ contract test is Shell {
             if (op == "s")
                 return file_size > 0;
 
-            if (stdio.strchr("bcdfhLpStgku", op) > 0)
+            if (str.chr("bcdfhLpStgku", op) > 0)
                 return _match_mode(op, mode);
 
-            if (stdio.strchr("rwxOG", op) > 0) {
-                uint16 uid = stdio.atoi(vars.val("UID", pool));
-                uint16 gid = stdio.atoi(vars.val("GID", pool));
+            if (str.chr("rwxOG", op) > 0) {
+                uint16 uid = str.toi(vars.val("UID", pool));
+                uint16 gid = str.toi(vars.val("GID", pool));
                 return _can_access(op, mode, owner_id, group_id, uid, gid);
             }
         return false;

@@ -12,7 +12,7 @@ contract mkfs is Utility {
         for (string param: params) {
 
         }
-        uint16 inode_size = use_inode_size ? stdio.atoi(params[1]) : DEF_INODE_SIZE;
+        uint16 inode_size = use_inode_size ? str.toi(params[1]) : fs.DEF_INODE_SIZE;
         fs_type = params[0];
 
         /*return SuperBlock(true, true, fs_type, inode_count, block_count, MAX_INODES - inode_count - first_inode, MAX_BLOCKS - block_count,
@@ -114,7 +114,6 @@ contract mkfs is Utility {
         TvmBuilder b_dev = _process_config_line(config_lines[0]);
         TvmBuilder b_info = _process_config_line(config_lines[1]);
 
-//        TvmBuilder b_main = _store_def_inode(inodes[0]);
         TvmBuilder b_main;
         b_main.store(b_dev);
         b_main.store(b_info);
@@ -124,17 +123,13 @@ contract mkfs is Utility {
         out.append(_builder_string(2, b_reg_files));
         TvmBuilder b_other;// = _store_def_inode(inodes[1]);
         out.append(_builder_string(3, b_other));
-//        TvmBuilder b = _read(inode);
         b_main.store(n_dirs, n_reg_files, n_other);
         b_dirs.store(n_dirs);
-//        b_dirs.store(def_dir_mode, def_owner_id, def_group_id, def_group_n_links, def_device_id, def_dir_n_blocks, def_dir_file_size, def_modified_at, def_last_modified);
         b_dirs.storeRef(b_dir_data);
 
         b_reg_files.store(n_reg_files);
-//        b_reg_files.store(def_reg_file_mode, def_owner_id, def_group_id, def_reg_file_n_links, def_device_id, def_reg_file_n_blocks, def_reg_file_file_size, def_modified_at, def_last_modified);
 
         b_other.store(n_other);
-//        b_other.store(def_other_mode, def_owner_id, def_group_id, def_other_n_links, def_device_id, def_other_n_blocks, def_other_file_size, def_modified_at, def_last_modified);
 
         out.append(_builder_string(0, b_main));
         b_main.storeRef(b_dirs);
@@ -168,10 +163,8 @@ contract mkfs is Utility {
             } else if (content_type == FT_CHRDEV) {
 
             }
-//            bytes contents;
             if (node_type == FT_DIR) {
                 string dir_contents;
-//                dir_contents = fields[3];
                 dir_contents = content;
                 (string[] files, ) = stdio.split_line(dir_contents, " ", "\n");
 
@@ -265,9 +258,7 @@ contract mkfs is Utility {
             (uint8 index, uint16 file_size) = s_reg_files.decode(uint8, uint16);
             Inode reg_inode = reg_def_inode;
             reg_inode.file_size = file_size;
-//            bytes file_data = s_dir_data.decode(bytes);
             inodes[index] = reg_inode;
-//            data[index] = dir_data;
         }
 
         TvmSlice s_other = s_main.loadRefAsSlice();
@@ -277,9 +268,7 @@ contract mkfs is Utility {
             (uint8 index, uint16 file_size) = s_other.decode(uint8, uint16);
             Inode inode = other_def_inode;
             inode.file_size = file_size;
-//            bytes file_data = s_dir_data.decode(bytes);
             inodes[index] = inode;
-//            data[index] = dir_data;
         }
 
     }
@@ -287,11 +276,6 @@ contract mkfs is Utility {
     function _store_inodes_and_dirs(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (TvmCell c, string out) {
         Inode inodes_inode = inodes[SB_INODES];
         out.append("Inodes inode: " + _inode_string(inodes_inode));
-//        uint16 inode_count = inodes_inode.owner_id;
-//        uint max_inodes_per_cell = 5;//1023 / 192;
-//        uint n_cells = inode_count / max_inodes_per_cell;
-//        uint inodes_in_cur_cell;
-//        uint cur_cells;
         uint16 n_dirs;
         uint16 n_reg_files;
         uint16 n_other;
@@ -302,19 +286,18 @@ contract mkfs is Utility {
         out.append(_builder_string(2, b_reg_files));
         TvmBuilder b_other = _store_def_inode(inodes[1]);
         out.append(_builder_string(3, b_other));
-        for ((uint16 i, Inode inode): inodes) {
-            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = inode.unpack();
-            if ((mode & S_IFMT) == S_IFDIR) {
+        for ((uint16 i, Inode ino): inodes) {
+            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
+            if (inode.is_dir(mode)) {
                 bytes dir_data = data[i];
                 out.append(format("dir data: {}\n", dir_data.length));
                 n_dirs++;
                 (, uint n_items) = stdio.split(dir_data, "\n");
                 b_dirs.store(uint8(n_dirs), uint8(n_items), uint16(dir_data.length));
                 out.append(_builder_string(1, b_dirs));
-//                b_dir_data.store(dir_data);
                 out.append(_builder_string(4, b_dir_data));
             }
-            else if ((mode & S_IFMT) == S_IFREG) {
+            else if (inode.is_reg(mode)) {
                 b_reg_files.store(uint8(i), uint16(file_size));
                 out.append(_builder_string(2, b_reg_files));
                 n_reg_files++;
@@ -395,46 +378,24 @@ contract mkfs is Utility {
         inodes[DEVFS_INODES_INODE] = inodes_inode;
     }
 
-    function _get_user_id(string user_name) internal pure returns (uint16) {
-        if (user_name == "root")
-            return SUPER_USER;
-        if (user_name == "boris")
-            return REG_USER;
-        if (user_name == "ivan")
-            return REG_USER + 1;
-        if (user_name == "guest")
-            return GUEST_USER;
-    }
-
-    function _get_group_id(string group_name) internal pure returns (uint16) {
-        if (group_name == "root")
-            return SUPER_USER_GROUP;
-        if (group_name == "staff")
-            return REG_USER_GROUP;
-        if (group_name == "boris")
-            return REG_USER_GROUP;
-        if (group_name == "guest")
-            return GUEST_USER_GROUP;
-    }
-
-      function parse_fs(string text) external pure returns (string out, mapping (uint16 => Inode) inodes) {
+    function parse_fs(string text) external pure returns (string out, mapping (uint16 => Inode) inodes) {
         return _parsefs(text);
     }
 
     function _parse_values(string line) internal pure returns (uint[] values) {
         (string[] fields, ) = stdio.split(line, " ");
         for (string s: fields) {
-            values.push(stdio.atoi(s));
+            values.push(str.toi(s));
         }
     }
 
     function _parse_sb_inode(string line) internal pure returns (uint16 index, Inode inode) {
-        string index_s = line.substr(0, DEF_INODE_SIZE);
+        string index_s = line.substr(0, fs.DEF_INODE_SIZE);
         (string[] fields, ) = stdio.split(index_s, " ");
         uint[] values;
 
         for (string s: fields) {
-            values.push(stdio.atoi(s));
+            values.push(str.toi(s));
         }
         return (uint16(values[0]), Inode(uint16(values[1]), uint16(values[2]), uint16(values[3]), uint16(values[4]), uint16(values[5]), uint16(values[6]), uint32(values[7]),
             uint32(values[8]), uint32(values[9]), fields[10]));
@@ -448,7 +409,7 @@ contract mkfs is Utility {
         for (uint i = 0; i < frs_len; i++) {
             string line = frs[i];
             uint line_len = line.byteLength();
-            if (line_len > DEF_INODE_SIZE) {
+            if (line_len > fs.DEF_INODE_SIZE) {
                 (uint16 index, Inode inode) = _parse_sb_inode(line);
                 inodes[index] = inode;
             }
@@ -542,7 +503,7 @@ contract mkfs is Utility {
         uint16[] sb_info;
         (string[] fields, ) = stdio.split_line(info, " ", "\n");
         for (string s: fields)
-            sb_info.push(stdio.atoi(s));
+            sb_info.push(str.toi(s));
 
         uint16 total_inodes = sb_info[1];
         uint16 total_blocks = sb_info[2];

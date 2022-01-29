@@ -29,16 +29,6 @@ struct Arg {
 
 abstract contract Utility is Internal {
 
-    uint8 constant FT_UNKNOWN   = 0;
-    uint8 constant FT_REG_FILE  = 1;
-    uint8 constant FT_DIR       = 2;
-    uint8 constant FT_CHRDEV    = 3;
-    uint8 constant FT_BLKDEV    = 4;
-    uint8 constant FT_FIFO      = 5;
-    uint8 constant FT_SOCK      = 6;
-    uint8 constant FT_SYMLINK   = 7;
-    uint8 constant FT_LAST      = FT_SYMLINK;
-
     uint8 constant IO_WR_COPY       = 1;
     uint8 constant IO_ALLOCATE      = 2;
     uint8 constant IO_TRUNCATE      = 3;

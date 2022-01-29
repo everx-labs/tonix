@@ -9,7 +9,7 @@ contract exec is Shell {
         (bool substitute_command, bool empty_env, bool prepend_dash, bool f1, bool f2, bool f3, bool f4, bool f5) = arg.flag_values("acl12345", flags);
         uint16 pos;
         if (!params.empty())
-            pos = stdio.atoi(params[0]);
+            pos = str.toi(params[0]);
         ec = EXECUTE_SUCCESS;
     }
 

@@ -2,36 +2,9 @@ pragma ton-solidity >= 0.56.0;
 
 import "../include/fs_types.sol";
 import "stdio.sol";
+import "inode.sol";
 
 library dirent {
-
-    uint16 constant S_IXOTH = 1 << 0;
-    uint16 constant S_IWOTH = 1 << 1;
-    uint16 constant S_IROTH = 1 << 2;
-    uint16 constant S_IRWXO = S_IROTH + S_IWOTH + S_IXOTH;
-
-    uint16 constant S_IXGRP = 1 << 3;
-    uint16 constant S_IWGRP = 1 << 4;
-    uint16 constant S_IRGRP = 1 << 5;
-    uint16 constant S_IRWXG = S_IRGRP + S_IWGRP + S_IXGRP;
-
-    uint16 constant S_IXUSR = 1 << 6;
-    uint16 constant S_IWUSR = 1 << 7;
-    uint16 constant S_IRUSR = 1 << 8;
-    uint16 constant S_IRWXU = S_IRUSR + S_IWUSR + S_IXUSR;
-
-    uint16 constant S_ISVTX = 1 << 9;  //   sticky bit
-    uint16 constant S_ISGID = 1 << 10; //   set-group-ID bit
-    uint16 constant S_ISUID = 1 << 11; //   set-user-ID bit
-
-    uint16 constant S_IFIFO = 1 << 12;
-    uint16 constant S_IFCHR = 1 << 13;
-    uint16 constant S_IFDIR = 1 << 14;
-    uint16 constant S_IFBLK = S_IFDIR + S_IFCHR;
-    uint16 constant S_IFREG = 1 << 15;
-    uint16 constant S_IFLNK = S_IFREG + S_IFCHR;
-    uint16 constant S_IFSOCK = S_IFREG + S_IFDIR;
-    uint16 constant S_IFMT  = 0xF000; //   bit mask for the file type bit field
 
     uint8 constant FT_UNKNOWN   = 0;
     uint8 constant FT_REG_FILE  = 1;
@@ -59,7 +32,7 @@ library dirent {
     uint8 constant ENAMETOOLONG = 14; // pathname is too long.
 
     function parse_entry(string s) internal returns (DirEntry) {
-        uint p = stdio.strchr(s, "\t");
+        uint p = str.chr(s, "\t");
         if (p > 1) {
             optional(int) index_u = stoi(s.substr(p));
             return DirEntry(file_type(s.substr(0, 1)), s.substr(1, p - 2), index_u.hasValue() ? uint16(index_u.get()) : ENOENT);
@@ -79,7 +52,7 @@ library dirent {
             if (s.empty())
                 out.append("Empty dir entry line\n");
             else {
-                (string s_head, string s_tail) = stdio.strsplit(s, "\t");
+                (string s_head, string s_tail) = str.split(s, "\t");
                 if (s_head.empty())
                     out.append("Empty file type and name: " + s + "\n");
                 else if (s_tail.empty())
@@ -89,7 +62,7 @@ library dirent {
                     if (h_len < 2)
                         out.append("File type and name too short: " + s_head + "\n");
                     else {
-                        DirEntry de = DirEntry(dirent.file_type(s_head.substr(0, 1)), s_head.substr(1), stdio.atoi(s_tail));
+                        DirEntry de = DirEntry(dirent.file_type(s_head.substr(0, 1)), s_head.substr(1), str.toi(s_tail));
                         contents.push(de);
                         out.append(dirent.print(de));
                     }
@@ -104,15 +77,15 @@ library dirent {
         return dir_entry_line(index, file_name, file_type);
     }
 
-    function read_dir(Inode inode, bytes data) internal returns (DirEntry[] contents, int16 status) {
-        if ((inode.mode & S_IFMT) != S_IFDIR)
+    function read_dir(Inode ino, bytes data) internal returns (DirEntry[] contents, int16 status) {
+        if (!inode.is_dir(ino.mode))
             status = -ENOTDIR;
         else
             return read_dir_data(data);
     }
 
-    function get_symlink_target(Inode inode, bytes node_data) internal returns (DirEntry target) {
-        if ((inode.mode & S_IFMT) != S_IFLNK)
+    function get_symlink_target(Inode ino, bytes node_data) internal returns (DirEntry target) {
+        if (!inode.is_symlink(ino.mode))
             target.index = ENOSYS;
         else
             return parse_entry(node_data);

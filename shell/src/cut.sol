@@ -18,12 +18,12 @@ contract cut is Utility {
         uint16 to;
         string range = arg.opt_arg_value(set_fields ? "f" : set_bytes ? "b" : set_chars ? "c" : "", argv);
         if (!range.empty()) {
-            if (stdio.strchr(range, "-") > 0) {
-                (string s_from, string s_to) = stdio.strsplit(range, "-");
-                from = s_from.empty() ? 1 : stdio.atoi(s_from);
-                to = s_to.empty() ? 0xFFFF : stdio.atoi(s_to);
+            if (str.chr(range, "-") > 0) {
+                (string s_from, string s_to) = str.split(range, "-");
+                from = s_from.empty() ? 1 : str.toi(s_from);
+                to = s_to.empty() ? 0xFFFF : str.toi(s_to);
             } else {
-                from = stdio.atoi(range);
+                from = str.toi(range);
                 to = from;
             }
             if (from == 0 || to == 0)
@@ -44,7 +44,7 @@ contract cut is Utility {
                     (string[] lines, ) = stdio.split(text, "\n");
                     for (string line: lines) {
                         if (set_fields) {
-                            if (only_delimited && stdio.strchr(line, delimiter) == 0)
+                            if (only_delimited && str.chr(line, delimiter) == 0)
                                 continue;
                             (string[] fields, uint n_fields) = stdio.split(line, delimiter);
                             uint cap = math.min(to, n_fields);

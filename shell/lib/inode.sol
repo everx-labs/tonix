@@ -115,6 +115,34 @@ library inode {
         if ((imode & S_IFMT) == S_IFIFO)  return "p";
     }
 
+    function is_block_dev(uint16 imode) internal returns (bool) {
+        return (imode & S_IFMT) == S_IFBLK;
+    }
+
+    function is_char_dev(uint16 imode) internal returns (bool) {
+        return (imode & S_IFMT) == S_IFCHR;
+    }
+
+    function is_reg(uint16 imode) internal returns (bool) {
+        return (imode & S_IFMT) == S_IFREG;
+    }
+
+    function is_dir(uint16 imode) internal returns (bool) {
+        return (imode & S_IFMT) == S_IFDIR;
+    }
+
+    function is_symlink(uint16 imode) internal returns (bool) {
+        return (imode & S_IFMT) == S_IFLNK;
+    }
+
+    function is_socket(uint16 imode) internal returns (bool) {
+        return (imode & S_IFMT) == S_IFSOCK;
+    }
+
+    function is_pipe(uint16 imode) internal returns (bool) {
+        return (imode & S_IFMT) == S_IFIFO;
+    }
+
     function mode_to_file_type(uint16 imode) internal returns (uint8) {
         if ((imode & S_IFMT) == S_IFBLK)  return FT_BLKDEV;
         if ((imode & S_IFMT) == S_IFCHR)  return FT_CHRDEV;
@@ -208,7 +236,7 @@ library inode {
             }
             if (!inode_s.empty())
                 out.append(inode_s);
-            if ((level & DUMP_TEXT_DIRS) > 0 && (imode & S_IFMT) == S_IFDIR || (level & DUMP_TEXT_ALL) > 0) {
+            if ((level & DUMP_TEXT_DIRS) > 0 && is_dir(imode) || (level & DUMP_TEXT_ALL) > 0) {
                 out.append(text);
                 out.append("\x05");
                 if (data.exists(i))
@@ -231,7 +259,7 @@ library inode {
         for ((uint16 i, Inode ino): inodes) {
             (uint16 imode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, imode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
-            if (level > 0 && ((imode & S_IFMT) == S_IFDIR || (imode & S_IFMT) == S_IFLNK) || level > 1)
+            if (level > 0 && (is_dir(imode) || is_symlink(imode) || level > 1))
                 out.append(data[i]);
         }
     }

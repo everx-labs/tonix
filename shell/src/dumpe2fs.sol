@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
-
+import "../lib/fs.sol";
 contract dumpe2fs is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
@@ -11,7 +11,7 @@ contract dumpe2fs is Utility {
         (bool sb_only, bool image_fs, , , , , , ) = arg.flag_values("hi", flags);
 
         if (sb_only)
-            out = _display_sb(inodes, data);
+            out = sb.display_sb(inodes, data);
 
         if (image_fs) {
             string s1 = _dump_e2fs(2, inodes, data);
@@ -25,70 +25,6 @@ contract dumpe2fs is Utility {
         for (uint i = 0; i < file_list.length; i++)
             if (file_list[i] == parent)
                 return uint8(i);
-    }
-
-    function _display_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
-        SuperBlock sb = sb.read_sb(inodes, data);
-        (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
-            uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
-            uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();
-
-        string[][] table = [
-//            ["Filesystem volume name:", "<none>"],
-//            ["Last mounted on:", "/swap"],
-//            ["Filesystem UUID:", "3255683f-53a2-4fdf-91cf-b4c1041e2a62"],
-//            ["Filesystem magic number:", "0xEF53"],
-//            ["Filesystem revision #:", "1 (dynamic)"],
-//            ["Filesystem features:", "has_journal ext_attr resize_inode dir_index filetype needs_recovery extent 64bit flex_bg sparse_super large_file huge_file dir_nlink extra_isize metadata_csum"],
-//            ["Filesystem flags:", "signed_directory_hash"],
-//            ["Default mount options:", "user_xattr acl"],
-            ["Filesystem state:", file_system_state ? "clean" : "dirty"],
-            ["Errors behavior:", errors_behavior ? "Continue" : "Stop"],
-            ["Filesystem OS type:", file_system_OS_type],
-            ["Inode count:", stdio.itoa(inode_count)],
-            ["Block count:", stdio.itoa(block_count)],
-//            ["Reserved block count:", "3355443"],
-            ["Free blocks:", stdio.itoa(free_blocks)],
-            ["Free inodes:", stdio.itoa(free_inodes)],
-            ["First block:", "0"],
-            ["Block size:", stdio.itoa(block_size)],
-//            ["Fragment size:", "4096"],
-//            ["Group descriptor size:", "64"],
-//            ["Reserved GDT blocks:", "1024"],
-//            ["Blocks per group:", "32768"],
-//            ["Fragments per group:", "32768"],
-//            ["Inodes per group:", "8192"],
-//            ["Inode blocks per group:", "512"],
-//            ["Flex block group size:", "4096"],
-            ["Filesystem created:", fmt.ts(created_at)],
-            ["Last mount time:", fmt.ts(last_mount_time)],
-            ["Last write time:", fmt.ts(last_write_time)],
-            ["Mount count:", stdio.itoa(mount_count)],
-            ["Maximum mount count:", stdio.itoa(max_mount_count)],
-//            ["Last checked:", "Wed Apr 10 19:35:05 2019"],
-//            ["Check interval:", "0 (<none>)"],
-            ["Lifetime writes:", stdio.itoa(lifetime_writes)], // "1028 MB"
-//            ["Reserved blocks uid:", "0 (user root)"],
-//            ["Reserved blocks gid:", "0 (group root)"],
-            ["First inode:", stdio.itoa(first_inode)],
-            ["Inode size:", stdio.itoa(inode_size)]
-//            ["Required extra isize:", "32"],
-//            ["Desired extra isize:", "32"],
-//            ["Journal inode:", format("{}", journal_inode)],
-//            ["Default directory hash:", "half_md4"],
-//            ["Directory Hash Seed:", "832ad346-60be-4f80-92f8-835728a807fe"],
-//            ["Journal backup:", "inode blocks"],
-//            ["Checksum type:", "crc32c"],
-//            ["Checksum:", "0x559724f0"],
-//            ["Journal features:", "journal_64bit journal_checksum_v3"],
-//            ["Journal size:", "1024M"],
-//            ["Journal length:", "262144"],
-//            ["Journal sequence:", "0x00000002"],
-//            ["Journal start:", "1"],
-//            ["Journal checksum type:", "crc32c"],
-//            ["Journal checksum:", "0x6d7f5c12"]
-            ];
-        return fmt.format_table(table, "\t", "\n", fmt.ALIGN_LEFT);
     }
 
     function _read_inode_table(mapping (uint16 => bytes) data) internal pure returns (mapping (uint16 => Inode) inodes) {
@@ -127,12 +63,12 @@ contract dumpe2fs is Utility {
     }
 
     function _dump_e2fs(uint8 level, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
-        out = _display_sb(inodes, data);
+        out = sb.display_sb(inodes, data);
 
         for ((uint16 i, Inode ino): inodes) {
             (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
-            if (level > 0 && ((mode & S_IFMT) == S_IFDIR || (mode & S_IFMT) == S_IFLNK) || level > 1) {
+            if (level > 0 && (inode.is_dir(mode) || inode.is_symlink(mode) || level > 1)) {
                 out.append(data[i]);
                 out.append("\n");
             }
@@ -212,9 +148,7 @@ contract dumpe2fs is Utility {
             (uint8 index, uint16 file_size) = s_reg_files.decode(uint8, uint16);
             Inode reg_inode = reg_def_inode;
             reg_inode.file_size = file_size;
-//            bytes file_data = s_dir_data.decode(bytes);
             inodes[index] = reg_inode;
-//            data[index] = dir_data;
         }
 
         TvmSlice s_other = s_main.loadRefAsSlice();
@@ -224,9 +158,7 @@ contract dumpe2fs is Utility {
             (uint8 index, uint16 file_size) = s_other.decode(uint8, uint16);
             Inode inode = other_def_inode;
             inode.file_size = file_size;
-//            bytes file_data = s_dir_data.decode(bytes);
             inodes[index] = inode;
-//            data[index] = dir_data;
         }
 
     }
@@ -245,46 +177,24 @@ contract dumpe2fs is Utility {
     uint16 constant DEVFS_INODES_INODE  = 0;
     uint16 constant DEVFS_DEV_DIR       = 1;
 
-    function _get_user_id(string user_name) internal pure returns (uint16) {
-        if (user_name == "root")
-            return SUPER_USER;
-        if (user_name == "boris")
-            return REG_USER;
-        if (user_name == "ivan")
-            return REG_USER + 1;
-        if (user_name == "guest")
-            return GUEST_USER;
-    }
-
-    function _get_group_id(string group_name) internal pure returns (uint16) {
-        if (group_name == "root")
-            return SUPER_USER_GROUP;
-        if (group_name == "staff")
-            return REG_USER_GROUP;
-        if (group_name == "boris")
-            return REG_USER_GROUP;
-        if (group_name == "guest")
-            return GUEST_USER_GROUP;
-    }
-
-      function parse_fs(string text) external pure returns (string out, mapping (uint16 => Inode) inodes) {
+    function parse_fs(string text) external pure returns (string out, mapping (uint16 => Inode) inodes) {
         return _parsefs(text);
     }
 
     function _parse_values(string line) internal pure returns (uint[] values) {
         (string[] fields, ) = stdio.split(line, " ");
         for (string s: fields) {
-            values.push(stdio.atoi(s));
+            values.push(str.toi(s));
         }
     }
 
     function _parse_sb_inode(string line) internal pure returns (uint16 index, Inode inode) {
-        string index_s = line.substr(0, DEF_INODE_SIZE);
+        string index_s = line.substr(0, fs.DEF_INODE_SIZE);
         (string[] fields, ) = stdio.split(index_s, " ");
         uint[] values;
 
         for (string s: fields)
-            values.push(stdio.atoi(s));
+            values.push(str.toi(s));
 
         return (uint16(values[0]), Inode(uint16(values[1]), uint16(values[2]), uint16(values[3]), uint16(values[4]), uint16(values[5]), uint16(values[6]), uint32(values[7]),
             uint32(values[8]), uint32(values[9]), fields[10]));
@@ -298,7 +208,7 @@ contract dumpe2fs is Utility {
         for (uint i = 0; i < frs_len; i++) {
             string line = frs[i];
             uint line_len = line.byteLength();
-            if (line_len > DEF_INODE_SIZE) {
+            if (line_len > fs.DEF_INODE_SIZE) {
                 (uint16 index, Inode inode) = _parse_sb_inode(line);
                 inodes[index] = inode;
             }

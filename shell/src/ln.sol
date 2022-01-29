@@ -58,7 +58,7 @@ contract ln is Utility {
         uint8 dirent_action_type;
         if (request_backup && overwrite_dest) {
             string t_backup_path = t_path + "~";
-            out = stdio.aif(out, verbose, "(backup:" + stdio.quote(t_backup_path) + ")");
+            out = str.aif(out, verbose, "(backup:" + str.quote(t_backup_path) + ")");
 
             ars.push(Ar(IO_WR_COPY, FT_REG_FILE, 0, t_ino, t_backup_path, ""));
             dirents.append(dirent.dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
@@ -84,12 +84,12 @@ contract ln is Utility {
             (string s_path, uint8 s_ft, uint16 s_ino, , uint16 s_dir_idx) = arg_list[i].unpack();
 
             if (s_ino < INODES) { errors.push(Err(0, s_ino, s_path)); break; }
-            if (verbose) { out.append(stdio.quote(s_path) + "->" + stdio.quote(t_path)); }
+            if (verbose) { out.append(str.quote(s_path) + "->" + str.quote(t_path)); }
 
             if (s_ft == FT_DIR && action_type == IO_HARDLINK_FILES)
                 errors.push(Err(no_hardlink_on_dir, 0, s_path));
             else if (to_file_flag && to_dir && s_ft == FT_REG_FILE)
-                errors.push(Err(cant_overwrite_dir, 0, stdio.quote(t_path)));
+                errors.push(Err(cant_overwrite_dir, 0, str.quote(t_path)));
             else if (collision && newer_only) {
                 if (inodes[t_ino].modified_at > inodes[s_ino].modified_at)
                     continue;

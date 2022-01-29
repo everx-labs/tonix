@@ -7,7 +7,7 @@ contract shift is Shell {
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
         (string[] params, , ) = arg.get_args(args);
 
-        uint16 shift_count = params.empty() ? 1 : stdio.atoi(params[0]);
+        uint16 shift_count = params.empty() ? 1 : str.toi(params[0]);
         if (shift_count == 0)
             return (EXECUTE_SUCCESS, pool);
 
@@ -24,7 +24,7 @@ contract shift is Shell {
         string pos_args = vars.val("POS_ARGS", pool);
         string opt_args = vars.val("OPT_ARGS", pool);
 
-        uint16 n_params = stdio.atoi(s_n_params);
+        uint16 n_params = str.toi(s_n_params);
         if (n_params < shift_count) {
             ec = EXECUTE_FAILURE;
             // can't shift that many
@@ -50,9 +50,9 @@ contract shift is Shell {
             ["PARAMS", pos_params],
             ["FLAGS", s_flags],
             ["ARGV", input],
-            ["#", stdio.itoa(n_new)],
+            ["#", str.toa(n_new)],
             ["@", new_pos_str],
-            ["?", stdio.itoa(ec)],
+            ["?", str.toa(ec)],
             ["_", last_param],
             ["OPT_ERR", dbg_x],
             ["REDIR_IN", redir_in],

@@ -25,7 +25,7 @@ contract look is Utility {
         string pattern = !params.empty() ? params[0] : "";
         string term_char = use_term_char && params.length > 1 ? params[1] : "\n";
 
-        uint p = stdio.strchr(pattern, term_char);
+        uint p = str.chr(pattern, term_char);
         if (p > 0)
             pattern = pattern.substr(0, p - 1);
 

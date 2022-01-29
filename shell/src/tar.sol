@@ -90,7 +90,6 @@ struct TarEntry {
         for (uint i = 0; i < arc_index.length; i++) {
             string line = arc_index[i];
             arc_index_file.append(line + "\n");
-//            bytes header = arc_data[i * 2];
             bytes file_data = arc_data[i * 2 + 1];
             data.push(file_data);
         }
@@ -104,7 +103,6 @@ struct TarEntry {
             string line = arc_index_lines[i];
             arc_index.push(_write_tar_index_entry(_read_tar_index_entry(line)));
             if (i < data_len && !data[i].empty()) {
-//                arc_data.push(_encode_tar_entry(_read_tar_entry(_read_tar_index_entry(line))));
                 arc_data.push(_encode_tar_entry(_read_tar_entry(line)));
                 arc_data.push(data[i]);
             }
@@ -124,11 +122,10 @@ struct TarEntry {
             string s_owner = fields[1];
             (string uname, string gname) = path.dir(s_owner);
             string s_size = fields[2];
-//            string mtime = fields[3] + " " + fields[4];
 
             uint16 mode = _mode(s_mode);
-            uint32 size = stdio.atoi(s_size);
-            uint64 attrs;// = _encode_attrs(mode, _get_user_id(uname), _get_group_id(gname), FT_REG_FILE, 0);
+            uint32 size = str.toi(s_size);
+            uint64 attrs;
 
             te = TarEntry(attrs, size, now, uname, gname, base_name, dir_name);
         }
@@ -172,7 +169,7 @@ struct TarEntry {
 
     function _bytes_to_string(bytes str) internal pure returns (string) {
         string s = string(str);
-        uint p = stdio.strchr(s, "\u0000");
+        uint p = str.chr(s, "\u0000");
         return p > 0 ? s.substr(0, p - 1) : s;
     }
 
@@ -202,32 +199,11 @@ struct TarEntry {
         tvm.hexdump(h_size);
         tvm.hexdump(h_mtime);
 
-        /*(uint16 h_mode, uint16 h_uid, uint16 h_gid, uint8 h_typeflag, uint8 h_version) = _decode_attrs(h_attrs);
-        uint128 attributes = uint128((uint(h_mode) << 112) + (uint(h_uid) << 96) + (uint(h_gid) << 80) + (uint(h_size) << 48) + (uint(h_mtime) << 16) + (uint(h_typeflag) << 8) + h_version);
-        string s_attr = format("{:x}", attributes);
-        string str = s_attr + bytes16(h_uname) + bytes16(h_gname) + bytes32(h_name) + bytes32(h_prefix);*/
         data.append(h_uname);
         data.append(h_gname);
         data.append(h_name);
         data.append(h_prefix);
-//        return bytes(str);
     }
-    /*function _write_tar_index_entry_bin(Inode inode) internal pure returns (string line) {
-        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, , , uint32 file_size, uint32 modified_at, , string file_name) = inode.unpack();
-        uint8 typeflag = dirent.mode_to_typeflag(mode);
-        mode = mode & 0xFFFF;
-        uint checksum;// = _byte_sum([mode, owner_id, group_id, file_size, modified_at]);
-
-        line = fmt.pad(file_name, 100, fmt.ALIGN_LEFT) + fmt.dec_to_oct(mode, 7) + fmt.dec_to_oct(owner_id, 7) + fmt.dec_to_oct(group_id, 7) +
-            fmt.dec_to_oct(file_size, 14) + fmt.dec_to_oct(modified_at, 14) + fmt.dec_to_oct(checksum, 6) + fmt.dec_to_oct(n_links, 1);
-
-        string res; // = _v0(mode);
-
-        uint[] values = [mode, owner_id, group_id, file_size, modified_at, checksum, typeflag];
-        uint8[] widths = [8, 8, 8, 12, 12, 8, 1];
-        string res2 = fmt.octal_dump(widths, values);
-        return res + "\n" + res2;
-    }*/
 
     function _command_info() internal override pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
         return ("tar", "an archiving utility", "-A [OPTIONS] ARCHIVE ARCHIVE\t-cdru [-f ARCHIVE] [OPTIONS] [FILE...]\t-tx [-f ARCHIVE] [OPTIONS] [MEMBER...]",

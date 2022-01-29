@@ -43,7 +43,7 @@ contract rm is Utility {
                     ars.push(Ar(IO_UNLINK, ft, iop, dir_idx, s, ""));
                     if (inodes[iop].n_links < 2)
                         victims[parent].push(dirent.dir_entry_line(iop, s, ft));
-                    out = stdio.aif(out, verbose, "removed" + stdio.quote(s) + "\n");
+                    out = str.aif(out, verbose, "removed" + str.quote(s) + "\n");
                 }
             } else if (!force_removal)
                 errors.push(Err(0, iop, s));
