@@ -1,0 +1,4 @@
+-A [display_man_page]=( [man]="46" [whatis]="6" )
+-A [main]=( [ls]="125" [file]="6" [namei]="2" [du]="10" [stat]="20" [cat]="40" [paste]="2" [tr]="2" [head]="2" [tail]="2" [wc]="1" [grep]="1" [look]="0" [expand]="0" [unexpand]="0" [rev]="5" [colrm]="0" [column]="0" [cut]="32" [basename]="1" [dirname]="1" [getent]="4" [realpath]="7" [whatis]="0" [whoami]="6" [id]="6" [uname]="2" [hostname]="2" [lslogins]="25" [last]="6" [who]="2" [finger]="2" [ps]="2" [printenv]="7" [readlink]="2" [df]="7" [groups]="8" [fsck]="129" [findmnt]="4" [fuser]="0" )
+-A [induce]=( [cp]="11" [mv]="2" [ln]="0" [rmdir]="2" [mkdir]="1" [rm]="1" [touch]="4" )
+-A [uadm]=( [gpasswd]="0" [groupadd]="7" [groupdel]="0" [groupmod]="0" [useradd]="2" [userdel]="0" [usermod]="0" )

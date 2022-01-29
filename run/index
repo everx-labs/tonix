@@ -1,0 +1,6 @@
+-a [keyword]=( ! elif fi while case else for then { } do done until if esac )
+-a [builtin]=( tosh help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift )
+-a [command]=( ls du file stat namei cat colrm column cut expand grep head look rev tail tr unexpand paste wc readlink realpath env man whatis mkfs mke2fs dumpe2fs fsck mount umount losetup udevadm df findmnt mountpoint touch cp mv rm rmdir mkdir ln install groupadd groupdel groupmod useradd userdel usermod chfn newgrp lslogins finger who last fuser utmpdump ps whoami id hostname tfs tmpfs printenv basename dirname uname groups getent )
+-a [limit]=( )
+-a [function]=( display_help display_man_page builtin_read_fs ustat exec b_exec main )
+-a [alias]=( yy tyu hey de )

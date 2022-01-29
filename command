@@ -26,7 +26,7 @@ args() {
         main)
             jq --rawfile argv run/export '. + {$argv}' run/fs;;
         display_man_page)
-            jq -n --rawfile v run/export --slurpfile v1 vfs/usr/share/man_pages '{args: $v, help_files: $v1}';;
+            jq -n --rawfile v run/export --slurpfile v1 vfs/usr/share/man_pages '{argv: $v, help_files: $v1}';;
         *)
             echo '{}';;
     esac
