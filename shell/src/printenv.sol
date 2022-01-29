@@ -12,7 +12,7 @@ contract printenv is Utility {
         if (params.empty()) {
             (string[] lines, ) = stdio.split(argv, "\n");
             for (string line: lines) {
-                (string attrs, string stmt) = stdio.strsplit(line, " ");
+                (string attrs, string stmt) = str.split(line, " ");
                 if (vars.match_attr_set(s_attrs, attrs)) {
                     (string name, string value) = vars.item_value(stmt);
                     out.append(name + "=" + value + delimiter);
@@ -22,7 +22,7 @@ contract printenv is Utility {
         for (string p: params) {
             string cur_record = vars.get_pool_record(p, argv);
             if (!cur_record.empty()) {
-                (string attrs, string stmt) = stdio.strsplit(cur_record, " ");
+                (string attrs, string stmt) = str.split(cur_record, " ");
                 if (vars.match_attr_set(s_attrs, attrs)) {
                     (string name, string value) = vars.item_value(stmt);
                     out.append(name + "=" + value + delimiter);

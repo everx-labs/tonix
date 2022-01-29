@@ -1,9 +1,8 @@
 pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
-import "compspec.sol";
 
-contract compgen is Shell, compspec {
+contract compgen is Shell {
 
     // Flag values that control parameter pattern substitution
     uint8 constant MATCH_ANY        = 0;
@@ -25,7 +24,7 @@ contract compgen is Shell, compspec {
         uint p_len = param.byteLength();
         (string[] lines, ) = stdio.split(pool, "\n");
         for (string line: lines) {
-            (string attrs, string name, string value) = vars.split_var_record(line);
+            (, string name, string value) = vars.split_var_record(line);
             if (name.byteLength() >= p_len && name.substr(0, p_len) == param) {
                 out.append((print_names ? name : print_values ? value : "") + "\n");
             }

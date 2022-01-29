@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -50,7 +50,7 @@ contract df is Utility {
         }
 
         string[] header = ["Filesystem", s_units, s_used, s_avl, s_p_used, "Mounted on"];
-        string[] row0 = [fs_name, stdio.itoa(u_units), stdio.itoa(u_used), stdio.itoa(u_avl), stdio.itoa(u_p_used) + "%", "/"];
+        string[] row0 = [fs_name, str.toa(u_units), str.toa(u_used), str.toa(u_avl), str.toa(u_p_used) + "%", "/"];
 
         out = fmt.format_table_ext(columns_format, [header, row0], " ", "\n");
         ec = EXECUTE_SUCCESS;

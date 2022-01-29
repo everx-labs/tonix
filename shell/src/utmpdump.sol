@@ -6,7 +6,7 @@ contract utmpdump is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ( , , string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
         bool write_back = arg.flag_set("r", flags);
         string[][] table;
@@ -34,7 +34,7 @@ contract utmpdump is Utility {
         if (write_back)
             for (LoginEvent le: wtmp) {
                 (uint8 letype, uint16 user_id, uint16 tty_id, , uint32 timestamp) = le.unpack();
-                table.push([stdio.itoa(letype), stdio.itoa(user_id), stdio.itoa(tty_id), fmt.ts(timestamp)]);
+                table.push([str.toa(letype), str.toa(user_id), str.toa(tty_id), fmt.ts(timestamp)]);
             }
         out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }

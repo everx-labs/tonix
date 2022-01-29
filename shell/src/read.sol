@@ -27,7 +27,7 @@ contract read is Shell {
             uint n_args = params.length;
             string s_rem = input;
             for (uint i = 0; i < n_args - 1; i++) {
-                (string s_head, string s_tail) = stdio.strsplit(s_rem, delimiter);
+                (string s_head, string s_tail) = str.split(s_rem, delimiter);
                 page = vars.set_var(s_attrs, params[i] + "=" + s_head, page);
                 if (i + 2 < n_args)
                     s_rem = s_tail;

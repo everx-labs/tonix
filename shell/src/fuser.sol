@@ -51,7 +51,7 @@ contract fuser is Utility {
             string ui_user_name;
             if (!line.empty())
                 (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
-            table.push([ui_user_name, "+", stdio.itoa(tty_id), fmt.ts(login_time), stdio.itoa(process_id)]);
+            table.push([ui_user_name, "+", str.toa(tty_id), fmt.ts(login_time), str.toa(process_id)]);
         }
 
         out = fmt.format_table_ext(columns_format, table, " ", "\n");

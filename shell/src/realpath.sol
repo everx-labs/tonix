@@ -6,38 +6,33 @@ contract realpath is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
-        if (wd >= ROOT_DIR)
-            (out, err) = _realpath(flags, params, wd, inodes, data);
-        else {
-            err.append("Failed to resolve relative path for" + argv + "\n");
-            ec = EXECUTE_FAILURE;
-        }
-    }
-
-    function _realpath(string flags, string[] s_args, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, string err) {
         (bool canon_existing, bool canon_missing, bool dont_expand_symlinks, bool no_errors, bool null_delimiter, /*bool logical*/, /*bool physical*/, )
             = arg.flag_values("emsqzLP", flags);
         bool canon_existing_dir = !canon_existing && !canon_missing;
         string line_delimiter = null_delimiter ? "\x00" : "\n";
+        if (wd >= ROOT_DIR) {
+            for (string s_arg: params) {
+                (string arg_dir, string arg_base) = path.dir(s_arg);
+                bool is_abs_path = s_arg.substr(0, 1) == "/";
+                string s_path = is_abs_path ? s_arg : fs.xpath(s_arg, wd, inodes, data);
+                uint16 cur_dir = is_abs_path ? fs.resolve_absolute_path(arg_dir, inodes, data) : wd;
 
-        for (string s_arg: s_args) {
-            (string arg_dir, string arg_base) = path.dir(s_arg);
-            bool is_abs_path = s_arg.substr(0, 1) == "/";
-            string s_path = is_abs_path ? s_arg : fs.xpath(s_arg, wd, inodes, data);
-            uint16 cur_dir = is_abs_path ? fs.resolve_absolute_path(arg_dir, inodes, data) : wd;
-
-            if ((canon_existing_dir || canon_existing) && !dont_expand_symlinks) {
-                (uint16 index, uint8 ft) = fs.lookup_dir(inodes[cur_dir], data[cur_dir], arg_base);
-                if (ft == FT_SYMLINK)
-                    (s_path, ft, , ,) = _dereference(path.EXPAND_SYMLINKS, s_arg, wd, inodes, data).unpack();
-                if (!canon_missing && index < INODES) {
-                    if (!no_errors)
-                        //errors.push(Err(0, index, s_arg));
-                        err.append("realpath: missing " + s_arg + ", index " + stdio.itoa(index) + "\n");
-                    continue;
+                if ((canon_existing_dir || canon_existing) && !dont_expand_symlinks) {
+                    (uint16 index, uint8 ft) = fs.lookup_dir(inodes[cur_dir], data[cur_dir], arg_base);
+                    if (ft == FT_SYMLINK)
+                        (s_path, ft, , ,) = _dereference(path.EXPAND_SYMLINKS, s_arg, wd, inodes, data).unpack();
+                    if (!canon_missing && index < INODES) {
+                        if (!no_errors)
+                            //errors.push(Err(0, index, s_arg));
+                            err.append("realpath: missing " + s_arg + ", index " + str.toa(index) + "\n");
+                        continue;
+                    }
                 }
+                out.append(s_path + line_delimiter);
             }
-            out.append(s_path + line_delimiter);
+        } else {
+            err.append("Failed to resolve relative path for" + argv + "\n");
+            ec = EXECUTE_FAILURE;
         }
     }
 

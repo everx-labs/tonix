@@ -50,8 +50,6 @@ contract fsck is Utility {
         (, string[] params, string flags, ) = arg.get_env(argv);
         (bool auto_repair, bool check_all, bool no_changes, bool list_files, bool skip_root, bool dry_run, bool verbose, bool print_sb) =
             arg.flag_values("pAnlRNvs", flags);
-        bool repair = auto_repair && !no_changes;
-        bool repoir = repair || dry_run;
         inodes_out = inodes;
         data_out = data;
         mapping (uint16 => fsck_err[]) es;
@@ -64,7 +62,7 @@ contract fsck is Utility {
                 out.append("Resolving start dir index for " + start_dir + "\n");
             start_dir_index = fs.resolve_absolute_path(start_dir, inodes, data);
             if (verbose)
-                out.append("start dir index resolved as " + stdio.itoa(start_dir_index) + "\n");
+                out.append("start dir index resolved as " + str.toa(start_dir_index) + "\n");
             if (!data.exists(start_dir_index)) {
                 es[start_dir_index].push(fsck_err(start_dir_index, MISSING_INODE_DATA, 0, 0));
             }
@@ -218,7 +216,7 @@ contract fsck is Utility {
     }
 
     function _fix_sb(Inode ino, bytes data, fsck_err fsckerr) internal pure returns (string err, string dry, Inode res, bytes res_data) {
-        (uint16 index, uint16 code, uint16 expected, uint16 actual) = fsckerr.unpack();
+        (, uint16 code, uint16 expected, uint16 actual) = fsckerr.unpack();
         res = ino;
         res_data = data;
         if ((code & INODE_COUNT_MISMATCH) > 0) {
@@ -247,12 +245,12 @@ contract fsck is Utility {
             dry.append(format("Fixing inode {} dir index:\n{}", index, data));
             string text;
             uint new_lc;
-            (string[] lines, uint n_lines) = stdio.split(data, "\n");
+            (string[] lines, ) = stdio.split(data, "\n");
             for (string s: lines) {
                 if (s.empty())
                     dry.append("Skipping empty dir entry line\n");
                 else {
-                    (string s_head, string s_tail) = stdio.strsplit(s, "\t");
+                    (string s_head, string s_tail) = str.split(s, "\t");
                     if (s_head.empty())
                         dry.append("Skipping line with an empty file type and name: " + s + "\n");
                     else if (s_tail.empty())

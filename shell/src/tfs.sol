@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.51.0;
+pragma ton-solidity >= 0.56.0;
 
 import "../lib/SyncFS.sol";
 import "Utility.sol";
@@ -22,7 +22,7 @@ contract tfs is SyncFS, Utility {
     function dump_fs_out(uint16 mode) external view returns (string out) {
         uint16 level = mode & 0xFF;
         uint16 form = (mode >> 8) & 0xFF;
-        return fs.dumpfs(level, form, _inodes, _data);
+        return inode.dumpfs(level, form, _inodes, _data);
     }
 
     function _handle_action(Session session, Action file_action, Ar[] ars) internal {
@@ -165,7 +165,7 @@ contract tfs is SyncFS, Utility {
 
     /* Print an internal debugging information about the file system state */
     function dump_fs(uint8 level) external view returns (string) {
-        return fs.dump_fs(level, _inodes, _data);
+        return inode.dump_fs(level, _inodes, _data);
     }
 
     /* Index node operations helpers */

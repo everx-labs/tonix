@@ -1,9 +1,8 @@
 pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
-import "compspec.sol";
 
-contract complete is Shell, compspec {
+contract complete is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
@@ -12,11 +11,11 @@ contract complete is Shell, compspec {
         if (flags.empty())
             flags = "p";
         bool xprint = arg.flag_set("p", flags);
-        bool print_all = params.empty();
-        bool remove = arg.flag_set("r", flags);
-        bool add = !xprint && !remove;
-        bool add_function = arg.flag_set("F", flags);
-        bool apply_to_command = arg.flag_set("C", flags);
+        //bool print_all = params.empty();
+//        bool remove = arg.flag_set("r", flags);
+        //bool add = !xprint && !remove;
+        //bool add_function = arg.flag_set("F", flags);
+        //bool apply_to_command = arg.flag_set("C", flags);
         string comp_specs_page = pool;
 
         if (xprint || params.empty()) {

@@ -61,21 +61,21 @@ contract wc is Utility {
                 }
 
                 table.push([
-                    stdio.itoa(line_count),
-                    stdio.itoa(word_count),
-                    stdio.itoa(char_count),
-                    stdio.itoa(char_count),
-                    stdio.itoa(max_width),
+                    str.toa(line_count),
+                    str.toa(word_count),
+                    str.toa(char_count),
+                    str.toa(char_count),
+                    str.toa(max_width),
                     arg]);
             }
         }
         if (count_totals)
             table.push([
-                stdio.itoa(total_lines),
-                stdio.itoa(total_words),
-                stdio.itoa(total_chars),
-                stdio.itoa(total_bytes),
-                stdio.itoa(overall_max_width),
+                str.toa(total_lines),
+                str.toa(total_words),
+                str.toa(total_chars),
+                str.toa(total_bytes),
+                str.toa(overall_max_width),
                 "total"]);
         out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }

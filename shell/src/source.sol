@@ -1,11 +1,11 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
 contract source is Shell {
 
     function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
-        (string[] params, , ) = arg.get_args(args);
+//        (string[] params, , ) = arg.get_args(args);
         ec = EXECUTE_SUCCESS;
 
         string file_contents = input;
@@ -14,7 +14,6 @@ contract source is Shell {
         string cmd = vars.val("$0", pool);
         string exec_queue;
         string exec_cmd;
-        string dbg;
 
         (string[] lines, uint n_lines) = stdio.split(file_contents, ";");
         for (uint i = 0; i < n_lines; i++) {
@@ -34,6 +33,7 @@ contract source is Shell {
             exec_cmd.append(exec_line);
         }
         res = exec_cmd;
+        out = "";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

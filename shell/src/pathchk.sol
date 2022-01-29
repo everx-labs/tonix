@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -20,6 +20,7 @@ contract pathchk is Utility {
             if (first == "-" && leading_hyphens)
                 out.append("pathchk: leading \'-\' in a component of file name \'" + s_arg + "\'\n");
         }
+        err = "";
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -6,7 +6,7 @@ contract dumpe2fs is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
+        ( , , string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
         (bool sb_only, bool image_fs, , , , , , ) = arg.flag_values("hi", flags);
 

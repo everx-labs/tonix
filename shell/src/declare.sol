@@ -30,7 +30,7 @@ contract declare is Shell {
         for (string p: params) {
             string cur_record = vars.get_pool_record(p, pool);
             if (!cur_record.empty()) {
-                (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+                (string cur_attrs, ) = str.split(cur_record, " ");
                 if (vars.match_attr_set(s_attrs, cur_attrs))
                     out.append(vars.print_reusable(cur_record));
             } else {

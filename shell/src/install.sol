@@ -11,10 +11,10 @@ contract install is Utility {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _install(params, flags, wd, arg_list, sb.get_inode_count(inodes), inodes, data);
+        (out, file_action, ars, errors) = _install(params, flags, wd, arg_list, sb.get_inode_count(inodes), inodes);
     }
 
-    function _install(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+    function _install(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
         (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool recurse)
             = arg.flag_values("vnbTtufr", flags);
 

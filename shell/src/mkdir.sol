@@ -11,10 +11,7 @@ contract mkdir is Utility {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _mkdir(flags, arg_list, sb.get_inode_count(inodes));
-    }
-
-    function _mkdir(string flags, Arg[] arg_list, uint16 ic) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+        uint16 ic = sb.get_inode_count(inodes);
         bool error_if_exists = !arg.flag_set("p", flags);
         bool report_actions = arg.flag_set("v", flags);
 
@@ -22,7 +19,7 @@ contract mkdir is Utility {
         uint8 action_item_type = IO_MKDIR;
 
         uint n = arg_list.length;
-        action = Action(action_type, uint16(n));
+        file_action = Action(action_type, uint16(n));
         mapping (uint16 => string[]) parent_dirs;
 
         for (Arg ag: arg_list) {
@@ -35,7 +32,7 @@ contract mkdir is Utility {
                 parent_dirs[parent].push(dirent.dir_entry_line(ic, file_name, file_type));
                 ic++;
                 if (report_actions)
-                    out.append("mkdir: created directory" + stdio.quote(file_name) + "\n");
+                    out.append("mkdir: created directory" + str.quote(file_name) + "\n");
             } else {
                 if (error_if_exists)
                     errors.push(Err(0, EEXIST, file_name));

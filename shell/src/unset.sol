@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
@@ -13,7 +13,7 @@ contract unset is Shell {
         for (string arg: params) {
             string line = vars.get_pool_record(arg, pool);
             if (!line.empty()) {
-                (string attrs, ) = stdio.strsplit(line, " ");
+                (string attrs, ) = str.split(line, " ");
                 if (vars.match_attr_set(s_attrs, attrs)) {
                     page = stdio.translate(page, line + "\n", "");
                 }

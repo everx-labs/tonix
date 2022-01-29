@@ -55,10 +55,10 @@ contract findmnt is Utility {
                     fields[0],
                     fields[2],
                     fields[3],
-                    stdio.itoa(u_units),
-                    stdio.itoa(u_used),
-                    stdio.itoa(u_avl),
-                    stdio.itoa(u_p_used) + "%",
+                    str.toa(u_units),
+                    str.toa(u_used),
+                    str.toa(u_avl),
+                    str.toa(u_p_used) + "%",
                     fields[1]]);
                 if (first_fs_only)
                     break;

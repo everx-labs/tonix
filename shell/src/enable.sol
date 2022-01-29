@@ -23,9 +23,9 @@ contract enable is Shell {
         if (print) {
             (string[] lines, ) = stdio.split(page, "\n");
             for (string line: lines) {
-                (string attrs, string stmt) = stdio.strsplit(line, " ");
+                (string attrs, string stmt) = str.split(line, " ");
                 if (vars.match_attr_set(s_attrs, attrs)) {
-                    (string name, ) = stdio.strsplit(stmt, "=");
+                    (string name, ) = str.split(stmt, "=");
                     out.append("enable " + vars.unwrap(name) + "\n");
                 }
             }

@@ -12,7 +12,7 @@ contract env is Utility {
         if (params.empty()) {
             (string[] lines, ) = stdio.split(argv, "\n");
             for (string line: lines) {
-                (string attrs, string stmt) = stdio.strsplit(line, " ");
+                (string attrs, string stmt) = str.split(line, " ");
                 if (vars.match_attr_set(s_attrs, attrs)) {
                     (string name, string value) = vars.item_value(stmt);
                     out.append(name + "=" + value + delimiter);
@@ -32,7 +32,7 @@ contract env is Utility {
         string s_attrs = "-x";
         (string[] lines, ) = stdio.split(pool, "\n");
         for (string line: lines) {
-            (string attrs, ) = stdio.strsplit(line, " ");
+            (string attrs, ) = str.split(line, " ");
             if (vars.match_attr_set(s_attrs, attrs))
                 exports.append(line + "\n");
         }

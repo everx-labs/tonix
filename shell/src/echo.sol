@@ -1,10 +1,10 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Shell.sol";
 
 contract echo is Shell {
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+    function print(string args, string /*pool*/) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
         bool no_trailing_newline = arg.flag_set("n", flags);
         out = stdio.join_fields(params, " ");

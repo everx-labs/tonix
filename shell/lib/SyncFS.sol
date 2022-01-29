@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "../include/Internal.sol";
 
@@ -12,15 +12,6 @@ abstract contract SyncFS is Internal {
 
     function get_inodes() external view returns (mapping (uint16 => Inode) inodes) {
         inodes = _inodes;
-    }
-
-    /* Read blocks of textual data fron the files specified by index */
-    function read_indices(Arg[] args) external view returns (string[] texts) {
-        for (Arg arg: args) {
-            if (arg.ft == FT_UNKNOWN)
-                continue;
-            texts.push(fs.get_file_contents(arg.idx, _inodes, _data));
-        }
     }
 
     function init_fs(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external accept {

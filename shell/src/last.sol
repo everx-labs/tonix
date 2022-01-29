@@ -47,15 +47,15 @@ contract last is Utility {
                 uint32 login_ts = log_ts[tty_id];
                 table.push([
                     ui_user_name,
-                    stdio.itoa(tty_id),
+                    str.toa(tty_id),
                     fmt.ts(login_ts),
                     fmt.ts(timestamp)]);
             }
             if (letype != AE_SHUTDOWN || shutdown_entries)
                 table.push([
                     ui_user_name,
-                    stdio.itoa(tty_id),
-                    stdio.itoa(user_id),
+                    str.toa(tty_id),
+                    str.toa(user_id),
                     fmt.ts(timestamp)]);
         }
 

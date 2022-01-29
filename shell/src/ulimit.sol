@@ -15,7 +15,7 @@ contract ulimit is Shell {
         for (uint i = 0; i < cls.length; i++) {
             (uint cells, uint bits, uint refs) = cls[i].dataSize(1000);
             uint bytess = bits / 8;
-            table.push([stdio.itoa(i), stdio.itoa(cells), stdio.itoa(bytess), stdio.itoa(refs)]);
+            table.push([str.toa(i), str.toa(cells), str.toa(bytess), str.toa(refs)]);
         }
         out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }

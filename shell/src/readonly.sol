@@ -14,16 +14,16 @@ contract readonly is Shell {
         if (params.empty()) {
             (string[] lines, ) = stdio.split(pool, "\n");
             for (string line: lines) {
-                (string attrs, ) = stdio.strsplit(line, " ");
+                (string attrs, ) = str.split(line, " ");
                 if (vars.match_attr_set(s_attrs, attrs))
                     out.append(vars.print_reusable(line));
             }
         }
         for (string p: params) {
-            (string name, ) = stdio.strsplit(p, "=");
+            (string name, ) = str.split(p, "=");
             string cur_record = vars.get_pool_record(name, pool);
             if (!cur_record.empty()) {
-                (string cur_attrs, ) = stdio.strsplit(cur_record, " ");
+                (string cur_attrs, ) = str.split(cur_record, " ");
                 if (vars.match_attr_set(s_attrs, cur_attrs))
                     out.append(vars.print_reusable(cur_record));
             } else {
