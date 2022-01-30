@@ -52,25 +52,16 @@ contract cp is Utility {
             return (out, ars, errors);
 
         string dirents;
-        uint8 dirent_action_type;
         if (request_backup && overwrite_dest) {
             string t_backup_path = t_path + "~";
             out = str.aif(out, verbose, "(backup:" + str.quote(t_backup_path) + ")");
 
             ars.push(Ar(IO_WR_COPY, FT_REG_FILE, 0, t_ino, t_backup_path, ""));
             dirents.append(dirent.dir_entry_line(t_ino, t_backup_path, FT_REG_FILE));
-            dirent_action_type = IO_ADD_DIR_ENTRY;
             ic++;
         }
 
-        uint8 action_item_type;
-        if (!hardlink) {
-            action_item_type = IO_WR_COPY;
-        } else if (hardlink) {
-            action_item_type = IO_HARDLINK;
-        } else if (symlink) {
-            action_item_type = IO_SYMLINK;
-        }
+        uint8 action_item_type = symlink ? IO_SYMLINK : hardlink ? IO_HARDLINK : IO_WR_COPY;
 
         for (uint i = first; i < last; i++) {
             (string s_path, uint8 s_ft, uint16 s_ino, , uint16 s_dir_idx) = arg_list[i].unpack();
@@ -92,13 +83,11 @@ contract cp is Utility {
 
                 ars.push(Ar(action_item_type, s_ft, s_ino, s_dir_idx, file_name, ""));
                 dirents.append(dirent.dir_entry_line(action_item_type == IO_HARDLINK ? s_ino : ic++, file_name, s_ft));
-                dirent_action_type = IO_ADD_DIR_ENTRY;
-
             }
         }
 
-        if (dirent_action_type > 0)
-            ars.push(Ar(dirent_action_type, FT_DIR, to_dir ? t_ino : wd, t_idx, "", dirents));
+        if (!dirents.empty())
+            ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, to_dir ? t_ino : wd, t_idx, "", dirents));
 
         if (overwrite_dest && errors.empty())
             ars.push(Ar(IO_UNLINK, t_ft, t_ino, t_idx, t_path, ""));

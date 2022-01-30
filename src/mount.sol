@@ -17,6 +17,40 @@ contract mount is Utility {
         err = "";
         ( , string[] params, string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
+//        (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
+        string mountinfo = fs.get_file_contents_at_path("/proc/self/mountinfo", inodes, data);
+        string fstab = fs.get_file_contents_at_path("/etc/fstab", inodes, data);
+        string mtab = fs.get_file_contents_at_path("/etc/mtab", inodes, data);
+        uint n_params = params.length;
+        if (n_params == 2) {
+            // device dir
+        } else if (n_params == 1) {
+            string s_path = params[0];
+            // device/dir
+        } else if (n_params == 0) {
+            // either -l or -a
+            // -l
+            (string[] lines, ) = stdio.split(mountinfo, "\n");
+            for (string line: lines) {
+                (string[] fields, uint n_fields) = stdio.split(line, " ");
+                if (n_fields > 6) {
+                    uint16 mount_id = str.toi(fields[0]);
+                    uint16 parent_id = str.toi(fields[1]);
+                    (string s_major, string s_minor) = str.split(fields[2], ":");
+                    uint8 major_id = uint8(str.toi(s_major));
+                    uint8 minor_id = uint8(str.toi(s_minor));
+                    string root = fields[3];
+                    string mountpoint = fields[4];
+                    string options = fields[5];
+                    string separator = fields[6];
+                    string fs_type = n_fields > 7 ? fields[7] : "";
+                    string source = n_fields > 8 ? fields[8] : "";
+                    string super_options = n_fields > 9 ? fields[9] : "";
+                    out.append(source + " on " + mountpoint + " type " + fs_type + " (" + options + ")\n");
+                }
+            }
+        }
+
     }
 /*
 36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
@@ -37,7 +71,7 @@ contract mount is Utility {
     function _command_help() internal override pure returns (CommandHelp) {
         return CommandHelp(
 "mount",
-"[-l]\t-a [-fnrvw]\t-[NTBM] <source> <directory>",
+"[-l]\t-a [-fnrvw]\t[-fnrsvw] [-o options] device|dir\t[-fnrsvw] [-t fstype] [-o options] device dir",
 "mount a filesystem",
 "Attach the filesystem found on some device to the file tree",
 "-a      mount all filesystems mentioned in fstab\n\

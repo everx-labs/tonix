@@ -140,8 +140,18 @@ library sb {
         }
     }
 
-    function display_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
+    function display_index_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
+        SuperBlock sblk = get_sb(inodes, data);
+        return display_sb(sblk);
+    }
+    function display_data_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
         SuperBlock sblk = read_sb(inodes, data);
+        return display_sb(sblk);
+    }
+
+    function display_sb(SuperBlock sblk) internal returns (string out) {
+//    function display_sb(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string out) {
+//        SuperBlock sblk = read_sb(inodes, data);
         (bool file_system_state, bool errors_behavior, string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes,
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sblk.unpack();

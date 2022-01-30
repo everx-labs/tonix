@@ -55,32 +55,104 @@ contract fsck is Utility {
         mapping (uint16 => fsck_err[]) es;
 
         string start_dir = "/";
-        uint16 start_dir_index = ROOT_DIR;
+        uint16 start = ROOT_DIR;
+
+        if (print_sb) {
+            out.append(sb.display_sb(sb.read_sb(inodes, data)));
+            out.append("\n======================================\n\n");
+            out.append(sb.display_sb(sb.get_sb(inodes, data)));
+        }
+
         if (!params.empty()) {
             start_dir = params[0];
             if (verbose)
                 out.append("Resolving start dir index for " + start_dir + "\n");
-            start_dir_index = fs.resolve_absolute_path(start_dir, inodes, data);
+            start = fs.resolve_absolute_path(start_dir, inodes, data);
             if (verbose)
-                out.append("start dir index resolved as " + str.toa(start_dir_index) + "\n");
-            if (!data.exists(start_dir_index)) {
-                es[start_dir_index].push(fsck_err(start_dir_index, MISSING_INODE_DATA, 0, 0));
+                out.append("start dir index resolved as " + str.toa(start) + "\n");
+            if (!data.exists(start)) {
+                es[start].push(fsck_err(start, MISSING_INODE_DATA, 0, 0));
             }
+            if (verbose)
+                out.append("checking dir " + str.toa(start) + "\n");
+            (string errs, string dry, Inode res, bytes res_data) = _check_dir(inodes[start], data[start]);
+            if (verbose)
+                out.append("dir " + str.toa(start) + " checked\n");
+            (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = res.unpack();
+            if (!err.empty()) {
+                err.append(errs);
+                ec |= ERRORS_UNCORRECTED;
+            }
+            if (dry_run) {
+                out.append(dry);
+            } else if (auto_repair && !no_changes) {
+                inodes_out[start] = res;
+                data_out[start] = res_data;
+                ec = ERRORS_CORRECTED;
+            }
+            err.append(format("\nfixed inode: I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", start, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
+            err.append(format("\nfixed data: {}\n", res_data));
+            return (ec, out, err, inodes_out, data_out);
         }
 
-        if (!dry_run && !skip_root && start_dir_index >= ROOT_DIR) {
-            (DirEntry[] contents, int16 status, string dbg) = dirent.read_dir_verbose(data[start_dir_index]);
-            out.append(dbg);
+        if (!dry_run && !skip_root && start >= ROOT_DIR) {
+            (DirEntry[] contents, int16 status, ) = dirent.read_dir_verbose(data[start]);
+            uint16 i = start;
+            uint16 s_n_links = inodes[i].n_links;
+            if (status < 0 || uint16(status) != s_n_links) {
+                es[i].push(fsck_err(i, DIR_INDEX_ERROR, 0, uint16(status)));
+            } else {
+                for (DirEntry de: contents) {
+                    (uint8 sub_ft, string sub_name, uint16 sub_index) = de.unpack();
+                    if (sub_name.empty())
+                        es[i].push(fsck_err(i, EMPTY_DIRENT_NAME, 0, sub_index));
+                    if (sub_ft == FT_UNKNOWN)
+                        es[i].push(fsck_err(i, UNKNOWN_DIRENT_TYPE, 0, sub_ft));
+                    if (verbose || list_files)
+                        out.append(dirent.dir_entry_line(sub_index, sub_name, sub_ft));
+                }
+            }
+            if (!es[i].empty()) {
+                uint err_len = es[i].length;
+                string suffix = err_len > 1 ? "s" : "";
+                err.append(format("\nInode {} consistency check failed with {} error{}:\n", i, err_len, suffix));
+                (string errs, string dry, Inode res, bytes res_data) = _rebuild_dir_index(inodes[i], data[i], fsck_err(i, DIR_INDEX_ERROR, 0, uint16(status)));
+                err.append(errs);
+                err.append(dry);
+                (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = res.unpack();
+                err.append(format("\nfixed inode: I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
+                err.append(format("\nfixed data: {}\n", res_data));
+            }
             if (status < 0) {
                 err.append(format("Error: {} \n", status));
-                es[start_dir_index].push(fsck_err(start_dir_index, DIR_INDEX_ERROR, 0, uint16(status)));
+                es[start].push(fsck_err(start, DIR_INDEX_ERROR, 0, uint16(status)));
                 ec = EXECUTE_FAILURE;
             } else {
+                i = start;
+                uint16 n_links = inodes[i].n_links;
+//                (errs, dry, res, res_data) = _rebuild_dir_index(inodes[i], data[i], fsckerr);
+                if (status < 0)
+                    es[i].push(fsck_err(i, DIR_INDEX_ERROR, 0, uint16(status)));
+                else if (uint16(status) != n_links)
+                    es[i].push(fsck_err(i, DIRENT_COUNT_MISMATCH, n_links, uint16(status)));
+                else {
+                    for (DirEntry de: contents) {
+                        (uint8 sub_ft, string sub_name, uint16 sub_index) = de.unpack();
+                        if (sub_name.empty())
+                            es[i].push(fsck_err(i, EMPTY_DIRENT_NAME, 0, sub_index));
+                        if (sub_ft == FT_UNKNOWN)
+                            es[i].push(fsck_err(i, UNKNOWN_DIRENT_TYPE, 0, sub_ft));
+                        if (verbose || list_files)
+                            out.append(dirent.dir_entry_line(sub_index, sub_name, sub_ft));
+                            if (es.exists(i))
+                                break;
+                    }
+                }
                 uint len = uint(status);
                 for (uint16 j = 0; j < len; j++) {
                     (uint8 ft, string name, uint16 index) = contents[j].unpack();
                     if (ft == FT_UNKNOWN) {
-                        es[start_dir_index].push(fsck_err(start_dir_index, UNKNOWN_DIRENT_TYPE, 0, ft));
+                        es[start].push(fsck_err(start, UNKNOWN_DIRENT_TYPE, 0, ft));
                         continue;
                     }
                     if (verbose)
@@ -94,14 +166,12 @@ contract fsck is Utility {
         uint total_blocks_reported;
         uint total_blocks_actual;
 
-        if (print_sb)
-            out.append(sb.display_sb(inodes, data));
-
         if (check_all) {
-            SuperBlock sb = sb.read_sb(inodes, data);
+//            SuperBlock sb = sb.read_sb(inodes, data);
+            SuperBlock sblk = sb.get_sb(inodes, data);
 
             (, , , uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, uint16 block_size, , , , ,
-                , , uint16 first_inode, uint16 inode_size) = sb.unpack();
+                , , uint16 first_inode, uint16 inode_size) = sblk.unpack();
 
             for ((uint16 i, Inode ino): inodes) {
                 (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();
@@ -109,11 +179,9 @@ contract fsck is Utility {
                 uint32 len = uint32(bts.length);
                 if (file_size != uint32(len))
                     es[i].push(fsck_err(i, FILE_SIZE_MISMATCH, uint16(file_size), uint16(len)));
-//                           ec |= ERRORS_CORRECTED;
-//                            ec |= ERRORS_UNCORRECTED;
                 uint16 n_data_blocks = uint16(len / block_size + 1);
                 if (n_blocks != n_data_blocks) {
-    //                errors.append(format("Block count mismatch: inode: {} data: {} \n", n_blocks, n_data_blocks));
+        //                errors.append(format("Block count mismatch: inode: {} data: {} \n", n_blocks, n_data_blocks));
                 }
                 total_blocks_reported += n_blocks;
                 total_blocks_actual += n_data_blocks;
@@ -190,7 +258,81 @@ contract fsck is Utility {
         err.append("\n======================================\n");
     }
 
-    function _fix_inode(Inode ino, bytes data, fsck_err fsckerr) internal pure returns (string err, string dry, Inode res) {
+    function _check_dir(Inode ino, bytes data) internal pure returns (string err, string dry, Inode res, bytes res_data) {
+        res = ino;
+        res_data = data;
+
+        (uint16 s_mode, , , uint16 s_n_links, , , , , , ) = ino.unpack();
+        if (!inode.is_dir(s_mode))
+            err.append("Not a directory\n");
+        (DirEntry[] contents, int16 status, ) = dirent.read_dir_verbose(data);
+//        err.append(dbg);
+        if (status < 0)
+            err.append(format("Error reading dir index: {}, status {}\n", "?", status));
+        if (uint16(status) != s_n_links)
+            err.append(format("Dir entry count mismatch, expected: {} actual: {}\n", s_n_links, status));
+        (string[] lines, ) = stdio.split(data, "\n");
+        for (string s: lines) {
+            if (s.empty())
+                err.append("Empty dir entry line\n");
+            else {
+                (string s_head, string s_tail) = str.split(s, "\t");
+                if (s_head.empty())
+                    err.append("Empty file type and name: " + s + "\n");
+                else if (s_tail.empty())
+                    err.append("Empty inode reference: " + s + "\n");
+                else {
+                    uint h_len = s_head.byteLength();
+                    if (h_len < 2)
+                        err.append("File type and name too short: " + s_head + "\n");
+                    else {
+                        DirEntry de = DirEntry(inode.file_type(s_head.substr(0, 1)), s_head.substr(1), str.toi(s_tail));
+                        contents.push(de);
+                        dry.append(dirent.print(de));
+                    }
+                }
+            }
+        }
+
+            /*(uint8 sub_ft, string sub_name, uint16 sub_index) = de.unpack();
+            if (sub_name.empty())
+                err.append(format("empty dir entry name {}\n", sub_index));
+            if (sub_ft == FT_UNKNOWN)
+                err.append(format("unknown dir entry type: {}, status {}\n", 0, sub_ft));
+            }*/
+        if (!err.empty()) {
+            dry.append(format("Fixing inode dir index:\n{}", data));
+            string text;
+            uint new_lc;
+            (lines, ) = stdio.split(data, "\n");
+            for (string s: lines) {
+                if (s.empty())
+                    dry.append("Skipping empty dir entry line\n");
+                else {
+                    (string s_head, string s_tail) = str.split(s, "\t");
+                    if (s_head.empty())
+                        dry.append("Skipping line with an empty file type and name: " + s + "\n");
+                    else if (s_tail.empty())
+                        dry.append("Skipping line with an empty inode reference: " + s + "\n");
+                    else {
+                        uint h_len = s_head.byteLength();
+                        if (h_len < 2)
+                            dry.append("Skipping line with a file type and name way too short: " + s_head + "\n");
+                        else {
+                            dry.append("Appending a valid line " + s + "\n");
+                            text.append(s + "\n");
+                            new_lc++;
+                        }
+                    }
+                }
+            }
+            res.n_links = uint16(new_lc);
+            res.file_size = text.byteLength();
+            res_data = text;
+        }
+    }
+
+    function _fix_inode(Inode ino, bytes /*data*/, fsck_err fsckerr) internal pure returns (string err, string dry, Inode res) {
         (uint16 index, uint16 code, uint16 expected, uint16 actual) = fsckerr.unpack();
         res = ino;
         if ((code & MISSING_INODE_DATA) > 0) {
@@ -215,7 +357,7 @@ contract fsck is Utility {
         }
     }
 
-    function _fix_sb(Inode ino, bytes data, fsck_err fsckerr) internal pure returns (string err, string dry, Inode res, bytes res_data) {
+    function _fix_sb(Inode ino, bytes data, fsck_err fsckerr) internal pure returns (string err, string /*dry*/, Inode res, bytes res_data) {
         (, uint16 code, uint16 expected, uint16 actual) = fsckerr.unpack();
         res = ino;
         res_data = data;

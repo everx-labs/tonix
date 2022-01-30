@@ -43,7 +43,19 @@ filter() {
             echo `jq -r '.res' $1`;;
         exec|main)
             jq -rj '.out' $1 >run/stdout;
-            jq -rj 'if has("err") then .err else empty end' $1 >run/stderr;;
+            jq -rj 'if has("err") then .err else empty end' $1 >run/stderr;
+            case $util in
+                fsck)
+                    jq 'if (.ec == "1") then . else empty end' $1 >tmp/fsck_res;
+                    if [ -s tmp/fsck_res ]; then
+                        cat tmp/fsck_res;
+                        cp run/fs run/fs_undo
+                        jq '{inodes: .inodes_out, data: .data_out}' tmp/fsck_res >run/fs
+                    fi;;
+                *)
+                    ;;
+            esac
+            ;;
         display_man_page)
             jq -rj '.out' $1 >run/stdout;;
         induce|uadm)
