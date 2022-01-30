@@ -4,7 +4,7 @@ import "Utility.sol";
 
 contract groupmod is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
 
         uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
@@ -49,7 +49,6 @@ contract groupmod is Utility {
         if (errors.empty()) {
             string text = format("{}\t{}\n", use_new_name ? new_group_name : target_group_name, new_group_id);
             ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", stdio.translate(etc_group, prev_entry, text)));
-            file_action = Action(use_group_id ? UA_CHANGE_GROUP_ID : UA_RENAME_GROUP, 1);
         } else
             ec = EXECUTE_FAILURE;
         out = "";

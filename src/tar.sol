@@ -1,9 +1,8 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
-import "../lib/SyncFS.sol";
 
-contract TapeArchive is Utility, SyncFS {
+contract TapeArchive is Utility {
 
 struct TarIndexEntry {
     string name;

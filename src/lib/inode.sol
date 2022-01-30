@@ -1,8 +1,6 @@
 pragma ton-solidity >= 0.56.0;
 
 import "../include/fs_types.sol";
-import "fmt.sol";
-import "dirent.sol";
 import "sb.sol";
 
 library inode {
@@ -84,7 +82,7 @@ library inode {
     }
 
     function mode(string s) internal returns (uint16 imode) {
-        imode = get_def_mode(dirent.file_type(s.substr(0, 1)));
+        imode = get_def_mode(file_type(s.substr(0, 1)));
         imode += string_to_octet(s.substr(1, 3)) << 6;
         imode += string_to_octet(s.substr(4, 3)) << 3;
         imode += string_to_octet(s.substr(7, 3));
@@ -143,6 +141,28 @@ library inode {
         return (imode & S_IFMT) == S_IFIFO;
     }
 
+    function file_type(string s) internal returns (uint8) {
+        if (s == "b") return FT_BLKDEV;
+        if (s == "c") return FT_CHRDEV;
+        if (s == "-") return FT_REG_FILE;
+        if (s == "d") return FT_DIR;
+        if (s == "l") return FT_SYMLINK;
+        if (s == "s") return FT_SOCK;
+        if (s == "p") return FT_FIFO;
+        return FT_UNKNOWN;
+    }
+
+    function file_type_sign(uint8 ft) internal returns (string) {
+        if (ft == FT_BLKDEV)    return "b";
+        if (ft == FT_CHRDEV)    return "c";
+        if (ft == FT_REG_FILE)  return "-";
+        if (ft == FT_DIR)       return "d";
+        if (ft == FT_SYMLINK)   return "l";
+        if (ft == FT_SOCK)      return "s";
+        if (ft == FT_FIFO)      return "p";
+        return "?";
+    }
+
     function mode_to_file_type(uint16 imode) internal returns (uint8) {
         if ((imode & S_IFMT) == S_IFBLK)  return FT_BLKDEV;
         if ((imode & S_IFMT) == S_IFCHR)  return FT_CHRDEV;
@@ -155,9 +175,9 @@ library inode {
     }
 
     function file_type_description(uint16 imode) internal returns (string) {
-        if ((imode & S_IFMT) == S_IFBLK)  return "block special";
-        if ((imode & S_IFMT) == S_IFCHR)  return "character special";
-        if ((imode & S_IFMT) == S_IFREG)  return "regular";
+        if ((imode & S_IFMT) == S_IFBLK)  return "block special file";
+        if ((imode & S_IFMT) == S_IFCHR)  return "character special file";
+        if ((imode & S_IFMT) == S_IFREG)  return "regular file";
         if ((imode & S_IFMT) == S_IFDIR)  return "directory";
         if ((imode & S_IFMT) == S_IFLNK)  return "symbolic link";
         if ((imode & S_IFMT) == S_IFSOCK) return "socket";
@@ -165,14 +185,14 @@ library inode {
         return "unknown";
     }
 
-    function get_def_mode(uint8 file_type) internal returns (uint16) {
-        if (file_type == FT_REG_FILE) return DEF_REG_FILE_MODE;
-        if (file_type == FT_DIR) return DEF_DIR_MODE;
-        if (file_type == FT_SYMLINK) return DEF_SYMLINK_MODE;
-        if (file_type == FT_BLKDEV) return DEF_BLOCK_DEV_MODE;
-        if (file_type == FT_CHRDEV) return DEF_CHAR_DEV_MODE;
-        if (file_type == FT_FIFO) return DEF_FIFO_MODE;
-        if (file_type == FT_SOCK) return DEF_SOCK_MODE;
+    function get_def_mode(uint8 ft) internal returns (uint16) {
+        if (ft == FT_REG_FILE) return DEF_REG_FILE_MODE;
+        if (ft == FT_DIR) return DEF_DIR_MODE;
+        if (ft == FT_SYMLINK) return DEF_SYMLINK_MODE;
+        if (ft == FT_BLKDEV) return DEF_BLOCK_DEV_MODE;
+        if (ft == FT_CHRDEV) return DEF_CHAR_DEV_MODE;
+        if (ft == FT_FIFO) return DEF_FIFO_MODE;
+        if (ft == FT_SOCK) return DEF_SOCK_MODE;
     }
 
     function get_any_node(uint8 ft, uint16 owner, uint16 group, uint16 device_id, uint16 n_blocks, string file_name, string text) internal returns (Inode, bytes) {

@@ -10,7 +10,8 @@ contract who is Utility {
         ec = EXECUTE_SUCCESS;
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
             , bool users_logged_in) = arg.flag_values("bHlqsTwu", flags);
-        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
+//        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
+        (string etc_passwd, ) = fs.get_passwd_group(inodes, data);
 
         uint16 var_run_dir = fs.resolve_absolute_path("/var/run", inodes, data);
         (uint16 utmp_index, uint8 utmp_file_type) = fs.lookup_dir(inodes[var_run_dir], data[var_run_dir], "utmp");
@@ -28,7 +29,7 @@ contract who is Utility {
                 string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
                 string ui_user_name;
                 if (!line.empty())
-                    (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
+                    (ui_user_name, , , , ) = uadmin.parse_passwd_entry_line(line);
                 out.append(ui_user_name + "\t");
                 count++;
             }
@@ -56,7 +57,7 @@ contract who is Utility {
             string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
             string ui_user_name;
             if (!line.empty())
-                (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
+                (ui_user_name, , , ,     ) = uadmin.parse_passwd_entry_line(line);
             table.push([ui_user_name, "+", str.toa(tty_id), fmt.ts(login_time), str.toa(process_id)]);
         }
         out = fmt.format_table_ext(columns_format, table, " ", "\n");

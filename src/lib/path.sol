@@ -1,7 +1,6 @@
 pragma ton-solidity >= 0.56.0;
 
 import "stdio.sol";
-import "str.sol";
 
 library path {
 

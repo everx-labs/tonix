@@ -1,8 +1,7 @@
 pragma ton-solidity >= 0.56.0;
 
-import "stdio.sol";
-import "fmt.sol";
 import "../include/fs_types.sol";
+import "fmt.sol";
 
 library sb {
 

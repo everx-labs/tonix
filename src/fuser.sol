@@ -10,7 +10,8 @@ contract fuser is Utility {
         ec = EXECUTE_SUCCESS;
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
             , bool users_logged_in) = arg.flag_values("bHlqsTwu", flags);
-        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
+//        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
+        (string etc_passwd, ) = fs.get_passwd_group(inodes, data);
 
         mapping (uint16 => Login) utmp;
 
@@ -23,7 +24,7 @@ contract fuser is Utility {
                 string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
                 string ui_user_name;
                 if (!line.empty())
-                    (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
+                    (ui_user_name, , , , ) = uadmin.parse_passwd_entry_line(line);
                 out.append(ui_user_name + "\t");
                 count++;
             }
@@ -50,7 +51,7 @@ contract fuser is Utility {
             string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
             string ui_user_name;
             if (!line.empty())
-                (ui_user_name, , , ) = uadmin.parse_passwd_entry_line(line);
+                (ui_user_name, , , , ) = uadmin.parse_passwd_entry_line(line);
             table.push([ui_user_name, "+", str.toa(tty_id), fmt.ts(login_time), str.toa(process_id)]);
         }
 

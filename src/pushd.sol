@@ -33,9 +33,9 @@ contract pushd is Shell {
 
             res = page;
         } else if (ft == FT_UNKNOWN) {
-            ec = ENOENT;
+            ec = er.ENOENT;
         } else {
-            ec = ENOTDIR;
+            ec = er.ENOTDIR;
         }
     }
 

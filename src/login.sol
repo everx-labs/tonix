@@ -8,7 +8,7 @@ contract login is Utility {
         err = "";
         ( , string[] params, string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
-        uint n_args = args.length;
+        /*uint n_args = args.length;
 
         bool force;
         bool use_hostname;
@@ -48,7 +48,7 @@ contract login is Utility {
             string user_name = a_user_name;
             string group_name = i_group_name;
             string cwd = i_cwd;
-/            session_out = Session(pid, uid, gid, wd, user_name, group_name, host_name, cwd);
+//            session_out = Session(pid, uid, gid, wd, user_name, group_name, host_name, cwd);
         }
 
         /*uint16 uid;

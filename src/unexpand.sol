@@ -4,39 +4,29 @@ import "Utility.sol";
 
 contract unexpand is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
-        string[] params;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
+        (, , string flags, string pi) = arg.get_env(argv);
+        bool use_tab_size = arg.flag_set("t", flags);
+        uint16 tab_size = use_tab_size ? str.toi(arg.opt_arg_value("t", argv)) : 8;
 
-        for (string s_arg: v_args) {
-            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
+        DirEntry[] contents = dirent.parse_param_index(pi);
+        for (DirEntry de: contents) {
+            (uint8 ft, string name, uint16 index) = de.unpack();
             if (ft != FT_UNKNOWN) {
-                (string s_out, string s_err) = _unexpand(flags, fs.get_file_contents(index, inodes, data), params);
-                if (s_err.empty())
-                    out.append(s_out + "\n");
-                else {
-                    err.append(s_err + "\n");
-                    ec = EXECUTE_FAILURE;
-                }
+                string text = fs.get_file_contents(index, inodes, data);
+                (string[] lines, ) = stdio.split(text, "\n");
+                out.append(_print(lines, flags, tab_size));
             } else
-                params.push(s_arg);
+                errors.push(Err(0, er.ENOENT, name));
         }
+        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+        err = "";
     }
 
-    function _unexpand(string flags, string texts, string[] params) private pure returns (string out, string err) {
-        (string[] text, ) = stdio.split(texts, "\n");
+    function _print(string[] lines, string flags, uint16 tab_size) private pure returns (string out) {
         bool convert_all_blanks = arg.flag_set("a", flags);
-        bool use_tab_size = arg.flag_set("t", flags);
-        uint16 tab_size = 8;
-
-        if (!params.empty() && use_tab_size) {
-            tab_size = str.toi(params[0]);
-            if (tab_size < 1)
-                return (out, "error");
-        }
-
         string pattern = fmt.spaces(tab_size);
-        for (string line: text) {
+        for (string line: lines) {
             if (convert_all_blanks)
                 out.append(stdio.translate(line, pattern, "\t"));
             else {
@@ -68,7 +58,7 @@ contract unexpand is Utility {
 "",
 "Written by Boris",
 "",
-"",
+"expand",
 "0.01");
     }
 

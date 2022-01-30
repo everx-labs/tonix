@@ -12,8 +12,8 @@ struct DeviceRecord {
 
 contract mknod is Utility {
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
+        (, string[] params, string flags, ) = arg.get_env(args);
         string node_name;
         uint n_args = params.length;
         if (!params.empty())
@@ -29,14 +29,12 @@ contract mknod is Utility {
                 file_type = FT_CHRDEV;
             else if (node_type == "p")
                 file_type = FT_FIFO;
-            (out, file_action, ars, errors) = _mknod(file_type, node_name, flags, sb.get_inode_count(inodes), inodes, data);
+            (ars, errors) = _mknod(file_type, node_name, flags, sb.get_inode_count(inodes), inodes, data);
         }
     }
 
-    function _mknod(uint8 file_type, string file_name, string flags, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
-        uint8 action_type = IO_CREATE_FILES;
+    function _mknod(uint8 file_type, string file_name, string flags, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (Ar[] ars, Err[] errors) {
         uint8 action_item_type = IO_MKDIR;
-        action = Action(action_type, 1);
         mapping (uint16 => string[]) parent_dirs;
 
         uint16 dev_dir_index = fs.resolve_absolute_path("/dev", inodes, data);
@@ -48,7 +46,7 @@ contract mknod is Utility {
                 parent_dirs[dev_dir_index].push(dirent.dir_entry_line(ic, file_name, file_type));
                 ic++;
             } else
-                errors.push(Err(0, EEXIST, file_name));
+                errors.push(Err(0, er.EEXIST, file_name));
 
         for ((uint16 dir_i, string[] added_dirents): parent_dirs) {
             uint16 n_dirents = uint16(added_dirents.length);

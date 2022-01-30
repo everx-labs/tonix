@@ -4,17 +4,17 @@ import "Utility.sol";
 
 contract ln is Utility {
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _ln(params, flags, wd, arg_list, sb.get_inode_count(inodes), inodes, data);
+        (out, ars, errors) = _ln(params, flags, wd, arg_list, sb.get_inode_count(inodes), inodes);
     }
 
-    function _ln(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+    function _ln(string[] args, string flags, uint16 wd, Arg[] arg_list, uint16 ic, mapping (uint16 => Inode) inodes) private pure returns (string out, Ar[] ars, Err[] errors) {
         (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool symlink)
             = arg.flag_values("vnbTtufs", flags);
 
@@ -40,9 +40,9 @@ contract ln is Utility {
 
         if (dest_exists && t_ft != FT_DIR) {
             if (multiple_sources)
-                errors.push(Err(ln_target, ENOTDIR, t_path));
+                errors.push(Err(er.ln_target, er.ENOTDIR, t_path));
             else if (!force)
-                errors.push(Err(symlink ? failed_symlink : failed_hardlink, EEXIST, t_path));
+                errors.push(Err(symlink ? er.failed_symlink : er.failed_hardlink, er.EEXIST, t_path));
         }
 
         if (dest_exists && t_ft == FT_DIR)
@@ -52,7 +52,7 @@ contract ln is Utility {
         bool overwrite_dest = collision && (!preserve || force);
 
         if (!errors.empty() || collision && preserve)
-            return (out, action, ars, errors);
+            return (out, ars, errors);
 
         string dirents;
         uint8 dirent_action_type;
@@ -66,19 +66,7 @@ contract ln is Utility {
             ic++;
         }
 
-        uint8 action_type;
-        uint8 action_item_type;
-
-        if (!symlink) {
-            action_type = IO_HARDLINK_FILES;
-            action_item_type = IO_HARDLINK;
-        } else {
-            action_type = IO_SYMLINK_FILES;
-            action_item_type = IO_SYMLINK;
-        }
-
-        uint n = last - first;
-        action = Action(action_type, uint16(n));
+        uint8 action_item_type = symlink ? IO_SYMLINK : IO_HARDLINK;
 
         for (uint i = first; i < last; i++) {
             (string s_path, uint8 s_ft, uint16 s_ino, , uint16 s_dir_idx) = arg_list[i].unpack();
@@ -86,10 +74,10 @@ contract ln is Utility {
             if (s_ino < INODES) { errors.push(Err(0, s_ino, s_path)); break; }
             if (verbose) { out.append(str.quote(s_path) + "->" + str.quote(t_path)); }
 
-            if (s_ft == FT_DIR && action_type == IO_HARDLINK_FILES)
-                errors.push(Err(no_hardlink_on_dir, 0, s_path));
+            if (s_ft == FT_DIR && action_item_type == IO_HARDLINK)
+                errors.push(Err(er.no_hardlink_on_dir, 0, s_path));
             else if (to_file_flag && to_dir && s_ft == FT_REG_FILE)
-                errors.push(Err(cant_overwrite_dir, 0, str.quote(t_path)));
+                errors.push(Err(er.cant_overwrite_dir, 0, str.quote(t_path)));
             else if (collision && newer_only) {
                 if (inodes[t_ino].modified_at > inodes[s_ino].modified_at)
                     continue;
@@ -97,7 +85,7 @@ contract ln is Utility {
                 (, string file_name) = path.dir(to_dir ? s_path : t_path);
 
                 ars.push(Ar(action_item_type, s_ft, s_ino, s_dir_idx, file_name, ""));
-                dirents.append(dirent.dir_entry_line(action_type == IO_HARDLINK_FILES ? s_ino : ic++, file_name, s_ft));
+                dirents.append(dirent.dir_entry_line(action_item_type == IO_HARDLINK ? s_ino : ic++, file_name, s_ft));
                 dirent_action_type = IO_ADD_DIR_ENTRY;
             }
         }

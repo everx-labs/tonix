@@ -1,10 +1,6 @@
 pragma ton-solidity >= 0.56.0;
 
-import "../include/fs_types.sol";
-import "fmt.sol";
 import "dirent.sol";
-import "sb.sol";
-import "inode.sol";
 
 library fs {
 
@@ -26,21 +22,6 @@ library fs {
     uint16 constant MAX_BLOCKS = 4000;
     uint16 constant MAX_INODES = 600;
 
-    uint8 constant ENOENT       = 1; // "No such file or directory" A component of pathname does not exist or is a dangling symbolic link; pathname is an empty string and AT_EMPTY_PATH was not specified in flags.
-    uint8 constant EEXIST       = 2; // "File exists"
-    uint8 constant ENOTDIR      = 3; //  "Not a directory" A component of the path prefix of pathname is not a directory.
-    uint8 constant EISDIR       = 4; //"Is a directory"
-    uint8 constant EACCES       = 5; // "Permission denied" Search permission is denied for one of the directories in the path prefix of pathname.  (See also path_resolution(7).)
-    uint8 constant ENOTEMPTY    = 6; // "Directory not empty"
-    uint8 constant EPERM        = 7; // "Not owner"
-    uint8 constant EINVAL       = 8; //"Invalid argument"
-    uint8 constant EROFS        = 9; //"Read-only file system"
-    uint8 constant EFAULT       = 10; //Bad address.
-    uint8 constant EBADF        = 11; // "Bad file number" fd is not a valid open file descriptor.
-    uint8 constant EBUSY        = 12; // "Device busy"
-    uint8 constant ENOSYS       = 13; // "Operation not applicable"
-    uint8 constant ENAMETOOLONG = 14; // pathname is too long.
-
     // Some defines for calling file status functions.
     uint16 constant FS_EXISTS	    = 1;
     uint16 constant FS_EXECABLE     = 2;
@@ -54,10 +35,10 @@ library fs {
         if (name == "/")
             return (ROOT_DIR, FT_DIR);
         if (!inodes.exists(dir))
-            return (ENOENT, FT_UNKNOWN);
+            return (er.ENOENT, FT_UNKNOWN);
         Inode ino = inodes[dir];
         if (inode.mode_to_file_type(ino.mode) != FT_DIR)
-            return (ENOTDIR, FT_UNKNOWN);
+            return (er.ENOTDIR, FT_UNKNOWN);
         return lookup_dir(ino, data[dir], name);
     }
 
@@ -78,7 +59,7 @@ library fs {
         for (uint i = 0; i < n_parts; i++) {
             (uint16 index, uint8 ft, uint16 dir_idx) = lookup_dir_ext(inodes[cur_dir], data[cur_dir], parts[i]);
             if (dir_idx == 0)
-                return ENOENT;
+                return er.ENOENT;
             if (ft != FT_DIR)
                 return index;
             cur_dir = index;
@@ -137,6 +118,14 @@ library fs {
         return data[file_index];
     }
 
+    function get_passwd_group(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string, string) {
+        uint16 etc_dir = resolve_absolute_path("/etc", inodes, data);
+        (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
+        (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
+        if (passwd_dir_idx > 0 && passwd_file_type == FT_REG_FILE && group_dir_idx > 0 && group_file_type == FT_REG_FILE)
+            return (get_file_contents(passwd_index, inodes, data), get_file_contents(group_index, inodes, data));
+    }
+
     /* Looks for a file name in the directory entry. Returns file index */
     function resolve_relative_path(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns
             (uint16 index, uint8 file_type, uint16 parent, uint16 dir_index) {
@@ -166,7 +155,7 @@ library fs {
 
     function lookup_dir_ext(Inode ino, bytes data, string file_name) internal returns (uint16 index, uint8 file_type, uint16 dir_idx) {
         if (inode.mode_to_file_type(ino.mode) != FT_DIR)
-            return (ENOTDIR, FT_UNKNOWN, 0);
+            return (er.ENOTDIR, FT_UNKNOWN, 0);
         (DirEntry[] contents, int16 status) = dirent.read_dir(ino, data);
         if (status < 0)
             return (uint16(-status), FT_UNKNOWN, 0);
@@ -176,7 +165,7 @@ library fs {
                 if (name == file_name)
                     return (idx, ft, uint16(i + 1));
             }
-            return (ENOENT, FT_UNKNOWN, 0);
+            return (er.ENOENT, FT_UNKNOWN, 0);
         }
     }
 }

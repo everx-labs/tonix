@@ -32,7 +32,7 @@ VAL0:=15
 I:=Repo
 PRIME:=$I
 
-UTILS:=basename cat colrm column cp cut df dirname du dumpe2fs env expand file findmnt finger fsck fuser getent grep groupadd groupdel groupmod groups head hostname id install last ln look losetup ls lslogins man mkdir mke2fs mkfs mknod mount mountpoint mv namei newgrp paste pathchk printenv ps readlink realpath rev rm rmdir stat tail tfs tmpfs touch tr udevadm umount uname unexpand useradd userdel usermod utmpdump wc whatis who whoami
+UTILS:=basename cat colrm column cp cut df dirname du dumpe2fs env expand file findmnt finger fsck fuser getent grep groupadd groupdel groupmod groups head hostname id install last ln login look losetup ls lsblk lslogins man mkdir mke2fs mkfs mknod mount mountpoint mv namei newgrp paste pathchk printenv ps readlink realpath rev rm rmdir stat tail tfs tmpfs touch tr udevadm umount uname unexpand useradd userdel usermod utmpdump wc whatis who whoami
 HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help jobs mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
 BUILTINS:=$(HELP_TOPICS) $(UTILS)
 
@@ -64,13 +64,6 @@ $$(eval $1_c=$(TOC) call $$($1_a) --abi $(BLD)/$1.abi.json)
 endef
 
 $(foreach c,$(INIT),$(eval $(call t-call,$c)))
-
-#define t-shell
-#tmp/$1_%.out: $(BIN)/$1.boc shell/$(BLD)/$1.abi.json tmp/$1_%.args
-#	$(TOC) -j run --boc $$(word 1,$$^) --abi $$(word 2,$$^) $$* $$(word 3,$$^) >$$@
-#endef
-
-#$(foreach c,$(BUILTINS),$(eval $(call t-shell,$c)))
 
 $(BIN)/%.boc: etc/hosts.shell
 	$(eval aa!=grep -w $* $< | cut -f 1)
@@ -105,9 +98,9 @@ k?=44
 init_x:
 	$($I_c) init_x '{"n":$n,"k":$k}'
 
-#uc: $(BLD)/$I.cs
-#	$(eval args!=jq -R '{c:.}' $<)
-#	$($I_c) upgrade_code '$(args)'
+uc: $(BLD)/$I.cs
+	$(eval args!=jq -R '{c:.}' $<)
+	$($I_c) upgrade_code '$(args)'
 
 $(BLD)/%.ress: $(BLD)/%.cs
 	$(eval args!=jq -R '{name:"$*",c:.}' $<)

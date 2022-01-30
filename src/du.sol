@@ -4,37 +4,28 @@ import "Utility.sol";
 
 contract du is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+        (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, , , ) = arg.flag_values("0ahcs", flags);
+        string line_end = null_line_end ? "\x00" : "\n";
+        if (count_files && summarize)
+            err = "du: cannot both summarize and show all entries\n";
+
         for (string s_arg: params) {
             (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
-            if (ft != FT_UNKNOWN)
-                out.append(_du(flags, s_arg, ft, index, inodes, data) + "\n");
-            else {
-                err.append("Failed to resolve relative path for" + s_arg + "\n");
-                ec = EXECUTE_FAILURE;
-            }
+            if (ft != FT_UNKNOWN) {
+                Inode inode = inodes[index];
+                bytes dir_data = data[index];
+                uint32 file_size = inode.file_size;
+                (string[][] table, uint32 total) = ft == FT_DIR ? _count_dir(flags, s_arg, inode, dir_data, inodes, data) :
+                    ([[fmt.scale(file_size, human_readable ? KILO : 1), s_arg]], file_size);
+                if (produce_total)
+                    table.push([format("{}", total), "total"]);
+                out.append(fmt.format_table(table, "\t", line_end, fmt.ALIGN_LEFT));
+            } else
+                errors.push(Err(0, er.ENOENT, s_arg));
         }
-    }
-
-    function _du(string f, string path, uint8 ft, uint16 index, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string) {
-        (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, , , ) = arg.flag_values("0ahcs", f);
-
-        string line_end = null_line_end ? "\x00" : "\n";
-
-        if (count_files && summarize)
-            return "du: cannot both summarize and show all entries\n";
-        Inode inode = inodes[index];
-        bytes dir_data = data[index];
-        uint32 file_size = inode.file_size;
-
-        (string[][] table, uint32 total) = ft == FT_DIR ? _count_dir(f, path, inode, dir_data, inodes, data) :
-            ([[fmt.scale(file_size, human_readable ? KILO : 1), path]], file_size);
-
-        if (produce_total)
-            table.push([format("{}", total), "total"]);
-
-        return fmt.format_table(table, "\t", line_end, fmt.ALIGN_LEFT);
+        ec = err.empty() && errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _count_dir(string f, string dir_name, Inode inode, bytes dir_data, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[][] lines, uint32 total) {

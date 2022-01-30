@@ -4,7 +4,7 @@ import "Utility.sol";
 
 contract useradd is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
         string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
         string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
@@ -105,7 +105,6 @@ contract useradd is Utility {
                 } else
                     ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", etc_group + group_text));
             }
-            file_action = Action(UA_ADD_USER, n_files);
         } else
             ec = EXECUTE_FAILURE;
         out = "";

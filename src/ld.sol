@@ -4,7 +4,7 @@ import "Utility.sol";
 
 contract ld is Utility {
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
 
         (bool output_map_file, bool no_page_align_flag, bool no_page_align_no_ro_flag, bool use_out_file_name, bool optimize,
@@ -23,7 +23,6 @@ contract ld is Utility {
             if (n_args > 1 && use_out_file_name) {
                 uint16 ic = sb.get_inode_count(inodes);
                 string out_file_path = args[1];
-                file_action = Action(IO_CREATE_FILES, 1);
                 mapping (uint16 => string[]) parent_dirs;
 
                 (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(out_file_path, session.wd, inodes, data);

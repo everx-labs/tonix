@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "vars.sol";
 
@@ -31,14 +31,15 @@ library arg {
             (args, ) = stdio.split(s_args, " ");
     }
 
-    function get_env(string env) internal returns (uint16 wd, string[] args, string flags, string cwd) {
+    function get_env(string env) internal returns (uint16 wd, string[] args, string flags, string indices) {
         string s_wd = vars.val("WD", env);
         wd = str.toi(s_wd);
-        cwd = vars.val("PWD", env);
+//        cwd = vars.val("PWD", env);
         flags = vars.val("FLAGS", env);
         string s_args = vars.val("PARAMS", env);
         if (!s_args.empty())
             (args, ) = stdio.split(s_args, " ");
+        indices = vars.get_map_value("PARAM_INDEX", env);
     }
 
     function get_user_data(string env) internal returns (uint16 uid, uint16 gid) {
@@ -55,6 +56,18 @@ library arg {
 
     function opt_arg_value(string opt_name, string s_arg) internal returns (string) {
         return vars.val(opt_name, vars.get_map_value("OPT_ARGS", s_arg));
+    }
+
+    function param_indices(string s_arg) internal returns (string) {
+        return vars.get_map_value("PARAM_INDEX", s_arg);
+    }
+
+    function index(string param_name, string s_arg) internal returns (string) {
+        return vars.val(param_name, vars.get_map_value("PARAM_INDEX", s_arg));
+    }
+
+    function dir_entry(string param_name, string s_arg) internal returns (string) {
+        return vars.get_pool_record(param_name, vars.get_map_value("PARAM_INDEX", s_arg));
     }
 
 }

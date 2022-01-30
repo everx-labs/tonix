@@ -43,7 +43,7 @@ contract readlink is Utility {
 
             if (!exists) {
                 if (print_errors)
-                    errors.push(Err(0, ENOENT, s_arg));
+                    errors.push(Err(0, er.ENOENT, s_arg));
                 continue;
             }
             out.append(s_path);

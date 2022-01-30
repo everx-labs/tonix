@@ -2,26 +2,16 @@ pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
-struct ParsedCommand {
-    string command;
-    string[] args;
-    string short_options;
-    string[] long_options;
-    string stdin_redirect;
-    string stdout_redirect;
-    uint16 action;
-    string s_action;
-}
-
 contract tmpfs is Utility {
 
-    function fopen(Session session, ParsedCommand pc, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+    function fopen(string env, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+        (uint16 wd, /*string[] params*/, /*string flags*/, ) = arg.get_env(env);
         uint16 device_id;
-        string path = pc.stdout_redirect;
+        string path = vars.val("REDIR_OUT", env);
         inodes = inodes_in;
         data = data_in;
-        (, uint16 uid, uint16 gid, , , , , ) = session.unpack();
-        (, , uint16 parent, uint16 dir_index) = fs.resolve_relative_path(path, session.wd, inodes_in, data_in);
+        (uint16 uid, uint16 gid) = arg.get_user_data(env);
+        (, , uint16 parent, uint16 dir_index) = fs.resolve_relative_path(path, wd, inodes_in, data_in);
         if (dir_index == 0) {
             ic = sb.get_inode_count(inodes);
             (inodes[ic], data[ic]) = inode.get_any_node(FT_REG_FILE, uid, gid, device_id, 0, path, "");
@@ -35,13 +25,13 @@ contract tmpfs is Utility {
         }
     }
 
-    function fwrite(Session /*session*/, ParsedCommand /*pc*/, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in, uint16 ic, string text) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+    function fwrite(string /*env*/, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in, uint16 ic, string text) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         inodes = inodes_in;
         data = data_in;
         data[ic].append(text);
     }
 
-    function fclose(Session /*session*/, ParsedCommand /*pc*/, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in, uint16 ic) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+    function fclose(string /*env*/, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in, uint16 ic) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         inodes = inodes_in;
         data = data_in;
         Inode inode = inodes[ic];
@@ -57,11 +47,11 @@ contract tmpfs is Utility {
         inodes[SB_INODES] = sb.claim_inodes_and_blocks(inodes[SB_INODES], 0, n_blocks);
     }
 
-    function handle_action(string env, Action file_action, Ar[] ars, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
+    function handle_action(string env, Ar[] ars, mapping (uint16 => Inode) inodes_in, mapping (uint16 => bytes) data_in) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint16 device_id;
         uint16 block_size = 100;
         (uint16 uid, uint16 gid) = arg.get_user_data(env);
-        (uint8 at, uint16 n_files) = file_action.unpack();
+        uint16 n_files;
         inodes = inodes_in;
         data = data_in;
         mapping (uint16 => Inode) inodes_diff;
@@ -72,12 +62,8 @@ contract tmpfs is Utility {
         uint total_blocks;
 
         uint n_ars = ars.length;
-        if (at == IO_CREATE_ARCHIVE || at == IO_ADD_FILES_TO_ARCHIVE || at == IO_APPEND_ARCHIVE || at == IO_CREATE_FILES || at == IO_UPDATE_NODE ||
-            at == IO_COPY_FILES || at == IO_MOVE_FILES || at == IO_HARDLINK_FILES || at == IO_SYMLINK_FILES || at == IO_UNLINK_FILES ||
-            at == IO_CHANGE_OWNER || at == IO_CHANGE_GROUP || at == IO_CHANGE_MODE || at == UA_ADD_USER || at == UA_ADD_GROUP || at == UA_DELETE_USER ||
-            at == UA_DELETE_GROUP || at == UA_UPDATE_USER || at == UA_UPDATE_GROUP || at == UA_RENAME_GROUP || at == UA_CHANGE_GROUP_ID) {
             for (uint i = 0; i < n_ars; i++) {
-                (uint8 ar_type, , uint16 index, /*uint16 dir_index*/, string path, string text) = ars[i].unpack();
+                (uint8 ar_type, , uint16 index, uint16 count, string path, string text) = ars[i].unpack();
                 if (ar_type == IO_MKFILE) {
                     uint16 n_blocks = uint16(text.byteLength() / block_size + 1);
                     (inodes_diff[counter], data[counter]) = inode.get_any_node(FT_REG_FILE, uid, gid, device_id, n_blocks, path, text);
@@ -97,7 +83,8 @@ contract tmpfs is Utility {
                     Inode parent_dir_node = inodes[index];
                     bytes parent_dir_data = data[index];
                     parent_dir_node.file_size += text.byteLength();
-                    parent_dir_node.n_links += n_files;
+                    parent_dir_node.n_links += count;
+                    n_files += count;
                     parent_dir_node.modified_at = now;
                     parent_dir_node.last_modified = now;
                     inodes_diff[index] = parent_dir_node;
@@ -148,7 +135,8 @@ contract tmpfs is Utility {
                     bytes passwd_data = data[index];
                     passwd_node.file_size += text.byteLength();
                     uint16 n_blocks = uint16(text.byteLength() / block_size + 1);
-                    passwd_node.n_links += n_files;
+                    passwd_node.n_links += count;
+                    n_files += count;
                     passwd_node.n_blocks = n_blocks;
                     total_blocks += n_blocks;
                     passwd_node.modified_at = now;
@@ -158,7 +146,7 @@ contract tmpfs is Utility {
                     data_diff[index] = passwd_data;
                 }
             }
-        }
+//        }
         inodes_diff[SB_INODES] = sb.claim_inodes_and_blocks(inodes[SB_INODES], n_files, uint16(total_blocks));
 
         for ((uint16 index, Inode inode): inodes_diff)

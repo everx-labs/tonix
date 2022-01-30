@@ -1,9 +1,8 @@
 pragma ton-solidity >= 0.56.0;
 
 import "include/Internal.sol";
-import "lib/stdio.sol";
-import "lib/vars.sol";
 import "lib/arg.sol";
+import "lib/fs.sol";
 
 struct BuiltinHelp {
     string name;
@@ -31,6 +30,20 @@ abstract contract Shell is Internal {
 
     string constant FLAG_ON = '-';
     string constant FLAG_OFF = '+';
+
+    function _file_stati(string[] names, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
+        for (string s: names) {
+            uint16 index;
+            uint8 ft;
+            if (s.substr(0, 1) == "/") {
+                index = fs.resolve_absolute_path(s, inodes, data);
+                if (index >= INODES && inodes.exists(index))
+                    ft = inode.mode_to_file_type(inodes[index].mode);
+            } else
+                (index, ft, , ) = fs.resolve_relative_path(s, wd, inodes, data);
+            out.append(vars.var_record(inode.file_type_sign(ft), s, str.toa(index)) + "\n");
+        }
+    }
 
     function builtin_help() external pure returns (BuiltinHelp bh) {
         return _builtin_help();

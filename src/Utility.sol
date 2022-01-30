@@ -1,9 +1,8 @@
 pragma ton-solidity >= 0.56.0;
 
 import "include/Internal.sol";
-import "lib/stdio.sol";
 import "lib/arg.sol";
-import "lib/vars.sol";
+import "lib/fs.sol";
 import "lib/uadmin.sol";
 
 struct CommandHelp {
@@ -45,12 +44,6 @@ abstract contract Utility is Internal {
     uint8 constant IO_APPEND_TO_FILE = 14;
     uint8 constant IO_MKBIN         = 15;
     uint8 constant IO_MKNOD         = 16;
-
-    uint8 constant IO_ARCHIVE           = 20;
-    uint8 constant IO_AR_CREATE         = 1 + IO_ARCHIVE;
-    uint8 constant IO_AR_APPEND         = 2 + IO_ARCHIVE;
-    uint8 constant IO_AR_APPEND_FILES   = 3 + IO_ARCHIVE;
-    uint8 constant IO_AR_EXTRACT        = 4 + IO_ARCHIVE;
 
     uint8 constant IO_ACTION                = 50;
     uint8 constant IO_CREATE_ARCHIVE        = 51;
@@ -101,26 +94,6 @@ abstract contract Utility is Internal {
     uint16 constant SB_SB       = SB_INFO + 6;
     uint16 constant SB_JOURNAL  = SB_INFO + 7;
     uint16 constant SB_BACKUP   = SB_INFO + 8;
-
-    uint8 constant ERR_MSG              = 0;
-    uint8 constant invalid_option       = 7;
-    uint8 constant extra_operand        = 8;
-    uint8 constant missing_file_operand = 11;
-    uint8 constant invalid_mode         = 15;
-    uint8 constant invalid_owner        = 16;
-    uint8 constant try_help_for_info    = 21;
-    uint8 constant omitting_directory   = 23;
-    uint8 constant cant_overwrite_dir   = 24;
-    uint8 constant command_not_found    = 25;
-    uint8 constant options_l_s_incompat = 26;
-    uint8 constant ln_target            = 27;
-    uint8 constant failed_symlink       = 28;
-    uint8 constant failed_hardlink      = 29;
-    uint8 constant hard_or_symlink      = 30;
-    uint8 constant no_hardlink_on_dir   = 31;
-    uint8 constant mutually_exclusive_options = 32;
-    uint8 constant login_data_not_found = 33;
-    uint8 constant not_a_block_device   = 34;
 
     function command_help() external pure returns (CommandHelp ch) {
         return _command_help();

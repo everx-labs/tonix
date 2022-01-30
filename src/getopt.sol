@@ -28,7 +28,7 @@ contract getopt is Utility {
             (args, short_options, long_options) = _parse_args(s_args);
 
         if (c != command_info.name)
-            parse_errors.push(Err(command_not_found, 0, c));
+            parse_errors.push(Err(er.command_not_found, 0, c));
         else {
             uint flags = _parse_short_options(short_options);
             if (args.empty()) {
@@ -162,13 +162,13 @@ contract getopt is Utility {
         }
 
         if (n_args < ci.min_args)
-            errors.push(Err(missing_file_operand, 0, command_s));
+            errors.push(Err(er.missing_file_operand, 0, command_s));
         if (n_args > ci.max_args)
-            errors.push(Err(extra_operand, 0, args[ci.max_args]));
+            errors.push(Err(er.extra_operand, 0, args[ci.max_args]));
         if (!extra_flags.empty())
-            errors.push(Err(invalid_option, 0, extra_flags));
+            errors.push(Err(er.invalid_option, 0, extra_flags));
         if (!errors.empty())
-            errors.push(Err(try_help_for_info, 0, command_s));
+            errors.push(Err(er.try_help_for_info, 0, command_s));
     }
 
     function _parse_short_options(string short_options) private pure returns (uint flags) {

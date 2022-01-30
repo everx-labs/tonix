@@ -34,7 +34,7 @@ contract Repo {
         img.version++;
         img.updated_at = now;
         _images[index - 1] = img;
-        new Base{stateInit: si, value: 3 ton}();
+        new Base{stateInit: si, value: 1 ton}();
     }
 
     function init_x(uint16 n, uint16 k) external accept {
@@ -72,12 +72,12 @@ contract Repo {
     function models() external view returns (string out) {
         Column[] columns_format = [
             Column(true, 3, fmt.ALIGN_LEFT),
-            Column(true, 3, fmt.ALIGN_RIGHT),
-            Column(true, 20, fmt.ALIGN_RIGHT),
-            Column(true, 5, fmt.ALIGN_RIGHT),
+            Column(true, 3, fmt.ALIGN_CENTER),
+            Column(true, 20, fmt.ALIGN_LEFT),
+            Column(true, 5, fmt.ALIGN_CENTER),
             Column(true, 6, fmt.ALIGN_RIGHT),
             Column(true, 5, fmt.ALIGN_RIGHT),
-            Column(true, 30, fmt.ALIGN_RIGHT),
+            Column(true, 30, fmt.ALIGN_LEFT),
             Column(true, 66, fmt.ALIGN_LEFT)];
 
         string[][] table = [["N", "ver", "Name", "cells", "bytes", "refs", "Updated at", "Address"]];
@@ -87,8 +87,8 @@ contract Repo {
             (uint cells, uint bits, uint refs) = code.dataSize(1000);
             uint bytess = bits / 8;
             table.push([
-                str.toa(i),
-                str.toa(version),
+                str.toa(i + 1),
+                str.toa(version + 1),
                 name,
                 str.toa(cells),
                 str.toa(bytess),

@@ -10,17 +10,17 @@ contract rm is Utility {
             contents = stdio.translate(contents, s, "");
     }
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             arg_list.push(Arg(s_arg, ft, index, parent, dir_index));
         }
-        (out, file_action, ars, errors) = _rm(flags, arg_list, inodes, data);
+        (out, ars, errors) = _rm(flags, arg_list, inodes, data);
     }
 
-    function _rm(string flags, Arg[] arg_list, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Action action, Ar[] ars, Err[] errors) {
+    function _rm(string flags, Arg[] arg_list, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Ar[] ars, Err[] errors) {
         bool verbose = arg.flag_set("v", flags);
         bool remove_empty_dirs = arg.flag_set("d", flags);
         bool force_removal = arg.flag_set("f", flags);
@@ -36,9 +36,9 @@ contract rm is Utility {
                             ars.push(Ar(IO_UNLINK, ft, iop, dir_idx, s, ""));
                             victims[parent].push(dirent.dir_entry_line(iop, s, ft));
                         } else
-                            errors.push(Err(0, ENOTEMPTY, s));
+                            errors.push(Err(0, er.ENOTEMPTY, s));
                     } else
-                        errors.push(Err(0, EISDIR, s));
+                        errors.push(Err(0, er.EISDIR, s));
                 } else {
                     ars.push(Ar(IO_UNLINK, ft, iop, dir_idx, s, ""));
                     if (inodes[iop].n_links < 2)
@@ -48,7 +48,6 @@ contract rm is Utility {
             } else if (!force_removal)
                 errors.push(Err(0, iop, s));
         }
-        action = Action(IO_UNLINK_FILES, uint16(ars.length));
 
         for ((uint16 dir_i, string[] victim_dirents): victims)
             if (!victim_dirents.empty())

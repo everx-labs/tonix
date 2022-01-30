@@ -4,9 +4,10 @@ import "Utility.sol";
 
 contract newgrp is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
         out = "";
+        ec = EXECUTE_SUCCESS;
         (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
 
         string etc_group = fs.get_file_contents_at_path("/etc/group", inodes, data);
@@ -14,8 +15,6 @@ contract newgrp is Utility {
         uint n_args = params.length;
         string target_group_name = params[n_args - 1];
         uint16 target_group_id;
-        uint16 options = is_system_group ? uadmin.UAO_SYSTEM : 0;
-        uint16[] added_groups;
 
         string g_line = uadmin.group_entry_by_name(target_group_name, etc_group);
         if (!g_line.empty()) {
@@ -52,7 +51,6 @@ contract newgrp is Utility {
                 ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", dirent.dir_entry_line(ic, "group", FT_REG_FILE)));
             } else
                 ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", etc_group + text));
-            file_action = Action(UA_ADD_GROUP, 1);
         }
 
     }

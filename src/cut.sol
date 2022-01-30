@@ -4,9 +4,9 @@ import "Utility.sol";
 
 contract cut is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
-        (bool set_fields, bool use_delimiter, bool only_delimited, bool null_line_end, bool set_bytes, bool set_chars, , ) =
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
+        (, , string flags, string pi) = arg.get_env(argv);
+        (bool set_fields, bool use_delimiter, , bool null_line_end, bool set_bytes, bool set_chars, , ) =
             arg.flag_values("fdszbc", flags);
         string line_delimiter = null_line_end ? "\x00" : "\n";
         string delimiter = use_delimiter ? arg.opt_arg_value("d", argv) : "\t";
@@ -37,28 +37,34 @@ contract cut is Utility {
             opt_err = "invalid decreasing range";
 
         if (opt_err.empty()) {
-            for (string s_arg: v_args) {
-                (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
+            DirEntry[] contents = dirent.parse_param_index(pi);
+            for (DirEntry de: contents) {
+                (uint8 ft, string name, uint16 index) = de.unpack();
                 if (ft != FT_UNKNOWN) {
                     string text = fs.get_file_contents(index, inodes, data);
                     (string[] lines, ) = stdio.split(text, "\n");
-                    for (string line: lines) {
-                        if (set_fields) {
-                            if (only_delimited && str.chr(line, delimiter) == 0)
-                                continue;
-                            (string[] fields, uint n_fields) = stdio.split(line, delimiter);
-                            uint cap = math.min(to, n_fields);
-                            for (uint j = from - 1; j < cap; j++)
-                                out.append(fields[j] + (j + 1 < cap ? delimiter : line_delimiter));
-                        } else
-                            out.append((to < line.byteLength() ? line.substr(from - 1, to - from + 1) : line.substr(from - 1)) + line_delimiter);
-                   }
+                    out.append(_print(lines, flags, from, to, delimiter, line_delimiter));
                 } else
-                    err.append("cut: " + s_arg + ": No such file or directory\n");
+                    errors.push(Err(0, er.ENOENT, name));
             }
         } else
             err.append("cut: " + opt_err + "\nTry 'cut --help' for more information.\n");
-        ec = err.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+        ec = err.empty() && errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+    }
+
+    function _print(string[] lines, string flags, uint16 from, uint16 to, string delimiter, string line_delimiter) internal pure returns (string out) {
+        (bool set_fields, , bool only_delimited, , , , , ) = arg.flag_values("fdszbc", flags);
+        for (string line: lines) {
+            if (set_fields) {
+                if (only_delimited && str.chr(line, delimiter) == 0)
+                    continue;
+                (string[] fields, uint n_fields) = stdio.split(line, delimiter);
+                uint cap = math.min(to, n_fields);
+                for (uint j = from - 1; j < cap; j++)
+                    out.append(fields[j] + (j + 1 < cap ? delimiter : line_delimiter));
+            } else
+                out.append((to < line.byteLength() ? line.substr(from - 1, to - from + 1) : line.substr(from - 1)) + line_delimiter);
+        }
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

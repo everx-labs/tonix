@@ -13,7 +13,7 @@ contract lslogins is Utility {
         bool print_user = !flag_system || flag_user;
         string field_separator;
         uint16 uid = str.toi(vars.val("UID", argv));
-        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
+        (string etc_passwd, ) = fs.get_passwd_group(inodes, data);
 
         if (colon)
             field_separator = ":";
@@ -38,19 +38,19 @@ contract lslogins is Utility {
         if (params.empty() && uid < GUEST_USER) {
             (string[] lines, ) = stdio.split(etc_passwd, "\n");
             for (string line: lines) {
-                (string s_owner, uint16 t_uid, uint16 t_gid, ) = uadmin.parse_passwd_entry_line(line);
-                table.push([str.toa(t_uid), s_owner, str.toa(t_gid), s_owner]);
+                (string s_owner, uint16 t_uid, uint16 t_gid, string s_group, ) = uadmin.parse_passwd_entry_line(line);
+                table.push([str.toa(t_uid), s_owner, str.toa(t_gid), s_group]);
             }
         } else {
             string user_name = params[0];
             string line = uadmin.passwd_entry_by_name(user_name, etc_passwd);
             if (!line.empty()) {
-                (, uint16 t_uid, uint16 t_gid, string home_dir) = uadmin.parse_passwd_entry_line(line);
+                (, uint16 t_uid, uint16 t_gid, string group_name, string home_dir) = uadmin.parse_passwd_entry_line(line);
                     table = [
                         ["Username:", user_name],
                         ["UID:", str.toa(t_uid)],
                         ["Home directory:", home_dir],
-                        ["Primary group:", user_name],
+                        ["Primary group:", group_name],
                         ["GID:", str.toa(t_gid)]];
 //                    break;
                 }

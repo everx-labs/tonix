@@ -38,17 +38,6 @@ struct DirEntry {
     uint16 index;
 }
 
-struct UserInfo {
-    uint16 gid;
-    string user_name;
-    string primary_group;
-}
-
-struct GroupInfo {
-    string group_name;
-    bool is_system;
-}
-
 struct Login {
     uint16 user_id;
     uint16 tty_id;
@@ -56,8 +45,20 @@ struct Login {
     uint32 login_time;
 }
 
-struct TTY {
-    uint8 device_id;
-    uint16 user_id;
-    uint16 login_id;
+struct Ar {
+    uint8 ar_type;
+    uint8 file_type;
+    uint16 index;
+    uint16 dir_index;
+    string path;
+    string text;
+}
+
+struct DeviceInfo {
+    uint8 major_id;
+    uint8 minor_id;
+    string name;
+    uint16 blk_size;
+    uint16 n_blocks;
+    address device_address;
 }

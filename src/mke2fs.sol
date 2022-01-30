@@ -36,8 +36,8 @@ contract mke2fs is Utility {
         (string[] fields, uint n_fields) = stdio.split_line(line, ":", "\n");
         if (n_fields > 3) {
             name = fields[0];
-            node_type = dirent.file_type(fields[1]);
-            content_type = dirent.file_type(fields[2]);
+            node_type = inode.file_type(fields[1]);
+            content_type = inode.file_type(fields[2]);
             content = fields[3];
         }
     }
@@ -489,8 +489,6 @@ contract mke2fs is Utility {
                 if (content_type == FT_REG_FILE) {
                     contents.append(content);
                 } else if (content_type == FT_SOCK) {
-//                    if (node_file_name == "hostname") {
-//                        contents = format("{}\n{}\n", host_device_info.name, host_device_info.device_address);
                     if (node_file_name == "sb_device_info")
                         contents = config_lines[0];
                 } else if (content_type == FT_SYMLINK) {

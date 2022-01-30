@@ -19,7 +19,7 @@ args() {
         builtin_read_fs)
             jq --rawfile args run/args --rawfile pool run/$page '. + {$args} + {$pool}' run/fs;;
         display_help)
-            jq -n --rawfile v run/args --slurpfile v1 vfs/usr/share/builtin_help '{args: $v, help_files: $v1}';;
+            jq -n --rawfile v run/args --slurpfile v1 usr/share/builtin_help '{args: $v, help_files: $v1}';;
         *)
             echo '{}';;
     esac
@@ -73,7 +73,6 @@ filter() {
             esac
             ;;
         read_input)
-#            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/script;
             jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/in_out;
             if [ -s tmp/in_out ]; then
                 case $builtin in

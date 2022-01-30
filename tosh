@@ -8,7 +8,7 @@ case $fn in
         util=$param;;
     run_builtin)
         util=builtin;;
-    execute_command)
+    execute_command|print_errors)
         util=command;;
     command_help)
         util=$param;;
@@ -23,7 +23,10 @@ args() {
         run_builtin)
             jq -n --rawfile args run/args '{$args}';;
         execute_command)
-            jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
+#            jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
+            jq --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool} + .' run/fs;;
+        print_errors)
+            jq '.' tmp/cmd_errors;;
         b_exec)
             jq '{e: .}' run/env >tmp/shell_in;
             jq -s 'add' tmp/shell_in run/fs;;
@@ -39,17 +42,21 @@ args() {
 filter() {
     case $fn in
         get_command_info)
-            cp $1 vfs/usr/share/$util.info;;
+            cp $1 usr/share/$util.info;;
         builtin_help)
-            cp $1 vfs/usr/share/$util.help;;
+            cp $1 usr/share/$util.help;;
         command_help)
-            cp $1 vfs/usr/share/$util.man;;
+            cp $1 usr/share/$util.man;;
         exec)
             jq -rj '.out' $1 >run/stdout;
             jq -rj '.err' $1 >run/stderr;;
         main)
             jq -rj '.out' $1 >run/stdout;
             jq -rj '.err' $1 >run/stderr;;
+        print_errors)
+            jq -rj '.err' $1 >run/stderr;
+            ./flush_std;;
+#            jq -rj '.err' $1;;
         run_builtin)
             b_ex=`jq -r '.res' $1`
             echo "$b_ex" >>var/log/commands

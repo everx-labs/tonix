@@ -30,7 +30,7 @@ contract cd is Shell {
             page = vars.set_var(s_attrs, "WD=" + format("{}", index), page);
             res = page;
         } else
-            ec = ft == FT_UNKNOWN ? ENOENT : ENOTDIR;
+            ec = ft == FT_UNKNOWN ? er.ENOENT : er.ENOTDIR;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

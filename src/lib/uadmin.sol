@@ -35,7 +35,7 @@ library uadmin {
 
         (string[] lines, ) = stdio.split(etc_passwd, "\n");
         for (string line: lines) {
-            (, uint16 user_id, uint16 group_id, ) = parse_passwd_entry_line(line);
+            (, uint16 user_id, uint16 group_id, , ) = parse_passwd_entry_line(line);
             if (user_id >= uid_min)
                 reg_users_counter = user_id + 1;
             else if (user_id >= sys_uid_min)
@@ -69,13 +69,14 @@ library uadmin {
             gid = 10000;
     }
 
-    function parse_passwd_entry_line(string line) internal returns (string name, uint16 uid, uint16 primary_gid, string home_dir) {
+    function parse_passwd_entry_line(string line) internal returns (string name, uint16 uid, uint16 primary_gid, string primary_group, string home_dir) {
         (string[] fields, uint n_fields) = stdio.split(line, ":");
         if (n_fields > 5) {
             name = fields[0];
             uid = str.toi(fields[2]);
             primary_gid = str.toi(fields[3]);
-            home_dir = fields[4];
+            primary_group = fields[4];
+            home_dir = fields[5];
         }
         if (primary_gid == 0 && name != "root")
             primary_gid = 10000;
@@ -113,7 +114,7 @@ library uadmin {
     function user_name_by_id(uint16 uid, string etc_passwd) internal returns (string) {
         (string[] lines, ) = stdio.split(etc_passwd, "\n");
         for (string line: lines) {
-            (string user_name, uint16 id, , ) = parse_passwd_entry_line(line);
+            (string user_name, uint16 id, , , ) = parse_passwd_entry_line(line);
             if (id == uid)
                 return user_name;
         }
@@ -131,7 +132,7 @@ library uadmin {
     function passwd_entry_by_primary_gid(uint16 gid, string etc_passwd) internal returns (string) {
         (string[] lines, ) = stdio.split(etc_passwd, "\n");
         for (string line: lines) {
-            (, , uint16 primary_gid, ) = parse_passwd_entry_line(line);
+            (, , uint16 primary_gid, , ) = parse_passwd_entry_line(line);
             if (primary_gid == gid)
                 return line;
         }
@@ -140,7 +141,7 @@ library uadmin {
     function passwd_entry_by_uid(uint16 uid, string etc_passwd) internal returns (string) {
         (string[] lines, ) = stdio.split(etc_passwd, "\n");
         for (string line: lines) {
-            (, uint16 id, , ) = parse_passwd_entry_line(line);
+            (, uint16 id, , , ) = parse_passwd_entry_line(line);
             if (id == uid)
                 return line;
         }
@@ -149,7 +150,7 @@ library uadmin {
     function passwd_entry_by_name(string name, string etc_passwd) internal returns (string) {
         (string[] lines, ) = stdio.split(etc_passwd, "\n");
         for (string line: lines) {
-            (string u_name, , , ) = parse_passwd_entry_line(line);
+            (string u_name, , , , ) = parse_passwd_entry_line(line);
             if (u_name == name)
                 return line;
         }

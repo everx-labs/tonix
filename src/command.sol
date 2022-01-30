@@ -79,19 +79,40 @@ contract command is Shell {
         exports.append(args);
     }
 
-    function execute_command(string args, string page, string pool) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
+    function _export_env_ext(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string exports) {
+        string s_attrs = "-x";
+        (string[] lines, ) = stdio.split(pool, "\n");
+        for (string line: lines) {
+            (string attrs, ) = str.split(line, " ");
+            if (vars.match_attr_set(s_attrs, attrs))
+                exports.append(line + "\n");
+        }
+        exports.append(args);
+        (string[] params, ) = stdio.split(vars.val("PARAMS", args), " ");
+        uint16 wd = str.toi(vars.val("WD", pool));
+        string f_dirents = _file_stati(params, wd, inodes, data);
+        exports.append("-A [PARAM_INDEX]=" + vars.as_map(f_dirents));
+    }
+
+//    function execute_command(string args, string page, string pool) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
+    function execute_command(string args, string page, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
         string comp_spec = page;
         string cmd = vars.val("COMMAND", args);
         string s_args = vars.val("@", args);
         string fn_name;
 
         (ec, fn_name, cs_res) = _update_hash_table(cmd, comp_spec, pool);
-        exports = _export_env(args, pool);
+//        exports = _export_env(args, pool);
+        exports = _export_env_ext(args, pool, inodes, data);
 
         if (ec == EXECUTE_SUCCESS)
             exec_line = "./command " + fn_name + " " + cmd + " " + s_args;
         else
             exec_line = "echo Error executing command: " + cmd + ", args " + s_args;
+    }
+
+    function print_errors(string cmd, Err[] errors) external pure returns (string err) {
+        return er.print_errors(cmd, errors);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

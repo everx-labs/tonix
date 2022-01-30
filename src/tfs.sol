@@ -1,10 +1,32 @@
 pragma ton-solidity >= 0.56.0;
 
-import "lib/SyncFS.sol";
 import "Utility.sol";
 
 /* Generic block device hosting a generic file system */
-contract tfs is SyncFS, Utility {
+contract tfs is Utility {
+
+    mapping (uint16 => Inode) _inodes;
+    mapping (uint16 => bytes) public _data;
+    uint16 _block_size;
+    uint16 _device_id;
+
+    function get_inodes() external view returns (mapping (uint16 => Inode) inodes) {
+        inodes = _inodes;
+    }
+
+    function init_fs(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external accept {
+        _inodes = inodes;
+        _data = data;
+        _device_id = inodes[sb.SB_INFO].device_id;
+        _block_size = inodes[sb.SB_INFO].n_blocks;
+    }
+
+    function apply_changes(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external accept {
+        for ((uint16 index, Inode inode): inodes)
+            _inodes[index] = inode;
+        for ((uint16 index, bytes bts): data)
+            _data[index] = bts;
+    }
 
     uint16 constant STG_NONE    = 0;
     uint16 constant STG_PRIMARY = 1;
@@ -15,8 +37,8 @@ contract tfs is SyncFS, Utility {
     uint16 constant STG_TMP     = 32;
     uint16 constant STG_RO      = 64;
 
-    function handle_action(Session session, Action file_action, Ar[] ars) external accept {
-        _handle_action(session, file_action, ars);
+    function handle_action(string env, Ar[] ars) external accept {
+        _handle_action(env, ars);
     }
 
     function dump_fs_out(uint16 mode) external view returns (string out) {
@@ -25,9 +47,9 @@ contract tfs is SyncFS, Utility {
         return inode.dumpfs(level, form, _inodes, _data);
     }
 
-    function _handle_action(Session session, Action file_action, Ar[] ars) internal {
-        (, uint16 uid, uint16 gid, , , , , ) = session.unpack();
-        (uint8 at, uint16 n_files) = file_action.unpack();
+    function _handle_action(string env, Ar[] ars) internal {
+        (uint16 uid, uint16 gid) = arg.get_user_data(env);
+        uint16 n_files;
         mapping (uint16 => Inode) inn;
         mapping (uint16 => bytes) data;
         uint16 inode_count = sb.get_inode_count(_inodes);
@@ -36,12 +58,8 @@ contract tfs is SyncFS, Utility {
         uint total_blocks;
 
         uint n_ars = ars.length;
-        if (at == IO_CREATE_ARCHIVE || at == IO_ADD_FILES_TO_ARCHIVE || at == IO_APPEND_ARCHIVE || at == IO_CREATE_FILES || at == IO_UPDATE_NODE ||
-            at == IO_COPY_FILES || at == IO_MOVE_FILES || at == IO_HARDLINK_FILES || at == IO_SYMLINK_FILES || at == IO_UNLINK_FILES ||
-            at == IO_CHANGE_OWNER || at == IO_CHANGE_GROUP || at == IO_CHANGE_MODE || at == UA_ADD_USER || at == UA_ADD_GROUP || at == UA_DELETE_USER ||
-            at == UA_DELETE_GROUP || at == UA_UPDATE_USER || at == UA_UPDATE_GROUP || at == UA_RENAME_GROUP || at == UA_CHANGE_GROUP_ID) {
             for (uint i = 0; i < n_ars; i++) {
-                (uint8 ar_type, , uint16 index, /*uint16 dir_index*/, string path, string text) = ars[i].unpack();
+                (uint8 ar_type, , uint16 index, uint16 count, string path, string text) = ars[i].unpack();
                 if (ar_type == IO_MKFILE) {
                     (inn[counter], data[counter]) = inode.get_any_node(FT_REG_FILE, uid, gid, _device_id, uint16(text.byteLength() / _block_size), path, text);
                     counter++;
@@ -58,7 +76,8 @@ contract tfs is SyncFS, Utility {
                     Inode parent_dir_node = _inodes[index];
                     bytes parent_dir_data = _data[index];
                     parent_dir_node.file_size += text.byteLength();
-                    parent_dir_node.n_links += n_files;
+                    parent_dir_node.n_links += count;
+                    n_files += count;
                     inn[index] = parent_dir_node;
                     parent_dir_data.append(text);
                     data[index] = parent_dir_data;
@@ -106,13 +125,13 @@ contract tfs is SyncFS, Utility {
                     Inode passwd_node = _inodes[index];
                     bytes passwd_data = _data[index];
                     passwd_node.file_size += text.byteLength();
-                    passwd_node.n_links += n_files;
+                    passwd_node.n_links += count;
+                    n_files += count;
                     inn[index] = passwd_node;
                     passwd_data.append(text);
                     data[index] = passwd_data;
                 }
             }
-        }
         inn[SB_INODES] = sb.claim_inodes_and_blocks(_inodes[SB_INODES], n_files, uint16(total_blocks));
 
         for ((uint16 index, Inode inode): inn)
@@ -148,12 +167,11 @@ contract tfs is SyncFS, Utility {
             _data[index] = bts;
     }
 
-    function write_to_file(Session session, string path, string text) external accept {
-        (uint16 uid, uint16 gid, ) = (session.uid, session.gid, session.wd);
+    function write_to_file(string env, string path, string text) external accept {
+        (uint16 uid, uint16 gid) = arg.get_user_data(env);
         uint16 counter = sb.get_inode_count(_inodes);
 
         (_inodes[counter], _data[counter]) = inode.get_any_node(FT_REG_FILE, uid, gid, _device_id, uint16(text.byteLength() / _block_size), path, text);
-//        _append_dir_entry(wd, counter, path, FT_REG_FILE);
     }
 
     function remove_node(uint16 parent, uint16 victim) external accept {

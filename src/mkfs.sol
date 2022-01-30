@@ -48,8 +48,8 @@ contract mkfs is Utility {
         (string[] fields, uint n_fields) = stdio.split_line(line, ":", "\n");
         if (n_fields > 3) {
             name = fields[0];
-            node_type = dirent.file_type(fields[1]);
-            content_type = dirent.file_type(fields[2]);
+            node_type = inode.file_type(fields[1]);
+            content_type = inode.file_type(fields[2]);
             content = fields[3];
         }
     }

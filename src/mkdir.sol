@@ -4,7 +4,7 @@ import "Utility.sol";
 
 contract mkdir is Utility {
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
@@ -15,11 +15,7 @@ contract mkdir is Utility {
         bool error_if_exists = !arg.flag_set("p", flags);
         bool report_actions = arg.flag_set("v", flags);
 
-        uint8 action_type = IO_CREATE_FILES;
         uint8 action_item_type = IO_MKDIR;
-
-        uint n = arg_list.length;
-        file_action = Action(action_type, uint16(n));
         mapping (uint16 => string[]) parent_dirs;
 
         for (Arg ag: arg_list) {
@@ -35,7 +31,7 @@ contract mkdir is Utility {
                     out.append("mkdir: created directory" + str.quote(file_name) + "\n");
             } else {
                 if (error_if_exists)
-                    errors.push(Err(0, EEXIST, file_name));
+                    errors.push(Err(0, er.EEXIST, file_name));
             }
         }
         for ((uint16 dir_i, string[] added_dirents): parent_dirs) {

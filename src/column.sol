@@ -4,36 +4,38 @@ import "Utility.sol";
 
 contract column is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        ec = EXECUTE_SUCCESS;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
         err = "";
-        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
-        string[] params;
-        for (string s_arg: v_args) {
-            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
-            if (ft != FT_UNKNOWN)
-                out.append(_column(flags, fs.get_file_contents(index, inodes, data), params) + "\n");
-            else
-                params.push(s_arg);
+        (, , string flags, string pi) = arg.get_env(argv);
+        (bool use_delimiter, bool use_width, , , , , , ) = arg.flag_values("sc", flags);
+        uint16 width = use_width ? str.toi(arg.opt_arg_value("c", argv)) : 140;
+        string delimiter = use_delimiter ? arg.opt_arg_value("s", argv) : " ";
+
+        DirEntry[] contents = dirent.parse_param_index(pi);
+        for (DirEntry de: contents) {
+            (uint8 ft, string name, uint16 index) = de.unpack();
+            if (ft != FT_UNKNOWN) {
+                string text = fs.get_file_contents(index, inodes, data);
+                out.append(_print(text, flags, width, delimiter));
+            } else
+                errors.push(Err(0, er.ENOENT, name));
         }
+        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
-    function _column(string flags, string texts, string[] params) private pure returns (string out) {
-        (string[] text, ) = stdio.split(texts, "\n");
-        bool ignore_empty_lines = !arg.flag_set("e", flags);
-        bool create_table = arg.flag_set("t", flags);
-        bool use_delimiter = arg.flag_set("s", flags);
+    function _print(string text, string flags, uint16 width, string delimiter) internal pure returns (string out) {
+        (bool dont_ignore_empty_lines, bool create_table, , , , , , ) = arg.flag_values("et", flags);
+        (string[] lines, ) = stdio.split(text, "\n");
 
-        string delimiter = use_delimiter && !params.empty() ? params[0] : " ";
         string[][] table;
 
-        (, , , uint max_width, uint max_words_per_line) = stdio.line_and_word_count(text);
-        uint max_columns = create_table ? max_words_per_line : (140 / max_width + 1);
+        (, , , uint max_width, uint max_words_per_line) = stdio.line_and_word_count(lines);
+        uint max_columns = create_table ? max_words_per_line : (width / max_width + 1);
         string[] cur_line;
         uint cur_columns;
 
-        for (string s: text) {
-            if (s.empty() && !ignore_empty_lines)
+        for (string s: lines) {
+            if (s.empty() && !dont_ignore_empty_lines)
                 continue;
             if (create_table) {
                 (cur_line, cur_columns) = stdio.split(s, " ");
@@ -60,6 +62,7 @@ contract column is Utility {
 "columnate lists",
 "The column utility formats its input into multiple columns. Rows are filled before columns. Input is taken from file operands, or, by default, from the standard input. Empty lines are ignored unless the -e option is used.",
 "-t      determine the number of columns the input contains and create a table. Columns are delimited with whitespace by default\n\
+-c      output is formatted for a display columns wide\n\
 -x      fill columns before filling rows\n\
 -n      disables merging multiple adjacent delimiters into a single delimiter when using the -t option\n\
 -e      do not ignore empty lines",

@@ -135,12 +135,4 @@ matching PATTERN, otherwise the list of help topics is printed.",
 "Returns success unless PATTERN is not found or an invalid option is given.");
     }
 
-    function _command_info() internal pure returns (string command, string purpose, string synopsis, string description, string option_list, uint8 min_args, uint16 max_args, string[] option_descriptions) {
-        return ("help", "display information about builtin commands", "[-dms]",
-            "Displays brief summaries of builtin commands.",
-            "dms", 0, M, [
-            "output short description for each topic",
-            "display usage in pseudo-manpage format",
-            "output only a short usage synopsis for each topic"]);
-    }
 }

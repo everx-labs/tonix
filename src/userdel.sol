@@ -4,7 +4,7 @@ import "Utility.sol";
 
 contract userdel is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
 
         uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
@@ -46,7 +46,6 @@ contract userdel is Utility {
                 string text = format("{}\t{}\n", victim_user_name, victim_group_id);
                 ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", stdio.translate(etc_group, text, "")));
             }
-            file_action = Action(UA_DELETE_USER, 1);
         } else
             ec = EXECUTE_FAILURE;
         out = "";

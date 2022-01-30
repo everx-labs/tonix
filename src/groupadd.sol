@@ -4,7 +4,7 @@ import "Utility.sol";
 
 contract groupadd is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Action file_action, Ar[] ars, Err[] errors) {
+    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
         (, , string flags, ) = arg.get_env(args);
         out = "";
         (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
@@ -47,7 +47,6 @@ contract groupadd is Utility {
                 ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, etc_dir, 1, "", dirent.dir_entry_line(ic, "group", FT_REG_FILE)));
             } else
                 ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, group_index, group_dir_idx, "group", etc_group + text));
-            file_action = Action(UA_ADD_GROUP, 1);
         }
         ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }

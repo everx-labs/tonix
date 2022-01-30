@@ -4,7 +4,7 @@ import "Utility.sol";
 
 contract touch is Utility {
 
-  function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Action file_action, Ar[] ars, Err[] errors) {
+  function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] /*errors*/) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
         Arg[] arg_list;
         for (string s_arg: params) {
@@ -15,8 +15,6 @@ contract touch is Utility {
         bool create_files = !arg.flag_set("c", flags);
         bool update_if_exists = !arg.flag_set("m", flags);
 
-        uint n = arg_list.length;
-        file_action = Action(IO_CREATE_FILES, uint16(n));
         mapping (uint16 => string[]) parent_dirs;
 
         for (Arg a: arg_list) {
@@ -37,6 +35,7 @@ contract touch is Utility {
             if (n_dirents > 0)
                 ars.push(Ar(IO_ADD_DIR_ENTRY, FT_DIR, dir_i, n_dirents, "", stdio.join_fields(added_dirents, "\n")));
         }
+        out = "";
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -34,7 +34,7 @@ contract lsblk is Utility {
         if (print_header)
             table = [header];
 
-        if (args.empty()) {
+        if (params.empty()) {
             (DirEntry[] contents, int16 status) = dirent.read_dir(inodes[dev_dir], data[dev_dir]);
             if (status < 0) {
                 out.append(format("Error: {} \n", status));
@@ -44,17 +44,17 @@ contract lsblk is Utility {
             for (uint16 j = 0; j < len; j++) {
                 (uint8 ft, string name, ) = contents[j].unpack();
                 if (ft == FT_BLKDEV || ft == FT_CHRDEV)
-                    args.push(name);
+                    params.push(name);
             }
         }
         (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size, , , , , , , , ) = sb.get_sb(inodes, data).unpack();
 
-        for (string s: args) {
-            (uint16 dev_file_index, uint8 dev_file_ft) = _fetch_dir_entry(s, dev_dir, inodes, data);
+        for (string s: params) {
+            (uint16 dev_file_index, uint8 dev_file_ft) = fs.fetch_dir_entry(s, dev_dir, inodes, data);
             if (dev_file_ft == FT_BLKDEV || dev_file_ft == FT_CHRDEV) {
                 (uint16 mode, uint16 owner_id, uint16 group_id, , , , , , , ) = inodes[dev_file_index].unpack();
                 (string[] lines, ) = stdio.split(data[dev_file_index], "\n");
-                string[] fields0 = stdio.get_tsv(lines[0]);
+                string[] fields0 = fmt.get_tsv(lines[0]);
                 if (fields0.length < 4)
                     continue;
                 string name = (full_path ? "/dev/" : "") + fields0[2];
@@ -76,7 +76,8 @@ contract lsblk is Utility {
                     s_group,
                     inode.permissions(mode)]);
             } else
-                errors.push(Err(not_a_block_device, 0, s));
+//                errors.push(Err(er.not_a_block_device, 0, s));
+                err.append(s + ": not a block device\n");
         }
         out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }

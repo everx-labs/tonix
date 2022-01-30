@@ -30,12 +30,10 @@ contract namei is Utility {
             string part = parts[i - 1];
             (uint16 ino, uint8 ft) = fs.lookup_dir(inodes[cur_dir], data[cur_dir], part);
             (uint16 mode, uint16 owner_id, uint16 group_id, , , , , , , ) = inodes[ino].unpack();
-//            string s_owner = _get_user_name(owner_id, inodes, data);
-//            string s_group = _get_group_name(group_id, inodes, data);
             string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
             string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
 
-            out.append(" " + (modes ? inode.permissions(mode) : dirent.file_type_sign(ft)) + " " + (owners ? s_owner + " "  + s_group + " " : "") + part + "\n");
+            out.append(" " + (modes ? inode.permissions(mode) : inode.file_type_sign(ft)) + " " + (owners ? s_owner + " "  + s_group + " " : "") + part + "\n");
             cur_dir = ino;
         }
     }
