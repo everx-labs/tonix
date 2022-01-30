@@ -6,8 +6,8 @@ import "lib/inode.sol";
 contract test is Shell {
 
     function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-        (string[] params, , ) = arg.get_args(args);
-        string page = pool;
+//        (string[] params, , ) = arg.get_args(args);
+//        string page = pool;
         string s_args = vars.val("@", args);
         string dbg;
         (string arg_1, string op, string arg_2) = _parse_test_args(s_args);
@@ -69,7 +69,7 @@ contract test is Shell {
     }
 
     function _eval_file_unary(string op, string path, string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
-        uint16 wd_index = str.toi(vars.val("WD", pool));
+        uint16 wd_index = vars.int_val("WD", pool);
 //        (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, ROOT_DIR, inodes, data);
         (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, wd_index, inodes, data);
 //        string cached_wd = vars.val("PWD", pool);
@@ -87,8 +87,8 @@ contract test is Shell {
                 return _match_mode(op, mode);
 
             if (str.chr("rwxOG", op) > 0) {
-                uint16 uid = str.toi(vars.val("UID", pool));
-                uint16 gid = str.toi(vars.val("GID", pool));
+                uint16 uid = vars.int_val("UID", pool);
+                uint16 gid = vars.int_val("GID", pool);
                 return _can_access(op, mode, owner_id, group_id, uid, gid);
             }
         return false;

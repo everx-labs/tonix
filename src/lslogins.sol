@@ -7,12 +7,11 @@ contract lslogins is Utility {
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
         ( , string[] params, string flags, ) = arg.get_env(argv);
-        ec = EXECUTE_SUCCESS;
         (bool flag_system, bool flag_user, bool colon, bool newline, bool raw, bool nulll, , ) = arg.flag_values("sucnrz", flags);
         bool print_system = flag_system || !flag_user;
         bool print_user = !flag_system || flag_user;
         string field_separator;
-        uint16 uid = str.toi(vars.val("UID", argv));
+        uint16 uid = vars.int_val("UID", argv);
         (string etc_passwd, ) = fs.get_passwd_group(inodes, data);
 
         if (colon)
@@ -52,7 +51,6 @@ contract lslogins is Utility {
                         ["Home directory:", home_dir],
                         ["Primary group:", group_name],
                         ["GID:", str.toa(t_gid)]];
-//                    break;
                 }
         }
         out = fmt.format_table_ext(columns_format, table, field_separator, "\n");

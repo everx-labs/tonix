@@ -1,4 +1,4 @@
-#set -x
+set -x
 fn=$1
 shift
 param=$1

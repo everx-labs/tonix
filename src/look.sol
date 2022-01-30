@@ -4,33 +4,34 @@ import "Utility.sol";
 
 contract look is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
         ec = EXECUTE_SUCCESS;
         err = "";
-        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
-        string[] params;
-        for (string s_arg: v_args) {
-            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
-            if (ft != FT_UNKNOWN)
-                out.append(_look(flags, fs.get_file_contents(index, inodes, data), params) + "\n");
-            else
-                params.push(s_arg);
+        (, string[] params, string flags, string pi) = arg.get_env(argv);
+        bool use_term_char = arg.flag_set("t", flags);
+        string term_char = use_term_char ? arg.opt_arg_value("t", argv) : "\n";
+        string pattern = !params.empty() ? params[0] : "";
+
+        DirEntry[] contents = dirent.parse_param_index(pi);
+        for (DirEntry de: contents) {
+            (uint8 ft, string name, uint16 index) = de.unpack();
+            if (ft != FT_UNKNOWN) {
+                string text = fs.get_file_contents(index, inodes, data);
+                (string[] lines, ) = stdio.split(text, "\n");
+                out.append(_print(lines, flags, term_char, pattern));
+            } else
+                errors.push(Err(0, er.ENOENT, name));
         }
+        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
-    function _look(string flags, string texts, string[] params) private pure returns (string out) {
-        (string[] text, ) = stdio.split(texts, "\n");
-        bool use_term_char = arg.flag_set("t", flags);
-
-        string pattern = !params.empty() ? params[0] : "";
-        string term_char = use_term_char && params.length > 1 ? params[1] : "\n";
-
+    function _print(string[] lines, string flags, string term_char, string pattern) private pure returns (string out) {
         uint p = str.chr(pattern, term_char);
         if (p > 0)
             pattern = pattern.substr(0, p - 1);
 
         uint pattern_len = pattern.byteLength();
-        for (string line: text) {
+        for (string line: lines) {
             uint line_len = line.byteLength();
             if (line_len >= pattern_len)
                 if (line.substr(0, pattern_len) == pattern)

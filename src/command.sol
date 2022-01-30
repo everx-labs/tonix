@@ -62,7 +62,7 @@ contract command is Shell {
                 ec = EXECUTE_FAILURE;
         } else {
             (, fn_name, ) = vars.split_var_record(fn_map);
-            uint16 hc = str.toi(vars.val(cmd, fn_map));
+            uint16 hc = vars.int_val(cmd, fn_map);
             string upd = vars.set_item_value(cmd, str.toa(hc + 1), fn_map);
             cs_res = stdio.translate(comp_spec, fn_map, upd);
         }
@@ -89,12 +89,11 @@ contract command is Shell {
         }
         exports.append(args);
         (string[] params, ) = stdio.split(vars.val("PARAMS", args), " ");
-        uint16 wd = str.toi(vars.val("WD", pool));
+        uint16 wd = vars.int_val("WD", pool);
         string f_dirents = _file_stati(params, wd, inodes, data);
         exports.append("-A [PARAM_INDEX]=" + vars.as_map(f_dirents));
     }
 
-//    function execute_command(string args, string page, string pool) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
     function execute_command(string args, string page, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string exec_line, string exports, string cs_res) {
         string comp_spec = page;
         string cmd = vars.val("COMMAND", args);
@@ -102,7 +101,6 @@ contract command is Shell {
         string fn_name;
 
         (ec, fn_name, cs_res) = _update_hash_table(cmd, comp_spec, pool);
-//        exports = _export_env(args, pool);
         exports = _export_env_ext(args, pool, inodes, data);
 
         if (ec == EXECUTE_SUCCESS)

@@ -4,19 +4,21 @@ import "Utility.sol";
 
 contract ls is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, string cwd) = arg.get_env(argv);
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string /*err*/, Err[] errors) {
+        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
         if (params.empty())
-            params.push(cwd);
+            params.push(vars.val("PWD", argv));
+        mapping (uint16 => string) users;
+        mapping (uint16 => string) groups;
+
         for (string s_arg: params) {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
                 out.append(_ls(flags, Arg(s_arg, ft, index, parent, dir_index), inodes, data) + "\n");
-            else {
-                err.append("ls: failed to resolve relative path for " + s_arg + "\n");
-                ec = EXECUTE_FAILURE;
-            }
+            else
+                errors.push(Err(0, er.ENOENT, s_arg));
         }
+        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _ls_sort_rating(string f, Inode inode, string name, uint16 dir_idx) private pure returns (uint rating) {
@@ -35,9 +37,9 @@ contract ls is Utility {
     }
 
     function _ls_populate_line(string f, Inode ino, uint16 index, string name, uint8 file_type, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[] l) {
-        bool double_quotes = arg.flag_set("Q", f) && !arg.flag_set("N", f);
-        bool append_slash_to_dirs = arg.flag_set("p", f) || arg.flag_set("F", f);
-        bool use_ctime = arg.flag_set("c", f);
+        (bool use_double_quotes, bool no_double_quotes, bool slash_to_dirs, bool classify, bool use_ctime, , , ) = arg.flag_values("QNpFc", f);
+        bool double_quotes = use_double_quotes && !no_double_quotes;
+        bool append_slash_to_dirs = slash_to_dirs || classify;
 
         (bool long_fmt, bool numeric, bool group_only, bool owner_only, bool print_allocated_size, bool print_index_node, bool no_group_names,
             bool human_readable) = arg.flag_values("lngosiGh", f);
@@ -153,9 +155,8 @@ contract ls is Utility {
 
     /* Decides whether ls should skip this entry with the set of flags */
     function _ls_should_skip(string f, string name) private pure returns (bool) {
-        bool print_dot_starters = arg.flag_set("a", f) || arg.flag_set("f", f);
-        bool skip_dot_dots = arg.flag_set("A", f);
-        bool ignore_blackups = arg.flag_set("B", f);
+        (bool notice_dot_starters, bool classify, bool skip_dot_dots, bool ignore_blackups, , , , ) = arg.flag_values("afAB", f);
+      bool print_dot_starters = notice_dot_starters || classify;
 
         uint len = name.byteLength();
         if (len == 0 || (skip_dot_dots && (name == "." || name == "..")))

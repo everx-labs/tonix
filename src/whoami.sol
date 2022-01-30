@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.55.0;
+pragma ton-solidity >= 0.56.0;
 
 import "Utility.sol";
 
@@ -7,7 +7,7 @@ contract whoami is Utility {
     function main(string argv) external pure returns (uint8 ec, string out, string err) {
         (string[] params, , ) = arg.get_args(argv);
         ec = params.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
-        out = vars.val("USER", argv);
+        out = vars.val("USER", argv) + "\n";
         err = "";
     }
 

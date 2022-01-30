@@ -47,6 +47,10 @@ library vars {
         return fetch_value(key, W_DQUOTE, page);
     }
 
+    function int_val(string key, string page) internal returns (uint16) {
+        return str.toi(fetch_value(key, W_DQUOTE, page));
+    }
+
     function function_body(string key, string page) internal returns (string value) {
         return fetch_value(key, W_BRACE, page);
     }
