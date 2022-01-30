@@ -24,7 +24,8 @@ args() {
             jq -n --rawfile args run/args '{$args}';;
         execute_command)
 #            jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
-            jq --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool} + .' run/fs;;
+#            jq --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool} + .' run/fs;;
+            jq --rawfile args run/args --rawfile comp_spec run/comp_spec --rawfile varss run/vars --rawfile users run/users --rawfile groups run/groups --rawfile pool run/pool '{$args, $comp_spec, $varss, $users, $groups, $pool} + .' run/fs;;
         print_errors)
             jq '.' tmp/cmd_errors;;
         b_exec)

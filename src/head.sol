@@ -4,49 +4,40 @@ import "Utility.sol";
 
 contract head is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
-        string[] params;
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
+        (, , string flags, string pi) = arg.get_env(argv);
+        (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = arg.flag_values("cnqvz", flags);
+        uint16 num_bytes = use_num_bytes ? str.toi(arg.opt_arg_value("c", argv)) : 0;
+        uint16 num_lines = use_num_bytes ? 0 : use_num_lines ? str.toi(arg.opt_arg_value("n", argv)) : 10;
+        string line_delimiter = null_delimiter ? "\x00" : "\n";
 
-        for (string s_arg: v_args) {
-            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
+        DirEntry[] contents = dirent.parse_param_index(pi);
+        bool print_headers = always_headers || !never_headers && contents.length > 1;
+        for (DirEntry de: contents) {
+            (uint8 ft, string name, uint16 index) = de.unpack();
             if (ft != FT_UNKNOWN) {
-                (string s_out, string s_err) = _head(flags, fs.get_file_contents(index, inodes, data), s_arg, params);
-                if (s_err.empty())
-                    out.append(s_out + "\n");
-                else {
-                    err.append(s_err + "\n");
-                    ec = EXECUTE_FAILURE;
-                }
+                string text = fs.get_file_contents(index, inodes, data);
+                out.append(_print(text, print_headers ? name : "", num_lines, num_bytes, line_delimiter));
             } else
-                params.push(s_arg);
+                errors.push(Err(0, er.ENOENT, name));
         }
+        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+        err = "";
     }
 
-    function _head(string flags, string texts, string s_arg, string[] params) private pure returns (string out, string err) {
-        (string[] text, ) = stdio.split(texts, "\n");
-        bool num_lines = arg.flag_set("n", flags);
-        bool never_headers = arg.flag_set("q", flags);
-        bool always_headers = arg.flag_set("v", flags);
-        string line_delimiter = arg.flag_set("z", flags) ? "\x00" : "\n";
-        uint len = text.length;
-        string file_name = s_arg;
-        uint n_lines = 10;
-        uint n_params = params.length;
-
-        if (num_lines && n_params > 0) {
-            n_lines = str.toi(params[0]);
-            if (n_lines < 1)
-                return (out, "error");
-        }
-        if (n_lines > len)
-            n_lines = len;
-
-        if (!file_name.empty() && (always_headers || !never_headers))
+    function _print(string text, string file_name, uint16 num_lines, uint16 num_bytes, string line_delimiter) private pure returns (string out) {
+        if (!file_name.empty())
              out = "==> " + file_name + " <==\n";
-
-        for (uint i = 0; i < n_lines; i++)
-            out.append(text[i] + line_delimiter);
+        if (num_lines > 0) {
+            (string[] lines, uint n_lines) = stdio.split(text, "\n");
+            uint len = math.min(n_lines, num_lines);
+            for (uint i = 0; i < len; i++)
+                out.append(lines[i] + line_delimiter);
+        } else if (num_bytes > 0) {
+            uint len = math.min(text.byteLength(), num_bytes);
+            out = len < num_bytes ? text.substr(0, len) : text;
+            return line_delimiter == "\x00" ? stdio.translate(out, "\n", "\x00") : out;
+        }
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -55,14 +46,15 @@ contract head is Utility {
 "[OPTION]... [FILE]...",
 "output the first part of files",
 "Print the first 10 lines of each FILE to standard output. With more than one FILE, precede each with a header giving the file name.",
-"-n      print the first NUM lines instead of the first 10;  with the leading '-', print all but the last  NUM lines of each file\n\
+"-c     print the first NUM bytes of each file; with the leading '-', print all but the last NUM bytes of each file\n\
+-n      print the first NUM lines instead of the first 10;  with the leading '-', print all but the last  NUM lines of each file\n\
 -q      never print headers giving file names\n\
 -v      always print headers giving file names\n\
 -z      line delimiter is NUL, not newline",
 "",
 "Written by Boris",
-"",
-"",
+"negative argument values are not yet implemented",
+"tail",
 "0.01");
     }
 

@@ -49,6 +49,8 @@ contract lsblk is Utility {
         }
         (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size, , , , , , , , ) = sb.get_sb(inodes, data).unpack();
 
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
+
         for (string s: params) {
             (uint16 dev_file_index, uint8 dev_file_ft) = fs.fetch_dir_entry(s, dev_dir, inodes, data);
             if (dev_file_ft == FT_BLKDEV || dev_file_ft == FT_CHRDEV) {
@@ -59,8 +61,8 @@ contract lsblk is Utility {
                     continue;
                 string name = (full_path ? "/dev/" : "") + fields0[2];
                 string mount_path = dev_file_ft == FT_BLKDEV ? ROOT : "";
-                string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
-                string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
+                string s_owner = user[owner_id];
+                string s_group = group[group_id];
 
                 table.push([
                     name,

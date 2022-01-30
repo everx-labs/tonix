@@ -11,8 +11,8 @@ contract ps is Utility {
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
             , bool users_logged_in) = arg.flag_values("bHlqsTwu", flags);
         mapping (uint16 => Login) utmp;
-//        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
-        (string etc_passwd, ) = fs.get_passwd_group(inodes, data);
+
+        (mapping (uint16 => string) user, ) = arg.get_users_groups(argv);
 
         if (all_logged_on) {
             uint count;
@@ -20,10 +20,7 @@ contract ps is Utility {
                 uint16 user_id = l.user_id;
                 if (system_login_proc && user_id > uadmin.login_def_value(uadmin.SYS_UID_MAX))
                     continue;
-                string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
-                string ui_user_name;
-                if (!line.empty())
-                    (ui_user_name, , , , ) = uadmin.parse_passwd_entry_line(line);
+                string ui_user_name = user[user_id];
                 out.append(ui_user_name + "\t");
                 count++;
             }
@@ -47,10 +44,7 @@ contract ps is Utility {
             (uint16 user_id, uint16 tty_id, uint16 process_id, uint32 login_time) = l.unpack();
             if (system_login_proc && user_id > uadmin.login_def_value(uadmin.SYS_UID_MAX))
                 continue;
-            string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
-            string ui_user_name;
-            if (!line.empty())
-                (ui_user_name, , , , ) = uadmin.parse_passwd_entry_line(line);
+            string ui_user_name = user[user_id];
             table.push([ui_user_name, "+", str.toa(tty_id), fmt.ts(login_time), str.toa(process_id)]);
         }
 

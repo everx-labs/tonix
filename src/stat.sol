@@ -13,6 +13,7 @@ contract stat is Utility {
 Blocks: Total: %b\tFree: %f\tAvailable: %a\nInodes: Total: %c\tFree: %d\n" :
 "   File: %n\n   Size: %s\t\tBlocks: %b\tIO Block: %o\t%F\nDevice: %Dh/%dd\tInode: %i\tLinks: %h\tDevice type: %t,%T\n\
 Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n";
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
 
         for (string name: params) {
             uint16 index;
@@ -27,15 +28,13 @@ Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n
                 Inode ino = inodes[index];
                 uint16 blk_size = sb.get_block_size(inodes);
                 (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
-                string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
-                string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
+                string s_owner = user[owner_id];
+                string s_group = group[group_id];
+
                 (string major, string minor) = ft == FT_BLKDEV || ft == FT_CHRDEV  ? inode.get_device_version(device_id) : ("0", "0");
 
                 if (fs_info) {
                     (, , string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, , , , , , ,, ,) = sb.get_sb(inodes, data).unpack();
-                    /*out.append(terse ? format("{} {:x} {} {} {} {} {} {} {} {} {}\n", name, index, 32, file_system_OS_type, block_size, block_size, block_count + free_blocks, free_blocks, free_blocks, inode_count + free_inodes, free_inodes) :
-                        format("  File: \"{}\"\n    ID: {:x} Namelen: {}\tType: {}\nBlock size: {}\tFundamental block size: {}\nBlocks: Total: {}\tFree: {}\tAvailable: {}\nInodes: Total: {}\tFree: {}\n",
-                            name, index, 20, file_system_OS_type, block_size, block_size, block_count + free_blocks, free_blocks, free_blocks, inode_count + free_inodes, free_inodes));*/
                     string s = sf;
                     s = stdio.translate(s, "%a", str.toa(free_blocks));
                     s = stdio.translate(s, "%b", str.toa(block_count + free_blocks));
@@ -51,19 +50,6 @@ Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n
                     s = stdio.translate(s, "%T", file_system_OS_type);
                     out.append(s + "\n");
                 } else {
-                    /*if (terse) {
-                        out.append(format("{} {} {} {:x} {} {} {:x} {} {} {} {} {} {} {} {}\n",
-                            name, file_size, n_blocks, mode, owner_id, group_id, device_id, index, n_links, major, minor, modified_at, last_modified, 0, blk_size));
-                    } else {
-                        out.append(format("   File: {}\n   Size: {}\t\tBlocks: {}\tIO Block: {}\t", name, file_size, n_blocks, blk_size));
-                        out.append(ft == FT_REG_FILE && file_size == 0 ? "regular empty" : inode.file_type_description(mode));
-                        out = str.aif(out, ft == FT_REG_FILE || ft == FT_BLKDEV || ft == FT_CHRDEV, " file");
-                        out.append(format("\nDevice: {:x}h/{}d\tInode: {}\tLinks: {}", device_id, device_id, index, n_links));
-                        if (ft == FT_BLKDEV || ft == FT_CHRDEV)
-                            out.append(format("\tDevice type: {},{}\n", major, minor));
-                        out.append(format("\nAccess: ({}/{})  Uid: ({}/{})  Gid: ({}/{})\nModify: {}\nChange: {}\n Birth: -\n",
-                            mode & 0x01FF, inode.permissions(mode), owner_id, s_owner, group_id, s_group, fmt.ts(modified_at), fmt.ts(last_modified)));
-                    }*/
                     if (ft == FT_SYMLINK) {
                         (, string target, ) = dirent.get_symlink_target(ino, data[index]).unpack();
                         name.append(" -> " + target);

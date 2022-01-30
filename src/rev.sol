@@ -20,21 +20,7 @@ contract rev is Utility {
         err = "";
     }
 
-        /*(uint16 wd, string[] v_args, , ) = arg.get_env(argv);
-
-        for (string s_arg: v_args) {
-            (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
-            if (ft != FT_UNKNOWN)
-                out.append(_rev(fs.get_file_contents(index, inodes, data)) + "\n");
-            else {
-                err.append("Failed to resolve relative path for" + s_arg + "\n");
-                ec = EXECUTE_FAILURE;
-            }
-        }
-    }*/
-
     function _print(string[] lines) private pure returns (string out) {
-//        (string[] text, ) = stdio.split(texts, "\n");
         for (string line: lines) {
             uint line_len = line.byteLength();
             for (uint i = line_len; i > 0; i--)
@@ -52,8 +38,8 @@ contract rev is Utility {
 "",
 "",
 "Written by Boris",
-"",
-"",
+"reading from standard input is not yet implemented",
+"tac",
 "0.01");
     }
 }

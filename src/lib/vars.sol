@@ -36,6 +36,7 @@ library vars {
     uint16 constant W_ARRAY     = 9;
     uint16 constant W_HASHMAP   = 10;
     uint16 constant W_FUNCTION  = 11;
+    uint16 constant W_ATTR_HASHMAP   = 12;
 
     function fetch_value(string key, uint16 delimiter, string page) internal returns (string value) {
         string key_pattern = wrap(key, W_SQUARE);
@@ -157,6 +158,10 @@ library vars {
         res = wrap(key, W_SQUARE) + "=" + wrap(value, W_DQUOTE);
     }
 
+    function as_attributed_hashmap(string name, string value) internal returns (string res) {
+        res = "-A " + wrap(name, W_SQUARE) + "=" + wrap(value, W_ATTR_HASHMAP);
+    }
+
     function as_map(string value) internal returns (string res) {
         res = wrap(value, W_HASHMAP);
     }
@@ -242,6 +247,8 @@ library vars {
             return ("( ", " )");
         else if (to == W_HASHMAP)
             return ("( ", " )");
+        else if (to == W_ATTR_HASHMAP)
+            return ("(\n", " )\n");
         else if (to == W_FUNCTION)
             return ("", "\n");
     }
@@ -267,6 +274,8 @@ library vars {
             return "( " + s + ")";
         else if (to == W_HASHMAP)
             return "( " + s + ")";
+        else if (to == W_ATTR_HASHMAP)
+            return "(\n" + s + " )\n";
         else if (to == W_FUNCTION)
             return "\n{\n" + s + "}\n";
     }

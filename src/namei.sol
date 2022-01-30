@@ -4,21 +4,22 @@ import "Utility.sol";
 
 contract namei is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
 
         for (string s_arg: params) {
             (, uint8 ft, uint16 parent, ) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
-                out.append(_namei(flags, s_arg, parent, inodes, data) + "\n");
-            else {
-                err.append("Failed to resolve relative path for" + s_arg + "\n");
-                ec = EXECUTE_FAILURE;
-            }
+                out.append(_namei(flags, s_arg, parent, inodes, data, user, group) + "\n");
+            else
+                errors.push(Err(0, er.ENOENT, s_arg));
         }
+        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+        err = "";
     }
 
-    function _namei(string f, string s_path, uint16 parent, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
+    function _namei(string f, string s_path, uint16 parent, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => string) user, mapping (uint16 => string) group) internal pure returns (string out) {
         bool modes = arg.flag_set("m", f) || arg.flag_set("l", f);
         bool owners = arg.flag_set("o", f) || arg.flag_set("l", f);
 
@@ -26,13 +27,13 @@ contract namei is Utility {
         string[] parts = path.disassemble_path(s_path);
         uint len = parts.length;
         uint16 cur_dir = parent;
+
         for (uint i = len; i > 0; i--) {
             string part = parts[i - 1];
             (uint16 ino, uint8 ft) = fs.lookup_dir(inodes[cur_dir], data[cur_dir], part);
             (uint16 mode, uint16 owner_id, uint16 group_id, , , , , , , ) = inodes[ino].unpack();
-            string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
-            string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
-
+            string s_owner = user[owner_id];
+            string s_group = group[group_id];
             out.append(" " + (modes ? inode.permissions(mode) : inode.file_type_sign(ft)) + " " + (owners ? s_owner + " "  + s_group + " " : "") + part + "\n");
             cur_dir = ino;
         }

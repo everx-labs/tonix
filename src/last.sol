@@ -14,9 +14,9 @@ contract last is Utility {
         ec = EXECUTE_SUCCESS;
 //        (bool host_names, bool translate_address, bool full_dates, bool numeric_addresses, bool numeric_addresses, bool numeric_addresses,
 //            bool shutdown_entries, ) = arg.flag_values("adFiRwx", flags);
+        (mapping (uint16 => string) user, ) = arg.get_users_groups(argv);
+
         bool shutdown_entries = arg.flag_set("x", flags);
-//        string etc_passwd = fs.get_file_contents_at_path("/etc/passwd", inodes, data);
-        (string etc_passwd, ) = fs.get_passwd_group(inodes, data);
 
         uint16 var_log_dir = fs.resolve_absolute_path("/var/log", inodes, data);
         (uint16 wtmp_index, uint8 wtmp_file_type) = fs.lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
@@ -37,11 +37,7 @@ contract last is Utility {
 
         for (LoginEvent le: wtmp) {
             (uint8 letype, uint16 user_id, uint16 tty_id, , uint32 timestamp) = le.unpack();
-            string line = uadmin.passwd_entry_by_uid(user_id, etc_passwd);
-            string ui_user_name;
-            if (!line.empty())
-                (ui_user_name, , , , ) = uadmin.parse_passwd_entry_line(line);
-
+            string ui_user_name = user[user_id];
             if (letype == AE_LOGIN)
                 log_ts[tty_id] = timestamp;
             if (letype == AE_LOGOUT) {

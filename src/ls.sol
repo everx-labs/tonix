@@ -8,13 +8,12 @@ contract ls is Utility {
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
         if (params.empty())
             params.push(vars.val("PWD", argv));
-        mapping (uint16 => string) users;
-        mapping (uint16 => string) groups;
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
 
         for (string s_arg: params) {
             (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_arg, wd, inodes, data);
             if (ft != FT_UNKNOWN)
-                out.append(_ls(flags, Arg(s_arg, ft, index, parent, dir_index), inodes, data) + "\n");
+                out.append(_ls(flags, Arg(s_arg, ft, index, parent, dir_index), inodes, data, user, group) + "\n");
             else
                 errors.push(Err(0, er.ENOENT, s_arg));
         }
@@ -36,7 +35,7 @@ contract ls is Utility {
             rating = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF - rating;
     }
 
-    function _ls_populate_line(string f, Inode ino, uint16 index, string name, uint8 file_type, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[] l) {
+    function _ls_populate_line(string f, Inode ino, uint16 index, string name, uint8 file_type, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string[] l) {
         (bool use_double_quotes, bool no_double_quotes, bool slash_to_dirs, bool classify, bool use_ctime, , , ) = arg.flag_values("QNpFc", f);
         bool double_quotes = use_double_quotes && !no_double_quotes;
         bool append_slash_to_dirs = slash_to_dirs || classify;
@@ -60,9 +59,8 @@ contract ls is Utility {
                 if (!owner_only)
                     l.push(str.toa(group_id));
             } else {
-                string s_owner = uadmin.user_name_by_id(owner_id, fs.get_file_contents_at_path("/etc/passwd", inodes, data));
-                string s_group = uadmin.group_name_by_id(group_id, fs.get_file_contents_at_path("/etc/group", inodes, data));
-
+                string s_owner = user[owner_id];
+                string s_group = group[group_id];
                 if (!group_only)
                     l.push(s_owner);
                 if (!owner_only && !no_group_names)
@@ -84,25 +82,25 @@ contract ls is Utility {
         l.push(name);
     }
 
-    function _ls(string f, Arg ag, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out) {
+    function _ls(string f, Arg ag, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string out) {
         (string s, uint8 ft, uint16 index, , ) = ag.unpack();
         Inode dir_inode = inodes[index];
         string[][] table;
         Arg[] sub_args;
         if (ft == FT_REG_FILE || ft == FT_DIR && arg.flag_set("d", f)) {
             if (!_ls_should_skip(f, s))
-                table.push(_ls_populate_line(f, dir_inode, index, s, ft, inodes, data));
+                table.push(_ls_populate_line(f, dir_inode, index, s, ft, user, group));
         } else if (ft == FT_DIR) {
             string ret;
-            (ret, sub_args) = _list_dir(f, ag, dir_inode, inodes, data);
+            (ret, sub_args) = _list_dir(f, ag, dir_inode, inodes, data, user, group);
             out.append(ret);
         }
 
         for (Arg sub_arg: sub_args)
-            out.append("\n" + sub_arg.path + ":\n" + _ls(f, sub_arg, inodes, data));
+            out.append("\n" + sub_arg.path + ":\n" + _ls(f, sub_arg, inodes, data, user, group));
     }
 
-    function _list_dir(string f, Arg ag, Inode inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string out, Arg[] sub_args) {
+    function _list_dir(string f, Arg ag, Inode inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string out, Arg[] sub_args) {
         (string s, uint8 ft, uint16 index, , ) = ag.unpack();
         (bool recurse, bool long_fmt, bool numeric, bool group_only, bool owner_only, bool print_allocated_size,
             bool delim_newline, bool delim_comma) = arg.flag_values("Rlngos1m", f);
@@ -116,7 +114,7 @@ contract ls is Utility {
 
         if (ft == FT_REG_FILE || ft == FT_DIR && arg.flag_set("d", f)) {
             if (!_ls_should_skip(f, s))
-                table.push(_ls_populate_line(f, inode, index, s, ft, inodes, data));
+                table.push(_ls_populate_line(f, inode, index, s, ft, user, group));
         } else if (ft == FT_DIR) {
             (DirEntry[] contents, int16 status) = dirent.read_dir_data(data[index]);
             if (status < 0) {
@@ -145,7 +143,7 @@ contract ls is Utility {
                 }
                 (uint8 ftt, string name, uint16 i) = contents[j].unpack();
 
-                table.push(_ls_populate_line(f, inodes[i], i, name, ftt, inodes, data));
+                table.push(_ls_populate_line(f, inodes[i], i, name, ftt, user, group));
                 p = ds.next(xk);
             }
         }
@@ -156,7 +154,7 @@ contract ls is Utility {
     /* Decides whether ls should skip this entry with the set of flags */
     function _ls_should_skip(string f, string name) private pure returns (bool) {
         (bool notice_dot_starters, bool classify, bool skip_dot_dots, bool ignore_blackups, , , , ) = arg.flag_values("afAB", f);
-      bool print_dot_starters = notice_dot_starters || classify;
+        bool print_dot_starters = notice_dot_starters || classify;
 
         uint len = name.byteLength();
         if (len == 0 || (skip_dot_dots && (name == "." || name == "..")))

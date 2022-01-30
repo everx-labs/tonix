@@ -70,4 +70,18 @@ library arg {
         return vars.get_pool_record(param_name, vars.get_map_value("PARAM_INDEX", s_arg));
     }
 
+    function get_users_groups(string s_arg) internal returns (mapping (uint16 => string) users, mapping (uint16 => string) groups) {
+        string user_map = vars.get_map_value("USERS", s_arg);
+        (string[] lines, ) = stdio.split(user_map, "\n");
+        for (string line: lines) {
+            (, string name, string value) = vars.split_var_record(line);
+            users[str.toi(name)] = value;
+        }
+        string group_map = vars.get_map_value("GROUPS", s_arg);
+        (lines, ) = stdio.split(group_map, "\n");
+        for (string line: lines) {
+            (, string name, string value) = vars.split_var_record(line);
+            groups[str.toi(name)] = value;
+        }
+    }
 }
