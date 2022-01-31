@@ -6,40 +6,42 @@ contract usermod is Utility {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
         (, string[] params, string flags, ) = arg.get_env(args);
+        (bool change_primary_group, /*bool supp_groups_list*/, , , , , , ) = arg.flag_values("gG", flags);
+        string param_user_name = change_primary_group ? params[0] : "";
 
-        uint16 etc_dir = fs.resolve_absolute_path("/etc", inodes, data);
-        (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
-        (uint16 group_index, uint8 group_file_type, ) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
-        string etc_passwd;
-        string etc_group;
-        if (passwd_file_type == FT_REG_FILE)
-            etc_passwd = fs.get_file_contents(passwd_index, inodes, data);
-        if (group_file_type == FT_REG_FILE)
-            etc_group = fs.get_file_contents(group_index, inodes, data);
-//        bool append_to_supp_groups = (flags & _a) > 0;
-        bool change_primary_group = arg.flag_set("g", flags);
-        bool supp_groups_list = arg.flag_set("G", flags);
+        (string etc_passwd, string etc_group, uint16 etc_passwd_index, ) = fs.get_passwd_group(inodes, data);
+        string cur_entry = uadmin.passwd_entry_by_name(param_user_name, etc_passwd);
+        string new_entry;
+        if (cur_entry.empty())
+            errors.push(Err(uadmin.E_NOTFOUND, 0, param_user_name)); // specified user doesn't exist
+        else {
+            if (change_primary_group && !params.empty()) {
+                string param_new_gid_s = arg.opt_arg_value("g", args);
+                uint16 new_gid = str.toi(param_new_gid_s);
+                string group_name = uadmin.group_name_by_id(new_gid, etc_group);
+                if (group_name.empty())
+                    errors.push(Err(uadmin.E_NOTFOUND, 0, param_new_gid_s)); // specified group doesn't exist
+                else {
+                    (string cur_user_name, uint16 cur_uid, , string cur_primary_group, ) = uadmin.parse_passwd_entry_line(cur_entry);
+                    cur_entry.append("\n");
+                    new_entry = uadmin.passwd_entry_line(cur_user_name, cur_uid, new_gid, cur_primary_group);
+                }
+            }
+        }
 
-        uint n_args = params.length;
-        string user_name = params[n_args - 1];
+        if (!cur_entry.empty() && !new_entry.empty() && errors.empty())
+            ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, etc_passwd_index, 0, "passwd", stdio.translate(etc_passwd, cur_entry, new_entry)));
+        else
+            ec = EXECUTE_FAILURE;
+        out = "";
+
+        /*uint n_args = params.length;
         uint16 user_id;
         uint16 group_id;
         string group_name;
         uint16[] group_list;
+        string new_entry;
 
-        string prev_entry = uadmin.passwd_entry_by_name(user_name, etc_passwd);
-        if (prev_entry.empty())
-            errors.push(Err(uadmin.E_NOTFOUND, 0, user_name)); // specified user doesn't exist
-        if (change_primary_group && n_args > 1) {
-            string group_id_s = params[0];
-            optional(int) val = stoi(group_id_s);
-            if (!val.hasValue())
-                errors.push(Err(uadmin.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
-            else
-                group_id = uint16(val.get());
-            group_name = uadmin.group_name_by_id(group_id, etc_group);
-            if (group_name.empty())
-                errors.push(Err(uadmin.E_NOTFOUND, 0, group_name)); // specified group doesn't exist
         } else if (supp_groups_list && n_args > 1) {
             string supp_string = params[0];
             (string[] supp_list, ) = stdio.split(supp_string, ",");
@@ -57,7 +59,7 @@ contract usermod is Utility {
             ars.push(Ar(IO_UPDATE_TEXT_DATA, FT_REG_FILE, passwd_index, passwd_dir_idx, "passwd", stdio.translate(etc_passwd, prev_entry, text)));
         } else
             ec = EXECUTE_FAILURE;
-        out = "";
+        out = "";*/
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -39,9 +39,8 @@ dirs:
 cc: $(patsubst %,$(BLD)/%.cs,$(BUILTINS))
 	@true
 
-install: dirs cc ccb hosts bocs
+install: dirs cc ccb config hosts bocs
 	echo Tonix has been installed successfully
-	$(TOC) config --url rfld-dapp01.ds1.itgold.io
 
 TOOLS_MAJOR_VERSION:=0.56
 TOOLS_MINOR_VERSION:=0
@@ -57,6 +56,9 @@ $(TOOLS_BINARIES):
 
 tools: $(TOOLS_BINARIES)
 	$(foreach t,$(wordlist 2,4,$^),$t --version;)
+
+config:
+	$(TOC) config --url rfld-dapp01.ds1.itgold.io
 
 $(BLD)/%.tvc: $(SRC)/%.sol
 	$(SOLC) $< -o $(BLD)

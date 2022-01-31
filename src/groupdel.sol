@@ -5,7 +5,7 @@ import "Utility.sol";
 contract groupdel is Utility {
 
     function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = arg.get_env(argv);
+        (, string[] params, string flags, ) = arg.get_env(args);
 
         string victim_group_name;
         if (params.length == 1)
