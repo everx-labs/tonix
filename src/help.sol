@@ -68,7 +68,7 @@ contract help is Shell {
             description + "\n",
             fmt.format_custom("Options:", options, 2, "\n"),
             fmt.format_line("", arguments),
-            fmt.format_line("Exit Status:", exit_status)], "\n");
+            fmt.format_custom("Exit Status:", exit_status, 0, "\n")], "\n");
 
         if (command_format == COMMAND_FORMAT_DEFAULT)
             return fmt.format_list(name + ": " + name + " " + synopsis, help_text);

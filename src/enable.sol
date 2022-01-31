@@ -4,14 +4,46 @@ import "Shell.sol";
 
 contract enable is Shell {
 
-    function run_builtin(string args, string pool) external pure returns (uint8 ec, string out, string res) {
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
+        (bool print_reusable, bool print_all, bool posix_only, , , , , ) = arg.flag_values("pas", flags);
+
+        string s_attrs;
+        string[] a_attrs = ["f", "n", "d", "s"];
+        for (string attr: a_attrs)
+            if (arg.flag_set(attr, flags))
+                s_attrs.append(attr);
+
+        s_attrs = print_all ? "" : ("-" + (s_attrs.empty() ? "-" : s_attrs));
+
+        if (params.empty()) {
+            (string[] lines, ) = stdio.split(pool, "\n");
+            for (string line: lines) {
+                (string attrs, string name, string value) = vars.split_var_record(line);
+//                (string attrs, ) = str.split(line, " ");
+                if (vars.match_attr_set(s_attrs, attrs))
+                    out.append("enable " + name + "\n");
+            }
+        }
+        for (string p: params) {
+            (string name, ) = str.split(p, "=");
+            string cur_record = vars.get_pool_record(name, pool);
+            if (!cur_record.empty()) {
+                (string cur_attrs, ) = str.split(cur_record, " ");
+                if (vars.match_attr_set(s_attrs, cur_attrs))
+                    out.append("enable " + name + "\n");
+            } else {
+                ec = EXECUTE_FAILURE;
+                out.append("enable: " + name + " not found\n");
+            }
+        }
+    }
+
+    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
+        (string[] params, string flags, ) = arg.get_args(args);
+//        (bool load, bool disable, bool unload, bool posix_only, , , , ) = arg.flag_values("fnds", flags);
 
         string page = pool;
-
-        (bool load, bool disable, bool unload, bool print_reusable, bool print_all, bool posix_only, , ) = arg.flag_values("fndpas", flags);
-        bool print = print_all || print_reusable || posix_only || params.empty();
-
         string s_attrs;
         string[] a_attrs = ["f", "n", "d", "s"];
         for (string attr: a_attrs)
@@ -20,20 +52,10 @@ contract enable is Shell {
 
         s_attrs = "-" + (s_attrs.empty() ? "-" : s_attrs);
         ec = EXECUTE_SUCCESS;
-        if (print) {
-            (string[] lines, ) = stdio.split(page, "\n");
-            for (string line: lines) {
-                (string attrs, string stmt) = str.split(line, " ");
-                if (vars.match_attr_set(s_attrs, attrs)) {
-                    (string name, ) = str.split(stmt, "=");
-                    out.append("enable " + vars.unwrap(name) + "\n");
-                }
-            }
-        } else {
-            for (string arg: params)
-                page = vars.set_var(s_attrs, arg, page);
-            res = page;
-        }
+
+        for (string p: params)
+            page = vars.set_var_attr(s_attrs, p, page);
+        res = page;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

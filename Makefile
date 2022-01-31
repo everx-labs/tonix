@@ -51,6 +51,9 @@ dirs:
 cc: $(patsubst %,$(BLD)/%.cs,$(BUILTINS))
 	@true
 
+install:
+	$(TOC) config --url rfld-dapp01.ds1.itgold.io
+
 $(BLD)/%.tvc: $(SRC)/%.sol
 	$(SOLC) $< -o $(BLD)
 	$(LINKER) compile --lib $(LIB) $(BLD)/$*.code -o $@

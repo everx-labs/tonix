@@ -85,7 +85,8 @@ contract wc is Utility {
 "wc",
 "[OPTION]... [FILE]...",
 "print newline, word, and byte counts for each file",
-"Print newline, word, and byte counts for each FILE, and a total line if more than one FILE is specified. A word is a non-zero-length sequence of characters delimited by white space.",
+"Print newline, word, and byte counts for each FILE, and a total line if more than one FILE is specified.\n\
+A word is a non-zero-length sequence of characters delimited by white space.",
 "-c      print the byte counts\n\
 -m      print the character counts\n\
 -l      print the newline counts\n\
