@@ -33,7 +33,8 @@ contract ulimit is Shell {
         (bool file_locks, bool max_pseudoterminals, bool max_user_threads, bool soft_resource_limit, bool hard_resource_limit, bool print_all, , ) =
             arg.flag_values("xPTSHa", flags);
         bool use_hard_limit = hard_resource_limit && !soft_resource_limit;*/
-        ec = EXECUTE_SUCCESS;
+        if (!args.empty())
+            ec = EXECUTE_SUCCESS;
 
 /*/proc/27196/limits
 Limit                     Soft Limit           Hard Limit           Units
@@ -56,6 +57,7 @@ Max realtime timeout      unlimited            unlimited            us*/
 //        if (print_all) {
             (string[] items, ) = stdio.split_line(pool, "\n", "\n");
             for (string item: items) {
+                out.append(item);
 //                (string attrs, string name, string value) = _parse_var(item);
 //                out.append(name + " " + value + "\n");
             }

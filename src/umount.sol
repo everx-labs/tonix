@@ -6,7 +6,9 @@ contract umount is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
+        if (!argv.empty() && !inodes.empty() && !data.empty())
+            out = "";
+//        ( , string[] params, string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
     }
 
@@ -29,7 +31,7 @@ contract umount is Utility {
 -q      suppress 'not mounted' error messages",
 "",
 "Written by Boris",
-"",
+"Not yet implemented",
 "",
 "0.01");
     }

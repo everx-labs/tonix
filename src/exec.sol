@@ -5,12 +5,14 @@ import "Shell.sol";
 contract exec is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
+        (string[] params, , ) = arg.get_args(args);
 //        (bool substitute_command, bool empty_env, bool prepend_dash, bool f1, bool f2, bool f3, bool f4, bool f5) = arg.flag_values("acl12345", flags);
         uint16 pos;
         if (!params.empty())
             pos = str.toi(params[0]);
-        ec = EXECUTE_SUCCESS;
+        out = "";
+        if (!pool.empty())
+            ec = EXECUTE_SUCCESS;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

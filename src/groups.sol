@@ -7,7 +7,7 @@ contract groups is Utility {
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (, string[] params, , ) = arg.get_env(argv);
 
-        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
+//        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
 
         /*for ((uint16 i, string s): user)
             out.append(str.toa(i) + " => " + s + "\n");

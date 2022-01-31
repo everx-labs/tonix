@@ -6,13 +6,14 @@ contract mountpoint is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
+        ec = EXECUTE_SUCCESS;
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
         bool mounted_device = arg.flag_set("d", flags);
         bool quiet = arg.flag_set("q", flags);
         bool arg_device = arg.flag_set("x", flags);
 
         string s_path = params[0];
-        (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(s_path, wd, inodes, data);
+        (uint16 index, uint8 ft, , ) = fs.resolve_relative_path(s_path, wd, inodes, data);
         if (arg_device) {
             if (ft != FT_BLKDEV)
                 err.append("not_a_block_device " + s_path);

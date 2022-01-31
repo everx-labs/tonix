@@ -20,6 +20,7 @@ contract mknod is Utility {
             node_name = params[0];
         string node_type;
         uint8 file_type;
+        out = "";
         if (n_args > 1) {
             node_type = params[1];
             if (node_type == "b") {
@@ -33,7 +34,7 @@ contract mknod is Utility {
         }
     }
 
-    function _mknod(uint8 file_type, string file_name, string flags, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (Ar[] ars, Err[] errors) {
+    function _mknod(uint8 file_type, string file_name, string /*flags*/, uint16 ic, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (Ar[] ars, Err[] errors) {
         uint8 action_item_type = IO_MKDIR;
         mapping (uint16 => string[]) parent_dirs;
 

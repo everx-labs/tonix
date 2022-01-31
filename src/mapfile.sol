@@ -11,11 +11,11 @@ contract mapfile is Shell {
 
         string s_attrs = "-a";
         string delimiter = arg.flag_set("d", flags) ? arg.opt_arg_value("d", args) : "\n";
-        uint count = arg.flag_set("n", flags) ? str.toi(arg.opt_arg_value("n", args)) : 0;
-        uint origin = arg.flag_set("O", flags) ? str.toi(arg.opt_arg_value("O", args)) : 0;
+//        uint count = arg.flag_set("n", flags) ? str.toi(arg.opt_arg_value("n", args)) : 0;
+//        uint origin = arg.flag_set("O", flags) ? str.toi(arg.opt_arg_value("O", args)) : 0;
         string array_name = params.empty() ? "MAPFILE" : params[params.length - 1];
-        string ofs = arg.flag_set("t", flags) ? " " : (delimiter + " ");
-        string ofs_2 = arg.flag_set("t", flags) ? "" : delimiter;
+//        string ofs = arg.flag_set("t", flags) ? " " : (delimiter + " ");
+//        string ofs_2 = arg.flag_set("t", flags) ? "" : delimiter;
         uint16 page_index;
         if (arg.flag_set("u", flags)) {
             string s_fd = arg.opt_arg_value("u", args);
@@ -39,6 +39,7 @@ contract mapfile is Shell {
 //        string arr_val = array_name + "=" + vars.encode_items(entries, " ");
 //        out.append(vars.wrap(array_name, vars.W_SQUARE) + "=" + _encode_items(entries, "\n"));*/
         string arr_val = vars.as_indexed_array(array_name, input, "\n");
+        out = dbg;
         res = vars.set_var(s_attrs, arr_val, pool);
     }
 

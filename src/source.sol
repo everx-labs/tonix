@@ -6,7 +6,8 @@ contract source is Shell {
 
     function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
 //        (string[] params, , ) = arg.get_args(args);
-        ec = EXECUTE_SUCCESS;
+        if (!args.empty())
+            ec = EXECUTE_SUCCESS;
 
         string file_contents = input;
         string tosh_path = vars.val("TOSH", pool);

@@ -5,10 +5,10 @@ import "Shell.sol";
 contract pushd is Shell {
 
     function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = arg.get_args(args);
+        (string[] params, , ) = arg.get_args(args);
         string page = pool;
 
-        bool suppress_dir_change = arg.flag_set("n", flags);
+//        bool suppress_dir_change = arg.flag_set("n", flags);
 
         string s_attrs = "--";
         string cur_dir = vars.val("PWD", page);

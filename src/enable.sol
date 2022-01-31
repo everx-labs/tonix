@@ -6,7 +6,7 @@ contract enable is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
-        (bool print_reusable, bool print_all, bool posix_only, , , , , ) = arg.flag_values("pas", flags);
+        (, bool print_all, , , , , , ) = arg.flag_values("pas", flags);
 
         string s_attrs;
         string[] a_attrs = ["f", "n", "d", "s"];
@@ -19,7 +19,7 @@ contract enable is Shell {
         if (params.empty()) {
             (string[] lines, ) = stdio.split(pool, "\n");
             for (string line: lines) {
-                (string attrs, string name, string value) = vars.split_var_record(line);
+                (string attrs, string name, ) = vars.split_var_record(line);
 //                (string attrs, ) = str.split(line, " ");
                 if (vars.match_attr_set(s_attrs, attrs))
                     out.append("enable " + name + "\n");

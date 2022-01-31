@@ -6,9 +6,12 @@ contract login is Utility {
 
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
-        ec = EXECUTE_SUCCESS;
-        /*uint n_args = args.length;
+//        ( , string[] params, string flags, ) = arg.get_env(argv);
+        if (!argv.empty() && !inodes.empty() && !data.empty())
+            ec = EXECUTE_SUCCESS;
+        out = "";
+
+          /*uint n_args = args.length;
 
         bool force;
         bool use_hostname;

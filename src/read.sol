@@ -11,7 +11,7 @@ contract read is Shell {
 
     function _read(string[] params, string flags, string input, string pool) internal pure returns (uint8 ec, string out, string res) {
         bool assign_to_array = arg.flag_set("a", flags);
-        bool use_delimiter = arg.flag_set("d", flags);
+//        bool use_delimiter = arg.flag_set("d", flags);
         bool echo_input = !arg.flag_set("s", flags);
         string delimiter = " ";
         ec = EXECUTE_SUCCESS;

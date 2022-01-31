@@ -5,7 +5,7 @@ import "Shell.sol";
 contract set is Shell {
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
+        (string[] params, , ) = arg.get_args(args);
         ec = EXECUTE_SUCCESS;
         if (params.empty()) {
             out.append(pool + "\n");

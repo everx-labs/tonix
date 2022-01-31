@@ -10,7 +10,8 @@ contract echo is Shell {
         out = stdio.join_fields(params, " ");
         if (!no_trailing_newline)
             out.append("\n");
-        ec = EXECUTE_SUCCESS;
+        if (!pool.empty())
+            ec = EXECUTE_SUCCESS;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

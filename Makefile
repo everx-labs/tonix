@@ -53,7 +53,7 @@ $(TOOLS_BINARIES):
 	mkdir -p $(TOOLS_BIN)
 	rm -f $(TOOLS_ARCHIVE)
 	wget $(TOOLS_URL)
-	tar -xzf $(TOOLS_ARCHIVE) -C $(TOOLS_BIN)
+	tar -xJf $(TOOLS_ARCHIVE) -C $(TOOLS_BIN)
 
 tools: $(TOOLS_BINARIES)
 	$(foreach t,$(wordlist 2,4,$^),$t --version;)
