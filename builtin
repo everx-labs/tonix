@@ -1,0 +1,92 @@
+#set -x
+builtin=$1
+shift
+fn=$1
+shift
+page=$1
+input=$2
+
+args() {
+   case $fn in
+        print)
+            jq -n --rawfile args run/args --rawfile pool run/$page '{$args, $pool}';;
+        modify)
+            jq -n --rawfile args run/args --rawfile pool run/$page '{$args, $pool}';;
+        read_input)
+            jq -n --rawfile args run/args --rawfile input $input --rawfile pool run/pool '{$args, $input, $pool}';;
+        lookup)
+            jq -n --rawfile args run/args --rawfile page run/$page --rawfile pool run/pool '{$args, $page, $pool}';;
+        builtin_read_fs)
+            jq --rawfile args run/args --rawfile pool run/$page '. + {$args} + {$pool}' run/fs;;
+        display_help)
+            jq -n --rawfile v run/args --slurpfile v1 usr/share/builtin_help '{args: $v, help_files: $v1}';;
+        *)
+            echo '{}';;
+    esac
+}
+
+filter() {
+    case $fn in
+        print)
+            jq -rj '.out' $1 >run/stdout;;
+        display_help)
+            jq -rj '.out' $1 >run/stdout;;
+        modify)
+            jq -rj '.ec' $1 >run/ec
+            jq -rj '.res' $1 >run/res
+            if [ -s run/res ]; then
+                case $builtin in
+                    unset|export|readonly|declare|alias|unalias)
+                        cp run/res run/$page;;
+                    shift)
+                        diff run/pos_params run/res;
+                        cp run/res run/shifted;;
+                    *)
+                        ;;
+                esac
+            fi;;
+        lookup)
+            jq -rj '.ec' $1 >run/ec
+            jq -rj '.out' $1
+            jq -rj '.res' $1 >run/res;
+            if [ -s run/res ]; then
+                case $builtin in
+                    hash)
+                       cp run/res run/hashes;;
+                    *)
+                        ;;
+                esac
+            fi;;
+        builtin_read_fs)
+            jq -rj '.ec' $1 >run/ec
+            jq -rj '.res' $1 >run/res
+            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/page_changed
+#            if [ -s run/res ]; then
+            case $builtin in
+                cd)
+                    if [ -s tmp/page_changed ]; then
+                        cp run/res run/$page
+                        cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
+                    fi;;
+                *)
+                    jq -rj '.res' $1;;
+            esac
+            ;;
+        read_input)
+            jq -rj 'if (.ec == "0") then .res else empty end' $1 >tmp/in_out;
+            if [ -s tmp/in_out ]; then
+                case $builtin in
+                    source)
+                       ./tz tmp/in_out;;
+                    *)
+                        cat tmp/in_out;;
+                esac
+            fi;;
+        *)
+            ;;
+    esac
+}
+
+args >tmp/${builtin}_$fn.args
+~/bin/tonos-cli -j run --boc bin/$builtin.boc --abi build/$builtin.abi.json $fn tmp/${builtin}_$fn.args >tmp/${builtin}_$fn.out
+filter tmp/${builtin}_$fn.out

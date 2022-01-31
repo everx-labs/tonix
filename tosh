@@ -1,0 +1,83 @@
+#set -x
+fn=$1
+shift
+param=$1
+
+case $fn in
+    b_exec|builtin_help|exec|read_fs_to_env|main)
+        util=$param;;
+    run_builtin)
+        util=builtin;;
+    execute_command|print_errors)
+        util=command;;
+    command_help)
+        util=$param;;
+    handle_action)
+        util=tmpfs;;
+    *)
+        util=eilish;;
+esac
+
+args() {
+   case $fn in
+        run_builtin)
+            jq -n --rawfile args run/args '{$args}';;
+        execute_command)
+#            jq -n --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool}';;
+#            jq --rawfile args run/args --rawfile page run/comp_spec --rawfile pool run/pool '{$args, $page, $pool} + .' run/fs;;
+            jq --rawfile args run/args --rawfile comp_spec run/comp_spec --rawfile varss run/vars --rawfile users run/users --rawfile groups run/groups --rawfile pool run/pool '{$args, $comp_spec, $varss, $users, $groups, $pool} + .' run/fs;;
+        print_errors)
+            jq '.' tmp/cmd_errors;;
+        b_exec)
+            jq '{e: .}' run/env >tmp/shell_in;
+            jq -s 'add' tmp/shell_in run/fs;;
+        exec)
+            jq --rawfile args run/export '. + {$args}' run/fs;;
+        main)
+            jq --rawfile args run/export '. + {$argv}' run/fs;;
+        *)
+            echo '{}';;
+    esac
+}
+
+filter() {
+    case $fn in
+        get_command_info)
+            cp $1 usr/share/$util.info;;
+        builtin_help)
+            cp $1 usr/share/$util.help;;
+        command_help)
+            cp $1 usr/share/$util.man;;
+        exec)
+            jq -rj '.out' $1 >run/stdout;
+            jq -rj '.err' $1 >run/stderr;;
+        main)
+            jq -rj '.out' $1 >run/stdout;
+            jq -rj '.err' $1 >run/stderr;;
+        print_errors)
+            jq -rj '.err' $1 >run/stderr;
+            ./flush_std;;
+#            jq -rj '.err' $1;;
+        run_builtin)
+            b_ex=`jq -r '.res' $1`
+            echo "$b_ex" >>var/log/commands
+            eval "$b_ex";;
+        execute_command)
+            jq -rj '.ec' $1 >run/ec;
+            jq 'if (.ec == "0") then . else empty end' $1 >tmp/cmd_exec;
+            if [ -s tmp/cmd_exec ]; then
+                jq -rj '.exports' $1 >run/export;
+                jq -rj '.cs_res' $1 >run/comp_spec;
+            fi
+            jq -r '.exec_line' $1 >>var/log/commands
+            eval `jq -rj '.exec_line' $1`;;
+        b_exec)
+            cp $1 tmp/post_b_exec;;
+        *)
+            ;;
+    esac
+}
+
+args >tmp/${util}_$fn.args
+~/bin/tonos-cli -j run --boc bin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
+filter tmp/${util}_$fn.out

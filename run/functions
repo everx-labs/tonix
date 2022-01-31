@@ -1,0 +1,5 @@
+-f [builtin_read_fs]={. builtin_read_fs $0 $@;. on_b_exec}
+-f [read_input]={. $0 read_input $@}
+-f [exec]={. exec $0 $@}
+-f [run]={. $0 run $@}
+-f [print]={. $0 print $@}

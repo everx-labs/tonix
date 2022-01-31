@@ -1,0 +1,270 @@
+{
+  "name": "tosh",
+  "synopsis": "[command ...]",
+  "purpose": "Command shell",
+  "description": "Command shell",
+  "options": "",
+  "arguments": "",
+  "exit_status": ""
+}
+{
+  "name": "help",
+  "synopsis": "[-dms] [pattern ...]",
+  "purpose": "Display information about builtin commands.",
+  "description": "Displays brief summaries of builtin commands.  If PATTERN is specified, gives detailed help on all commands matching PATTERN, otherwise the list of help topics is printed.",
+  "options": "-d        output short description for each topic\n-m        display usage in pseudo-manpage format\n-s        output only a short usage synopsis for each topic matching PATTERN",
+  "arguments": "PATTERN   Pattern specifying a help topic",
+  "exit_status": "Returns success unless PATTERN is not found or an invalid option is given."
+}
+{
+  "name": "declare",
+  "synopsis": "[-aAfFgilnrtux] [-p] [name[=value] ...]",
+  "purpose": "Set variable values and attributes.",
+  "description": "Declare variables and give them attributes.  If no NAMEs are given, display the attributes and values of all variables.",
+  "options": "-f        restrict action or display to function names and definitions\n-F        restrict display to function names only (plus line number and source file when debugging)\n-g        create global variables when used in a shell function; otherwise ignored\n-p        display the attributes and value of each NAME\nOptions which set attributes:\n-a        to make NAMEs indexed arrays (if supported)\n-A        to make NAMEs associative arrays (if supported)\n-i        to make NAMEs have the `integer' attribute\n-l        to convert the value of each NAME to lower case on assignment\n-n        make NAME a reference to the variable named by its value\n-r        to make NAMEs readonly\n-t        to make NAMEs have the `trace' attribute\n-u        to convert the value of each NAME to upper case on assignment\n-x        to make NAMEs export\n    Using `+' instead of `-' turns off the given attribute.",
+  "arguments": "Variables with the integer attribute have arithmetic evaluation (see the `let' command) performed when the variable is assigned a value.\nWhen used in a function, `declare' makes NAMEs local, as with the `local' command.  The `-g' option suppresses this behavior.",
+  "exit_status": "Returns success unless an invalid option is supplied or a variable assignment error occurs."
+}
+{
+  "name": "type",
+  "synopsis": "[-afptP] name [name ...]",
+  "purpose": "Display information about command type.",
+  "description": "For each NAME, indicate how it would be interpreted if used as a command name.",
+  "options": "-a        display all locations containing an executable named NAME; includes aliases, builtins, and functions, if and only if\n          the `-p' option is not also used\n-f        suppress shell function lookup\n-P        force a PATH search for each NAME, even if it is an alias, builtin, or function, and returns the name of the disk file\n          that would be executed\n-p        returns either the name of the disk file that would be executed, or nothing if `type -t NAME' would not return `file'\n-t        output a single word which is one of `alias', `keyword', `function', `builtin', `file' or `', if NAME is an alias, shell\nreserved word, shell function, shell builtin, disk file, or not found, respectively",
+  "arguments": "NAME      Command name to be interpreted.",
+  "exit_status": "Returns success if all of the NAMEs are found; fails if any are not found."
+}
+{
+  "name": "builtin",
+  "synopsis": "[shell-builtin [arg ...]]",
+  "purpose": "Execute shell builtins.",
+  "description": "Execute SHELL-BUILTIN with arguments ARGs without performing command lookup.",
+  "options": "",
+  "arguments": "",
+  "exit_status": "Returns the exit status of SHELL-BUILTIN, or false if SHELL-BUILTIN is not a shell builtin."
+}
+{
+  "name": "pwd",
+  "synopsis": "[-LP]",
+  "purpose": "Print the name of the current working directory.",
+  "description": "",
+  "options": "-L        print the value of $PWD if it names the current working directory\n-P        print the physical directory, without any symbolic links\nBy default, pwd behaves as if -L were specified.",
+  "arguments": "",
+  "exit_status": "Returns 0 unless an invalid option is given or the current directory cannot be read."
+}
+{
+  "name": "read",
+  "synopsis": "[-ers] [-a array] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout] [-u fd] [name ...]",
+  "purpose": "Read a line from the standard input and split it into fields.",
+  "description": "Reads a single line from the standard input, or from file descriptor FD if the -u option is supplied. The line is split\ninto fields as with word splitting, and the first word is assigned to the first NAME, the second word to the second NAME,\nand so on, with any leftover words assigned to the last NAME.  Only the characters found in $IFS are recognized as word\ndelimiters.\nIf no NAMEs are supplied, the line read is stored in the REPLY variable.",
+  "options": "-a array  assign the words read to sequential indices of the array variable ARRAY, starting at zero\n-d delim  continue until the first character of DELIM is read, rather than newline\n-e        use Readline to obtain the line\n-i text   use TEXT as the initial text for Readline\n-n nchars return after reading NCHARS characters rather than waiting for a newline, but honor a delimiter if fewer than NCHARS\n          characters are read before the delimiter\n-N nchars return only after reading exactly NCHARS characters, unless EOF is encountered or read times out, ignoring any delimiter\n-p prompt output the string PROMPT without a trailing newline before attempting to read\n-r        do not allow backslashes to escape any characters\n-s        do not echo input coming from a terminal\n-u fd     read from file descriptor FD instead of the standard input",
+  "arguments": "",
+  "exit_status": "The return code is zero, unless end-of-file is encountered, read times out (in which case it's greater than 128), a variable assignment\nerror occurs, or an invalid file descriptor is supplied as the argument to -u."
+}
+{
+  "name": "hash",
+  "synopsis": "[-lr] [-p pathname] [-dt] [name ...]",
+  "purpose": "Remember or display program locations.",
+  "description": "Determine and remember the full pathname of each command NAME.  If no arguments are given, information about remembered commands is displayed.",
+  "options": "-d        forget the remembered location of each NAME\n-l        display in a format that may be reused as input\n-p pathname       use PATHNAME as the full pathname of NAME\n-r        forget all remembered locations\n-t        print the remembered location of each NAME, preceding each location with the corresponding NAME if multiple NAMEs are given",
+  "arguments": "NAME      Each NAME is searched for in $PATH and added to the list of remembered commands.",
+  "exit_status": "Returns success unless NAME is not found or an invalid option is given."
+}
+{
+  "name": "command",
+  "synopsis": "[-pVv] command [arg ...]",
+  "purpose": "Execute a simple command or display information about commands.",
+  "description": "Runs COMMAND with ARGS suppressing  shell function lookup, or display information about the specified COMMANDs.  Can be used to invoke commands on disk when a function with the same name exists.",
+  "options": "-p    use a default value for PATH that is guaranteed to find all of the standard utilities\n-v    print a description of COMMAND similar to the `type' builtin\n-V    print a more verbose description of each COMMAND",
+  "arguments": "",
+  "exit_status": "Returns exit status of COMMAND, or failure if COMMAND is not found."
+}
+{
+  "name": "export",
+  "synopsis": "[-fn] [name[=value] ...] or export -p",
+  "purpose": "Set export attribute for shell variables.",
+  "description": "Marks each NAME for automatic export to the environment of subsequently executed commands.  If VALUE is supplied, assign VALUE before exporting.",
+  "options": "-f        refer to shell functions\n-n        remove the export property from each NAME\n-p        display a list of all exported variables and functions",
+  "arguments": "An argument of `--' disables further option processing.",
+  "exit_status": "Returns success unless an invalid option is given or NAME is invalid."
+}
+{
+  "name": "readonly",
+  "synopsis": "[-aAf] [name[=value] ...] or readonly -p",
+  "purpose": "Mark shell variables as unchangeable.",
+  "description": "Mark each NAME as read-only; the values of these NAMEs may not be changed by subsequent assignment.\nIf VALUE is supplied, assign VALUE before marking as read-only.",
+  "options": "-a        refer to indexed array variables\n-A        refer to associative array variables\n-f        refer to shell functions\n-p        display a list of all readonly variables or functions, depending on whether or not the -f option is given",
+  "arguments": "An argument of `--' disables further option processing.",
+  "exit_status": "Returns success unless an invalid option is given or NAME is invalid."
+}
+{
+  "name": "alias",
+  "synopsis": "[-p] [name[=value] ... ]",
+  "purpose": "Define or display aliases.",
+  "description": "Without arguments, `alias' prints the list of aliases in the reusable form `alias NAME=VALUE' on standard output.\nOtherwise, an alias is defined for each NAME whose VALUE is given. A trailing space in VALUE causes the next word\nto be checked for alias substitution when the alias is expanded.",
+  "options": "-p        print all defined aliases in a reusable format",
+  "arguments": "",
+  "exit_status": "alias returns true unless a NAME is supplied for which no alias has been defined."
+}
+{
+  "name": "unalias",
+  "synopsis": "[-a] name [name ...]",
+  "purpose": "Remove each NAME from the list of defined aliases.",
+  "description": "",
+  "options": "-a        remove all alias definitions",
+  "arguments": "",
+  "exit_status": "Return success unless a NAME is not an existing alias."
+}
+{
+  "name": "unset",
+  "synopsis": "[-f] [-v] [-n] [name ...]",
+  "purpose": "Unset values and attributes of shell variables and functions.",
+  "description": "For each NAME, remove the corresponding variable or function.",
+  "options": "-f        treat each NAME as a shell function\n-v        treat each NAME as a shell variable\n-n        treat each NAME as a name reference and unset the variable itself rather than the variable it references",
+  "arguments": "Without options, unset first tries to unset a variable, and if that fails, tries to unset a function.\nSome variables cannot be unset; also see `readonly'.",
+  "exit_status": "Returns success unless an invalid option is given or a NAME is read-only."
+}
+{
+  "name": "enable",
+  "synopsis": "[-a] [-dnps] [-f filename] [name ...]",
+  "purpose": "Enable and disable shell builtins.",
+  "description": "Enables and disables builtin shell commands.  Disabling allows you to execute a disk command which has the same\nname as a shell builtin without using a full pathname.",
+  "options": "-a        print a list of builtins showing whether or not each is enabled\n-n        disable each NAME or display a list of disabled builtins\n-p        print the list of builtins in a reusable format\n-s        print only the names of Posix `special' builtins\n\nOptions controlling dynamic loading:\n-f        Load builtin NAME from shared object FILENAME\n-d        Remove a builtin loaded with -f\n\nWithout options, each NAME is enabled.",
+  "arguments": "To use the `test' found in $PATH instead of the shell builtin version, type `enable -n test'.",
+  "exit_status": "Returns success unless NAME is not a shell builtin or an error occurs."
+}
+{
+  "name": "test",
+  "synopsis": "[expr]",
+  "purpose": "Evaluate conditional expression.",
+  "description": "Exits with a status of 0 (true) or 1 (false) depending on the evaluation of EXPR.  Expressions may be unary or binary.  Unary\nexpressions are often used to examine the status of a file.  There are string operators and numeric comparison operators as well.\nThe behavior of test depends on the number of arguments.  Read the manual page for the complete specification.\nFile operators:",
+  "options": "-a FILE        True if file exists.\n-b FILE        True if file is block special.\n-c FILE        True if file is character special.\n-d FILE        True if file is a directory.\n-e FILE        True if file exists.\n-f FILE        True if file exists and is a regular file.\n-g FILE        True if file is set-group-id.\n-h FILE        True if file is a symbolic link.\n-L FILE        True if file is a symbolic link.\n-k FILE        True if file has its `sticky' bit set.\n-p FILE        True if file is a named pipe.\n-r FILE        True if file is readable by you.\n-s FILE        True if file exists and is not empty.\n-S FILE        True if file is a socket.\n-t FD          True if FD is opened on a terminal.\n-u FILE        True if the file is set-user-id.\n-w FILE        True if the file is writable by you.\n-x FILE        True if the file is executable by you.\n-O FILE        True if the file is effectively owned by you.\n-G FILE        True if the file is effectively owned by your group.\n-N FILE        True if the file has been modified since it was last read.\nFILE1 -nt FILE2  True if file1 is newer than file2 (according to modification date).\nFILE1 -ot FILE2  True if file1 is older than file2.\nFILE1 -ef FILE2  True if file1 is a hard link to file2.\nAll file operators except -h and -L are acting on the target of a symbolic link, not on\nthe symlink itself, if FILE is a symbolic link.\nString operators:\n  -z STRING      True if string is empty.\n  -n STRING\n     STRING      True if string is not empty.\n  STRING1 = STRING2  True if the strings are equal.\n  STRING1 != STRING2 True if the strings are not equal.\n  STRING1 < STRING2  True if STRING1 sorts before STRING2 lexicographically.\n  STRING1 > STRING2  True if STRING1 sorts after STRING2 lexicographically.",
+  "arguments": "Other operators:\n\n-o OPTION      True if the shell option OPTION is enabled.\n-v VAR         True if the shell variable VAR is set.\n-R VAR         True if the shell variable VAR is set and is a name reference.\n! EXPR         True if expr is false.\nEXPR1 -a EXPR2 True if both expr1 AND expr2 are true.\nEXPR1 -o EXPR2 True if either expr1 OR expr2 is true.\n\narg1 OP arg2   Arithmetic tests.  OP is one of -eq, -ne, -lt, -le, -gt, or -ge.\n\nArithmetic binary operators return true if ARG1 is equal, not-equal, less-than, less-than-or-equal,\ngreater-than, or greater-than-or-equal than ARG2.",
+  "exit_status": "Returns success if EXPR evaluates to true; fails if EXPR evaluates to false or an invalid argument is given."
+}
+{
+  "name": "cd",
+  "synopsis": "[-L|[-P [-e]] [-@]] [dir]",
+  "purpose": "Change the shell working directory.",
+  "description": "Change the current directory to DIR.  The default DIR is the value of the HOME shell variable.\nThe variable CDPATH defines the search path for the directory containing DIR. Alternative directory names in CDPATH are separated by a colon (:).\nA null directory name is the same as the current directory.  If DIR begins with a slash (/), then CDPATH is not used.\nIf the directory is not found, and the shell option `cdable_vars' is set, the word is assumed to be  a variable name.  If that variable has a value, its value is used for DIR.",
+  "options": "-L        force symbolic links to be followed: resolve symbolic links in DIR after processing instances of `..'\n-P        use the physical directory structure without following symbolic links: resolve symbolic links in DIR before processing instances of `..'\n-e        if the -P option is supplied, and the current working directory cannot be determined successfully, exit with a non-zero status\n-@        on systems that support it, present a file with extended attributes as a directory containing the file attributes\nThe default is to follow symbolic links, as if `-L' were specified.\n`..' is processed by removing the immediately previous pathname component\nback to a slash or the beginning of DIR.",
+  "arguments": "",
+  "exit_status": "Returns 0 if the directory is changed, and if $PWD is set successfully when -P is used; non-zero otherwise."
+}
+{
+  "name": "dirs",
+  "synopsis": "[-clpv] [+N] [-N]",
+  "purpose": "Display directory stack.",
+  "description": "Display the list of currently remembered directories.  Directories find their way onto the list\nwith the `pushd' command; you can get back up through the list with the `popd' command.",
+  "options": "-c        clear the directory stack by deleting all of the elements\n-l        do not print tilde-prefixed versions of directories relative to your home directory\n-p        print the directory stack with one entry per line\n-v        print the directory stack with one entry per line prefixed with its position in the stack",
+  "arguments": "+N        Displays the Nth entry counting from the left of the list shown by dirs when invoked without options, starting with zero.\n-N        Displays the Nth entry counting from the right of the list shown by dirs when invoked without options, starting with zero.",
+  "exit_status": "Returns success unless an invalid option is supplied or an error occurs."
+}
+{
+  "name": "pushd",
+  "synopsis": "[-n] [+N | -N | dir]",
+  "purpose": "Add directories to stack.",
+  "description": "Adds a directory to the top of the directory stack, or rotates the stack, making the new top\nof the stack the current working directory.  With no arguments, exchanges the top two directories.",
+  "options": "-n        Suppresses the normal change of directory when adding directories to the stack, so only the stack is manipulated.",
+  "arguments": "+N        Rotates the stack so that the Nth directory (counting from the left of the list shown by `dirs', starting with zero) is at the top.\n-N        Rotates the stack so that the Nth directory (counting from the right of the list shown by `dirs', starting with zero) is at the top.\ndir       Adds DIR to the directory stack at the top, making it the new current working directory.\nThe `dirs' builtin displays the directory stack.",
+  "exit_status": "Returns success unless an invalid argument is supplied or the directory change fails."
+}
+{
+  "name": "popd",
+  "synopsis": "[-n] [+N | -N]",
+  "purpose": "Remove directories from stack.",
+  "description": "Removes entries from the directory stack.  With no arguments, removes the top directory from the stack, and changes to the new top directory.",
+  "options": "-n        Suppresses the normal change of directory when removing directories from the stack, so only the stack is manipulated.",
+  "arguments": "+N        Removes the Nth entry counting from the left of the list shown by `dirs', starting with zero.  For example:\n         `popd +0' removes the first directory, `popd +1' the second.\n-N        Removes the Nth entry counting from the right of the list shown by `dirs', starting with zero.  For example:\n        `popd -0' removes the last directory, `popd -1' the next to last.\n    The `dirs' builtin displays the directory stack.",
+  "exit_status": "Returns success unless an invalid argument is supplied or the directory change fails."
+}
+{
+  "name": "echo",
+  "synopsis": "[-neE] [arg ...]",
+  "purpose": "Write arguments to the standard output.",
+  "description": "Display the ARGs, separated by a single space character and followed by a newline, on the standard output.",
+  "options": "-n        do not append a newline\n-e        enable interpretation of the following backslash escapes\n-E        explicitly suppress interpretation of backslash escapes",
+  "arguments": "",
+  "exit_status": "Returns success unless a write error occurs."
+}
+{
+  "name": "complete",
+  "synopsis": "[-abcdefgjksuv] [-pr] [-DEI] [-o option] [-A action] [-G globpat] [-W wordlist]  [-F function] [-C command] [-X filterpat] [-P prefix] [-S suffix] [name ...]",
+  "purpose": "Specify how arguments are to be completed",
+  "description": "For each NAME, specify how arguments are to be completed.  If no options\nare supplied, existing completion specifications are printed in a way that\nallows them to be reused as input.",
+  "options": "-p        print existing completion specifications in a reusable format\n-r        remove a completion specification for each NAME, or, if no NAMEs are supplied, all completion specifications\n-D        apply the completions and actions as the default for commands without any specific completion defined\n-E        apply the completions and actions to \"empty\" commands -- completion attempted on a blank line\n-I        apply the completions and actions to the initial (usually the command) word",
+  "arguments": "When completion is attempted, the actions are applied in the order the\nuppercase-letter options are listed above.  If multiple options are supplied,\nthe -D option takes precedence over -E, and both take precedence over -I.",
+  "exit_status": "Returns success unless an invalid option is supplied or an error occurs."
+}
+{
+  "name": "ulimit",
+  "synopsis": "[-SHabcdefiklmnpqrstuvxPT] [limit]",
+  "purpose": "Modify shell resource limits.",
+  "description": "Provides control over the resources available to the shell and processes it creates, on systems that allow such control.",
+  "options": "-S        use the `soft' resource limit\n-H        use the `hard' resource limit\n-a        all current limits are reported\n-b        the socket buffer size\n-c        the maximum size of core files created\n-d        the maximum size of a process's data segment\n-e        the maximum scheduling priority (`nice')\n-f        the maximum size of files written by the shell and its children\n-i        the maximum number of pending signals\n//-k        the maximum number of kqueues allocated for this process\n-l        the maximum size a process may lock into memory\n-m        the maximum resident set size\n-n        the maximum number of open file descriptors\n-p        the pipe buffer size\n-q        the maximum number of bytes in POSIX message queues\n-r        the maximum real-time scheduling priority\n-s        the maximum stack size\n-t        the maximum amount of cpu time in seconds\n-u        the maximum number of user processes\n-v        the size of virtual memory\n-x        the maximum number of file locks\n-P        the maximum number of pseudoterminals\n-T        the maximum number of threads\n\nNot all options are available on all platforms.",
+  "arguments": "If LIMIT is given, it is the new value of the specified resource; the\nspecial LIMIT values `soft', `hard', and `unlimited' stand for the\ncurrent soft limit, the current hard limit, and no limit, respectively.\nOtherwise, the current value of the specified resource is printed.  If\nno option is given, then -f is assumed.\n\nValues are in 1024-byte increments, except for -t, which is in seconds,\n-p, which is in increments of 512 bytes, and -u, which is an unscaled\nnumber of processes.",
+  "exit_status": "Returns success unless an invalid option is supplied or an error occurs."
+}
+{
+  "name": "shopt",
+  "synopsis": "[-pqsu] [-o] [optname ...]",
+  "purpose": "Set and unset shell options.",
+  "description": "Change the setting of each shell option OPTNAME.  Without any option\narguments, list each supplied OPTNAME, or all shell options if no\nOPTNAMEs are given, with an indication of whether or not each is set.",
+  "options": "-o        restrict OPTNAMEs to those defined for use with `set -o'\n-p        print each shell option with an indication of its status\n-q        suppress output\n-s        enable (set) each OPTNAME\n-u        disable (unset) each OPTNAME",
+  "arguments": "",
+  "exit_status": "Returns success if OPTNAME is enabled; fails if an invalid option is given or OPTNAME is disabled."
+}
+{
+  "name": "source",
+  "synopsis": "filename [arguments]",
+  "purpose": "Execute commands from a file in the current shell.",
+  "description": "Read and execute commands from FILENAME in the current shell. The entries in $PATH are used to find the directory containing FILENAME. If any ARGUMENTS are supplied, they become the positional parameters when FILENAME is executed.",
+  "options": "",
+  "arguments": "",
+  "exit_status": "Returns the status of the last command executed in FILENAME; fails if FILENAME cannot be read."
+}
+{
+  "name": "jobs",
+  "synopsis": "[-lnprs] [jobspec ...] or jobs -x command [args]",
+  "purpose": "Display status of jobs.",
+  "description": "Lists the active jobs.  JOBSPEC restricts output to that job. Without options, the status of all active jobs is displayed.",
+  "options": "-l        lists process IDs in addition to the normal information\n-n        lists only processes that have changed status since the last notification\n-p        lists process IDs only\n-r        restrict output to running jobs\n-s        restrict output to stopped jobs",
+  "arguments": "If -x is supplied, COMMAND is run after all job specifications that\nappear in ARGS have been replaced with the process ID of that job's\nprocess group leader.",
+  "exit_status": "Returns success unless an invalid option is given or an error occurs. If -x is used, returns the exit status of COMMAND."
+}
+{
+  "name": "mapfile",
+  "synopsis": "[-d delim] [-n count] [-O origin] [-s count] [-t] [-u fd] [-C callback] [-c quantum] [array]",
+  "purpose": "Read lines from the standard input into an indexed array variable.",
+  "description": "Read lines from the standard input into the indexed array variable ARRAY, or from file descriptor FD if the -u option is supplied.  The variable MAPFILE is the default ARRAY.",
+  "options": "-d delim  Use DELIM to terminate lines, instead of newline\n-n count  Copy at most COUNT lines.  If COUNT is 0, all lines are copied\n-O origin Begin assigning to ARRAY at index ORIGIN.  The default index is 0\n-s count  Discard the first COUNT lines read\n-t        Remove a trailing DELIM from each line read (default newline)\n-u fd     Read lines from file descriptor FD instead of the standard input\n-C callback       Evaluate CALLBACK each time QUANTUM lines are read\n-c quantum        Specify the number of lines read between each call to CALLBACK",
+  "arguments": "ARRAY     Array variable name to use for file data\nIf -C is supplied without -c, the default quantum is 5000.  When CALLBACK is evaluated, it is supplied the index of the next array\nelement to be assigned and the line to be assigned to that element as additional arguments.\nIf not supplied with an explicit origin, mapfile will clear ARRAY before assigning to it.",
+  "exit_status": "Returns success unless an invalid option is given or ARRAY is readonly or not an indexed array."
+}
+{
+  "name": "compgen",
+  "synopsis": "[-abcdefgjksuv] [-o option] [-A action] [-G globpat] [-W wordlist]  [-F function] [-C command] [-X filterpat] [-P prefix] [-S suffix] [word]",
+  "purpose": "Display possible completions depending on the options.",
+  "description": "Intended to be used from within a shell function generating possible completions. If the optional WORD argument is supplied, matches against WORD are generated.",
+  "options": "",
+  "arguments": "",
+  "exit_status": "Returns success unless an invalid option is supplied or an error occurs."
+}
+{
+  "name": "exec",
+  "synopsis": "[-cl] [-a name] [command [arguments ...]] [redirection ...]",
+  "purpose": "Replace the shell with the given command.",
+  "description": "Execute COMMAND, replacing this shell with the specified program. ARGUMENTS become the arguments to COMMAND. If COMMAND is not specified, any redirections take effect in the current shell.",
+  "options": "-a name   pass NAME as the zeroth argument to COMMAND\n-c        execute COMMAND with an empty environment\n-l        place a dash in the zeroth argument to COMMAND",
+  "arguments": "If the command cannot be executed, a non-interactive shell exits, unless the shell option `execfail' is set.",
+  "exit_status": "Returns success unless COMMAND is not found or a redirection error occurs."
+}
+{
+  "name": "set",
+  "synopsis": "[-abefhkmnptuvxBCHP] [--] [arg ...]",
+  "purpose": "Set or unset values of shell options and positional parameters.",
+  "description": "Change the value of shell attributes and positional parameters, or display the names and values of shell variables.",
+  "options": "-a  Mark variables which are modified or created for export.\n-b  Notify of job termination immediately.\n-e  Exit immediately if a command exits with a non-zero status.\n-f  Disable file name generation (globbing).\n-h  Remember the location of commands as they are looked up.\n-k  All assignment arguments are placed in the environment for a command, not just those that precede the command name.\n-m  Job control is enabled.\n-n  Read commands but do not execute them.\n-p  Turned on whenever the real and effective user ids do not match. Disables processing of the $ENV file and importing\n    of shell functions.  Turning this option off causes the effective uid and gid to be set to the real uid and gid.\n-t  Exit after reading and executing one command.\n-u  Treat unset variables as an error when substituting.\n-v  Print shell input lines as they are read.\n-x  Print commands and their arguments as they are executed.\n-B  the shell will perform brace expansion\n-C  If set, disallow existing regular files to be overwritten by redirection of output.\n-E  If set, the ERR trap is inherited by shell functions.\n-H  Enable ! style history substitution.  This flag is on by default when the shell is interactive.\n-P  If set, do not resolve symbolic links when executing commands such as cd which change the current directory.\n-T  If set, the DEBUG and RETURN traps are inherited by shell functions.\n--  Assign any remaining arguments to the positional parameters. If there are no remaining arguments, the positional\n    parameters are unset.\n-   Assign any remaining arguments to the positional parameters. The -x and -v options are turned off.",
+  "arguments": "Using + rather than - causes these flags to be turned off. The flags can also be used upon invocation of the shell.\nThe current set of flags may be found in $-. The remaining n ARGs are positional parameters and are assigned, in order,\nto $1, $2, .. $n. If no ARGs are given, all shell variables are printed.",
+  "exit_status": "Returns success unless an invalid option is given."
+}

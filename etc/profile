@@ -1,0 +1,9 @@
+[-]="himBHs"
+[TOSH]="./tosh"
+[TOSHOPTS]=( expand_aliases )
+[TOSHPID]="2"
+[TOSH_SUBSHELL]="0"
+[TOSH_ALIASES]=( [de]="declare" )
+[SHELLOPTS]="allexport:hashall"
+[TMPDIR]="tmp"
+[SHLVL]="1"
