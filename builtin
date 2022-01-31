@@ -13,7 +13,7 @@ args() {
         modify)
             jq -n --rawfile args run/args --rawfile pool run/$page '{$args, $pool}';;
         read_input)
-            jq -n --rawfile args run/args --rawfile input $input --rawfile pool run/pool '{$args, $input, $pool}';;
+            jq -n --rawfile args run/args --rawfile input "$input" --rawfile pool run/pool '{$args, $input, $pool}';;
         lookup)
             jq -n --rawfile args run/args --rawfile page run/$page --rawfile pool run/pool '{$args, $page, $pool}';;
         builtin_read_fs)
@@ -42,7 +42,7 @@ filter() {
                         diff run/pos_params run/res;
                         cp run/res run/shifted;;
                     *)
-                        ;;
+                        cat run/res;;
                 esac
             fi;;
         lookup)
@@ -54,7 +54,7 @@ filter() {
                     hash)
                        cp run/res run/hashes;;
                     *)
-                        ;;
+                        cat  run/res;;
                 esac
             fi;;
         builtin_read_fs)
@@ -83,7 +83,8 @@ filter() {
                 esac
             fi;;
         *)
-            ;;
+            echo Unhandled function: $fn
+            jq '.' $1;;
     esac
 }
 

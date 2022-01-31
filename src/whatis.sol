@@ -22,7 +22,7 @@ function display_man_page(string argv, CommandHelp[] help_files) external pure r
                 return (EXECUTE_SUCCESS, bh);
     }
 
-    function _get_man_text(string flags, CommandHelp help_file) private pure returns (string) {
+    function _get_man_text(string /*flags*/, CommandHelp help_file) private pure returns (string) {
         (string name, , string purpose, , , , , , , ) = help_file.unpack();
         return name + " (1)\t\t\t - " + purpose + "\n";
     }

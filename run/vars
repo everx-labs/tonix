@@ -1,6 +1,6 @@
--x [PWD]="/"
--x [OLDPWD]="/etc"
--x [WD]="11"
+-x [PWD]="/etc"
+-x [OLDPWD]="/"
+-x [WD]="14"
 -x [USER]="boris"
 -- [HOME]="/home/boris"
 -- [LOGNAME]="boris"
@@ -9,6 +9,7 @@
 -- [FUNCNAME]="b_exec"
 -- [LINENO]="0"
 -x [ty]="ioo"
--- [zz]="yyy"
+-- [zz]="xxxx"
 -- [sss]="ddd"
 -x [PATH]="/bin"
+-r [addd]

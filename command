@@ -1,4 +1,4 @@
-set -x
+#set -x
 fn=$1
 shift
 param=$1
@@ -60,9 +60,13 @@ filter() {
             jq -rj '.out' $1 >run/stdout;;
         induce|uadm)
             jq 'if (.ec == "0") then . else empty end' $1 >tmp/delta;
-            if [ -s tmp/delta ]; then
-                cat tmp/delta;
-            fi;;
+            if [ -s tmp/delta ]; then cat tmp/delta; fi;
+            case $util in
+                groupdel|groupmod|userdel|usermod)
+                    if [ -s tmp/delta ]; then ./tmpfs handle_action; fi;;
+                *)
+                    ;;
+            esac;;
         *)
             ;;
     esac

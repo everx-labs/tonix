@@ -118,12 +118,12 @@ library fs {
         return data[file_index];
     }
 
-    function get_passwd_group(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string, string) {
+    function get_passwd_group(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string, string, uint16, uint16) {
         uint16 etc_dir = resolve_absolute_path("/etc", inodes, data);
         (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
         (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
         if (passwd_dir_idx > 0 && passwd_file_type == FT_REG_FILE && group_dir_idx > 0 && group_file_type == FT_REG_FILE)
-            return (get_file_contents(passwd_index, inodes, data), get_file_contents(group_index, inodes, data));
+            return (get_file_contents(passwd_index, inodes, data), get_file_contents(group_index, inodes, data), passwd_index, group_index);
     }
 
     /* Looks for a file name in the directory entry. Returns file index */

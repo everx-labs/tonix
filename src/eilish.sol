@@ -63,16 +63,7 @@ contract eilish is Shell {
         string last_param;
         string opt_args;
         if (!s_args.empty()) {
-            uint p = str.rchr(s_args, ">");
-            if (p > 0) {
-                redir_out = str.tok(s_args, p, " ");
-                s_args = s_args.substr(0, p - 1);
-            }
-            uint q = str.rchr(s_args, "<");
-            if (q > 0) {
-                redir_in = str.tok(s_args, q, " ");
-                s_args = s_args.substr(0, q - 1);
-            }
+            (s_args, redir_in, redir_out) = _parse_redirects(s_args);
             (params, n_params) = stdio.split(s_args, " ");
             (s_flags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
             if (!err.empty())
@@ -104,8 +95,12 @@ contract eilish is Shell {
             exec_line = "./tosh execute_command " + input;
         else if (cmd_type == "function")
             exec_line = "./tosh execute_function " + input;
-        else if (!cmd_type.empty()) {
-            exec_line = "echo error: eilish: " + cmd + " unkown commmand type: " + cmd_type;
+        else {
+            if (!cmd_type.empty())
+                err.append("unknown commmand type: " + cmd_type);
+            else
+                err.append("command not found: " + cmd);
+            exec_line = "echo " + err;
             ec = EXECUTE_FAILURE;
         }
         res = exec_line;
@@ -154,6 +149,20 @@ contract eilish is Shell {
     uint16 constant PST_CONDCMD	    = 256; // parsing a [[...]] command
     uint16 constant PST_CONDEXPR	= 512; // parsing the guts of [[...]]
     uint16 constant PST_ARITHFOR	= 1024; // parsing an arithmetic for command
+
+    function _parse_redirects(string s) internal pure returns (string s_args, string redir_in, string redir_out) {
+        s_args = s;
+        uint p = str.rchr(s, ">");
+        if (p > 0) {
+            redir_out = str.tok(s_args, p, " ");
+            s_args = s_args.substr(0, p - 1);
+        }
+        uint q = str.rchr(s_args, "<");
+        if (q > 0) {
+            redir_in = str.tok(s_args, q, " ");
+            s_args = s_args.substr(0, q - 1);
+        }
+    }
 
     function _parse_params(string[] params, string opt_string) internal pure returns (string s_flags, string[][2] opt_values, string err, string pos_params, string s_attrs) {
         uint n_params = params.length;

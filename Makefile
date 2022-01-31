@@ -1,17 +1,5 @@
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
 UNAME_S:=$(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-	e:=echo -n
-	BASE64:=base64 -w 0
-	date=xargs -I{} date --date=@{} +"%b %d %T"
-	du=du -sb
-endif
-ifeq ($(UNAME_S),Darwin)
-	e:=/bin/echo -n
-	BASE64:=base64
-	date=xargs -I{} date -ur {} +"%b %d %T"
-	du=du -sh
-endif
 
 # Tools directories
 TOOLS_BIN:=~/bin
@@ -50,6 +38,27 @@ dirs:
 
 cc: $(patsubst %,$(BLD)/%.cs,$(BUILTINS))
 	@true
+
+install: dirs cc ccb config hosts bocs
+	echo Tonix has been installed successfully
+
+TOOLS_MAJOR_VERSION:=0.56
+TOOLS_MINOR_VERSION:=0
+TOOLS_VERSION:=$(TOOLS_MAJOR_VERSION).$(TOOLS_MINOR_VERSION)
+TOOLS_ARCHIVE:=tools_$(TOOLS_MAJOR_VERSION)_$(UNAME_S).txz
+TOOLS_URL:=https\://github.com/tonlabs/TON-Solidity-Compiler/releases/download/$(TOOLS_VERSION)/$(TOOLS_ARCHIVE)
+TOOLS_BINARIES:=$(LIB) $(SOLC) $(LINKER) $(TOC)
+$(TOOLS_BINARIES):
+	mkdir -p $(TOOLS_BIN)
+	rm -f $(TOOLS_ARCHIVE)
+	wget $(TOOLS_URL)
+	tar -xJf $(TOOLS_ARCHIVE) -C $(TOOLS_BIN)
+
+tools: $(TOOLS_BINARIES)
+	$(foreach t,$(wordlist 2,4,$^),$t --version;)
+
+config:
+	$(TOC) config --url rfld-dapp01.ds1.itgold.io
 
 $(BLD)/%.tvc: $(SRC)/%.sol
 	$(SOLC) $< -o $(BLD)

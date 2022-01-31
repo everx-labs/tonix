@@ -4,7 +4,7 @@ import "Shell.sol";
 
 contract builtin is Shell {
 
-    function run_builtin(string args) external pure returns (string res) {
+    function run_builtin(string args, string builtins) external pure returns (string res) {
         string flags = vars.val("FLAGS", args);
         string cmd = vars.val("COMMAND", args);
         string s_args = vars.val("@", args);
@@ -14,18 +14,22 @@ contract builtin is Shell {
 
         (bool f_p, bool f_v, bool f_V, bool f_l, bool f_d, bool f_r, bool f_t, bool f_f) = arg.flag_values("pvVldrtf", flags);
         bool p_e = params.empty();
-        if (ec == "1")
-            return "echo error parsing command line";
-        else if (ec == "2")
-            return "echo " + opterr;
 
-        string fn;
-        string page = "pool";
-
+        if (ec != "0")
+            return "echo " + (opterr.empty() ? "error parsing command line" : opterr);
         if (cmd == "builtin")
             return "./ty " + s_args;
 
-        if (cmd == "declare" || cmd == "alias" || cmd == "readonly" || cmd == "export" || cmd == "set" || cmd == "complete" || cmd == "shopt")
+        string line = vars.get_pool_record(cmd, builtins);
+        if (line.empty())
+            return "echo builtin: " + cmd + ": not a shell builtin";
+
+        (string attrs, , string value) = vars.split_var_record(line);
+        if (str.chr(attrs, "n") > 0)
+            return "echo builtin: " + cmd + "is disabled";
+
+        string fn;
+        if (cmd == "declare" || cmd == "alias" || cmd == "readonly" || cmd == "export" || cmd == "set" || cmd == "complete" || cmd == "shopt" || cmd == "enable")
             fn = f_p || p_e ? "print" : "modify";
         else if (cmd == "type" || cmd == "echo" || cmd == "pwd" || cmd == "compgen")
             fn = "print";
@@ -58,22 +62,29 @@ contract builtin is Shell {
         else
             return "echo builtin: " + cmd + ": not a shell builtin";
 
-        if (cmd == "alias" || cmd == "unalias")
+        string page = "pool";
+        if (!value.empty() && str.chr(value, " ") == 0)
+            page = value;
+
+        /*if (cmd == "alias" || cmd == "unalias")
             page = "aliases";
         else if (cmd == "hash")
             page = "hashes";
         else if (cmd == "shift")
             page = "pos_params";
-        else if (cmd == "declare" || cmd == "export" || cmd == "readonly")
-            page = f_f ? "functions" : fn == "print" ? "pool" : "vars";
         else if (cmd == "type")
             page = "pool";
+        else if (cmd == "enable")
+            page = "builtins";
         else if (cmd == "shopt")
             page = "shell_opts";
         else if (cmd == "echo" || cmd == "pwd" || cmd == "cd")
             page = "vars";
         else if (cmd == "dirs" || cmd == "pushd" || cmd == "popd")
-            page = "dir_stack";
+            page = "dir_stack";*/
+
+        if (cmd == "declare" || cmd == "export" || cmd == "readonly")
+            page = f_f ? "functions" : fn == "print" ? "pool" : "vars";
         else if (cmd == "complete" || cmd == "compgen") {
             (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = arg.flag_values("abcdefgj", flags);
             (bool fk, bool fs, bool fu, bool fv, , , , ) = arg.flag_values("ksuv", flags);
@@ -84,7 +95,7 @@ contract builtin is Shell {
                     fe ? "export" :
                     ff ? "filenames" :
                     fg ? "groups" :
-                    fj ? "jobs" :
+                    fj ? "job_list" :
                     fk ? "keywords" :
                     fs ? "services" :
                     fu ? "users" :

@@ -38,13 +38,13 @@ library vars {
     uint16 constant W_FUNCTION  = 11;
     uint16 constant W_ATTR_HASHMAP   = 12;
 
-    function fetch_value(string key, uint16 delimiter, string page) internal returns (string value) {
+    function fetch_value(string key, uint16 delimiter, string page) internal returns (string) {
         string key_pattern = wrap(key, W_SQUARE);
         (string val_pattern_start, string val_pattern_end) = wrap_symbols(delimiter);
         return str.val(page, key_pattern + "=" + val_pattern_start, val_pattern_end);
     }
 
-    function val(string key, string page) internal returns (string value) {
+    function val(string key, string page) internal returns (string) {
         return fetch_value(key, W_DQUOTE, page);
     }
 
@@ -52,11 +52,11 @@ library vars {
         return str.toi(fetch_value(key, W_DQUOTE, page));
     }
 
-    function function_body(string key, string page) internal returns (string value) {
+    function function_body(string key, string page) internal returns (string) {
         return fetch_value(key, W_BRACE, page);
     }
 
-    function get_map_value(string map_name, string page) internal returns (string value) {
+    function get_map_value(string map_name, string page) internal returns (string) {
         return unwrap(fetch_value(map_name, W_PAREN, page));
     }
 
@@ -139,34 +139,34 @@ library vars {
             res.append("-- " + wrap(entries[i][0], W_SQUARE) + (entries[i][1].empty() ? "" : ("=" + wrap(entries[i][1], W_DQUOTE))) + "\n");
     }
 
-    function as_hashmap(string name, string[][2] entries) internal returns (string res) {
+    function as_hashmap(string name, string[][2] entries) internal returns (string) {
         string body;
         for (uint i = 0; i < entries.length; i++)
             body.append(wrap(entries[i][0], W_SQUARE) + "=" + wrap(entries[i][1], W_DQUOTE) + " ");
-        res = "-A " + wrap(name, W_SQUARE) + "=" + wrap(body, W_HASHMAP);
+        return "-A " + wrap(name, W_SQUARE) + "=" + wrap(body, W_HASHMAP);
     }
 
-    function as_indexed_array(string name, string value, string ifs) internal returns (string res) {
+    function as_indexed_array(string name, string value, string ifs) internal returns (string) {
         string body;
         (string[] fields, uint n_fields) = stdio.split(value, ifs);
         for (uint i = 0; i < n_fields; i++)
             body.append(format("[{}]=\"{}\" ", i, fields[i]));
-        res = "-a " + wrap(name, W_SQUARE) + "=" + wrap(body, W_ARRAY);
+        return "-a " + wrap(name, W_SQUARE) + "=" + wrap(body, W_ARRAY);
     }
 
-    function encode_item(string key, string value) internal returns (string res) {
-        res = wrap(key, W_SQUARE) + "=" + wrap(value, W_DQUOTE);
+    function encode_item(string key, string value) internal returns (string) {
+        return wrap(key, W_SQUARE) + "=" + wrap(value, W_DQUOTE);
     }
 
-    function as_attributed_hashmap(string name, string value) internal returns (string res) {
-        res = "-A " + wrap(name, W_SQUARE) + "=" + wrap(value, W_ATTR_HASHMAP);
+    function as_attributed_hashmap(string name, string value) internal returns (string) {
+        return "-A " + wrap(name, W_SQUARE) + "=" + wrap(value, W_ATTR_HASHMAP);
     }
 
     function as_map(string value) internal returns (string res) {
         res = wrap(value, W_HASHMAP);
     }
 
-    function get_array_name(string value, string context) internal returns (string name) {
+    function get_array_name(string value, string context) internal returns (string) {
         (string[] lines, ) = stdio.split(context, "\n");
         string val_pattern = wrap(value, vars.W_SPACE);
         for (string line: lines)
@@ -180,23 +180,34 @@ library vars {
         return cur_value.empty() ? page + " " + new_record : stdio.translate(page, encode_item(name, cur_value), new_record);
     }
 
-    function set_var(string attrs, string token, string pg) internal returns (string page) {
+    function set_var(string attrs, string token, string pg) internal returns (string) {
         (string name, string value) = str.split(token, "=");
         string cur_record = get_pool_record(name, pg);
         string new_record = var_record(attrs, name, value);
-        if (!cur_record.empty()) {
-            (string cur_attrs, ) = str.split(cur_record, " ");
-            (, string cur_value) = str.split(cur_record, "=");
-            string new_value = !value.empty() ? value : !cur_value.empty() ? unwrap(cur_value) : "";
-            new_record = var_record(meld_attr_set(attrs, cur_attrs), name, new_value);
-            page = stdio.translate(pg, cur_record, new_record);
-        } else
-            page = pg + new_record + "\n";
+        if (cur_record.empty())
+            return pg + new_record + "\n";
+
+        (string cur_attrs, , string cur_value) = split_var_record(cur_record);
+        if (str.chr(cur_attrs, "r") > 0)
+            return pg;
+
+        string new_value = !value.empty() ? value : !cur_value.empty() ? unwrap(cur_value) : "";
+        new_record = var_record(meld_attr_set(attrs, cur_attrs), name, new_value);
+        return stdio.translate(pg, cur_record, new_record);
+    }
+
+    function set_var_attr(string attrs, string name, string pg) internal returns (string) {
+        string cur_record = get_pool_record(name, pg);
+        if (cur_record.empty())
+            return pg + var_record(attrs, name, "") + "\n";
+
+        (string cur_attrs, , string cur_value) = split_var_record(cur_record);
+        string new_record = var_record(meld_attr_set(attrs, cur_attrs), name, cur_value);
+        return stdio.translate(pg, cur_record, new_record);
     }
 
     function get_mask_ext(string s_attrs) internal returns (uint16 mask) {
-        uint len = s_attrs.byteLength();
-        for (uint i = 0; i < len; i++) {
+        for (uint i = 0; i < s_attrs.byteLength(); i++) {
             string c = s_attrs.substr(i, 1);
             if (c == "x") mask |= ATTR_EXPORTED;
             if (c == "r") mask |= ATTR_READONLY;
@@ -209,7 +220,7 @@ library vars {
         }
     }
 
-    function mask_base_type(uint16 mask) internal returns (string s_attrs) {
+    function mask_base_type(uint16 mask) internal returns (string) {
         if ((mask & ATTR_ARRAY) > 0) return "a";
         if ((mask & ATTR_FUNCTION) > 0) return "f";
         if ((mask & ATTR_ASSOC) > 0) return "A";
@@ -226,7 +237,7 @@ library vars {
         if (s_attrs == "-") s_attrs.append("-");
     }
 
-    function wrap_symbols(uint16 to) internal returns (string start, string end) {
+    function wrap_symbols(uint16 to) internal returns (string, string) {
         if (to == W_COLON)
             return (":", ":");
         else if (to == W_DQUOTE)
@@ -253,7 +264,7 @@ library vars {
             return ("", "\n");
     }
 
-    function wrap(string s, uint16 to) internal returns (string res) {
+    function wrap(string s, uint16 to) internal returns (string) {
         if (to == W_COLON)
             return ":" + s + ":";
         else if (to == W_DQUOTE)
@@ -284,30 +295,4 @@ library vars {
         uint len = s.byteLength();
         return len > 2 ? s.substr(1, len - 2) : "";
     }
-
-    /*function strrstr(string text, string pattern) internal returns (uint) {
-        uint text_len = text.byteLength();
-        uint pattern_len = pattern.byteLength();
-        if (text_len < pattern_len)
-            return 0;
-        for (uint i = text_len - pattern_len; i > pattern_len; i--)
-            if (text.substr(i, pattern_len) == pattern)
-                return i + 1;
-    }
-
-    function str_context(string text, string pattern, string delimiter) internal returns (string) {
-        uint q = stdio.strstr(text, pattern);
-        if (q > 0) {
-            uint d_len = delimiter.byteLength();
-            string s_head = text.substr(0, q - 1);
-            string s_tail = text.substr(q - 1 + pattern.byteLength());
-
-            uint p = strrstr(s_head, delimiter);
-            string s_before = p > 0 ? s_head.substr(p - 1 + d_len) : s_head;
-            p = stdio.strstr(s_tail, delimiter);
-            string s_after = p > 0 ? s_tail.substr(0, p - 1) : s_tail;
-            return s_before + pattern + s_after;
-        }
-    }*/
-
 }

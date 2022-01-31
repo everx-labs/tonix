@@ -5,7 +5,7 @@ import "Utility.sol";
 contract man is Utility {
 
     function display_man_page(string argv, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags,) = arg.get_args(argv);
+        (string[] params, ,) = arg.get_args(argv);
         string opt_args = vars.get_map_value("OPT_ARGS", argv);
         uint8 command_format = 1;
         if (!vars.val("help", opt_args).empty())

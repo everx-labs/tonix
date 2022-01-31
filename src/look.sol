@@ -25,7 +25,7 @@ contract look is Utility {
         ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
-    function _print(string[] lines, string flags, string term_char, string pattern) private pure returns (string out) {
+    function _print(string[] lines, string /*flags*/, string term_char, string pattern) private pure returns (string out) {
         uint p = str.chr(pattern, term_char);
         if (p > 0)
             pattern = pattern.substr(0, p - 1);

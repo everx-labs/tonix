@@ -4,16 +4,16 @@ import "Utility.sol";
 
 contract mkfs is Utility {
 
-    function main(string argv) external pure returns (uint8 ec, string out, string err) {
-        (string[] params, string flags, ) = arg.get_args(argv);
-        (bool use_fs_type, bool use_root_dir, bool use_inode_size, bool ext3_journal, bool dry_run, bool sb_only, , ) = arg.flag_values("tdIjnS", flags);
-        string fs_type;
+//    function main(string argv) external pure returns (uint8 ec, string out, string err) {
+//        (string[] params, , ) = arg.get_args(argv);
+//        (bool use_fs_type, bool use_root_dir, bool use_inode_size, bool ext3_journal, bool dry_run, bool sb_only, , ) = arg.flag_values("tdIjnS", flags);
+//        string fs_type;
 
-        for (string param: params) {
+//        for (string param: params) {
 
-        }
-        uint16 inode_size = use_inode_size ? str.toi(params[1]) : fs.DEF_INODE_SIZE;
-        fs_type = params[0];
+//        }
+//        uint16 inode_size = use_inode_size ? str.toi(params[1]) : fs.DEF_INODE_SIZE;
+//        fs_type = params[0];
 
         /*return SuperBlock(true, true, fs_type, inode_count, block_count, MAX_INODES - inode_count - first_inode, MAX_BLOCKS - block_count,
             block_size, now, 0, now, 0, 0, 1, 0, inode_size);*/
@@ -22,7 +22,7 @@ contract mkfs is Utility {
             uint16 free_blocks, uint16 block_size, uint32 created_at, uint32 last_mount_time, uint32 last_write_time, uint16 mount_count,
             uint16 max_mount_count, uint16 lifetime_writes, uint16 first_inode, uint16 inode_size) = sb.unpack();*/
 
-    }
+//    }
 
     function _get_parent_offset(string parent, string[] file_list) internal pure returns (uint8 offset) {
         for (uint i = 0; i < file_list.length; i++)
@@ -34,7 +34,7 @@ contract mkfs is Utility {
         return _get_device_fs(devices);
     }
 
-    function t_mkfs(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
+    function t_mkfs(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell /*c*/, string /*out*/) {
         (inodes, data) = _get_system_init(config);
     }
     function t_mkfs_2(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
@@ -80,7 +80,7 @@ contract mkfs is Utility {
     }
 
     function _process_config_line(string line) internal pure returns (TvmBuilder b) {
-        (string name, uint8 node_type, uint8 content_type, bytes content) = _parse_config_line(line);
+        (, uint8 node_type, , bytes content) = _parse_config_line(line);
         if (node_type == FT_BLKDEV) {
             (uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks) = _parse_blkdev(content);
             uint16 device_id = (uint16(major_id) << 8) + minor_id;
@@ -104,7 +104,6 @@ contract mkfs is Utility {
         DeviceInfo host_device_info;
         uint16 host_device_id;
         uint16 block_size;
-        uint16 block_count;
         string[] file_list = ["/"];
 
         uint16 n_dirs;
@@ -190,7 +189,7 @@ contract mkfs is Utility {
     }
 
     function _inode_string(Inode inode) internal pure returns (string) {
-        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = inode.unpack();
+        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , ) = inode.unpack();
         return format("PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", mode, owner_id, group_id, n_links, device_id, n_blocks, file_size);
     }
 
@@ -433,7 +432,7 @@ contract mkfs is Utility {
     }
 
     function _parse_device_info_2(string dev_info_s) internal pure returns (string dev_name, uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks, uint16 device_id) {
-        (string name, uint8 node_type, uint8 content_type, bytes content) = _parse_config_line(dev_info_s);
+        (string name, uint8 node_type, , bytes content) = _parse_config_line(dev_info_s);
         if (node_type == FT_BLKDEV) {
             dev_name = name;
             (major_id, minor_id, block_size, n_blocks) = _parse_blkdev(content);
@@ -445,7 +444,8 @@ contract mkfs is Utility {
         uint8 n = 0;
         string[] file_list = ["sb_set"];
         (string[] config_lines, uint config_line_count) = stdio.split(config, "\n");
-        (string dev_name, uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks, uint16 host_device_id) = _parse_device_info_2(config_lines[0]);
+//        (string dev_name, uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks, uint16 host_device_id) = _parse_device_info_2(config_lines[0]);
+        (, , , uint16 block_size, , uint16 host_device_id) = _parse_device_info_2(config_lines[0]);
         uint16 block_count;
 
         for (uint j = 1; j < config_line_count; j++) {

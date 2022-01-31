@@ -9,7 +9,7 @@ contract lsblk is Utility {
         err = "";
         ( , string[] params, string flags, ) = arg.get_env(argv);
         ec = EXECUTE_SUCCESS;
-        (bool print_all_devices, bool human_readable, bool print_header, bool print_fsinfo, bool print_permissions, bool full_path, , ) =
+        (/*bool print_all_devices*/, bool human_readable, bool print_header, bool print_fsinfo, bool print_permissions, bool full_path, , ) =
             arg.flag_values("abnfmp", flags);
         bool print_device_info = !print_fsinfo && !print_permissions;
         string[][] table;

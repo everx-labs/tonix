@@ -21,7 +21,7 @@ contract shift is Shell {
         string dbg_x = vars.val("OPT_ERR", pool);
         string redir_in = vars.val("REDIR_IN", pool);
         string redir_out = vars.val("REDIR_OUT", pool);
-        string pos_args = vars.val("POS_ARGS", pool);
+//        string pos_args = vars.val("POS_ARGS", pool);
         string opt_args = vars.val("OPT_ARGS", pool);
 
         uint16 n_params = str.toi(s_n_params);

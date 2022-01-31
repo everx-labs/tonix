@@ -6,7 +6,8 @@ contract mke2fs is Utility {
 
 //    function main(string argv) external pure returns (uint8 ec, string out, string err) {
     function exec(string argv) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
-        (string[] params, string flags, ) = arg.get_args(argv);
+//        (string[] params, string flags, ) = arg.get_args(argv);
+        out = "";
 //    function exec(string config) external pure returns (string out, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
 //        (bool use_block_size, bool use_root_dir, bool use_inode_size, bool ext3_journal, bool dry_run, bool sb_only, , ) = arg.flag_values("bdIjnS", flags);
         (inodes, data) = _get_system_init(argv);
@@ -22,9 +23,9 @@ contract mke2fs is Utility {
         return _get_device_fs(devices);
     }
 
-    function t_mkfs(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
-        (inodes, data) = _get_system_init(config);
-    }
+//    function t_mkfs(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
+//        (inodes, data) = _get_system_init(config);
+//    }
     function t_mkfs_2(string config) external pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, TvmCell c, string out) {
         return _mkfs(config);
     }
@@ -68,7 +69,7 @@ contract mke2fs is Utility {
     }
 
     function _process_config_line(string line) internal pure returns (TvmBuilder b) {
-        (string name, uint8 node_type, uint8 content_type, bytes content) = _parse_config_line(line);
+        (, uint8 node_type, , bytes content) = _parse_config_line(line);
         if (node_type == FT_BLKDEV) {
             (uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks) = _parse_blkdev(content);
             uint16 device_id = (uint16(major_id) << 8) + minor_id;
@@ -92,7 +93,6 @@ contract mke2fs is Utility {
         DeviceInfo host_device_info;
         uint16 host_device_id;
         uint16 block_size;
-        uint16 block_count;
         string[] file_list = ["/"];
 
         uint16 n_dirs;
@@ -176,7 +176,7 @@ contract mke2fs is Utility {
     }
 
     function _inode_string(Inode inode) internal pure returns (string) {
-        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = inode.unpack();
+        (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , ) = inode.unpack();
         return format("PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", mode, owner_id, group_id, n_links, device_id, n_blocks, file_size);
     }
 
@@ -421,7 +421,7 @@ contract mke2fs is Utility {
     }
 
     function _parse_device_info_2(string dev_info_s) internal pure returns (string dev_name, uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks, uint16 device_id) {
-        (string name, uint8 node_type, uint8 content_type, bytes content) = _parse_config_line(dev_info_s);
+        (string name, uint8 node_type, , bytes content) = _parse_config_line(dev_info_s);
         if (node_type == FT_BLKDEV) {
             dev_name = name;
             (major_id, minor_id, block_size, n_blocks) = _parse_blkdev(content);
@@ -431,8 +431,6 @@ contract mke2fs is Utility {
 
     function _get_bare_fs() internal pure returns (mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) {
         uint16 n = 0;
-        uint16 block_size = fs.DEF_BLOCK_SIZE;
-        uint16 n_blocks = fs.MAX_BLOCKS;
         uint16 host_device_id = 0;
         uint16 block_count;
 
@@ -440,7 +438,7 @@ contract mke2fs is Utility {
         (inodes[n], data[n]) = inode.get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, ROOT, inode.get_dots(n, n));
         block_count++;
 
-        SuperBlock sb = _get_default_sb("bfs", fs.DEF_BLOCK_SIZE, n, inodes, data);
+//        SuperBlock sb = _get_default_sb("bfs", fs.DEF_BLOCK_SIZE, n, inodes, data);
         bytes inodes_dump = _write_inodes(inodes, data);
 
         data[SB_INODES_TABLE] = inodes_dump;
@@ -452,7 +450,7 @@ contract mke2fs is Utility {
         uint8 n = 0;
         string[] file_list = ["sb_set"];
         (string[] config_lines, uint config_line_count) = stdio.split(config, "\n");
-        (, , , uint16 block_size, uint16 n_blocks, uint16 host_device_id) = _parse_device_info_2(config_lines[0]);
+        (, , , uint16 block_size, , uint16 host_device_id) = _parse_device_info_2(config_lines[0]);
         uint16 block_count;
 
         for (uint j = 1; j < config_line_count; j++) {
@@ -547,11 +545,12 @@ contract mke2fs is Utility {
     function _get_default_sb(string name, uint16 block_size, uint16 first_inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (SuperBlock sb) {
         uint16 inode_count;
         uint16 block_count;
-        for ((uint16 i, Inode inode): inodes) {
-            inode_count++;
+        for ((uint16 i, ): inodes) {
+            if (i > 0)
+                inode_count++;
             block_count++;
         }
-        for ((uint16 i, bytes bts): data)
+        for ((, bytes bts): data)
             block_count += uint16(bts.length / block_size) + 1;
 
         return SuperBlock(true, true, name, inode_count, block_count, fs.MAX_INODES - inode_count - first_inode, fs.MAX_BLOCKS - block_count,
@@ -568,7 +567,7 @@ contract mke2fs is Utility {
             mount_count, max_mount_count, lifetime_writes, first_inode, inode_size);
     }
 
-    function _write_inodes(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bytes out) {
+    function _write_inodes(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) /*data*/) internal pure returns (bytes out) {
         for ((uint16 i, Inode ino): inodes) {
             (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, string file_name) = ino.unpack();
             out.append(format("{} {} {} {} {} {} {} {} {} {} {}\n", i, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size, modified_at, last_modified, file_name));

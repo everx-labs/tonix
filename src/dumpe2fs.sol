@@ -10,8 +10,9 @@ contract dumpe2fs is Utility {
         ec = EXECUTE_SUCCESS;
         (bool sb_only, bool image_fs, , , , , , ) = arg.flag_values("hi", flags);
 
+        SuperBlock sblk = sb.get_sb(inodes, data);
         if (sb_only)
-            out = sb.display_sb(inodes, data);
+            out = sb.display_sb(sblk);
 
         if (image_fs) {
             string s1 = _dump_e2fs(2, inodes, data);
@@ -63,7 +64,8 @@ contract dumpe2fs is Utility {
     }
 
     function _dump_e2fs(uint8 level, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out) {
-        out = sb.display_sb(inodes, data);
+        SuperBlock sblk = sb.get_sb(inodes, data);
+        out = sb.display_sb(sblk);
 
         for ((uint16 i, Inode ino): inodes) {
             (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();

@@ -4,13 +4,14 @@ import "Shell.sol";
 
 contract echo is Shell {
 
-    function print(string args, string /*pool*/) external pure returns (uint8 ec, string out) {
+    function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
         bool no_trailing_newline = arg.flag_set("n", flags);
         out = stdio.join_fields(params, " ");
         if (!no_trailing_newline)
             out.append("\n");
-        ec = EXECUTE_SUCCESS;
+        if (!pool.empty())
+            ec = EXECUTE_SUCCESS;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -15,7 +15,7 @@ contract test is Shell {
         bool result;
         if (arg_2.empty()) {
             if (str.chr("aesbcdfhLpSgukrwxOGN", op) > 0)
-                result = _eval_file_unary(op, arg_1, args, pool, inodes, data);
+                result = _eval_file_unary(op, arg_1, pool, inodes, data);
 //            else if (str.chr("ovR", op) > 0)
 //                result = _eval_option(op, arg_1, e);
             else
@@ -68,7 +68,7 @@ contract test is Shell {
         return false;
     }
 
-    function _eval_file_unary(string op, string path, string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
+    function _eval_file_unary(string op, string path, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
         uint16 wd_index = vars.int_val("WD", pool);
 //        (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, ROOT_DIR, inodes, data);
         (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, wd_index, inodes, data);
