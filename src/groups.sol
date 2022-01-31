@@ -7,14 +7,8 @@ contract groups is Utility {
     function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
         (, string[] params, , ) = arg.get_env(argv);
 
-//        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
-
-        /*for ((uint16 i, string s): user)
-            out.append(str.toa(i) + " => " + s + "\n");
-        for ((uint16 i, string s): group)
-            out.append(str.toa(i) + " => " + s + "\n");*/
         string user_name = vars.val("USER", argv);
-        (, string etc_group) = fs.get_passwd_group(inodes, data);
+        (, string etc_group, , ) = fs.get_passwd_group(inodes, data);
 
         if (params.empty()) {
             (string primary, string[] supp) = uadmin.user_groups(user_name, etc_group);

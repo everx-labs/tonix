@@ -12,7 +12,7 @@ contract lslogins is Utility {
         bool print_user = !flag_system || flag_user;
         string field_separator;
         uint16 uid = vars.int_val("UID", argv);
-        (string etc_passwd, ) = fs.get_passwd_group(inodes, data);
+        (string etc_passwd, , , ) = fs.get_passwd_group(inodes, data);
 
         if (colon)
             field_separator = ":";

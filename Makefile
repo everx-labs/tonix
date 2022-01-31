@@ -39,7 +39,7 @@ dirs:
 cc: $(patsubst %,$(BLD)/%.cs,$(BUILTINS))
 	@true
 
-install: dirs cc
+install: dirs cc ccb hosts bocs
 	echo Tonix has been installed successfully
 	$(TOC) config --url rfld-dapp01.ds1.itgold.io
 
