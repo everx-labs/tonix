@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "compgen",
+    "synopsis": "[-abcdefgjksuv] [-o option] [-A action] [-G globpat] [-W wordlist]  [-F function] [-C command] [-X filterpat] [-P prefix] [-S suffix] [word]",
+    "purpose": "Display possible completions depending on the options.",
+    "description": "Intended to be used from within a shell function generating possible completions. If the optional WORD argument is supplied, matches against WORD are generated.",
+    "options": "",
+    "arguments": "",
+    "exit_status": "Returns success unless an invalid option is supplied or an error occurs."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "ps",
+    "synopsis": "[options]",
+    "purpose": "report a snapshot of the current processes",
+    "description": "Displays information about a selection of the active processes.",
+    "options": "-e      select all processes\n-f      do full-format listing\n-F      extra full format",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

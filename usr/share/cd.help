@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "cd",
+    "synopsis": "[-L|[-P [-e]] [-@]] [dir]",
+    "purpose": "Change the shell working directory.",
+    "description": "Change the current directory to DIR. The default DIR is the value of the HOME shell variable. The variable CDPATH\ndefines the search path for the directory containing DIR. Alternative directory names in CDPATH are separated\nby a colon (:). A null directory name is the same as the current directory. If DIR begins with a slash (/), then\nCDPATH is not used.\nIf the directory is not found, and the shell option `cdable_vars' is set, the word is assumed\nto be a variable name. If that variable has a value, its value is used for DIR.",
+    "options": "-L        force symbolic links to be followed: resolve symbolic links in DIR after processing instances of `..'\n-P        use the physical directory structure without following symbolic links: resolve symbolic links in DIR\nbefore processing instances of `..'\n-e        if the -P option is supplied, and the current working directory cannot be determined successfully, exit with a non-zero status\n-@        on systems that support it, present a file with extended attributes as a directory containing the file attributes",
+    "arguments": "The default is to follow symbolic links, as if `-L' were specified. `..' is processed by removing the immediately\nprevious pathname component back to a slash or the beginning of DIR.",
+    "exit_status": "Returns 0 if the directory is changed, and if $PWD is set successfully when -P is used; non-zero otherwise."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "cat",
+    "synopsis": "[OPTION]... [FILE]...",
+    "purpose": "concatenate files and print on the standard output",
+    "description": "Concatenate FILE(s) to standard output.",
+    "options": "-A      equivalent to -vET\n-b      number nonempty output lines, overrides -n\n-e      equivalent to -vE\n-E      display $ at end of each line\n-n      number all output lines\n-s      suppress repeated empty output lines\n-t      equivalent to -vT\n-T      display TAB characters as ^I\n-u      (ignored)\n-v      use ^ and M- notation, except for LFD and TAB",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "none known so far",
+    "see_also": "tac(1)",
+    "version": "0.01"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "hostname",
+    "synopsis": "[-afis]",
+    "purpose": "show or set the system's host name",
+    "description": "Display the system's hostname and address",
+    "options": "-a      alias names\n-f      long host name (FQDN)\n-i      addresses for the host name\n-s      short host name",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

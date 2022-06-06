@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "lslogins",
+    "synopsis": "[options] [-s] [username]",
+    "purpose": "display information about known users in the system",
+    "description": "Examine the wtmp and btmp logs, /etc/shadow (if necessary) and /etc/passwd and output the desired data.",
+    "options": "-c      display data in a format similar to /etc/passwd\n-e      display in an export-able output format\n-n      display each piece of information on a new line\n-r      display in raw mode\n-s      display system accounts\n-u      display user accounts\n-z      delimit user entries with a nul character",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

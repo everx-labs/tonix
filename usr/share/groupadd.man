@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "groupadd",
+    "synopsis": "[options] group",
+    "purpose": "create a new group",
+    "description": "Creates a new group account using the default values from the system.",
+    "options": "-f     exit successfully if the group already exists, and cancel -g if the GID is already used\n-g      use GID for the new group\n-r      create a system group",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

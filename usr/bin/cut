@@ -1,0 +1,1 @@
+(cd /home/boris/tonix/tmp/usr/bin/cut && jq '{p_in: .p}' /home/boris/tonix/run/proc >cut.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main cut.args >/home/boris/tonix/run/proc_out )

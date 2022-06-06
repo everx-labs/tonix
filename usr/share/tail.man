@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "tail",
+    "synopsis": "[OPTION]... [FILE]...",
+    "purpose": "output the last part of files",
+    "description": "Print the last 10 lines of each FILE to standard output. With more than one FILE, precede each with a header giving the file name.",
+    "options": "-c     output the last NUM bytes; or use -c +NUM to output starting with byte NUM of each file\n-n      output the last NUM lines, instead of the last 10;  or use -n +NUM to output starting with line NUM\n-q      never output headers giving file names\n-v      always output headers giving file names\n-z      line delimiter is NUL, not newline",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "positive argument values are not yet implemented",
+    "see_also": "head",
+    "version": "0.01"
+  }
+}

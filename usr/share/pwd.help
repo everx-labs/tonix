@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "pwd",
+    "synopsis": "[-LP]",
+    "purpose": "Print the name of the current working directory.",
+    "description": "",
+    "options": "-L        print the value of $PWD if it names the current working directory\n-P        print the physical directory, without any symbolic links\nBy default, pwd behaves as if -L were specified.",
+    "arguments": "",
+    "exit_status": "Returns 0 unless an invalid option is given or the current directory cannot be read."
+  }
+}

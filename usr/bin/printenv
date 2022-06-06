@@ -1,0 +1,1 @@
+(cd /home/boris/tonix/tmp/usr/bin/printenv && jq '{p_in: .p}' /home/boris/tonix/run/proc >printenv.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main printenv.args >/home/boris/tonix/run/proc_out )

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "usermod",
+    "synopsis": "[options] LOGIN",
+    "purpose": "modify a user account",
+    "description": "Modifies the system account files to reflect the changes that are specified on the command line.",
+    "options": "-a      add the user to the supplementary groups mentioned by the -G option\n-g      force use GROUP as new primary group\n-G      a list of supplementary groups separated from the next by a comma",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

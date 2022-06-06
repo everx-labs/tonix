@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "shift",
+    "synopsis": "[n]",
+    "purpose": "Shift positional parameters.",
+    "description": "Rename the positional parameters $N+1,$N+2 ... to $1,$2 ...  If N is not given, it is assumed to be 1.",
+    "options": "",
+    "arguments": "",
+    "exit_status": "Returns success unless N is negative or greater than $#."
+  }
+}

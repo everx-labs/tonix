@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "groupmod",
+    "synopsis": "[options] GROUP",
+    "purpose": "modify a group definition on the system",
+    "description": "Modifies the definition of the specified GROUP by modifying the appropriate entry in the group database.",
+    "options": "-g     the group ID of the given GROUP will be changed to GID\n-n      the name of the group will be changed from GROUP to NEW_GROUP name",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

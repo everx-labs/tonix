@@ -1,0 +1,169 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "main",
+			"inputs": [
+				{"components":[{"components":[{"name":"cr_users","type":"uint16"},{"name":"cr_uid","type":"uint16"},{"name":"cr_ruid","type":"uint16"},{"name":"cr_svuid","type":"uint16"},{"name":"cr_ngroups","type":"uint8"},{"name":"cr_rgid","type":"uint16"},{"name":"cr_svgid","type":"uint16"},{"name":"cr_loginclass","type":"string"},{"name":"cr_flags","type":"uint16"},{"name":"cr_groups","type":"uint16[]"}],"name":"p_ucred","type":"tuple"},{"components":[{"name":"fdt_nfiles","type":"uint16"},{"components":[{"name":"attr","type":"uint256"},{"name":"flags","type":"uint16"},{"name":"file","type":"uint16"},{"name":"path","type":"string"},{"name":"offset","type":"uint32"},{"components":[{"name":"buf","type":"bytes"},{"name":"error","type":"uint8"},{"name":"size","type":"uint32"},{"name":"len","type":"uint16"},{"name":"flags","type":"uint32"},{"name":"sect_len","type":"uint16"},{"name":"rec_off","type":"uint32"}],"name":"buf","type":"tuple"}],"name":"fdt_ofiles","type":"tuple[]"}],"name":"p_fd","type":"tuple"},{"components":[{"components":[{"name":"attr","type":"uint256"},{"name":"flags","type":"uint16"},{"name":"file","type":"uint16"},{"name":"path","type":"string"},{"name":"offset","type":"uint32"},{"components":[{"name":"buf","type":"bytes"},{"name":"error","type":"uint8"},{"name":"size","type":"uint32"},{"name":"len","type":"uint16"},{"name":"flags","type":"uint32"},{"name":"sect_len","type":"uint16"},{"name":"rec_off","type":"uint32"}],"name":"buf","type":"tuple"}],"name":"pwd_cdir","type":"tuple"},{"components":[{"name":"attr","type":"uint256"},{"name":"flags","type":"uint16"},{"name":"file","type":"uint16"},{"name":"path","type":"string"},{"name":"offset","type":"uint32"},{"components":[{"name":"buf","type":"bytes"},{"name":"error","type":"uint8"},{"name":"size","type":"uint32"},{"name":"len","type":"uint16"},{"name":"flags","type":"uint32"},{"name":"sect_len","type":"uint16"},{"name":"rec_off","type":"uint32"}],"name":"buf","type":"tuple"}],"name":"pwd_rdir","type":"tuple"},{"name":"pd_cmask","type":"uint16"}],"name":"p_pd","type":"tuple"},{"components":[{"components":[{"name":"rlim_cur","type":"uint32"},{"name":"rlim_max","type":"uint32"}],"name":"pl_rlimit","type":"tuple[]"},{"name":"pl_refcnt","type":"uint16"}],"name":"p_limit","type":"tuple"},{"name":"p_flag","type":"uint32"},{"name":"p_pid","type":"uint16"},{"name":"p_oppid","type":"uint16"},{"name":"p_comm","type":"string"},{"components":[{"name":"sy_call","type":"uint16"},{"name":"sy_narg","type":"uint8"}],"name":"p_sysent","type":"tuple[]"},{"components":[{"name":"ar_length","type":"uint16"},{"name":"ar_args","type":"string[]"},{"components":[{"name":"argv","type":"string"},{"name":"flags","type":"string"},{"name":"sargs","type":"string"},{"name":"n_params","type":"uint16"},{"name":"pos_params","type":"string[]"},{"name":"ec","type":"uint8"},{"name":"last_param","type":"string"},{"name":"opt_err","type":"string"},{"name":"redir_in","type":"string"},{"name":"redir_out","type":"string"},{"components":[{"name":"d_fileno","type":"uint16"},{"name":"d_type","type":"uint8"},{"name":"d_name","type":"string"}],"name":"pos_args","type":"tuple[]"},{"name":"opt_values","type":"string[][]"}],"name":"ar_misc","type":"tuple"}],"name":"p_args","type":"tuple"},{"name":"environ","type":"string[]"},{"name":"p_xexit","type":"uint16"},{"name":"p_numthreads","type":"uint16"},{"name":"p_leader","type":"uint16"}],"name":"p_in","type":"tuple"}
+			],
+			"outputs": [
+				{"components":[{"components":[{"name":"cr_users","type":"uint16"},{"name":"cr_uid","type":"uint16"},{"name":"cr_ruid","type":"uint16"},{"name":"cr_svuid","type":"uint16"},{"name":"cr_ngroups","type":"uint8"},{"name":"cr_rgid","type":"uint16"},{"name":"cr_svgid","type":"uint16"},{"name":"cr_loginclass","type":"string"},{"name":"cr_flags","type":"uint16"},{"name":"cr_groups","type":"uint16[]"}],"name":"p_ucred","type":"tuple"},{"components":[{"name":"fdt_nfiles","type":"uint16"},{"components":[{"name":"attr","type":"uint256"},{"name":"flags","type":"uint16"},{"name":"file","type":"uint16"},{"name":"path","type":"string"},{"name":"offset","type":"uint32"},{"components":[{"name":"buf","type":"bytes"},{"name":"error","type":"uint8"},{"name":"size","type":"uint32"},{"name":"len","type":"uint16"},{"name":"flags","type":"uint32"},{"name":"sect_len","type":"uint16"},{"name":"rec_off","type":"uint32"}],"name":"buf","type":"tuple"}],"name":"fdt_ofiles","type":"tuple[]"}],"name":"p_fd","type":"tuple"},{"components":[{"components":[{"name":"attr","type":"uint256"},{"name":"flags","type":"uint16"},{"name":"file","type":"uint16"},{"name":"path","type":"string"},{"name":"offset","type":"uint32"},{"components":[{"name":"buf","type":"bytes"},{"name":"error","type":"uint8"},{"name":"size","type":"uint32"},{"name":"len","type":"uint16"},{"name":"flags","type":"uint32"},{"name":"sect_len","type":"uint16"},{"name":"rec_off","type":"uint32"}],"name":"buf","type":"tuple"}],"name":"pwd_cdir","type":"tuple"},{"components":[{"name":"attr","type":"uint256"},{"name":"flags","type":"uint16"},{"name":"file","type":"uint16"},{"name":"path","type":"string"},{"name":"offset","type":"uint32"},{"components":[{"name":"buf","type":"bytes"},{"name":"error","type":"uint8"},{"name":"size","type":"uint32"},{"name":"len","type":"uint16"},{"name":"flags","type":"uint32"},{"name":"sect_len","type":"uint16"},{"name":"rec_off","type":"uint32"}],"name":"buf","type":"tuple"}],"name":"pwd_rdir","type":"tuple"},{"name":"pd_cmask","type":"uint16"}],"name":"p_pd","type":"tuple"},{"components":[{"components":[{"name":"rlim_cur","type":"uint32"},{"name":"rlim_max","type":"uint32"}],"name":"pl_rlimit","type":"tuple[]"},{"name":"pl_refcnt","type":"uint16"}],"name":"p_limit","type":"tuple"},{"name":"p_flag","type":"uint32"},{"name":"p_pid","type":"uint16"},{"name":"p_oppid","type":"uint16"},{"name":"p_comm","type":"string"},{"components":[{"name":"sy_call","type":"uint16"},{"name":"sy_narg","type":"uint8"}],"name":"p_sysent","type":"tuple[]"},{"components":[{"name":"ar_length","type":"uint16"},{"name":"ar_args","type":"string[]"},{"components":[{"name":"argv","type":"string"},{"name":"flags","type":"string"},{"name":"sargs","type":"string"},{"name":"n_params","type":"uint16"},{"name":"pos_params","type":"string[]"},{"name":"ec","type":"uint8"},{"name":"last_param","type":"string"},{"name":"opt_err","type":"string"},{"name":"redir_in","type":"string"},{"name":"redir_out","type":"string"},{"components":[{"name":"d_fileno","type":"uint16"},{"name":"d_type","type":"uint8"},{"name":"d_name","type":"string"}],"name":"pos_args","type":"tuple[]"},{"name":"opt_values","type":"string[][]"}],"name":"ar_misc","type":"tuple"}],"name":"p_args","type":"tuple"},{"name":"environ","type":"string[]"},{"name":"p_xexit","type":"uint16"},{"name":"p_numthreads","type":"uint16"},{"name":"p_leader","type":"uint16"}],"name":"p","type":"tuple"}
+			]
+		},
+		{
+			"name": "get_device_fs",
+			"inputs": [
+				{"name":"devices","type":"string"}
+			],
+			"outputs": [
+				{"components":[{"name":"mode","type":"uint16"},{"name":"owner_id","type":"uint16"},{"name":"group_id","type":"uint16"},{"name":"n_links","type":"uint16"},{"name":"device_id","type":"uint16"},{"name":"n_blocks","type":"uint16"},{"name":"file_size","type":"uint32"},{"name":"modified_at","type":"uint32"},{"name":"last_modified","type":"uint32"},{"name":"file_name","type":"string"}],"name":"inodes","type":"map(uint16,tuple)"},
+				{"name":"data","type":"map(uint16,bytes)"}
+			]
+		},
+		{
+			"name": "get_arr_fs",
+			"inputs": [
+				{"name":"nodes","type":"uint256[]"},
+				{"name":"blocks","type":"bytes[]"}
+			],
+			"outputs": [
+				{"components":[{"name":"mode","type":"uint16"},{"name":"owner_id","type":"uint16"},{"name":"group_id","type":"uint16"},{"name":"n_links","type":"uint16"},{"name":"device_id","type":"uint16"},{"name":"n_blocks","type":"uint16"},{"name":"file_size","type":"uint32"},{"name":"modified_at","type":"uint32"},{"name":"last_modified","type":"uint32"},{"name":"file_name","type":"string"}],"name":"inodes","type":"map(uint16,tuple)"},
+				{"name":"data","type":"map(uint16,bytes)"}
+			]
+		},
+		{
+			"name": "arr_to_cell",
+			"inputs": [
+				{"name":"nodes","type":"uint256[]"},
+				{"name":"blocks","type":"bytes[]"}
+			],
+			"outputs": [
+				{"name":"cells","type":"cell[]"}
+			]
+		},
+		{
+			"name": "cell_to_arr",
+			"inputs": [
+				{"name":"cells","type":"cell[]"}
+			],
+			"outputs": [
+				{"name":"nodes","type":"uint256[]"},
+				{"name":"blocks","type":"bytes[]"}
+			]
+		},
+		{
+			"name": "to_arr_fs",
+			"inputs": [
+				{"components":[{"name":"mode","type":"uint16"},{"name":"owner_id","type":"uint16"},{"name":"group_id","type":"uint16"},{"name":"n_links","type":"uint16"},{"name":"device_id","type":"uint16"},{"name":"n_blocks","type":"uint16"},{"name":"file_size","type":"uint32"},{"name":"modified_at","type":"uint32"},{"name":"last_modified","type":"uint32"},{"name":"file_name","type":"string"}],"name":"inodes","type":"map(uint16,tuple)"},
+				{"name":"data","type":"map(uint16,bytes)"}
+			],
+			"outputs": [
+				{"name":"nodes","type":"uint256[]"},
+				{"name":"blocks","type":"bytes[]"}
+			]
+		},
+		{
+			"name": "t_mkfs",
+			"inputs": [
+				{"name":"config","type":"string"}
+			],
+			"outputs": [
+				{"components":[{"name":"mode","type":"uint16"},{"name":"owner_id","type":"uint16"},{"name":"group_id","type":"uint16"},{"name":"n_links","type":"uint16"},{"name":"device_id","type":"uint16"},{"name":"n_blocks","type":"uint16"},{"name":"file_size","type":"uint32"},{"name":"modified_at","type":"uint32"},{"name":"last_modified","type":"uint32"},{"name":"file_name","type":"string"}],"name":"inodes","type":"map(uint16,tuple)"},
+				{"name":"data","type":"map(uint16,bytes)"},
+				{"name":"value2","type":"cell"},
+				{"name":"value3","type":"string"}
+			]
+		},
+		{
+			"name": "t_mkfs_2",
+			"inputs": [
+				{"name":"config","type":"string"}
+			],
+			"outputs": [
+				{"components":[{"name":"mode","type":"uint16"},{"name":"owner_id","type":"uint16"},{"name":"group_id","type":"uint16"},{"name":"n_links","type":"uint16"},{"name":"device_id","type":"uint16"},{"name":"n_blocks","type":"uint16"},{"name":"file_size","type":"uint32"},{"name":"modified_at","type":"uint32"},{"name":"last_modified","type":"uint32"},{"name":"file_name","type":"string"}],"name":"inodes","type":"map(uint16,tuple)"},
+				{"name":"data","type":"map(uint16,bytes)"},
+				{"name":"c","type":"cell"},
+				{"name":"out","type":"string"}
+			]
+		},
+		{
+			"name": "parse_fs",
+			"inputs": [
+				{"name":"text","type":"string"}
+			],
+			"outputs": [
+				{"name":"out","type":"string"},
+				{"components":[{"name":"mode","type":"uint16"},{"name":"owner_id","type":"uint16"},{"name":"group_id","type":"uint16"},{"name":"n_links","type":"uint16"},{"name":"device_id","type":"uint16"},{"name":"n_blocks","type":"uint16"},{"name":"file_size","type":"uint32"},{"name":"modified_at","type":"uint32"},{"name":"last_modified","type":"uint32"},{"name":"file_name","type":"string"}],"name":"inodes","type":"map(uint16,tuple)"}
+			]
+		},
+		{
+			"name": "process_system_init",
+			"inputs": [
+				{"name":"mode","type":"uint16"},
+				{"name":"config","type":"string"}
+			],
+			"outputs": [
+				{"name":"out","type":"string"}
+			]
+		},
+		{
+			"name": "get_system_init",
+			"inputs": [
+				{"name":"config","type":"string"}
+			],
+			"outputs": [
+				{"components":[{"name":"mode","type":"uint16"},{"name":"owner_id","type":"uint16"},{"name":"group_id","type":"uint16"},{"name":"n_links","type":"uint16"},{"name":"device_id","type":"uint16"},{"name":"n_blocks","type":"uint16"},{"name":"file_size","type":"uint32"},{"name":"modified_at","type":"uint32"},{"name":"last_modified","type":"uint32"},{"name":"file_name","type":"string"}],"name":"inodes","type":"map(uint16,tuple)"},
+				{"name":"data","type":"map(uint16,bytes)"}
+			]
+		},
+		{
+			"name": "command_help",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"synopsis","type":"string"},{"name":"purpose","type":"string"},{"name":"description","type":"string"},{"name":"options","type":"string"},{"name":"notes","type":"string"},{"name":"author","type":"string"},{"name":"bugs","type":"string"},{"name":"see_also","type":"string"},{"name":"version","type":"string"}],"name":"value0","type":"tuple"}
+			]
+		},
+		{
+			"name": "print_usage",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"string"}
+			]
+		},
+		{
+			"name": "upgrade",
+			"inputs": [
+				{"name":"c","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "reset_storage",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"}
+	]
+}

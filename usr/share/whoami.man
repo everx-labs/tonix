@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "whoami",
+    "synopsis": "OPTION...",
+    "purpose": "print effective userid",
+    "description": "Print the user name associated with the current effective user ID. Same as id -un.",
+    "options": "",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

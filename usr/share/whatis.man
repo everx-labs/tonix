@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "whatis",
+    "synopsis": "[-dlv] name ...",
+    "purpose": "display one-line manual page descriptions",
+    "description": "Searches the manual page names and displays the manual page descriptions of any name matched.",
+    "options": "-d      emit debugging messages\n-l      do not trim output to terminal width\n-v      print verbose warning messages",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "Options are not yet implemented",
+    "see_also": "apropos, man, mandb",
+    "version": "0.01"
+  }
+}

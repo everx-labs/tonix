@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "popd",
+    "synopsis": "[-n] [+N | -N]",
+    "purpose": "Remove directories from stack.",
+    "description": "Removes entries from the directory stack.  With no arguments, removes the top directory from the stack, and changes to the new top directory.",
+    "options": "-n     Suppresses the normal change of directory when removing directories from the stack, so only the stack is manipulated.",
+    "arguments": "+N Removes the Nth entry counting from the left of the list shown by `dirs', starting with zero.  For example:\n    `popd +0' removes the first directory, `popd +1' the second.\n-N  Removes the Nth entry counting from the right of the list shown by `dirs', starting with zero.  For example:\n    `popd -0' removes the last directory, `popd -1' the next to last.\nThe `dirs' builtin displays the directory stack.",
+    "exit_status": "Returns success unless an invalid argument is supplied or the directory change fails."
+  }
+}

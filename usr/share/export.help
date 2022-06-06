@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "export",
+    "synopsis": "[-fn] [name[=value] ...] or export -p",
+    "purpose": "Set export attribute for shell variables.",
+    "description": "Marks each NAME for automatic export to the environment of subsequently executed commands. If VALUE is supplied,\nassign VALUE before exporting.",
+    "options": "-f        refer to shell functions\n-n        remove the export property from each NAME\n-p        display a list of all exported variables and functions",
+    "arguments": "An argument of `--' disables further option processing.",
+    "exit_status": "Returns success unless an invalid option is given or NAME is invalid."
+  }
+}

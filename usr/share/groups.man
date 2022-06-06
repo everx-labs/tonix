@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "groups",
+    "synopsis": "[OPTION]... [USERNAME]...",
+    "purpose": "print the groups a user is in",
+    "description": "Print group memberships for each USERNAME or, if no USERNAME is specified, for the current process\n(which may differ if the groups database has changed).",
+    "options": "",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "getent(1)",
+    "version": "0.01"
+  }
+}

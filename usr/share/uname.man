@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "uname",
+    "synopsis": "[OPTION]...",
+    "purpose": "print system information",
+    "description": "Print certain system information. With no OPTION, same as -s.",
+    "options": "-a      print all information, in the following order, except omit -p and -i if unknown:\n-s      print the kernel name\n-n      print the network node hostname\n-r      print the kernel release\n-v      print the kernel version\n-m      print the machine hardware name\n-p      print the processor type (non-portable)\n-i      print the hardware platform (non-portable)\n-o      print the operating system",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

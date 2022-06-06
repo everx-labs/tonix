@@ -1,0 +1,1 @@
+(cd /home/boris/tonix/tmp/usr/bin/colrm && jq '{p_in: .p}' /home/boris/tonix/run/proc >colrm.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main colrm.args >/home/boris/tonix/run/proc_out )

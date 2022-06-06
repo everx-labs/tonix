@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "unalias",
+    "synopsis": "[-a] name [name ...]",
+    "purpose": "Remove each NAME from the list of defined aliases.",
+    "description": "",
+    "options": "-a        remove all alias definitions",
+    "arguments": "",
+    "exit_status": "Return success unless a NAME is not an existing alias."
+  }
+}

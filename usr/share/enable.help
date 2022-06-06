@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "enable",
+    "synopsis": "[-a] [-dnps] [-f filename] [name ...]",
+    "purpose": "Enable and disable shell builtins.",
+    "description": "Enables and disables builtin shell commands.  Disabling allows you to execute a disk command which has the same\nname as a shell builtin without using a full pathname.",
+    "options": "-a        print a list of builtins showing whether or not each is enabled\n-n        disable each NAME or display a list of disabled builtins\n-p        print the list of builtins in a reusable format\n-s        print only the names of Posix `special' builtins\n\nOptions controlling dynamic loading:\n-f        Load builtin NAME from shared object FILENAME\n-d        Remove a builtin loaded with -f\n\nWithout options, each NAME is enabled.",
+    "arguments": "To use the `test' found in $PATH instead of the shell builtin version, type `enable -n test'.",
+    "exit_status": "Returns success unless NAME is not a shell builtin or an error occurs."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "tmpfs",
+    "synopsis": "[OPTION]... FILE...",
+    "purpose": "temporary file system",
+    "description": "Used for file system operations testing.",
+    "options": "-c      do not create any files\n-m      change only the modification time",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

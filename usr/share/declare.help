@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "declare",
+    "synopsis": "[-aAfFgilnrtux] [-p] [name[=value] ...]",
+    "purpose": "Set variable values and attributes.",
+    "description": "Declare variables and give them attributes.  If no NAMEs are given, display the attributes and values of all variables.",
+    "options": "-f        restrict action or display to function names and definitions\n-F        restrict display to function names only (plus line number and source file when debugging)\n-g        create global variables when used in a shell function; otherwise ignored\n-p        display the attributes and value of each NAME\n\nOptions which set attributes:\n-a        to make NAMEs indexed arrays (if supported)\n-A        to make NAMEs associative arrays (if supported)\n-i        to make NAMEs have the `integer' attribute\n-l        to convert the value of each NAME to lower case on assignment\n-n        make NAME a reference to the variable named by its value\n-r        to make NAMEs readonly\n-t        to make NAMEs have the `trace' attribute\n-u        to convert the value of each NAME to upper case on assignment\n-x        to make NAMEs export\n\nUsing `+' instead of `-' turns off the given attribute.",
+    "arguments": "Variables with the integer attribute have arithmetic evaluation (see the `let' command) performed when the variable is assigned a value.\nWhen used in a function, `declare' makes NAMEs local, as with the `local' command.  The `-g' option suppresses this behavior.",
+    "exit_status": "Returns success unless an invalid option is supplied or a variable assignment error occurs."
+  }
+}

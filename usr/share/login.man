@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "login",
+    "synopsis": "[-h host] [username] -r host",
+    "purpose": "begin session on the system",
+    "description": "Establish a new session with the system.",
+    "options": "-f      do not perform authentication, user is preauthenticated\n-h      name of the remote host for this login\n-r      perform autologin protocol for rlogin",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

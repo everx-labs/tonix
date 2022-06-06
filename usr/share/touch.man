@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "touch",
+    "synopsis": "[OPTION]... FILE...",
+    "purpose": "change file timestamps",
+    "description": "Update the modification time of each FILE to the current time. A FILE argument that does not exist is created empty, unless -c is supplied.",
+    "options": "-c      do not create any files\n-m      change only the modification time",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

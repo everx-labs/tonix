@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "mkdir",
+    "synopsis": "[OPTION]... DIRECTORY...",
+    "purpose": "make directories",
+    "description": "Create the DIRECTORY(ies), if they do not already exist.",
+    "options": "-m      set file mode (as in chmod), not a=rwx - umask\n-p      no error if existing, make parent directories as needed\n-v      print a message for each created directory",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

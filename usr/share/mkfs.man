@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "mkfs",
+    "synopsis": "[options] [fs-options] device [size]",
+    "purpose": "build a Tonix filesystem",
+    "description": "Used to build a Tonix filesystem on a device. The device argument is either the device name, or a regular file that shall contain the filesystem. The size argument is the number of blocks to be used for the filesystem.",
+    "options": "-V     produce verbose output, including all filesystem-specific commands that are executed",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

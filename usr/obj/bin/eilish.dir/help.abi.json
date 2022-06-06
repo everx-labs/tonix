@@ -1,0 +1,57 @@
+{
+	"ABI version": 2,
+	"version": "2.2",
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "display_help",
+			"inputs": [
+				{"name":"args","type":"string"},
+				{"components":[{"name":"name","type":"string"},{"name":"synopsis","type":"string"},{"name":"purpose","type":"string"},{"name":"description","type":"string"},{"name":"options","type":"string"},{"name":"arguments","type":"string"},{"name":"exit_status","type":"string"}],"name":"help_files","type":"tuple[]"}
+			],
+			"outputs": [
+				{"name":"ec","type":"uint8"},
+				{"name":"out","type":"string"}
+			]
+		},
+		{
+			"name": "builtin_help",
+			"inputs": [
+			],
+			"outputs": [
+				{"components":[{"name":"name","type":"string"},{"name":"synopsis","type":"string"},{"name":"purpose","type":"string"},{"name":"description","type":"string"},{"name":"options","type":"string"},{"name":"arguments","type":"string"},{"name":"exit_status","type":"string"}],"name":"bh","type":"tuple"}
+			]
+		},
+		{
+			"name": "upgrade",
+			"inputs": [
+				{"name":"c","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "reset_storage",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"}
+	]
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "who",
+    "synopsis": "OPTION... [FILE]...",
+    "purpose": "show who is logged on",
+    "description": "Print information about users who are currently logged in.",
+    "options": "-a      same as -b -d -l -p -r -t -T -u\n-b      time of last system boot\n-d      print dead processes\n-H      print line of column headings\n-l      print system login processes\n-p      print active processes spawned by init\n-q      all login names and number of users logged on\n-s      print only name, line, and time (default)\n-t      print last system clock change\n-T      \n-w      add user's message status as +, - or ?\n-u      list users logged in",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

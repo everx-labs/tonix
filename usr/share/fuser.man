@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "fuser",
+    "synopsis": "[-almsuv]",
+    "purpose": "identify processes using files or sockets",
+    "description": "Displays the PIDs of processes using the specified files or file systems.",
+    "options": "-a      display unused files too\n-l      list available signal names\n-m      show all processes using the named filesystems or block device\n-s      silent operation\n-u      display user IDs\n-v      verbose output",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "eilish",
+    "synopsis": "[command ...]",
+    "purpose": "Command shell",
+    "description": "Command shell",
+    "options": "",
+    "arguments": "",
+    "exit_status": ""
+  }
+}

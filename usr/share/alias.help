@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "alias",
+    "synopsis": "[-p] [name[=value] ... ]",
+    "purpose": "Define or display aliases.",
+    "description": "Without arguments, `alias' prints the list of aliases in the reusable form `alias NAME=VALUE' on standard output.\nOtherwise, an alias is defined for each NAME whose VALUE is given. A trailing space in VALUE causes the next word\nto be checked for alias substitution when the alias is expanded.",
+    "options": "-p        print all defined aliases in a reusable format",
+    "arguments": "",
+    "exit_status": "alias returns true unless a NAME is supplied for which no alias has been defined."
+  }
+}

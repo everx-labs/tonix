@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "lsblk",
+    "synopsis": "[options] [device...]",
+    "purpose": "list block devices",
+    "description": "List information about all available or the specified block devices.",
+    "options": "-a      print all devices\n-b      print SIZE in bytes rather than in human readable format\n-f      output info about filesystems\n-m      output info about permissions\n-n      don't print headings\n-O      output all columns\n-p      print complete device path",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

@@ -1,0 +1,1 @@
+(cd /home/boris/tonix/tmp/usr/bin/diff && jq '{p_in: .p}' /home/boris/tonix/run/proc >diff.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main diff.args >/home/boris/tonix/run/proc_out )
