@@ -1,4 +1,4 @@
--A [display_man_page]=( [man]="98" [whatis]="11" )
--A [main]=( [ls]="170" [file]="15" [namei]="3" [du]="29" [stat]="74" [cat]="78" [paste]="2" [tr]="2" [head]="13" [tail]="6" [wc]="1" [grep]="1" [look]="0" [expand]="10" [unexpand]="4" [rev]="8" [colrm]="0" [column]="10" [cut]="40" [basename]="1" [dirname]="1" [getent]="4" [realpath]="11" [whoami]="11" [id]="11" [uname]="3" [hostname]="2" [lslogins]="32" [last]="6" [who]="3" [finger]="4" [ps]="3" [printenv]="8" [readlink]="2" [df]="9" [groups]="17" [fsck]="187" [findmnt]="4" [fuser]="0" [lsblk]="2" )
--A [induce]=( [cp]="13" [mv]="2" [ln]="0" [rmdir]="7" [mkdir]="2" [rm]="1" [touch]="4" )
+-A [display_man_page]=( [man]="99" [whatis]="11" )
+-A [main]=( [ls]="189" [file]="15" [namei]="3" [du]="29" [stat]="75" [cat]="83" [paste]="2" [tr]="2" [head]="13" [tail]="6" [wc]="1" [grep]="1" [look]="0" [expand]="10" [unexpand]="4" [rev]="8" [colrm]="0" [column]="10" [cut]="40" [basename]="1" [dirname]="1" [getent]="48" [realpath]="11" [whoami]="15" [id]="11" [uname]="3" [hostname]="2" [lslogins]="37" [last]="6" [who]="3" [finger]="11" [ps]="3" [printenv]="8" [readlink]="2" [df]="9" [groups]="19" [fsck]="187" [findmnt]="4" [fuser]="0" [lsblk]="2" [login]="10" )
+-A [induce]=( [cp]="14" [mv]="2" [ln]="0" [rmdir]="7" [mkdir]="2" [rm]="1" [touch]="4" )
 -A [uadm]=( [gpasswd]="0" [groupadd]="7" [groupdel]="7" [groupmod]="4" [useradd]="2" [userdel]="4" [usermod]="2" )

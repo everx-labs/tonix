@@ -46,7 +46,6 @@ SUB:=bin
 INIT:=$(PRIME)
 
 BIN:=bin
-#TMP:=tmp
 TMP:=$(CURDIR)/tmp
 RUN:=run
 USR:=usr
@@ -60,7 +59,7 @@ dirs:
 	mkdir -p $(DIRS)
 
 ETC_HOSTS:=$(CURDIR)/etc/hosts.1
-BINU:=cat cp df echo ln ls mkdir mv pwd realpath rm rmdir test eilish
+BINU:=cat cp df ln ls mkdir mv pwd realpath rm rmdir test eilish
 SBINU:=fsck mount reboot umount
 BOOTU:=Repo
 USR.BINU:=alias basename chfn colrm column cut diff dirname du env expand file findmnt finger fuser getent grep groups head hostid hostname id last login look lsblk lslogins lsof man mountpoint namei newgrp paste patch pathchk printenv ps readlink rev stat tail touch tr uname unexpand wc whatis who whoami
