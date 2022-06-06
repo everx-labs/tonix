@@ -3,3 +3,4 @@
 -f [exec]={. exec $0 $@}
 -f [run]={. $0 run $@}
 -f [print]={. $0 print $@}
+-f [hi]={ echo hi }
