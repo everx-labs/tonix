@@ -1,7 +1,7 @@
 #set -x
 
 ./eilish set_tosh_vars
-cat run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
+cat $1 run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
 
 while true
 do
@@ -9,9 +9,10 @@ do
     read input
     echo ">" "$input" >>var/log/session
     case $input in
-        quit)
+        q|quit)
             break;;
         *)
-            ./ty "$input";;
+#            ./ty "$input";;
+            ./bin/eilish "$input";;
     esac
 done
