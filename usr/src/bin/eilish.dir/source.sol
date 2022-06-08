@@ -1,15 +1,20 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract source is Shell {
 
-    function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
-//        (string[] params, , ) = arg.get_args(args);
-        if (!args.empty())
-            ec = EXECUTE_SUCCESS;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
 
-        string file_contents = input;
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
+        string file_contents;
+        s_of f = p.fdopen(0, "r");
+        if (!f.ferror())
+            file_contents = f.gets_s(0);
+
         string tosh_path = vars.val("TOSH", pool);
         string sargs = vars.val("$@", pool);
         string cmd = vars.val("$0", pool);
@@ -33,8 +38,9 @@ contract source is Shell {
             exec_queue.append(format("[{}]=\"{}\"\n", i, sline));
             exec_cmd.append(exec_line);
         }
-        res = exec_cmd;
-        out = "";
+        //res = exec_cmd; // TODO: apply to redirections
+
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

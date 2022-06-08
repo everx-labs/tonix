@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
@@ -23,7 +23,8 @@ contract enable is Shell {
 
         if (!m.empty()) {
             uint idx = m == "alias" ? 1 : m == "opt_string" ? 2 : m == "index" ? 3 : m == "pool" ? 4 : m == "hash" ? 5 :
-                m == "builtin" ? 6 : m == "user" ? 7 : m == "group" ? 8 : 0;
+                m == "builtin" ? 6 : m == "user" ? 7 : m == "group" ? 8 : m == "vars" ? 9 : m == "functions" ? 10 : m == "keywords" ? 11 :
+                m == "commands" ? 12 : m == "dir_stack" ? 13 : 0;
             if (idx > 0) {
                 s_sbuf s;
                 string page = sv.vmem[1].vm_pages[idx - 1];
@@ -31,9 +32,8 @@ contract enable is Shell {
                 s.sbuf_finish();
                 p.p_fd.fdt_ofiles.push(s_of(0, io.SRD, 0, m, 0, s));
                 p.p_fd.fdt_nfiles++;
-            } else {
-                p.puts(m + " not found");
-            }
+            } else
+                p.perror(m + " not found");
         }
         string pool;
         if (sv.vmem.length > 1 && sv.vmem[1].vm_pages.length > 3)
@@ -42,7 +42,6 @@ contract enable is Shell {
             (string[] lines, ) = pool.split("\n");
             for (string line: lines) {
                 (string attrs, string name, ) = vars.split_var_record(line);
-//                (string attrs, ) = str.split(line, " ");
                 if (vars.match_attr_set(sattrs, attrs))
                     p.puts("enable " + name);
             }
@@ -54,46 +53,10 @@ contract enable is Shell {
                 (string cur_attrs, ) = cur_record.csplit(" ");
                 if (vars.match_attr_set(sattrs, cur_attrs))
                     p.puts("enable " + name);
-            } else {
-                p.puts("enable: " + name + " not found");
-            }
+            } else
+                p.perror(name + " not found");
         }
         sv.cur_proc = p;
-    }
-
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        (, bool print_all, , , , , , ) = arg.flag_values("pas", flags);
-
-        string sattrs;
-        string[] a_attrs = ["f", "n", "d", "s"];
-        for (string attr: a_attrs)
-            if (arg.flag_set(attr, flags))
-                sattrs.append(attr);
-
-        sattrs = print_all ? "" : ("-" + (sattrs.empty() ? "-" : sattrs));
-
-        if (params.empty()) {
-            (string[] lines, ) = pool.split("\n");
-            for (string line: lines) {
-                (string attrs, string name, ) = vars.split_var_record(line);
-//                (string attrs, ) = str.split(line, " ");
-                if (vars.match_attr_set(sattrs, attrs))
-                    out.append("enable " + name + "\n");
-            }
-        }
-        for (string p: params) {
-            (string name, ) = p.csplit("=");
-            string cur_record = vars.get_pool_record(name, pool);
-            if (!cur_record.empty()) {
-                (string cur_attrs, ) = cur_record.csplit(" ");
-                if (vars.match_attr_set(sattrs, cur_attrs))
-                    out.append("enable " + name + "\n");
-            } else {
-                ec = EXECUTE_FAILURE;
-                out.append("enable: " + name + " not found\n");
-            }
-        }
     }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {

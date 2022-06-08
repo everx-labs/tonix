@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Base.sol";
 import "../lib/fmt.sol";
@@ -14,13 +14,8 @@ struct Image {
 contract Repo {
 
     uint32 public _counter = 10;
-    bool public _live_update = true;
 
     Image[] public _images;
-
-    function set_live_update(bool flag) external accept {
-        _live_update = flag;
-    }
 
     modifier accept {
         tvm.accept();
@@ -42,51 +37,25 @@ contract Repo {
             _redeploy(k);
     }
 
-    function _get_image_index(string name) internal view returns (uint) {
-        for (uint i = 0; i < _images.length; i++)
-            if (_images[i].name == name)
-                return i + 1;
+    function add_model(string name, TvmCell c) external accept {
+        _add_model(name, c);
     }
 
-    function update_model(string name, TvmCell c) external accept {
-        uint index = _get_image_index(name);
-        if (index == 0) {
-            TvmCell si = tvm.buildStateInit({code: c});
-            address addr = address.makeAddrStd(0, tvm.hash(si));
-            _images.push(Image(0, name, addr, c, now));
-            new Base{stateInit: si, value: 1 ton}();
-        } else {
-            Image img = _images[index - 1];
-            (, , address addr, TvmCell code, ) = img.unpack();
-            if (code != c) {
-                img.version++;
-                img.code = c;
-                img.updated_at = now;
-                _images[index - 1] = img;
-                if (_live_update)
-                    Base(addr).upgrade{value: 0.015 ton, flag: 1}(c);
-            }
-        }
+    function _add_model(string name, TvmCell c) internal {
+        TvmCell si = tvm.buildStateInit({code: c});
+        _images.push(Image(0, name, address.makeAddrStd(0, tvm.hash(si)), c, now));
+        new Base{stateInit: si, value: 1 ton}();
     }
-
-    function update_model_at_index(uint16 index, string name, TvmCell c) external accept {
-        if (index == 0) {
-            TvmCell si = tvm.buildStateInit({code: c});
-            address addr = address.makeAddrStd(0, tvm.hash(si));
-            _images.push(Image(0, name, addr, c, now));
-            new Base{stateInit: si, value: 1 ton}();
-        } else {
-            Image img = _images[index - 1];
-            (, , address addr, TvmCell code, ) = img.unpack();
-            if (code != c) {
-                img.version++;
-                img.code = c;
-                img.updated_at = now;
-                _images[index - 1] = img;
-                if (_live_update)
-                    Base(addr).upgrade{value: 0.015 ton, flag: 1}(c);
-            }
-        }
+    function update_model_at_index(uint16 index, TvmCell c) external {
+        Image img = _images[index - 1];
+        (, , address addr, TvmCell code, ) = img.unpack();
+        require(code != c, 222);
+        tvm.accept();
+        img.version++;
+        img.code = c;
+        img.updated_at = now;
+        _images[index - 1] = img;
+        Base(addr).upgrade{value: 0.015 ton, flag: 1}(c);
     }
 
     function disable(uint16 index) external accept {
@@ -124,22 +93,22 @@ contract Repo {
     }
 
     function etc_hosts() external view returns (string out) {
-        Column[] columns_format = [
-            Column(true, 66, fmt.LEFT),
-            Column(true, 20, fmt.LEFT)];
+        Column[] columns_format = [Column(true, 66, fmt.LEFT), Column(true, 20, fmt.LEFT)];
 
         string[][] table;
         for (uint i = 0; i < _images.length; i++) {
             Image img = _images[i];
             (, string name, address addr, , ) = img.unpack();
-            table.push([
-                format("{}", addr),
-                name]);
+            table.push([format("{}", addr), name]);
         }
         out = fmt.format_table_ext(columns_format, table, "\t", "\n");
     }
 
-    function upgrade_code(TvmCell c) external {
+    function erase() external accept() {
+        _images.pop();
+    }
+
+    function upgrade(TvmCell c) external {
         tvm.accept();
         tvm.commit();
         tvm.setcode(c);
@@ -149,9 +118,4 @@ contract Repo {
     function reset_storage() external accept {
         tvm.resetStorage();
     }
-
-    /*onBounce(TvmSlice slice) external {
-        uint32 functionId = slice.decode(uint32);
-//        _roster.push(DeviceRecord(0, 0, 0, functionId, msg.sender));
-	}*/
 }

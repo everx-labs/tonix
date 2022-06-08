@@ -1,0 +1,4 @@
+cd /home/boris/tonix/tmp/bin/eilish.dir/test
+jq --slurpfile fs ../fs '$fs[] + {sv_in: .}' ../vm >test.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main test.args >../vm_out
+cd -

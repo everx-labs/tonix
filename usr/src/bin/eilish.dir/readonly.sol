@@ -1,36 +1,39 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract readonly is Shell {
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        bool functions_only = arg.flag_set("f", flags);
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+        bool functions_only = p.flag_set("f");
         string sattrs = "-r";
         if (functions_only)
             sattrs.append("-f");
+
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], functions_only ? 9 : 8);
 
         if (params.empty()) {
             (string[] lines, ) = pool.split("\n");
             for (string line: lines) {
                 (string attrs, ) = line.csplit(" ");
                 if (vars.match_attr_set(sattrs, attrs))
-                    out.append(vars.print_reusable(line));
+                    p.puts(vars.print_reusable(line));
             }
         }
-        for (string p: params) {
-            (string name, ) = p.csplit("=");
+        for (string param: params) {
+            (string name, ) = param.csplit("=");
             string cur_record = vars.get_pool_record(name, pool);
             if (!cur_record.empty()) {
                 (string cur_attrs, ) = cur_record.csplit(" ");
                 if (vars.match_attr_set(sattrs, cur_attrs))
-                    out.append(vars.print_reusable(cur_record));
-            } else {
-                ec = EXECUTE_FAILURE;
-                out.append("readonly: " + name + " not found\n");
-            }
+                    p.puts(vars.print_reusable(cur_record));
+            } else
+                p.perror(name + " not found");
         }
+        sv.cur_proc = p;
     }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {

@@ -1,36 +1,46 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 import "../../lib/env.sol";
 
 contract cd is Shell {
 
-    function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-        (string[] params, , ) = arg.get_args(args);
-        string page = pool;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
 
-        string cur_dir = env.get("PWD", page);
-        string old_wd = env.get("OLDPWD", page);
+        string page = vmem.vmem_fetch_page(sv.vmem[1], 3);
+
+        s_of cur_dir = p.p_pd.pwd_cdir;
+        string scur_dir = env.get("PWD", page);
+        string old_cwd = env.get("OLDPWD", page);
         string home_dir = env.get("HOME", page);
         string arg = params.empty() ? home_dir : params[0];
-
-        uint16 wd = fs.resolve_absolute_path(cur_dir, inodes, data);
 
         if (arg == "~")
             arg = home_dir;
         else if (arg == "-")
-            arg = old_wd;
+            arg = old_cwd;
 
-        (uint16 index, uint8 t, , ) = fs.resolve_relative_path(arg, wd, inodes, data);
-
-        if (t == ft.FT_DIR) {
-            string new_dir = fs.get_absolute_path(index, inodes, data);
-            page = env.put("OLDPWD=" + cur_dir, page);
-            page = env.put("PWD=" + new_dir, page);
-            page = env.put("WD=" + format("{}", index), page);
-            res = page;
-        } else
-            ec = t == ft.FT_UNKNOWN ? er.ENOENT : er.ENOTDIR;
+        s_dirent[] dents = dirent.parse_dirents(cur_dir.buf.buf);
+        for (s_dirent de: dents) {
+            if (de.d_name == arg) {
+                if (de.d_type != libstat.FT_DIR)
+                    p.perror(arg + ": not a directory");
+                else {
+                    string new_dir = scur_dir + "/" + arg;
+                    page = env.put("OLDPWD=" + scur_dir, page);
+                    page = env.put("PWD=" + new_dir, page);
+                    page = env.put("WD=" + format("{}", de.d_fileno), page);
+                    sv.vmem[1].vm_pages[3] = page;
+                }
+                sv.cur_proc = p;
+                return sv;
+            }
+        }
+        p.perror(arg + ": no such file or directory");
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

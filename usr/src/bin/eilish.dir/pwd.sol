@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 import "../../lib/unistd.sol";
@@ -7,30 +7,17 @@ contract pwd is Shell {
 
     using unistd for s_proc;
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
-        p = p_in;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
         if (!p.flag_set("P")) {
             string wd = p.getwd();
             if (wd.empty()) {
-                p.perror("pwd: current directory cannot be read");
+                p.perror("current directory cannot be read");
             } else
                 p.puts(wd);
         }
-    }
-
-//    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-    function print(s_proc p, string args, string pool) external pure returns (uint8 ec, string out) {
-        (, string flags, ) = arg.get_args(args);
-        bool print_physical = !flags.empty() && arg.flag_set("P", flags);
-        if (!print_physical) {
-//            string wd = vars.val("PWD", pool);
-            string wd = p.getwd();
-            if (wd.empty()) {
-                ec = EXECUTE_FAILURE;
-                out = "pwd: current directory cannot be read\n";
-            } else
-                out = wd + "\n";
-        }
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

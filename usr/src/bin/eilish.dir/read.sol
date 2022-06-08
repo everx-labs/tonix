@@ -1,23 +1,25 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract read is Shell {
 
-    function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        (ec, out, res) = _read(params, flags, input, pool);
-    }
-
-    function _read(string[] params, string flags, string input, string pool) internal pure returns (uint8 ec, string out, string res) {
-        bool assign_to_array = arg.flag_set("a", flags);
-//        bool use_delimiter = arg.flag_set("d", flags);
-        bool echo_input = !arg.flag_set("s", flags);
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+        bool assign_to_array = p.flag_set("a");
+//        bool use_delimiter = p.flag_set("d");
+        bool echo_input = !p.flag_set("s");
         string delimiter = " ";
-        ec = EXECUTE_SUCCESS;
         string sattrs = assign_to_array ? "-a" : "--";
 
-        string page = pool;
+        string page = vmem.vmem_fetch_page(sv.vmem[1], 9);
+
+        string input;
+        s_of f = p.fdopen(0, "r");
+        if (!f.ferror())
+            input = f.gets_s(0);
 
         if (assign_to_array) {
             string array_name = "REPLY";
@@ -35,9 +37,10 @@ contract read is Shell {
                     page = vars.set_var(sattrs, params[i + 1] + "=" + stail, page);
             }
         }
-        res = page;
+        sv.vmem[1].vm_pages[9] = page;
         if (echo_input)
-            out.append(input);
+            p.puts(input);
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

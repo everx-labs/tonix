@@ -14,13 +14,6 @@ library env {
             uint q = str.strstr(line, pat);
             if (q > 0) {
                 string s = e.val(pat + "=", "\n");
-//                e.sval(pat + "=", "\n");
-
-//                e.val(pat + "=", "\n");
-//                string s = line.substr(q + pat.byteLength() - 1);
-//                string s = line.substr(q + pat.byteLength() - 1);
-//                s.unwrap();
-//                return s;
                 return str.unwrp(s);
             }
         }

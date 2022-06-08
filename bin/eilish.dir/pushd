@@ -1,0 +1,4 @@
+cd /home/boris/tonix/tmp/bin/eilish.dir/pushd
+jq '{sv_in: .}' ../vm >pushd.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main pushd.args >../vm_out
+cd -

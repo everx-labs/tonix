@@ -1,24 +1,16 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract echo is Shell {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
-        p = p_in;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
         p.puts(libstring.join_fields(p.params(), " "));
         if (!p.flag_set("n"))
             p.puts("\n");
-    }
-
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        bool no_trailing_newline = arg.flag_set("n", flags);
-        out = libstring.join_fields(params, " ");
-        if (!no_trailing_newline)
-            out.append("\n");
-        if (!pool.empty())
-            ec = EXECUTE_SUCCESS;
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -1,9 +1,25 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
-import "../../lib/fs.sol";
 
 contract dirs is Shell {
+
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+        string page = vmem.vmem_fetch_page(sv.vmem[1], 12);
+
+        (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, , , , ) =
+            p.flag_values("clpv");
+        bool print = expand_tilde || entry_per_line || pos_entry_per_line || params.empty();
+        if (print)
+            p.puts(page);
+        else if (clear_dir_stack)
+            sv.vmem[1].vm_pages[12] = "";
+        sv.cur_proc = p;
+//        string home_dir = vars.val("HOME", page);
+    }
 
     function _print_dir_contents(uint16 start_dir_index, mapping (uint16 => bytes) data) internal pure returns (uint8 ec, string out) {
         (DirEntry[] contents, int16 status) = udirent.read_dir_data(data[start_dir_index]);
@@ -19,27 +35,6 @@ contract dirs is Shell {
                 out.append(udirent.dir_entry_line(index, name, t));
             }
         }
-    }
-
-    function builtin_read_fs(string /*args*/, string /*pool*/, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-//        (string[] params, string flags, ) = arg.get_args(args);
-//        (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, bool res_abs_path, bool dirent_stack, bool dump_dirs, ) =
-//            arg.flag_values("clpvrsd", flags);
-//        bool print = expand_tilde || entry_per_line || pos_entry_per_line || params.empty();
-//        string page = pool;
-        string out;
-//        string sattrs = "--";
-//        string home_dir = vars.val("HOME", page);
-        /*if (res_abs_path) {
-            string spath = params[0];
-            uint16 dir_index = fs.resolve_abs_path(spath, inodes, data);
-            res.append(spath + ": " + str.toa(dir_index) + "\n");
-        }*/
-        uint16 root_dir_index = fs.resolve_absolute_path("/", inodes, data);
-        if (root_dir_index >= sb.ROOT_DIR) {
-            (ec, out) = _print_dir_contents(root_dir_index, data);
-        }
-        res.append(out);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

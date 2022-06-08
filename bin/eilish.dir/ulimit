@@ -1,0 +1,4 @@
+cd /home/boris/tonix/tmp/bin/eilish.dir/ulimit
+jq '{sv_in: .}' ../vm >ulimit.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main ulimit.args >../vm_out
+cd -

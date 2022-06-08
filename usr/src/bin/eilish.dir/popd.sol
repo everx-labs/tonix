@@ -1,42 +1,26 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract popd is Shell {
 
-    function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-        (string[] params, , ) = arg.get_args(args);
-        string page = pool;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+        string page = vmem.vmem_fetch_page(sv.vmem[1], 12);
+        (string[] dir_stack, uint n_dirs) = page.split("\n");
 
-//        bool suppress_dir_change = arg.flag_set("n", flags);
-
-        string sattrs = "--";
-        string cur_dir = vars.val("PWD", page);
-        string old_wd = vars.val("OLDPWD", page);
-        string home_dir = vars.val("HOME", page);
-        string arg = params.empty() ? home_dir : params[0];
-
-        uint16 wd = fs.resolve_absolute_path(cur_dir, inodes, data);
-
-        if (arg == "~")
-            arg = home_dir;
-        else if (arg == "-")
-            arg = old_wd;
-
-        (uint16 index, uint8 t, , ) = fs.resolve_relative_path(arg, wd, inodes, data);
-
-        if (t == ft.FT_DIR) {
-            string new_dir = fs.get_absolute_path(index, inodes, data);
-            page = vars.set_var(sattrs, "OLDPWD=" + cur_dir, page);
-            page = vars.set_var(sattrs, "PWD=" + new_dir, page);
-            page = vars.set_var(sattrs, "WD=" + format("{}", index), page);
-
-            res = page;
-        } else if (t == ft.FT_UNKNOWN) {
-            ec = er.ENOENT;
-        } else {
-            ec = er.ENOTDIR;
+        if (params.empty()) {
+            if (n_dirs < 2)
+                p.perror("directory stack empty");
+            else {
+                dir_stack.pop();
+                page = libstring.join_fields(dir_stack, "\n");
+                sv.vmem[1].vm_pages[12] = page;
+            }
         }
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

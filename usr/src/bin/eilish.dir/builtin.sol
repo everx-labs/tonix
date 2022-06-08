@@ -80,13 +80,6 @@ contract builtin is Shell {
             (bool v1, bool v2, bool v3, bool v4, bool v5, bool v6, bool v7, bool v8) = arg.flag_values("12345678", flags);
             if (params.empty()) fn = "print";
             else if (v1) fn = "v1";
-            /*else if (v2) fn = "v2";
-            else if (v3) fn = "v3";
-            else if (v4) fn = "v4";
-            else if (v5) fn = "v5";
-            else if (v6) fn = "v6";
-            else if (v7) fn = "v7";
-            else if (v8) fn = "v8";*/
             else fn = "execute";
         } else if (cmd == "hash")
             fn = p_e || f_l ? "print" : f_d || f_r ? "modify" : f_t || flags.empty() ? "lookup" : "";

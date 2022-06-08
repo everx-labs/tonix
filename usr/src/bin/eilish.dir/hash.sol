@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract hash is Shell {
-//    function main(string args, string pool) external pure returns (uint8 ec, string out) {
+
     function main(svm sv_in) external pure returns (svm sv) {
         sv = sv_in;
         s_proc p = sv.cur_proc;
@@ -13,9 +13,7 @@ contract hash is Shell {
         bool print_tabbed = p.flag_set("t");
         bool print_reusable = p.flag_set("l");
         bool no_args = params.empty();
-        string pool;
-        if (sv.vmem.length > 1 && sv.vmem[1].vm_pages.length > 4)
-            pool = sv.vmem[1].vm_pages[4];
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], 4);
 
         if (no_args) {
             if (pool.empty())
@@ -51,49 +49,6 @@ contract hash is Shell {
         sv.cur_proc = p;
     }
 
-    function hash_print(string line) internal pure returns (string o) {
-        o = line;
-        return o;
-    }
-
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        bool print_tabbed = arg.flag_set("t", flags);
-        bool print_reusable = arg.flag_set("l", flags);
-        bool no_args = params.empty();
-        if (no_args) {
-            if (pool.empty())
-                out.append("hash: hash table empty\n");
-            else {
-                if (!print_reusable)
-                    out.append("hits\tcommand\n");
-                (string[] lines, ) = pool.split("\n");
-                for (string line: lines) {
-                    (, string path, string contents) = vars.split_var_record(line);
-                    contents.trim_spaces();
-                    (string[] bins, ) = contents.split(" ");
-                    for (string bin: bins) {
-                        (string name, string value) = vars.item_value(bin);
-                        out.append(print_reusable ?
-                            "builtin hash -p " + path + "/" + name + " " + name + "\n" :
-                            fmt.pad(value, 4, fmt.RIGHT) + "\t" + path + "/" + name + "\n");
-                    }
-                }
-            }
-        }
-        for (string arg: params) {
-            string path = vars.get_array_name(arg, pool);
-            if (!path.empty()) {
-                out.append(print_tabbed ?
-                    arg + "\t" + path + "/" + arg + "\n" :
-                    "builtin hash -p " + path + "/" + arg + " " + arg + "\n");
-            } else {
-                ec = EXECUTE_FAILURE;
-                if (print_tabbed)
-                    out.append("-tosh: hash: " + arg + ": not found\n");
-            }
-        }
-    }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
         (string[] params, string flags, ) = arg.get_args(args);

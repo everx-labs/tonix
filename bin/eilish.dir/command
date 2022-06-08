@@ -1,0 +1,11 @@
+cd /home/boris/tonix/tmp/bin/eilish.dir/command
+jq '{sv_in: .}' ../vm | jq --rawfile args /home/boris/tonix/run/args '{$args} + .' >command.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main command.args >co
+jq -er '."Error"? // empty' co && exit $?
+jq -rj '.exports' co >/home/boris/tonix/run/export
+jq -rj '.sv.cur_proc' co | jq --rawfile argv /home/boris/tonix/run/export '{$argv} + {p: .}' >/home/boris/tonix/run/proc
+jq '.sv' co >../vm
+jq -r '.exec_line' co >>/home/boris/tonix/var/log/commands
+cd -
+eval "`jq -rj '.exec_line' /home/boris/tonix/tmp/bin/eilish.dir/command/co`"
+jq -er '."Error"? // empty' /home/boris/tonix/run/proc_out && exit $?

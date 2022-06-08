@@ -1,22 +1,20 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract complete is Shell {
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-
-        ec = EXECUTE_SUCCESS;
-        if (flags.empty())
-            flags = "p";
-        bool xprint = arg.flag_set("p", flags);
-        //bool print_all = params.empty();
-//        bool remove = arg.flag_set("r", flags);
-        //bool add = !xprint && !remove;
-        //bool add_function = arg.flag_set("F", flags);
-        //bool apply_to_command = arg.flag_set("C", flags);
-        string comp_specs_page = pool;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+        bool xprint = p.flag_set("p");
+        string comp_specs_page = vmem.vmem_fetch_page(sv.vmem[1], 11);
+        /* bool print_all = params.empty();
+        bool remove = arg.flag_set("r", flags);
+        bool add = !xprint && !remove;
+        bool add_function = arg.flag_set("F", flags);
+        bool apply_to_command = arg.flag_set("C", flags); */
 
         if (xprint || params.empty()) {
             (string[] comp_specs, ) = comp_specs_page.split("\n");
@@ -25,9 +23,10 @@ contract complete is Shell {
                 command_list.trim_spaces();
                 (string[] items, ) = command_list.split(" ");
                 for (string item: items)
-                    out.append("complete -F " + comp_func + " " + item + "\n");
+                    p.puts("complete -F " + comp_func + " " + item);
             }
         }
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

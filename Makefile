@@ -8,6 +8,8 @@ LIB:=$(TOOLS_BIN)/stdlib_sol.tvm
 LINKER:=$(TOOLS_BIN)/tvm_linker
 TOC:=$(TOOLS_BIN)/tonos-cli
 
+#URL:=gql.custler.net
+URL:=rfld-dapp01.ds1.itgold.io/graphql
 GIVER:=Novi
 _pay=$(TOOLS_BIN)/$(GIVER)/s4.sh $1 $2
 #_pay=$(TOOLS_BIN)/$(GIVER)/s2.sh $1 $2
@@ -30,7 +32,7 @@ PRIME:=$I
 
 #UTILS:=basename cat colrm column cp cut df dirname du dumpe2fs env expand file findmnt finger fsck fuser getent grep groupadd groupdel groupmod groups head hostname id last ln login look losetup ls lsblk lslogins man mkdir mke2fs mkfs mount mountpoint mv namei newgrp paste pathchk printenv ps readlink realpath rev rm rmdir stat tail tfs tmpfs touch tr umount uname unexpand useradd userdel usermod utmpdump wc whatis who whoami lsof explain reboot sdz vnp hive umm vmstat vmm mdb diff mddb md2 patch
 #OPT:=dist adc jury
-#HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
+HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
 #DEVICES:=null
 #FILES:=motd group procfs
 #KI:=core zone_misc corev2 kview corev3 kview2 stg0 bringup bringup2 bringup3 kview3 bringup4 zones_viewer patch_zone zones_host stg1 stg2 stg3 file_host call_proxy stg4 stg5 stg41 stg42 patch3 file_index stg44 GSV idx4
@@ -51,7 +53,9 @@ RUN:=run
 USR:=usr
 USH:=$(USR)/share
 USRC:=$(USR)/src
-UOBJ:=$(USR)/obj
+#UOBJ:=$(USR)/obj
+UOBJ:=$(TMP)
+MAN:=$(USH)/man
 LOG:=var/log
 DIRS:=$(BIN) $(TMP) $(RUN) $(USH) $(LOG)
 
@@ -59,10 +63,10 @@ dirs:
 	mkdir -p $(DIRS)
 
 ETC_HOSTS:=$(CURDIR)/etc/hosts.1
-BINU:=cat cp df ln ls mkdir mv pwd realpath rm rmdir test eilish
-SBINU:=fsck mount reboot umount
 BOOTU:=Repo
-USR.BINU:=alias basename chfn colrm column cut diff dirname du env expand file findmnt finger fuser getent grep groups head hostid hostname id last login look lsblk lslogins lsof man mountpoint namei newgrp paste patch pathchk printenv ps readlink rev stat tail touch tr uname unexpand wc whatis who whoami
+BINU:=cat cp df ln ls mkdir mv realpath rm rmdir eilish
+SBINU:=fsck mount reboot umount
+USR.BINU:=basename chfn colrm column cut diff dirname du env expand file findmnt finger fuser getent grep groups head hostid hostname id last login look lsblk lslogins lsof man mountpoint namei newgrp paste patch pathchk printenv ps readlink rev stat tail touch tr uname unexpand wc whatis who whoami
 USR.SBINU:=dumpe2fs groupadd groupdel groupmod mke2fs mkfs useradd userdel usermod
 SHB:=alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
 SYSFSU:=tfs tmpfs
@@ -70,24 +74,29 @@ SYSVMU:=uma_startup umm vmm
 SYSKERNU:=vnp
 
 define t-sub
-SRCS+=$3
-CSS+=$$(patsubst %,$(UOBJ)/$1/%.cs,$3)
-RES+=$$(patsubst %,$(UOBJ)/$1/%.ress,$3)
-BOCS+=$$(patsubst %,$2/%.boc,$3)
-BINS+=$$(patsubst %,$2/%,$3)
-$(UOBJ)/$1/%.tvc: $(USRC)/$1/%.sol
-	$(SOLC) $$< -o $(UOBJ)/$1
-	$(LINKER) compile --lib $(LIB) -a $(UOBJ)/$1/$$*.abi.json $(UOBJ)/$1/$$*.code -o $$@
-$(UOBJ)/$1/%.cs: $(UOBJ)/$1/%.tvc
+SRCS+=$$(patsubst %,$2/%.sol,$3)
+CSS+=$$(patsubst %,$1/%.cs,$3)
+RES+=$$(patsubst %,$1/%.ress,$3)
+BOCS+=$$(patsubst %,$1/%.boc,$3)
+BINS+=$$(patsubst %,$1/%,$3)
+MANP+=$$(patsubst %,$1/%.man,$3)
+$1/%.tvc: $2/%.sol
+	$(SOLC) $$< -o $$(@D)
+	$(LINKER) compile --lib $(LIB) -a $$(@D)/$$*.abi.json $$(@D)/$$*.code -o $$@
+$1/%.cs: $1/%.tvc
 	$(LINKER) decode --tvc $$< | grep 'code:' | cut -d ' ' -f 3 | tr -d '\n' >$$@
-$(UOBJ)/$1/%.ress: $(UOBJ)/$1/%.cs
-	$$(eval index!=grep -nw $$* etc/hosts.1 | cut -d ':' -f 1)
-	$$(eval args!=jq -R '{index:$$(index),name:"$$*",c:.}' $$<)
-	$$($I_c) update_model_at_index '$$(args)' >$$@
-	rm -f $2/$$*.boc
-$$(patsubst %,$2/%.boc,$3): $(ETC_HOSTS)
+$1/%.ress: $1/%.cs
+	./bin/Repo update_model_at_index `grep -nw $$* $(ETC_HOSTS) | cut -d ':' -f 1` $$< >$$@
+	rm -f $$(@D)/$$*.boc
+$$(patsubst %,$1/%.boc,$3): $(ETC_HOSTS)
 	$(TOC) account `grep -w $$(subst .boc,,$$(@F)) $$< | cut -f 1` -b $$@
+$(MAN)/%.0: $1/%.boc $1/%.abi.json
+	$(TOC) -j run --boc $$< --abi $$(word 2,$$^) builtin_help {} >$$@
 endef
+# 	$$(eval index!=grep -nw $$* etc/hosts.1 | cut -d ':' -f 1)
+#	$$(eval args!=jq -R '{index:$$(index),name:"$$*",c:.}' $$<)
+#	$$($I_c) update_model_at_index '$$(args)' >$$@
+
 #$$(patsubst %,$2/%,$3): $(ETC_HOSTS)
 #	mkdir -p $(TMP)/$$(@F)
 #	(cd $(TMP)/$$(@F) && tonos-cli config --url gql.custler.net --abi $(UOBJ)/$1/$$(@F).abi.json --addr `grep -w $$(@F) $$< | cut -f 1`)
@@ -100,37 +109,67 @@ COMMA:=,
 define t-gen-bin
 $2/$1: $(ETC_HOSTS)
 	mkdir -p $(TMP)/$2/$1
-	(cd $(TMP)/$2/$1 && tonos-cli config --url gql.custler.net --abi $(CURDIR)/$(UOBJ)/$3/$1.abi.json --addr `grep -w $1 $$< | cut -f 1`)
-	$$(file >$$@,(cd $(TMP)/$2/$1 && jq $(QUOTE){p_in: .p}$(QUOTE) $(CURDIR)/run/proc >$1.args && $(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >$(CURDIR)/run/proc_out ))
+	(cd $(TMP)/$2/$1 && tonos-cli config --url $(URL) --abi ../$1.abi.json --addr `grep -w $1 $$< | cut -f 1`)
+	$$(file >$$@,cd $(TMP)/$2/$1)
+	$$(file >>$$@,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p, argv: .argv}$(QUOTE) $(CURDIR)/run/proc >$1.args)
+	$$(file >>$$@,$(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >$(CURDIR)/run/proc_out)
+	$$(file >>$$@,cd -)
 	chmod u+x $$@
 endef
+
 #	echo '(cd $(TMP)/$2/$1 && jq '{p_in: .p, argv: .argv}' $(CURDIR)/run/proc >$1.args && $(TOC) -j run main $1.args)' >$$@
 #$(info $(call t-sub,bin,bin,$(BINU)))
-$(eval $(call t-sub,bin,bin,$(BINU)))
-$(eval $(call t-sub,sbin,sbin,$(SBINU)))
-#$(eval $(call t-sub,stand,boot,$(BOOTU)))
-$(eval $(call t-sub,usr.bin,usr/bin,$(USR.BINU)))
-$(eval $(call t-sub,usr.sbin,usr/sbin,$(USR.SBINU)))
-$(eval $(call t-sub,bin/eilish.dir,bin/eilish.dir,$(SHB)))
-$(eval $(call t-sub,sys/fs,sbin,$(SYSFSU)))
-$(eval $(call t-sub,sys/vm,sbin,$(SYSVMU)))
-$(eval $(call t-sub,sys/kern,sbin,$(SYSKERNU)))
+$(eval $(call t-sub,$(UOBJ)/stand,$(USRC)/stand,$(BOOTU)))
+$(eval $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset))
+#OD:=$$(UOBJ)/$1)
+#$$(eval SD:=$$(USRC)/$2)
+#$(info $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
+#$(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
+#$(info $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
+#$(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
+#$(eval $(call t-sub,usr/bin,usr.bin,$(USR.BINU)))
+#$(eval $(call t-sub,usr/sbin,usr.sbin,$(USR.SBINU)))
+#$(eval $(call t-sub,bin/eilish.dir,bin/eilish.dir,$(SHB)))
+#$(eval $(call t-sub,sys/fs,sys/fs,$(SYSFSU)))
+##$(eval $(call t-sub,sys/vm,sys/vm,$(SYSVMU)))
+#$(eval $(call t-sub,sys/kern,sys/kern,$(SYSKERNU)))
 
 define t-gen-args
 $2/$1: $(ETC_HOSTS)
 	mkdir -p $(TMP)/$2/$1
 	(cd $(TMP)/$2/$1 && tonos-cli config --url gql.custler.net --abi $(CURDIR)/$(UOBJ)/$3/$1.abi.json --addr `grep -w $1 $$< | cut -f 1`)
-	$$(file >$$@,(cd $(TMP)/$2/$1\n$4 >$1.args\n$(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >$(CURDIR)/run/proc_out\ncd - ))
+	$$(file >$$@,(cd $(TMP)/$2/$1 $4 >$1.args && $(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >$(CURDIR)/run/proc_out))
 	chmod u+x $$@
 endef
 
+b0: $(patsubst %,$(MAN)/%.0,$(HELP_TOPICS))
+	rm -f $(MAN)/0.man
+	jq 'add' $^ >$(MAN)/0.man
+#$(MAN)/%.0: $(BIN)/%.boc $(BLD)/%.abi.json
+#$(MAN)/%.0: $(UOBJ)/%.boc $(BLD)/%.abi.json
+#	$(TOC) -j run --boc $< --abi $(word 2,$^) builtin_help {} >$@
+
+STMP:=$(UOBJ)/bin/eilish.dir
+define t-gen-builtin
+bin/eilish.dir/$1: $(ETC_HOSTS)
+	mkdir -p $(STMP)/$1
+	(cd $(STMP)/$1 && tonos-cli config --url $(URL) --abi ../$1.abi.json --addr `grep -w $1 $$< | cut -f 1`)
+	$$(file >$$@,cd $(STMP)/$1)
+	$$(file >>$$@,jq $(QUOTE){sv_in: .}$(QUOTE) ../vm >$1.args)
+	$$(file >>$$@,$(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >../vm_out)
+	$$(file >>$$@,cd -)
+	chmod u+x $$@
+endef
 
 #$(info $(call t-gen-bin,type,bin/eilish.dir))
-$(foreach b,$(SHB),$(eval $(call t-gen-bin,$b,bin/eilish.dir,bin/eilish.dir)))
-$(foreach b,$(USR.BINU),$(eval $(call t-gen-bin,$b,usr/bin,usr.bin)))
-#$(foreach b,$(BINU),$(eval $(call t-gen-bin,$b,bin,bin)))
+#$(foreach b,$(SHB),$(eval $(call t-gen-bin,$b,bin/eilish.dir,bin/eilish.dir)))
+#$(foreach b,$(USR.BINU),$(eval $(call t-gen-bin,$b,usr/bin,usr.bin)))
+$(foreach b,$(BINU),$(eval $(call t-gen-bin,$b,bin,bin)))
+$(foreach b,$(SHB),$(eval $(call t-gen-builtin,$b)))
 #$(foreach b,$(BINU),$(info $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
-$(foreach b,$(BINU),$(eval $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
+#$(foreach b,$(BINU),$(eval $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
+#$(foreach b,$(SHB),$(eval $(call t-gen-args,$b,bin/eilish.dir,bin/eilish.dir,jq $(QUOTE){sv_in: .}$(QUOTE) $(CURDIR)/run/vm)))
+#jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
 
 #c0: $(patsubst %,bin/%.boc,cat eilish)
 #	echo $(BOCS)
@@ -138,6 +177,8 @@ $(foreach b,$(BINU),$(eval $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURD
 
 bocs: $(BOCS)
 	echo $^
+cr: $I.tvc
+
 cc: $(CSS)
 	echo $(SRCS)
 	echo $(CSS)
@@ -147,7 +188,7 @@ install: dirs cc ccb config hosts bocs
 	echo Tonix has been installed successfully
 
 config:
-	$(TOC) config --url gql.custler.net
+	$(TOC) config --url $(URL)
 
 #$(BLD)/%.tvc: %.sol
 #	$(SOLC) $< -o $(BLD)
@@ -176,7 +217,8 @@ $(BIN)/$I.boc: etc/hosts.0
 #	$(eval aa!=grep -w $* $< | cut -f 1)
 #	$(TOC) account $(aa) -b $@
 ru:
-	$($I_r) models {} | jq -j '.out'
+#	$($I_r) models {} | jq -j '.out'
+	./bin/Repo models
 
 #bocs: $(patsubst %,$(BIN)/%.boc,$(SRCS))
 #	@true
@@ -186,11 +228,11 @@ DEPLOYED=$(patsubst %,$(BLD)/%.deployed,$(INIT))
 deploy: $(DEPLOYED)
 	-cat $^
 
-$(BLD)/%.shift: $(BLD)/%.tvc $(BLD)/%.abi.json $(RKEYS)
+$(UOBJ)/stand/%.shift: $(UOBJ)/stand/%.tvc $(UOBJ)/stand/%.abi.json $(RKEYS)
 	$(TOC) genaddr $< --abi $(word 2,$^) --setkey $(word 3,$^) | grep "Raw address:" | sed 's/.* //g' >$@
 $(BLD)/%.cargs:
 	$(file >$@,{})
-$(BLD)/%.deployed: $(BLD)/%.shift $(BLD)/%.tvc $(BLD)/%.abi.json $(RKEYS) $(BLD)/%.cargs
+$(BLD)/%.deployed: $(UOBJ)/stand/%.shift $(UOBJ)/stand/%.tvc $(UOBJ)/stand/%.abi.json $(RKEYS) $(BLD)/%.cargs
 	$(call _pay,$(file < $<),$(VAL0))
 	$(TOC) deploy $(word 2,$^) --abi $(word 3,$^) --sign $(word 4,$^) $(word 5,$^) >$@
 
@@ -206,9 +248,10 @@ ss: $(RES)
 # make s_add dir=usr.bin name=chfn
 dir?=
 name?=
-s_add: $(UOBJ)/$(dir)/$(name).cs
-	$(eval args!=jq -R '{index:0,name:"$(name)",c:.}' $<)
-	$($I_c) update_model_at_index '$(args)'
+add: $(UOBJ)/$(dir)/$(name).cs
+#	$(eval args!=jq -R '{index:0,name:"$(name)",c:.}' $<)
+#	$($I_c) update_model_at_index '$(args)'
+	./bin/Repo add_model $(name) $<
 #add_all: $(patsubst %,$(BLD)/%.as,$(SRCS))
 #	echo $^
 #$(BLD)/%.as: $(BLD)/%.cs
@@ -216,11 +259,11 @@ s_add: $(UOBJ)/$(dir)/$(name).cs
 #	$($I_c) update_model_at_index '$(args)' >$@
 
 etc/hosts.1:
-	$($I_r) etc_hosts {} | jq -j '.out' | sed 's/ *$$//' >$@
+#	$($I_r) etc_hosts {} | jq -j '.out' | sed 's/ *$$//' >$@
+	./bin/Repo etc_hosts | sed 's/ *$$//' | head -n -1 >$@
 hosts:
 	rm -f etc/hosts.1
 	make etc/hosts.1
-
 
 tty tt: tx bocs
 	./$<

@@ -160,7 +160,7 @@ library vmem {
         addrp = vm.vm_inuse;
     }
     function vmem_free(s_vmem vm, uint32 addr, uint16 size) internal {}
-    function vmem_xalloc(s_vmem vm, uint16 size, uint16 align, uint16 phase, uint16 nocross, uint32 minaddr, uint32 maxaddr, uint16 flags, uint32 addrp) internal returns (int) {}
+    function vmem_xalloc(s_vmem vm, uint16 size, uint16 align, uint16 phase, uint16 nocross, uint32 minaddr, uint32 maxaddr, uint16 flags, uint32 addrp) internal returns (uint8) {}
     function vmem_xfree(s_vmem vm, uint32 addr, uint16 size) internal {}
     function vmem_add(s_vmem vm, uint32 addr, uint16 size, uint16 flags) internal returns (uint16) {}
     function vmem_roundup_size(s_vmem vm, uint16 size) internal returns (uint16) {}
@@ -169,5 +169,9 @@ library vmem {
     function vmem_print(uint32 addr, string , string ) internal {}
     function vmem_printall(string , string ) internal {}
     function vmem_startup() internal {}
+
+    function vmem_fetch_page(s_vmem vm, uint16 idx) internal returns (string) {
+        return idx < vm.vm_pages.length ? vm.vm_pages[idx] : "Page fault";
+    }
 
 }

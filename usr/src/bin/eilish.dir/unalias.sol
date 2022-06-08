@@ -1,28 +1,28 @@
-pragma ton-solidity >= 0.59.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract unalias is Shell {
 
-    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        string alias_page = pool;
-        bool remove_all = arg.flag_set("a", flags);
-        ec = EXECUTE_SUCCESS;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string alias_page = vmem.vmem_fetch_page(sv.vmem[1], 0);
+
+        bool remove_all = p.flag_set("a");
         if (remove_all)
-            res = "";
+            delete sv.vmem[1].vm_pages[0];
         else {
             string initial_val = alias_page;
-            for (string token: params) {
+            for (string token: p.params()) {
                 string record = vars.get_pool_record(token, alias_page);
-                if (!record.empty()) {
+                if (!record.empty())
                     alias_page.translate(record + "\n", "");
-                } else
-                    ec = EXECUTE_FAILURE;
             }
             if (initial_val != alias_page)
-                res = alias_page;
+                sv.vmem[1].vm_pages[0] = alias_page;
         }
+        sv.cur_proc = p;
     }
 
 function _builtin_help() internal pure override returns (BuiltinHelp) {

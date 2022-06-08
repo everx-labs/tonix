@@ -4,5 +4,9 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-if [ -s run/stdout ]; then cat run/stdout >>var/log/stdout; cat run/stdout >>var/log/session; echo -n ${GREEN}; cat run/stdout; echo -n ${NC}; rm run/stdout; fi
-if [ -s run/stderr ]; then cat run/stderr >>var/log/stderr; cat run/stderr >>var/log/session; echo -n ${RED}; cat run/stderr; echo -n ${NC}; rm run/stderr; fi
+out=$1
+err=$2
+[[ -s $out ]] && echo -ne ${GREEN} && cat $out | tee -a var/log/stdout var/log/session && echo -ne ${NC} && rm $out
+[[ -s $err ]] && echo -ne ${RED} && cat $err | tee -a var/log/stderr var/log/session && echo -ne ${NC} && rm $err
+#if [ -s $out ]; then cat $out >>var/log/stdout; cat $out >>var/log/session; echo -n ${GREEN}; cat $out; echo -n ${NC}; rm $out; fi
+#if [ -s $err ]; then cat $err >>var/log/stderr; cat $err >>var/log/session; echo -n ${RED}; cat $err; echo -n ${NC}; rm $err; fi

@@ -1,16 +1,14 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract set is Shell {
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, , ) = arg.get_args(args);
-        ec = EXECUTE_SUCCESS;
-        if (params.empty()) {
-            out.append(pool + "\n");
-        } else {
-        }
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        p.puts(vmem.vmem_fetch_page(sv.vmem[1], 3));
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

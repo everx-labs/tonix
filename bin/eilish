@@ -1,0 +1,15 @@
+set -x
+cd /home/boris/tonix/tmp/bin/eilish
+jq -n --arg v "$@" --slurpfile sv ../eilish.dir/vm '{sv_in: $sv[], input: $v}' >eilish.args
+tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main eilish.args >sa.out
+jq -er '."Error"? // empty' sa.out && exit $?
+jq -rj '.out' sa.out >/home/boris/tonix/run/args
+jq '.sv' sa.out >../eilish.dir/vm
+cd -
+eval `jq -rj '.res' /home/boris/tonix/tmp/bin/eilish/sa.out`
+#jq -rj '.p.p_fd.fdt_ofiles[1].buf.buf' run/proc_out | xxd -p -r >run/stdout
+jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[1].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stdout
+jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[2].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stderr
+./flush_std run/stdout run/stderr
+#$jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[1].buf.buf' tmp/$c.out | xxd -p -r >run/stdout
+#./flush_std run/stdout run/stderr

@@ -1,40 +1,23 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract exec is Shell {
 
-    function modify(string args, s_proc p_in) external pure returns (s_proc p) {
-//        (, string[] params, , ) = arg.get_env(argv);
-        (string[] params, , ) = arg.get_args(args);
-        p = p_in;
-        /*p.execve()
-
-        p.
-    "p_pid": "0",
-    "p_oppid": "0",
-    "p_comm": "",
-    "p_args": {
-      "ar_length": "0",
-      "ar_args": ""
-    },*/
-
-        for (string param: params) {
-            s_of f = p.fopen(param, "r");
-            if (!f.ferror()) {
-
-            }
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+        (bool substitute_command, bool empty_env, bool prepend_dash, , , , , ) = p.flag_values("acl");
+        if (empty_env)
+            delete p.environ;
+        if (substitute_command) {
+            string sub = p.opt_value("a");
+            p.p_comm = sub;
         }
-    }
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, , ) = arg.get_args(args);
-//        (bool substitute_command, bool empty_env, bool prepend_dash, bool f1, bool f2, bool f3, bool f4, bool f5) = arg.flag_values("acl12345", flags);
-        uint16 pos;
-        if (!params.empty())
-            pos = str.toi(params[0]);
-        out = "";
-        if (!pool.empty())
-            ec = EXECUTE_SUCCESS;
+        if (prepend_dash)
+            p.p_comm = "-" + p.p_comm;
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

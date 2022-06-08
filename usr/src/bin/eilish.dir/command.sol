@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 import "../../lib/xio.sol";
@@ -8,7 +8,6 @@ import "../../sys/sys/libkeg.sol";
 contract command is Shell {
 
     using sbuf for s_sbuf;
-//    using libsvm for svm;
     using libkeg for uma_keg;
 
     uint16 constant CDESC_ALL       = 1; // type -a
@@ -19,14 +18,16 @@ contract command is Shell {
     uint16 constant CDESC_FORCE_PATH= 32; // type -ap or type -P
     uint16 constant CDESC_NOFUNCS   = 64; // type -f
 
-    function main(svm sv_in, string args, string comp_spec, string varss, string users, string groups) external pure returns (svm sv, s_proc p, string exec_line, string exports) {
-//        c = c_in;
+    function main(svm sv_in, string args) external pure returns (svm sv, s_proc p, string exec_line, string exports) {
         sv = sv_in;
         p = sv.cur_proc;
+        s_vmem vmm = sv.vmem[1];
         string cmd = p.p_comm;
-        string hash_pool;
-        if (sv.vmem.length > 1 && sv.vmem[1].vm_pages.length > 4)
-            hash_pool = sv.vmem[1].vm_pages[4];
+        string varss = vmem.vmem_fetch_page(vmm, 8);
+        string users = vmem.vmem_fetch_page(vmm, 6);
+        string groups = vmem.vmem_fetch_page(vmm, 7);
+        string hash_pool = vmem.vmem_fetch_page(vmm, 4);
+
         string pattern = "[" + cmd + "]";
         string path;
         (string[] lines, uint n_lines) = hash_pool.split("\n");
@@ -39,17 +40,16 @@ contract command is Shell {
         path = path.empty() ? "usr/bin" : path;
         string[] env;
         string cl;
-//        uma_zone sz = sv.sz[5];
-//        s_uma_slab s = sz.uz_keg.uk_domain[0].ud_part_slab[0];
-//        s_uma_slab s = sz.uz_keg.keg_fetch_slab();
-//        uma_keg k = sz.uz_keg;
-        //uma_slab s; //= k.fetch_slab();
-//        s_uma_slab s = c.keg_fetch_slab(5, 0);
+        /*uma_zone sz = sv.sz[5];
+        s_uma_slab s = sz.uz_keg.uk_domain[0].ud_part_slab[0];
+        s_uma_slab s = sz.uz_keg.keg_fetch_slab();
+        uma_keg k = sz.uz_keg;
+        uma_slab s; //= k.fetch_slab();
+        s_uma_slab s = c.keg_fetch_slab(5, 0);*/
         bytes b;// = s.us_data;
         bytes[] vd = sv.vmem[0].vm_pages;
         (mapping (uint16 => Inode) inodes2, mapping (uint16 => bytes) data2) = fs.read_fs(b, vd);
         (s_of[] fdt, s_dirent[] pas, string param_index) = _file_stati(p, inodes2, data2);
-//        (s_of[] fdt, s_dirent[] pas, string param_index) = _file_stati(p, inodes, data);
         p.p_args.ar_misc.pos_args = pas;
         for (s_of f: fdt)
             p.p_fd.fdt_ofiles.push(f);
@@ -59,13 +59,11 @@ contract command is Shell {
 
         string[] pa;
         string pi = vars.as_attributed_hashmap("PARAM_INDEX", param_index);
-//        exports.append(pi);
         p.environ = env;
         pa.push(cl);
         pa.push(pi);
         p.p_args.ar_args = pa;
         p.p_args.ar_length = uint16(pa.length);
-//        p.p_comm = cmd;
         exec_line = "." + path + "/" + cmd + " " + p.p_args.ar_misc.sargs;
         sv.cur_proc = p;
     }
@@ -148,7 +146,6 @@ contract command is Shell {
                 if (!_is_open(fdt_ofiles, index)) {
                     s.sbuf_new(data[index], inodes[index].file_size, 0);
                     s.sbuf_finish();
-//                    fdt_ofiles.push(s_of(_attr(inodes[index], bs, index), io.SRD, index, name, 0, s));
                     fdt.push(s_of(_attr(inodes[index], bs, index), io.SRD, counter++, name, 0, s));
                 }
                 pa[i] = s_dirent(index, t, name);
@@ -184,9 +181,7 @@ contract command is Shell {
         sv.sz = uz;
     }
 
-//    function execute_command(svm sv_in, string args, string comp_spec, string varss, string users, string groups, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv, s_proc p, string exec_line, string exports) {
     function execute_command(svm sv_in, string args, string comp_spec, string varss, string users, string groups) external pure returns (svm sv, s_proc p, string exec_line, string exports) {
-//        c = c_in;
         sv = sv_in;
         p = sv.cur_proc;
         string cmd = p.p_comm;
@@ -201,16 +196,12 @@ contract command is Shell {
         string[] env;
         string cl;
         uma_zone sz = sv.sz[5];
-//        s_uma_slab s = sz.uz_keg.uk_domain[0].ud_part_slab[0];
-//        s_uma_slab s = sz.uz_keg.keg_fetch_slab();
         uma_keg k = sz.uz_keg;
         uma_slab s; //= k.fetch_slab();
-//        s_uma_slab s = c.keg_fetch_slab(5, 0);
         bytes b = s.us_data;
         bytes[] vd = sv.vmem[0].vm_pages;
         (mapping (uint16 => Inode) inodes2, mapping (uint16 => bytes) data2) = fs.read_fs(b, vd);
         (s_of[] fdt, s_dirent[] pas, string param_index) = _file_stati(p, inodes2, data2);
-//        (s_of[] fdt, s_dirent[] pas, string param_index) = _file_stati(p, inodes, data);
         p.p_args.ar_misc.pos_args = pas;
         for (s_of f: fdt)
             p.p_fd.fdt_ofiles.push(f);
@@ -220,13 +211,11 @@ contract command is Shell {
 
         string[] pa;
         string pi = vars.as_attributed_hashmap("PARAM_INDEX", param_index);
-//        exports.append(pi);
         p.environ = env;
         pa.push(cl);
         pa.push(pi);
         p.p_args.ar_args = pa;
         p.p_args.ar_length = uint16(pa.length);
-//        p.p_comm = cmd;
         exec_line = "./command " + fn_name + " " + cmd + " " + p.p_args.ar_misc.sargs;
         sv.cur_proc = p;
     }
@@ -236,7 +225,7 @@ contract command is Shell {
 "command",
 "[-pVv] command [arg ...]",
 "Execute a simple command or display information about commands.",
-"Runs COMMAND with ARGS suppressing  shell function lookup, or display information about the specified COMMANDs.  Can be used to invoke commands on disk when a function with the same name exists.",
+"Runs COMMAND with ARGS suppressing shell function lookup, or display information about the specified COMMANDs. Can be used to invoke commands on disk when a function with the same name exists.",
 "-p    use a default value for PATH that is guaranteed to find all of the standard utilities\n\
 -v    print a description of COMMAND similar to the `type' builtin\n\
 -V    print a more verbose description of each COMMAND",

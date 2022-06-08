@@ -1,12 +1,12 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract alias_ is Shell {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
-        p = p_in;
-//        bool f_terse = p.flag_set("t");
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
         string[] params = p.params();
         s_of f = p.fopen("alias", "r");
         string alias_page;
@@ -32,6 +32,7 @@ contract alias_ is Shell {
             }
         } else
             p.perror("Failed to read alias page from pool");
+        sv.cur_proc = p;
     }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
@@ -53,30 +54,6 @@ contract alias_ is Shell {
         }
         if (initial_val != alias_page)
             res = libstring.translate(pool, initial_val, alias_page);
-    }
-
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        ec = EXECUTE_SUCCESS;
-        out = "";
-        (string[] params, , ) = arg.get_args(args);
-        if (params.empty()) {
-            (string[] aliases, ) = pool.split_line("\n", "\n");
-            for (string line: aliases) {
-                (, string name, string value) = vars.split_var_record(line);
-                value.quote();
-                out.append("alias " + name + "=" + value + "\n");
-            }
-        } else {
-            string token = params[0];
-            string cur_val = vars.val(token, pool);
-            if (cur_val.empty()) {
-                ec = EXECUTE_FAILURE;
-                out.append("-tosh: alias: " + token + ": not found\n");
-            } else {
-                cur_val.quote();
-                out.append("alias " + token + "=" + cur_val + "\n");
-            }
-        }
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

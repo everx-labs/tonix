@@ -1,29 +1,30 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract unset is Shell {
 
-    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        bool unset_vars = arg.flag_set("v", flags);
-        bool unset_functions = arg.flag_set("f", flags);
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        bool unset_vars = p.flag_set("v");
+        bool unset_functions = p.flag_set("f");
         string sattrs = unset_functions ? "-f" : unset_vars ? "+f" : "";
-        string page = pool;
-        for (string arg: params) {
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], unset_functions ? 9 : 8);
+        for (string arg: p.params()) {
             string line = vars.get_pool_record(arg, pool);
             if (!line.empty()) {
                 (string attrs, ) = line.csplit(" ");
                 if (vars.match_attr_set(sattrs, attrs)) {
-                    page.translate(line + "\n", "");
+                    pool.translate(line + "\n", "");
                 }
             } else {
-                ec = EXECUTE_FAILURE;
-//                out.append("unset: " + arg + " not found\n");
+                p.perror(arg + " not found");
                 // not found
             }
         }
-        res = page;
+        sv.vmem[1].vm_pages[unset_functions ? 9 : 8] = pool;
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

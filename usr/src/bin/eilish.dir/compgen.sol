@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
@@ -12,23 +12,43 @@ contract compgen is Shell {
     uint8 constant MATCH_GLOBREP    = 16;
     uint8 constant MATCH_QUOTED     = 32;
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = arg.flag_values("abcdefgj", flags);
-        (bool fk, bool fs, bool fu, bool fv, , , , ) = arg.flag_values("ksuv", flags);
+        function main(svm sv_in) external pure returns (svm sv) {
+            sv = sv_in;
+            s_proc p = sv.cur_proc;
+            string[] params = p.params();
+        (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = p.flag_values("abcdefgj");
+        (bool fk, bool fs, bool fu, bool fv, , , , ) = p.flag_values("ksuv");
         bool print_names = fa || fb || fe || fv;
         bool print_values = fc || fd || ff || fg || fj || fk || fs || fu;
-        ec = EXECUTE_SUCCESS;
 
+        string[] vp = sv.vmem[1].vm_pages;
+        string[] pages;
+        uint8 indices;
+        if (fa) pages.push(vp[0]);
+        if (fb) pages.push(vp[5]);
+        if (fc) pages.push(vp[11]);
+//        if (fd) pages.push(vp[]);
+//        if (fe) pages.push(vp[]);
+//        if (ff) pages.push(vp[]);
+        if (fg) pages.push(vp[7]);
+//        if (fj) pages.push(vp[]);
+        if (fk) pages.push(vp[10]);
+//        if (fs) pages.push(vp[]);
+        if (fu) pages.push(vp[6]);
+        if (fv) pages.push(vp[8]);
+
+//        string page = vmem.vmem_fetch_page(sv.vmem[1], 3);
         string param = params.empty() ? "" : params[0];
-        uint p_len = param.byteLength();
-        (string[] lines, ) = pool.split("\n");
-        for (string line: lines) {
-            (, string name, string value) = vars.split_var_record(line);
-            if (name.byteLength() >= p_len && name.substr(0, p_len) == param) {
-                out.append((print_names ? name : print_values ? value : "") + "\n");
+        for (string pool: pages) {
+            uint p_len = param.byteLength();
+            (string[] lines, ) = pool.split("\n");
+            for (string line: lines) {
+                (, string name, string value) = vars.split_var_record(line);
+                if (name.byteLength() >= p_len && name.substr(0, p_len) == param)
+                    p.puts(print_names ? name : print_values ? value : "");
             }
         }
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

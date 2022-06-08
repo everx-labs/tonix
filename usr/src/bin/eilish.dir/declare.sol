@@ -1,43 +1,47 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract declare is Shell {
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        bool function_names_only = arg.flag_set("F", flags);
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+
+        bool function_names_only = p.flag_set("F");
 
         string sattrs;
         string[] a_attrs = ["a", "A", "x", "i", "r", "t", "n", "f"];
         for (string attr: a_attrs)
-            if (arg.flag_set(attr, flags))
+            if (p.flag_set(attr))
                 sattrs.append(attr);
         if (function_names_only)
             sattrs.append("-f");
         sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
 
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], 3);
         if (params.empty()) {
             (string[] lines, ) = pool.split("\n");
             for (string line: lines) {
                 (string attrs, string name, string value) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
-                    out.append(flags.empty() ?
-                        (name + "=" + value + "\n") :
+                    p.puts(p.flags_empty() ?
+                        (name + "=" + value) :
                         vars.print_reusable(line));
             }
         }
-        for (string p: params) {
-            string cur_record = vars.get_pool_record(p, pool);
+        for (string param: params) {
+            string cur_record = vars.get_pool_record(param, pool);
             if (!cur_record.empty()) {
                 (string cur_attrs, ) = cur_record.csplit(" ");
                 if (vars.match_attr_set(sattrs, cur_attrs))
-                    out.append(vars.print_reusable(cur_record));
+                    p.puts(vars.print_reusable(cur_record));
             } else {
-                ec = EXECUTE_FAILURE;
-                out.append("declare: " + p + " not found\n");
+                p.perror(param + ": not found");
             }
         }
+        sv.cur_proc = p;
     }
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {

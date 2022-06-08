@@ -1,40 +1,32 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract ulimit is Shell {
 
-    function _table(TvmCell[] cls) internal pure returns (string out) {
-        Column[] columns_format = [
-            Column(true, 3, fmt.LEFT),
-            Column(true, 5, fmt.LEFT),
-            Column(true, 6, fmt.LEFT),
-            Column(true, 5, fmt.LEFT)];
-
-        string[][] table = [["N", "cells", "bytes", "refs"]];
-        for (uint i = 0; i < cls.length; i++) {
-            (uint cells, uint bits, uint refs) = cls[i].dataSize(1000);
-            uint bytess = bits / 8;
-            table.push([str.toa(i), str.toa(cells), str.toa(bytess), str.toa(refs)]);
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+//        string[] params = p.params();
+//        (bool socket_buffer_size, bool core_file_size, bool data_seg_size, bool scheduling_priority, bool file_size, bool pending_signals,
+//            bool max_locked_memory, bool max_memory_size) = p.flag_values("bcdefilm");
+//        (bool open_files, bool pipe_size, bool POSIX_message_queues, bool real_time_priority, bool stack_size, bool cpu_time,
+//            bool max_user_processes, bool virtual_memory) = p.flag_values("npqrstuv");
+//        (bool file_locks, bool max_pseudoterminals, bool max_user_threads, bool soft_resource_limit, bool hard_resource_limit, bool print_all, , ) =
+//            p.flag_values("xPTSHa");
+        (bool soft_resource_limit, bool hard_resource_limit, bool print_all, , , , , ) = p.flag_values("SHa");
+        bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], 12); // 13?
+        if (print_all) {
+            (string[] items, ) = pool.split_line("\n", "\n");
+            for (string item: items) {
+                p.puts(item);
+//                (string attrs, string name, string value) = _parse_var(item);
+//                out.append(name + " " + value + "\n");
+            }
         }
-        out = fmt.format_table_ext(columns_format, table, " ", "\n");
+        sv.cur_proc = p;
     }
-
-    function v1(string args, string pool) external pure returns (uint8 ec, string out) {
-
-    }
-
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        /*(string[] params, string flags, ) = arg.get_args(args);
-        (bool socket_buffer_size, bool core_file_size, bool data_seg_size, bool scheduling_priority, bool file_size, bool pending_signals,
-            bool max_locked_memory, bool max_memory_size) = arg.flag_values("bcdefilm", flags);
-        (bool open_files, bool pipe_size, bool POSIX_message_queues, bool real_time_priority, bool stack_size, bool cpu_time,
-            bool max_user_processes, bool virtual_memory) = arg.flag_values("npqrstuv", flags);
-        (bool file_locks, bool max_pseudoterminals, bool max_user_threads, bool soft_resource_limit, bool hard_resource_limit, bool print_all, , ) =
-            arg.flag_values("xPTSHa", flags);
-        bool use_hard_limit = hard_resource_limit && !soft_resource_limit;*/
-        if (!args.empty())
-            ec = EXECUTE_SUCCESS;
 
 /*/proc/27196/limits
 Limit                     Soft Limit           Hard Limit           Units
@@ -54,17 +46,25 @@ Max msgqueue size         819200               819200               bytes
 Max nice priority         0                    0
 Max realtime priority     0                    0
 Max realtime timeout      unlimited            unlimited            us*/
-//        if (print_all) {
-            (string[] items, ) = pool.split_line("\n", "\n");
-            for (string item: items) {
-                out.append(item);
-//                (string attrs, string name, string value) = _parse_var(item);
-//                out.append(name + " " + value + "\n");
-            }
-//        }
+
+    function _table(TvmCell[] cls) internal pure returns (string out) {
+        Column[] columns_format = [
+            Column(true, 3, fmt.LEFT),
+            Column(true, 5, fmt.LEFT),
+            Column(true, 6, fmt.LEFT),
+            Column(true, 5, fmt.LEFT)];
+
+        string[][] table = [["N", "cells", "bytes", "refs"]];
+        for (uint i = 0; i < cls.length; i++) {
+            (uint cells, uint bits, uint refs) = cls[i].dataSize(1000);
+            uint bytess = bits / 8;
+            table.push([str.toa(i), str.toa(cells), str.toa(bytess), str.toa(refs)]);
+        }
+        out = fmt.format_table_ext(columns_format, table, " ", "\n");
     }
 
-
+    function v1(string args, string pool) external pure returns (uint8 ec, string out) {
+    }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(

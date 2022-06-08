@@ -1,0 +1,12 @@
+set -x
+cd /home/boris/tonix/tmp/stand/Repo
+fn=$1
+#addr=`jq -r '.config.addr' tonos-cli.conf.json`
+case $fn in
+    etc_hosts|models) ~/bin/tonos-cli -j runx $fn | jq -j '.out';;
+    add_model) ~/bin/tonos-cli callx $fn --name $2 --c `cat $3`;;
+    update_model_at_index) ~/bin/tonos-cli callx $fn --index $2 --c `cat $3`;;
+    upgrade) ~/bin/tonos-cli callx $fn --c `cat $2`;;
+esac
+cd -
+# | sed 's/ *$$//' >hosts;;

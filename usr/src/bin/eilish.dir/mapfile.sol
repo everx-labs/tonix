@@ -1,35 +1,41 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract mapfile is Shell {
 
-    function read_input(string args, string input, string pool) external pure returns (uint8 ec, string out, string res) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        ec = EXECUTE_SUCCESS;
-        string dbg;
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
+        sv.cur_proc = p;
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], 3);
 
         string sattrs = "-a";
-        string delimiter = arg.flag_set("d", flags) ? arg.opt_arg_value("d", args) : "\n";
-//        uint count = arg.flag_set("n", flags) ? str.toi(arg.opt_arg_value("n", args)) : 0;
-//        uint origin = arg.flag_set("O", flags) ? str.toi(arg.opt_arg_value("O", args)) : 0;
+        string delimiter = p.flag_set("d") ? p.opt_value("d") : "\n";
+        uint count = p.flag_set("n") ? str.toi(p.opt_value("n")) : 0;
+        uint origin = p.flag_set("O") ? str.toi(p.opt_value("O")) : 0;
         string array_name = params.empty() ? "MAPFILE" : params[params.length - 1];
-//        string ofs = arg.flag_set("t", flags) ? " " : (delimiter + " ");
-//        string ofs_2 = arg.flag_set("t", flags) ? "" : delimiter;
+//        string ofs = p.flag_set("t") ? " " : (delimiter + " ");
+//        string ofs_2 = p.flag_set("t") ? "" : delimiter;
         uint16 page_index;
-        if (arg.flag_set("u", flags)) {
-            string sfd = arg.opt_arg_value("u", args);
+        if (p.flag_set("u")) {
+            string sfd = p.opt_value("u");
             uint16 fd = str.toi(sfd);
             if (fd > 0)
                 page_index = fd;
             else
-                dbg.append(format("Invalid fd specified: {}, using stdin\n", sfd));
+                p.perror("Invalid fd specified: " + sfd + ", using stdin");
         }
 
-        dbg.append(format("delim {} arr_name {} page_index {}\n", delimiter, array_name, page_index));
+        string input;
+        s_of f = p.fdopen(0, "r");
+        if (!f.ferror())
+            input = f.gets_s(0);
+
         string arr_val = vars.as_indexed_array(array_name, input, "\n");
-        out = dbg;
-        res = vars.set_var(sattrs, arr_val, pool);
+        sv.vmem[1].vm_pages[3] = vars.set_var(sattrs, arr_val, pool);
+        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

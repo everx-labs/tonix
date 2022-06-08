@@ -1,0 +1,4 @@
+cd /home/boris/tonix/tmp/bin/eilish.dir/enable
+jq '{sv_in: .}' ../vm >enable.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main enable.args >../vm_out
+cd -

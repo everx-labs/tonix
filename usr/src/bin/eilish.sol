@@ -48,7 +48,6 @@ contract eilish is Shell {
     function main(svm sv_in, string input) external pure returns (svm sv, uint8 ec, string out, string res, string redir_in, string redir_out) {
         sv = sv_in;
 
-//        s_vmem vmem1 = sv.vmem[1];
         string[] pages;
         string aliases;
         string opt_string;
@@ -165,97 +164,6 @@ contract eilish is Shell {
             sv.vmem[1] = vmem1;
         else
             sv.vmem.push(vmem1);
-    }
-
-    function set_args(svm sv_in, string input, string aliases, string opt_string, string index, string pool) external pure returns (svm sv, uint8 ec, string out, string res, string redir_in, string redir_out) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        s_of f = p.stdout();
-        f.fflush();
-        p.p_fd.fdt_ofiles[io.STDOUT_FILENO] = f;
-        f = p.stderr();
-        f.fflush();
-        p.p_fd.fdt_ofiles[io.STDERR_FILENO] = f;
-        f = p.p_fd.fdt_ofiles[3];
-        f.fflush();
-        p.p_fd.fdt_ofiles[3] = f;
-
-        if (input.empty())
-            return (sv, EXECUTE_FAILURE, "", "", "", "");
-        (string cmd_raw, string argv) = input.csplit(" ");
-        string cmd_expanded = vars.val(cmd_raw, aliases);
-        string sinput = cmd_expanded.empty() ? input : cmd_expanded + " " + argv;
-        string cmd;
-        (cmd, argv) = sinput.csplit(" ");
-        string cmd_opt_string = vars.val(cmd, opt_string);
-
-        string sflags;
-        string[][2] opt_values;
-        string pos_params;
-        string err;
-        string[] params;
-        uint n_params;
-        string last_param;
-        string sargs = argv;
-        if (!argv.empty()) {
-            string sbody;
-            (sbody, redir_out) = argv.csplit(">");
-            (sargs, redir_in) = sbody.csplit("<");
-            (params, n_params) = sargs.split(" ");
-            (sflags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
-            if (!err.empty())
-                ec = EX_BADUSAGE;
-            for (string arg: params) {
-                if (arg.strchr("$") > 0) {
-                    string ref = arg.val("$", " ");
-                    if (ref.strchr("{") > 0)
-                        ref.unwrap();
-                    string ref_val = vars.val(ref, pool);
-                    pos_params.translate(arg, ref_val);
-                    sargs.translate(arg, ref_val);
-                }
-            }
-        }
-        string cmd_type = vars.get_array_name(cmd, index);
-//        string exec_line;
-        if (cmd_type == "builtin")
-            res = "./tosh run_builtin " + cmd + " " + sargs;
-        else if (cmd_type == "command")
-            res = "./tosh execute_command " + cmd + " " + sargs;
-        else if (cmd_type == "sysmain")
-            res = "./tosh sys_main " + cmd + " " + sargs;
-        else if (cmd_type == "function") {
-//            string val = vars.function_body(cmd, pool);
-            res = "./tosh execute_function " + sinput;
-        } else {
-            if (!cmd_type.empty())
-                err.append("unknown commmand type: " + cmd_type);
-            else
-                err.append("command not found: " + cmd);
-            res = "echo " + err;
-            ec = EXECUTE_FAILURE;
-        }
-        last_param = sargs.empty() ? cmd : params[n_params - 1];
-
-        p.p_comm = cmd;
-        s_dirent[] pas;
-        for (string pm: params)
-            pas.push(s_dirent(0, 0, pm));
-        p.p_args.ar_misc = s_ar_misc(sinput, sflags, sargs, uint16(n_params), params, ec, last_param,
-            err, redir_in, redir_out, pas, opt_values);
-        out = vars.as_var_list("", [
-            ["COMMAND", cmd],
-            ["PARAMS", pos_params],
-            ["FLAGS", sflags],
-            ["ARGV", sinput],
-            ["#", str.toa(n_params)],
-            ["@", sargs],
-            ["?", str.toa(ec)],
-            ["_", last_param],
-            ["OPTERR", err],
-            ["REDIR_IN", redir_in],
-            ["REDIR_OUT", redir_out]]);
-        sv.cur_proc = p;
     }
 
     function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {

@@ -1,15 +1,18 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract shopt is Shell {
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags, ) = arg.get_args(args);
+    function main(svm sv_in) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+        string[] params = p.params();
 
-        bool print_reusable = arg.flag_set("p", flags);
-        bool set_opt = arg.flag_set("s", flags);
-        bool unset_opt = arg.flag_set("u", flags);
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], 3);
+        bool print_reusable = p.flag_set("p");
+        bool set_opt = p.flag_set("s");
+        bool unset_opt = p.flag_set("u");
         string sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
 
         if (params.empty()) {
@@ -17,23 +20,24 @@ contract shopt is Shell {
             for (string line: lines) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
-                    out.append(print_reusable ? "shopt " + attrs + " " + name + "\n" :
-                    name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off") + "\n");
+                    p.puts(print_reusable ? "shopt " + attrs + " " + name :
+                    name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
             }
         }
-        for (string p: params) {
-            string line = vars.get_pool_record(p, pool);
+        for (string param: params) {
+            string line = vars.get_pool_record(param, pool);
             if (!line.empty()) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
-                    out.append(print_reusable ? "shopt " + attrs + " " + name + "\n" :
-                    name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off") + "\n");
+                    p.puts(print_reusable ? "shopt " + attrs + " " + name :
+                    name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
             } else {
-                ec = EXECUTE_FAILURE;
-                out.append("shopt: " + p + " not found\n");
+                p.perror(param + " not found");
             }
         }
+        sv.cur_proc = p;
     }
+
 
     function modify(string args, string pool) external pure returns (uint8 ec, string res) {
         (string[] params, string flags, ) = arg.get_args(args);

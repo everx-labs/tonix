@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 import "../../lib/inode.sol";
@@ -8,11 +8,14 @@ contract test is Shell {
 
     using libstatmode for uint16;
 
-    function builtin_read_fs(string args, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string res) {
-//        (string[] params, , ) = arg.get_args(args);
-//        string page = pool;
-        string sargs = vars.val("@", args);
+    function main(svm sv_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv) {
+        sv = sv_in;
+        s_proc p = sv.cur_proc;
+//        string[] params = p.params();
+        string sargs = p.p_args.ar_misc.sargs;
         string dbg;
+        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
+
         (string arg_1, string op, string arg_2) = _parse_test_args(sargs);
         dbg.append(format("arg 1: {} op: {} arg 2: {}\n", arg_1, op, arg_2));
         bool result;
@@ -24,8 +27,9 @@ contract test is Shell {
             else
                 result = false;
         }
-        res = result ? "true\n" : "false\n";
-        ec = result ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+//        res = result ? "true\n" : "false\n";
+        p.p_xexit = result ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+        sv.cur_proc = p;
     }
 
     function _match_mode(string op, uint16 mode) internal pure returns (bool res) {
