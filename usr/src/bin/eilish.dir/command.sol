@@ -64,7 +64,7 @@ contract command is Shell {
         pa.push(pi);
         p.p_args.ar_args = pa;
         p.p_args.ar_length = uint16(pa.length);
-        exec_line = "." + path + "/" + cmd + " " + p.p_args.ar_misc.sargs;
+        exec_line = "./" + path + "/" + cmd + " " + p.p_args.ar_misc.sargs;
         sv.cur_proc = p;
     }
 

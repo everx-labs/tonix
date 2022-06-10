@@ -1,18 +1,22 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
 contract cp is Utility {
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
-        (uint16 wd, , string flags, string pi) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        Err[] errors;
+        Ar[] ars;
+        string out;
+        (uint16 wd, , string flags, string pi) = p.get_env();
         uint16 ic = sb.get_inode_count(inodes);
-        DirEntry[] contents;// = dirent.parse_param_index(pi);
+        s_dirent[] contents = p.p_args.ar_misc.pos_args;
 
         (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool recurse)
-            = arg.flag_values("vnbTtufr", flags);
-        bool hardlink = arg.flag_set("l", flags);
-        bool symlink = arg.flag_set("s", flags);
+            = p.flag_values("vnbTtufr");
+        bool hardlink = p.flag_set("l");
+        bool symlink = p.flag_set("s");
 
         if (hardlink && symlink)
             errors.push(Err(er.hard_or_symlink, 0, ""));
@@ -33,7 +37,7 @@ contract cp is Utility {
             last = nargs - 1;
             target_n = nargs - 1;
         }
-        (, string t_path, uint16 t_ino) = contents[target_n].unpack();
+        (uint16 t_ino, , string t_path) = contents[target_n].unpack();
         bool dest_exists = t_ino >= sb.ROOT_DIR;
         s_stat tst = fs.istat(inodes[t_ino]);
 
@@ -43,8 +47,8 @@ contract cp is Utility {
         bool collision = dest_exists && ft.is_reg(tst.st_mode);
         bool overwrite_dest = collision && (!preserve || force);
 
-        if (!errors.empty() || collision && preserve)
-            return (out, ars, errors);
+//        if (!errors.empty() || collision && preserve)
+//            return (out, ars, errors);
 
         string dirents;
         if (request_backup && overwrite_dest) {
@@ -58,7 +62,7 @@ contract cp is Utility {
         uint8 aop = symlink ? aio.SYMLINK : hardlink ? aio.HARDLINK : aio.WR_COPY;
 
         for (uint i = first; i < last; i++) {
-            (uint8 sft, string spath, uint16 sino) = contents[i].unpack();
+            (uint16 sino, uint8 sft, string spath) = contents[i].unpack();
             if (sino < sb.ROOT_DIR) { errors.push(Err(0, sino, spath)); break; }
             s_stat st = fs.istat(inodes[sino]);
             if (verbose) { out.append(spath.squote() + "=>" + t_path.squote()); }

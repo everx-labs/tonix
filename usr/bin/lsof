@@ -1,1 +1,4 @@
-(cd /home/boris/tonix/tmp/usr/bin/lsof && jq '{p_in: .p}' /home/boris/tonix/run/proc >lsof.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main lsof.args >/home/boris/tonix/run/proc_out )
+cd /home/boris/tonix/tmp/bin/lsof
+jq '{p_in: .p}' ../proc >lsof.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main lsof.args >../proc_out
+cd -

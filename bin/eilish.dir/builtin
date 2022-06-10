@@ -1,4 +1,4 @@
-set -x
+#set -x
 cd /home/boris/tonix/tmp/bin/eilish.dir/builtin
 jq --rawfile args /home/boris/tonix/run/args --rawfile builtins /home/boris/tonix/run/builtins '{sv_in: .} + {$args, $builtins}' ../vm >builtin.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main builtin.args >rb.out
@@ -8,3 +8,6 @@ echo "$b_ex" >>/home/boris/tonix/var/log/commands
 #jq -rj '.sv.cur_proc' rb.out | jq --rawfile argv /home/boris/tonix/run/export '{$argv} + {p: .}' >/home/boris/tonix/run/proc
 cd -
 eval "$b_ex"
+#jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[1].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stdout
+jq -rj '.sv.cur_proc' /home/boris/tonix/tmp/bin/eilish.dir/vm_out >/home/boris/tonix/tmp/bin/proc_out
+#jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[2].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stderr

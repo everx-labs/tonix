@@ -1,14 +1,11 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
 contract umount is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        if (!argv.empty() && !inodes.empty() && !data.empty())
-            out = "";
-        ec = EXECUTE_SUCCESS;
+    function main(s_proc p_in) external pure returns (s_proc p) {
+        p = p_in;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -32,7 +29,7 @@ contract umount is Utility {
 "Written by Boris",
 "Not yet implemented",
 "",
-"0.01");
+"0.00");
     }
 
 }

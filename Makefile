@@ -66,7 +66,9 @@ ETC_HOSTS:=$(CURDIR)/etc/hosts.1
 BOOTU:=Repo
 BINU:=cat cp df ln ls mkdir mv realpath rm rmdir eilish
 SBINU:=fsck mount reboot umount
-USR.BINU:=basename chfn colrm column cut diff dirname du env expand file findmnt finger fuser getent grep groups head hostid hostname id last login look lsblk lslogins lsof man mountpoint namei newgrp paste patch pathchk printenv ps readlink rev stat tail touch tr uname unexpand wc whatis who whoami
+#USR.BINU:=basename chfn colrm column cut diff dirname du env expand file findmnt finger fuser getent grep groups head hostid hostname id last login look lsblk lslogins lsof man mountpoint namei newgrp paste patch pathchk printenv ps readlink rev stat tail touch tr uname unexpand wc whatis who whoami
+USR.BINU:=basename chfn colrm column cut diff dirname env expand fuser look lslogins lsof
+USR.BINU2:=du file findmnt finger getent grep groups head hostid hostname id last login lsblk mountpoint namei newgrp readling stat touch wc who
 USR.SBINU:=dumpe2fs groupadd groupdel groupmod mke2fs mkfs useradd userdel usermod
 SHB:=alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
 SYSFSU:=tfs tmpfs
@@ -80,9 +82,10 @@ RES+=$$(patsubst %,$1/%.ress,$3)
 BOCS+=$$(patsubst %,$1/%.boc,$3)
 BINS+=$$(patsubst %,$1/%,$3)
 MANP+=$$(patsubst %,$1/%.man,$3)
+DBG+=$$(patsubst %,$1/%.dbg,$3)
 $1/%.tvc: $2/%.sol
 	$(SOLC) $$< -o $$(@D)
-	$(LINKER) compile --lib $(LIB) -a $$(@D)/$$*.abi.json $$(@D)/$$*.code -o $$@
+	$(LINKER) compile --lib $(LIB) -a $$(@D)/$$*.abi.json $$(@D)/$$*.code --debug-map $$(@D)/$$*.dbg -o $$@
 $1/%.cs: $1/%.tvc
 	$(LINKER) decode --tvc $$< | grep 'code:' | cut -d ' ' -f 3 | tr -d '\n' >$$@
 $1/%.ress: $1/%.cs
@@ -93,6 +96,9 @@ $$(patsubst %,$1/%.boc,$3): $(ETC_HOSTS)
 $(MAN)/%.0: $1/%.boc $1/%.abi.json
 	$(TOC) -j run --boc $$< --abi $$(word 2,$$^) builtin_help {} >$$@
 endef
+#$1/%.dbg: $1/%.code
+#	$(LINKER) compile --lib $(LIB) $< --debug-map $(BLD)/$*.dbg -o $@
+
 # 	$$(eval index!=grep -nw $$* etc/hosts.1 | cut -d ':' -f 1)
 #	$$(eval args!=jq -R '{index:$$(index),name:"$$*",c:.}' $$<)
 #	$$($I_c) update_model_at_index '$$(args)' >$$@
@@ -111,12 +117,14 @@ $2/$1: $(ETC_HOSTS)
 	mkdir -p $(TMP)/$2/$1
 	(cd $(TMP)/$2/$1 && tonos-cli config --url $(URL) --abi ../$1.abi.json --addr `grep -w $1 $$< | cut -f 1`)
 	$$(file >$$@,cd $(TMP)/$2/$1)
-	$$(file >>$$@,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p, argv: .argv}$(QUOTE) $(CURDIR)/run/proc >$1.args)
-	$$(file >>$$@,$(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >$(CURDIR)/run/proc_out)
+	$$(file >>$$@,jq --slurpfile fs ../fs $(QUOTE)$$$$fs[] + {p_in: .p, argv: .argv}$(QUOTE) ../proc >$1.args)
+	$$(file >>$$@,$(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >../proc_out)
 	$$(file >>$$@,cd -)
 	chmod u+x $$@
 endef
 
+#	$$(file >>$$@,jq --slurpfile fs ../fs $(QUOTE)$$$$fs[] + {p_in: .p, argv: .argv}$(QUOTE) ../proc >$1.args)
+#	$$(file >>$$@,jq $(QUOTE){p_in: .p}$(QUOTE) ../../proc >$1.args)
 #	echo '(cd $(TMP)/$2/$1 && jq '{p_in: .p, argv: .argv}' $(CURDIR)/run/proc >$1.args && $(TOC) -j run main $1.args)' >$$@
 #$(info $(call t-sub,bin,bin,$(BINU)))
 $(eval $(call t-sub,$(UOBJ)/stand,$(USRC)/stand,$(BOOTU)))
@@ -124,10 +132,10 @@ $(eval $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin 
 #OD:=$$(UOBJ)/$1)
 #$$(eval SD:=$$(USRC)/$2)
 #$(info $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
-#$(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
+$(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
 #$(info $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
-#$(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
-#$(eval $(call t-sub,usr/bin,usr.bin,$(USR.BINU)))
+$(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
+$(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/usr.bin,$(USR.BINU)))
 #$(eval $(call t-sub,usr/sbin,usr.sbin,$(USR.SBINU)))
 #$(eval $(call t-sub,bin/eilish.dir,bin/eilish.dir,$(SHB)))
 #$(eval $(call t-sub,sys/fs,sys/fs,$(SYSFSU)))
@@ -161,11 +169,27 @@ bin/eilish.dir/$1: $(ETC_HOSTS)
 	chmod u+x $$@
 endef
 
+UTMP:=$(UOBJ)/bin
+define t-gen-usr-bin
+usr/bin/$1: $(ETC_HOSTS)
+	mkdir -p $(UTMP)/$1
+	(cd $(UTMP)/$1 && tonos-cli config --url $(URL) --abi ../$1.abi.json --addr `grep -w $1 $$< | cut -f 1`)
+	$$(file >$$@,cd $(UTMP)/$1)
+	$$(if $2,$$(file >>$$@,jq --slurpfile fs ../fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) ../proc >$1.args),$$(file >>$$@,jq $(QUOTE){p_in: .p}$(QUOTE) ../proc >$1.args))
+	$$(file >>$$@,$(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >../proc_out)
+	$$(file >>$$@,cd -)
+	chmod u+x $$@
+endef
+
+
 #$(info $(call t-gen-bin,type,bin/eilish.dir))
 #$(foreach b,$(SHB),$(eval $(call t-gen-bin,$b,bin/eilish.dir,bin/eilish.dir)))
 #$(foreach b,$(USR.BINU),$(eval $(call t-gen-bin,$b,usr/bin,usr.bin)))
 $(foreach b,$(BINU),$(eval $(call t-gen-bin,$b,bin,bin)))
+$(foreach b,$(SBINU),$(eval $(call t-gen-bin,$b,sbin,sbin)))
 $(foreach b,$(SHB),$(eval $(call t-gen-builtin,$b)))
+#$(foreach b,$(USR.BINU),$(info $(call t-gen-usr-bin,$b,,)))
+$(foreach b,$(USR.BINU),$(eval $(call t-gen-usr-bin,$b,,)))
 #$(foreach b,$(BINU),$(info $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
 #$(foreach b,$(BINU),$(eval $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
 #$(foreach b,$(SHB),$(eval $(call t-gen-args,$b,bin/eilish.dir,bin/eilish.dir,jq $(QUOTE){sv_in: .}$(QUOTE) $(CURDIR)/run/vm)))
@@ -176,13 +200,16 @@ $(foreach b,$(SHB),$(eval $(call t-gen-builtin,$b)))
 #	echo $^
 
 bocs: $(BOCS)
-	echo $^
+#	echo $^
+	@true
 cr: $I.tvc
 
+dbg: $(CSS)
+	@true
 cc: $(CSS)
-	echo $(SRCS)
-	echo $(CSS)
-	echo $^
+#	echo $(SRCS)
+#	echo $(CSS)
+#	echo $^
 	@true
 install: dirs cc ccb config hosts bocs
 	echo Tonix has been installed successfully
@@ -245,7 +272,7 @@ uc0: $(UOBJ)/stand/$I.cs
 
 ss: $(RES)
 	@true
-# make s_add dir=usr.bin name=chfn
+# make add dir=usr.bin name=chfn
 dir?=
 name?=
 add: $(UOBJ)/$(dir)/$(name).cs

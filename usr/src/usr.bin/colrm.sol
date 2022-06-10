@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -54,7 +54,7 @@ contract colrm is Utility {
 "[start [stop]]",
 "remove columns from a file",
 "Removes selected columns from the lines of a file. A column is defined as a single character in a line. Output is written to the standard output.\n\
-If only the start column is specified, columns numbered less than the start column will be written.  If both start and stop columns are\n\
+If only the start column is specified, columns numbered less than the start column will be written. If both start and stop columns are\n\
 specified, columns numbered less than the start column or greater than the stop column will be written.  Column numbering starts with one, not zero.",
 "",
 "",

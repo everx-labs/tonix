@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
@@ -90,7 +90,7 @@ contract mount is Utility {
 "",
 "Written by Boris",
 "",
-"umount, findmnt, losetup, mke2fs, ",
+"umount, findmnt, losetup, mke2fs",
 "0.01");
     }
 

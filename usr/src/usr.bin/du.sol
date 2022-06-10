@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/fts.sol";

@@ -1,20 +1,20 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
 contract mv is Utility {
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
-        (uint16 wd, , string flags, string pi) = arg.get_env(args);
-        /*Arg[] arg_list;
-        for (string param: params) {
-            (uint16 index, uint8 ft, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
-            arg_list.push(Arg(param, ft, index, parent, dir_index));
-        }*/
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        Err[] errors;
+        Ar[] ars;
+        string out;
+        (uint16 wd, , string flags, string pi) = p.get_env();
         uint16 ic = sb.get_inode_count(inodes);
+        s_dirent[] contents = p.p_args.ar_misc.pos_args;
+
         (bool verbose, bool preserve, bool request_backup, bool to_file_flag, bool to_dir_flag, bool newer_only, bool force, bool recurse)
-            = arg.flag_values("vnbTtufR", flags);
-        DirEntry[] contents = udirent.parse_param_index(pi);
+            = p.flag_values("vnbTtufR");
 
         bool to_dir = to_dir_flag;
         uint nargs = contents.length;
@@ -32,7 +32,7 @@ contract mv is Utility {
             last = nargs - 1;
             target_n = nargs - 1;
         }
-        (, string t_path, uint16 t_ino) = contents[target_n].unpack();
+        (uint16 t_ino, , string t_path) = contents[target_n].unpack();
         bool dest_exists = t_ino >= sb.ROOT_DIR;
         s_stat tst = fs.istat(inodes[t_ino]);
 
@@ -42,8 +42,8 @@ contract mv is Utility {
         bool collision = dest_exists && ft.is_reg(tst.st_mode);
         bool overwrite_dest = collision && (!preserve || force);
 
-        if (!errors.empty() || collision && preserve)
-            return (out, ars, errors);
+//        if (!errors.empty() || collision && preserve)
+//            return (out, ars, errors);
 
         string dirents;
         uint8 dirent_action_type;
@@ -60,7 +60,7 @@ contract mv is Utility {
         uint8 aop = to_dir ? aio.HARDLINK : aio.WR_COPY;
 
         for (uint i = first; i < last; i++) {
-            (uint8 sft, string spath, uint16 sino) = contents[i].unpack();
+            (uint16 sino, uint8 sft, string spath) = contents[i].unpack();
             uint16 sparent = wd;
             if (sino < sb.ROOT_DIR) { errors.push(Err(0, sino, spath)); break; }
             s_stat st = fs.istat(inodes[sino]);

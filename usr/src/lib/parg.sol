@@ -1,12 +1,52 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.0;
 
 import "argmisc.sol";
-import "../lib/libstring.sol";
+import "libstring.sol";
 import "xio.sol";
 library parg {
 
     using argmisc for s_ar_misc;
     using str for string;
+    using libstring for string;
+    using io for s_proc;
+    using xio for s_of;
+
+    function map_file(s_proc p, string name) internal returns (string[]) {
+        string all_lines = read_file(p, name);
+        if (!all_lines.empty()) {
+            (string[] lines, ) = all_lines.split("\n");
+            return lines;
+        } else
+            p.perror(name + ": empty");
+    }
+
+    function read_file(s_proc p, string name) internal returns (string) {
+        s_of f = p.fopen(name, "r");
+        if (!f.ferror()) {
+            string all_lines = f.gets_s(0);
+            if (!f.ferror())
+                return all_lines;
+        } else
+            p.perror(name + ": failed to open");
+    }
+
+    function shift_args(s_proc p) internal {
+        s_ar_misc misc = p.p_args.ar_misc;
+//        (string argv, string flags, string sargs, uint16 n_params, string[] pos_params, uint8 ec, string last_param, string opt_err, string redir_in, string redir_out,
+//            s_dirent[] pos_args, string[][2] opt_values) = misc.unpack();
+        (, , string sargs, uint16 n_params, string[] pos_params, , string last_param, , , ,
+            , ) = misc.unpack();
+        if (n_params > 0) {
+            p.p_comm = pos_params[0];
+            for (uint i = 0; i < n_params - 1; i++)
+                pos_params[i] = pos_params[i + 1];
+            pos_params.pop();
+            n_params--;
+            last_param = pos_params[n_params - 1];
+            sargs = libstring.join_fields(pos_params, " ");
+        }
+
+    }
 
     function flag_set(s_proc p, string name) internal returns (bool) {
         return p.p_args.ar_misc.flag_set(name);
@@ -72,15 +112,4 @@ library parg {
             groups[str.toi(name)] = value;
         }*/
     }
-
-    /*function get_users_groups(string sarg) internal returns (mapping (uint16 => string) users, mapping (uint16 => string) groups) {
-        for (string line: lines) {
-            (, string name, string value) = vars.split_var_record(line);
-            users[str.toi(name)] = value;
-        }
-        for (string line: lines) {
-            (, string name, string value) = vars.split_var_record(line);
-            groups[str.toi(name)] = value;
-        }
-    }*/
 }

@@ -1,13 +1,14 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
 contract df is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (, , string flags, ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+
         (, , string file_system_OS_type, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, , , , , , , , uint16 first_inode, ) = sb.get_sb(inodes, data).unpack();
-        (bool human_readable, bool powers_of_1000, bool list_inodes, bool block_1k, bool posix_output, , , ) = arg.flag_values("hHikP", flags);
+        (bool human_readable, bool powers_of_1000, bool list_inodes, bool block_1k, bool posix_output, , , ) = p.flag_values("hHikP");
 
         string fs_name = file_system_OS_type;
         Column[] columns_format = [
@@ -52,9 +53,7 @@ contract df is Utility {
         string[] header = ["Filesystem", sunits, sused, savl, sp_used, "Mounted on"];
         string[] row0 = [fs_name, str.toa(u_units), str.toa(u_used), str.toa(u_avl), str.toa(u_p_used) + "%", "/"];
 
-        out = fmt.format_table_ext(columns_format, [header, row0], " ", "\n");
-        ec = EXECUTE_SUCCESS;
-        err = "";
+        p.puts(fmt.format_table_ext(columns_format, [header, row0], " ", "\n"));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

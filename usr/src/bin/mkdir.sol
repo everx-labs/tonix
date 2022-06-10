@@ -1,26 +1,30 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
 contract mkdir is Utility {
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
-        (uint16 wd, , string flags, string pi) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        Err[] errors;
+        Ar[] ars;
+        (uint16 wd, , , ) = p.get_env();
         uint16 ic = sb.get_inode_count(inodes);
-        bool error_if_exists = !arg.flag_set("p", flags);
-        bool report_actions = arg.flag_set("v", flags);
+        s_dirent[] contents = p.p_args.ar_misc.pos_args;
+
+        bool error_if_exists = !p.flag_set("p");
+        bool report_actions = p.flag_set("v");
         mapping (uint16 => string[]) parent_dirs;
 
-        DirEntry[] contents = udirent.parse_param_index(pi);
-        for (DirEntry de: contents) {
-            (uint8 t, string name, uint16 index) = de.unpack();
+        for (s_dirent de: contents) {
+            (uint16 index, uint8 t, string name) = de.unpack();
             uint16 parent = wd;
             if (t == ft.FT_UNKNOWN) {
                 ars.push(Ar(aio.MKDIR, index, name, inode.get_dots(ic, parent)));
                 parent_dirs[parent].push(udirent.dir_entry_line(ic, name, ft.FT_DIR));
                 ic++;
                 if (report_actions)
-                    out.append("mkdir: created directory" + str.squote(name) + "\n");
+                    p.puts("mkdir: created directory" + str.squote(name));
             } else if (error_if_exists)
                 errors.push(Err(0, er.EEXIST, name));
         }

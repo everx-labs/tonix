@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -10,7 +10,7 @@ contract basename is Utility {
         p = p_in;
         string[] params = p.params();
         if (params.empty())
-            p.perror("basename: missing operand");
+            p.perror("missing operand");
 
         bool multiple_args = p.flag_set("a");
         string line_terminator = p.flag_set("z") ? "\x00" : "\n";

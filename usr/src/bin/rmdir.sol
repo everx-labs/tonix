@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
@@ -10,32 +10,20 @@ contract rmdir is Utility {
             contents.translate(s, "");
     }
 
-//    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
-//    function induce(string argv, s_of[] fds) external pure returns (uint8 ec, Ar[] ars, s_of[] out) {
-    function induce(string argv, s_proc p_in) external pure returns (s_proc p, uint8 ec, Ar[] ars) {
+//    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+    function main(s_proc p_in) external pure returns (s_proc p) {
         p = p_in;
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
-//        out.get(fds);
-        bool verbose = arg.flag_set("v", flags);
-        bool force_removal = arg.flag_set("f", flags);
-
+        Ar[] ars;
+        (uint16 wd, string[] params, , ) = p.get_env();
+        bool verbose = p.flag_set("v");
+        bool force_removal = p.flag_set("f");
+        uint8 ec;
         mapping (uint16 => string[]) victims;
-        Err[] errors;
         string sout;
 
         for (string param: params) {
             s_of f = p.fopen(param, "r");
 
-/*        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
-        Arg[] arg_list;
-        for (string param: params) {
-            (uint16 index, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
-            arg_list.push(Arg(param, t, index, parent, dir_index));
-        }
-*/
-
-//        for (Arg a: arg_list) {
-//            (string s, uint8 t, uint16 iop, uint16 parent, ) = a.unpack();
             string s = param;
             s_stat st;
             st.stt(f.attr);

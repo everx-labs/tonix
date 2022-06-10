@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
@@ -10,10 +10,14 @@ contract rm is Utility {
             contents.translate(s, "");
     }
 
-    function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] errors) {
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        Err[] errors;
+        Ar[] ars;
+        string out;
+        (uint16 wd, , string flags, ) = p.get_env();
         Arg[] arg_list;
-        for (string param: params) {
+        for (string param: p.params()) {
             (uint16 index, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
             arg_list.push(Arg(param, t, index, parent, dir_index));
         }

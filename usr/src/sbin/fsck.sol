@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
@@ -46,10 +46,17 @@ contract fsck is Utility {
         uint16 expected;
         uint16 actual;
     }
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, mapping (uint16 => Inode) inodes_out, mapping (uint16 => bytes) data_out) {
-        (, string[] params, string flags, ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        uint8 ec;
+        string out;
+        string err;
+        string[] params = p.params();
+        mapping (uint16 => Inode) inodes_out;
+        mapping (uint16 => bytes) data_out;
+
         (bool auto_repair, bool check_all, bool no_changes, bool list_files, bool skip_root, bool dry_run, bool verbose, bool print_sb) =
-            arg.flag_values("pAnlRNvs", flags);
+            p.flag_values("pAnlRNvs");
         inodes_out = inodes;
         data_out = data;
         mapping (uint16 => fsck_err[]) es;
@@ -92,7 +99,6 @@ contract fsck is Utility {
             }
             err.append(format("\nfixed inode: I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", start, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
             err.append(format("\nfixed data: {}\n", res_data));
-            return (ec, out, err, inodes_out, data_out);
         }
 
         if (!dry_run && !skip_root && start >= sb.ROOT_DIR) {

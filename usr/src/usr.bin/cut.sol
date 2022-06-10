@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -60,7 +60,7 @@ contract cut is Utility {
                     p.perror("cannot open");
             }
         } else
-            p.perror("cut: " + opt_err + "\nTry 'cut --help' for more information.\n");
+            p.perror(opt_err + "\nTry 'cut --help' for more information");
         p.puts(out);
     }
 

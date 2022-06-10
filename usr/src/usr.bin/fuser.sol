@@ -1,18 +1,16 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/adm.sol";
 
 contract fuser is Utility {
 
-    function main(string argv) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        ( , , string flags, ) = arg.get_env(argv);
+    function main(s_proc p_in) external pure returns (s_proc p) {
+        p = p_in;
 
-        ec = EXECUTE_SUCCESS;
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
-            , bool users_logged_in) = arg.flag_values("bHlqsTwu", flags);
-        (mapping (uint16 => string) user, ) = arg.get_users_groups(argv);
+            , bool users_logged_in) = p.flag_values("bHlqsTwu");
+        (mapping (uint16 => string) user, ) = p.get_users_groups();
         mapping (uint16 => Login) utmp;
 
         if (all_logged_on) {
@@ -22,11 +20,10 @@ contract fuser is Utility {
                 if (system_login_proc && user_id > adm.login_def_value(adm.SYS_UID_MAX))
                     continue;
                 string ui_user_name = user[user_id];
-                out.append(ui_user_name + "\t");
+                p.puts(ui_user_name + "\t");
                 count++;
             }
-            out.append(format("\n# users = {}\n", count));
-            return (EXECUTE_SUCCESS, out, err);
+            p.puts(format("\n# users = {}", count));
         }
 
         string[][] table;
@@ -49,7 +46,7 @@ contract fuser is Utility {
             table.push([ui_user_name, "+", str.toa(tty_id), fmt.ts(login_time), str.toa(process_id)]);
         }
 
-        out = fmt.format_table_ext(columns_format, table, " ", "\n");
+        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

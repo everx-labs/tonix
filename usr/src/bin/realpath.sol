@@ -1,20 +1,18 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
 contract realpath is Utility {
 
-    function main(string argv, s_of[] fds, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-//    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
         (bool canon_existing, bool canon_missing, bool dont_expand_symlinks, bool no_errors, bool null_delimiter, /*bool logical*/, /*bool physical*/, )
-            = arg.flag_values("emsqzLP", flags);
+            = p.flag_values("emsqzLP");
         bool canon_existing_dir = !canon_existing && !canon_missing;
         string line_delimiter = null_delimiter ? "\x00" : "\n";
-        if (wd >= sb.ROOT_DIR) {
-//            s_stat cwds = fds.stat(param);
+        (uint16 wd, , , ) = p.get_env();
 
-            for (string param: params) {
+            for (string param: p.params()) {
                 (string arg_dir, string arg_base) = path.dir(param);
                 bool is_abs_path = param.substr(0, 1) == "/";
                 string spath = is_abs_path ? param : fs.xpath(param, wd, inodes, data);
@@ -25,21 +23,18 @@ contract realpath is Utility {
 
                 if ((canon_existing_dir || canon_existing) && !dont_expand_symlinks) {
                     (uint16 index, uint8 t) = fs.lookup_dir(inodes[cur_dir], data[cur_dir], arg_base);
-//                    if (t == ft.FT_SYMLINK)
                     if (st_mode.is_symlink())
                         (spath, t, , ,) = _dereference(path.EXPAND_SYMLINKS, param, wd, inodes, data).unpack();
                     if (!canon_missing && index < sb.ROOT_DIR) {
                         if (!no_errors)
-                            err.append("realpath: missing " + param + ", index " + str.toa(index) + "\n");
+                            p.perror("missing " + param + ", index " + str.toa(index));
                         continue;
                     }
                 }
-                out.append(spath + line_delimiter);
+                p.puts(spath + line_delimiter);
             }
-        } else {
-            err.append("Failed to resolve relative path for" + argv + "\n");
-            ec = EXECUTE_FAILURE;
-        }
+//        } else
+//            p.perror("Failed to resolve relative path for" + argv + "\n");
     }
 
     /* Path utilities helpers */

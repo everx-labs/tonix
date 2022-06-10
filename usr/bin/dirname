@@ -1,1 +1,4 @@
-(cd /home/boris/tonix/tmp/usr/bin/dirname && jq '{p_in: .p}' /home/boris/tonix/run/proc >dirname.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main dirname.args >/home/boris/tonix/run/proc_out )
+cd /home/boris/tonix/tmp/bin/dirname
+jq '{p_in: .p}' ../proc >dirname.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main dirname.args >../proc_out
+cd -

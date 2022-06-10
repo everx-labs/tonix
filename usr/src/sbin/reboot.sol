@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 import "../lib/pw.sol";
@@ -45,7 +45,7 @@ contract reboot is Utility {
 "-p     reboot the machine\n\
 -f      force immediate reboot\n\
 -w      don't reboot, just write wtmp record\n\
--d      don't   write wtmp record",
+-d      don't  write wtmp record",
 "",
 "Written by Boris",
 "",

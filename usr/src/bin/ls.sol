@@ -1,10 +1,9 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Utility.sol";
 
 contract ls is Utility {
 
-//    function main(string argv, s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string /*err*/, Err[] errors) {
     function main(string argv, s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
         p = p_in;
         (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
@@ -18,8 +17,7 @@ contract ls is Utility {
             if (t != ft.FT_UNKNOWN)
                 p.puts(_ls(flags, Arg(param, t, index, parent, dir_index), inodes, data, user, group) + "\n");
             else
-                p.perror("cannot open");
-  //              errors.push(Err(0, er.ENOENT, param));
+                p.perror(param + ": cannot open");
         }
     }
 

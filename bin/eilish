@@ -8,8 +8,10 @@ jq '.sv' sa.out >../eilish.dir/vm
 cd -
 eval `jq -rj '.res' /home/boris/tonix/tmp/bin/eilish/sa.out`
 #jq -rj '.p.p_fd.fdt_ofiles[1].buf.buf' run/proc_out | xxd -p -r >run/stdout
-jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[1].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stdout
-jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[2].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stderr
+#jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[1].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stdout
+#jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[2].buf.buf' /home/boris/tonix/tmp/bin/eilish.dir/vm_out | xxd -p -r >run/stderr
+jq -rj '.p_fd.fdt_ofiles[1].buf.buf' /home/boris/tonix/tmp/bin/proc_out | xxd -p -r >run/stdout
+jq -rj '.p_fd.fdt_ofiles[2].buf.buf' /home/boris/tonix/tmp/bin/proc_out | xxd -p -r >run/stderr
 ./flush_std run/stdout run/stderr
 #$jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[1].buf.buf' tmp/$c.out | xxd -p -r >run/stdout
 #./flush_std run/stdout run/stderr

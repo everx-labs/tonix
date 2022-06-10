@@ -7,7 +7,9 @@ contract set is Shell {
     function main(svm sv_in) external pure returns (svm sv) {
         sv = sv_in;
         s_proc p = sv.cur_proc;
-        p.puts(vmem.vmem_fetch_page(sv.vmem[1], 3));
+        for (uint16 i = 0; i < 12; i++) {
+            p.puts(vmem.vmem_fetch_page(sv.vmem[1], i));
+        }
         sv.cur_proc = p;
     }
 

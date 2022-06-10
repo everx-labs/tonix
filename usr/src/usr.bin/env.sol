@@ -1,25 +1,19 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-//import "..//parg.sol";
 
 contract env_ is Utility {
 
-    using parg for s_proc;
-//    function main(string argv, s_proc p_in) external pure returns (s_proc p) {
     function main(s_proc p_in) external pure returns (s_proc p) {
         p = p_in;
-//        s_ar_misc m = p.p_args.ar_misc;
-//        (, string[] params, string fflags, ) = arg.get_env(argv);
-        (string[] params, string fflags, string av) = p.get_args();
-        string delimiter = arg.flag_set("0", fflags) ? "\x00" : "\n";
+//        string delimiter = p.flag_set("0") ? "\x00" : "\n";
         string op;
         string param;
         uint32 val;
         string sval;
         string sout;
 
-        for (string name: params) {
+        for (string name: p.params()) {
                 if (op == "export") {
                     if (param == "syserr") {
                         sout.append("exporting syserr\n");
@@ -29,7 +23,6 @@ contract env_ is Utility {
 
             s_of f = p.fopen(name, "r");
             if (f.file > 0) {
-                uint32 pos;
                 if (op == "fopen") {
                     p.fopen(name, "r");
                 }

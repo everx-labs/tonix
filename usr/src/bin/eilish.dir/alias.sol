@@ -9,10 +9,9 @@ contract alias_ is Shell {
         s_proc p = sv.cur_proc;
         string[] params = p.params();
         s_of f = p.fopen("alias", "r");
-        string alias_page;
         string token = params.empty() ? "" : params[0];
-
         if (!f.ferror()) {
+            string alias_page;
             alias_page = f.gets_s(0);
             if (params.empty()) {
                 while (!f.feof()) {
@@ -32,6 +31,40 @@ contract alias_ is Shell {
             }
         } else
             p.perror("Failed to read alias page from pool");
+
+        p.puts("======");
+
+        if (params.empty()) {
+            string[] ali = p.map_file("alias");
+            for (string l: ali) {
+                (, string name, string value) = vars.split_var_record(l);
+                value.quote();
+                p.puts("alias " + name + "=" + value);
+            }
+        } else {
+            string alias_page = p.read_file("alias");
+            string cur_tval = vars.val(token, alias_page);
+            (, , string argv) = p.get_args();
+            if (argv.strchr("=") > 0) {
+                (string name, ) = token.csplit("=");
+                string value = argv.val("=", "\n");
+                string new_value = vars.var_record("", name, value);
+                string cur_val = vars.val(name, alias_page);
+                if (cur_val.empty())
+                    alias_page.append(new_value + "\n");
+                else
+                    alias_page.translate(cur_val, new_value);
+            } else {
+                if (cur_tval.empty())
+                    p.perror(token + ": not found");
+                else {
+                    cur_tval.quote();
+                    p.puts("alias " + token + "=" + cur_tval);
+                }
+            }
+            p.puts("Result: ");
+            p.puts(alias_page);
+        }
         sv.cur_proc = p;
     }
 
