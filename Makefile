@@ -69,7 +69,8 @@ SBINU:=fsck mount reboot umount
 #USR.BINU:=basename chfn colrm column cut diff dirname du env expand file findmnt finger fuser getent grep groups head hostid hostname id last login look lsblk lslogins lsof man mountpoint namei newgrp paste patch pathchk printenv ps readlink rev stat tail touch tr uname unexpand wc whatis who whoami
 USR.BINU:=basename chfn colrm column cut diff dirname env expand fuser look lslogins lsof man paste patch pathchk printenv ps rev tail tr uname unexpand whatis whoami
 USR.BINU2:=du file findmnt finger getent grep groups head hostid hostname id last login lsblk mountpoint namei newgrp readlink stat touch wc who
-USR.SBINU:=dumpe2fs groupadd groupdel groupmod mke2fs mkfs useradd userdel usermod
+#USR.SBINU:=dumpe2fs groupadd groupdel groupmod mke2fs mkfs useradd userdel usermod
+USR.SBINU:=groupadd groupdel groupmod useradd userdel usermod
 SHB:=alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
 SYSFSU:=tfs tmpfs
 SYSVMU:=uma_startup umm vmm
@@ -140,7 +141,7 @@ $(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
 $(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
 $(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/usr.bin,$(USR.BINU)))
 $(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/usr.bin,$(USR.BINU2)))
-#$(eval $(call t-sub,usr/sbin,usr.sbin,$(USR.SBINU)))
+$(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/usr.sbin,$(USR.SBINU)))
 #$(eval $(call t-sub,bin/eilish.dir,bin/eilish.dir,$(SHB)))
 #$(eval $(call t-sub,sys/fs,sys/fs,$(SYSFSU)))
 ##$(eval $(call t-sub,sys/vm,sys/vm,$(SYSVMU)))
@@ -189,6 +190,17 @@ usr/bin/$1: $(ETC_HOSTS)
 	chmod u+x $$@
 endef
 
+USTMP:=$(UOBJ)/sbin
+define t-gen-usr-sbin
+usr/sbin/$1: $(ETC_HOSTS)
+	mkdir -p $(USTMP)/$1
+	(cd $(USTMP)/$1 && tonos-cli config --url $(URL) --abi ../$1.abi.json --addr `grep -w $1 $$< | cut -f 1`)
+	$$(file >$$@,cd $(USTMP)/$1)
+	$$(if $2,$$(file >>$$@,jq --slurpfile fs ../fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) ../proc >$1.args),$$(file >>$$@,jq $(QUOTE){p_in: .p}$(QUOTE) ../proc >$1.args))
+	$$(file >>$$@,$(TOC) -j run `jq -r $(QUOTE).config.addr$(QUOTE) tonos-cli.conf.json` main $1.args >../proc_out)
+	$$(file >>$$@,cd -)
+	chmod u+x $$@
+endef
 
 #$(info $(call t-gen-bin,type,bin/eilish.dir))
 #$(foreach b,$(SHB),$(eval $(call t-gen-bin,$b,bin/eilish.dir,bin/eilish.dir)))
@@ -199,6 +211,7 @@ $(foreach b,$(SHB),$(eval $(call t-gen-builtin,$b)))
 #$(foreach b,$(USR.BINU),$(info $(call t-gen-usr-bin,$b,,)))
 $(foreach b,$(USR.BINU),$(eval $(call t-gen-usr-bin,$b,,)))
 $(foreach b,$(USR.BINU2),$(eval $(call t-gen-usr-bin,$b,1,)))
+$(foreach b,$(USR.SBINU),$(eval $(call t-gen-usr-sbin,$b,1,)))
 #$(foreach b,$(BINU),$(info $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
 #$(foreach b,$(BINU),$(eval $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
 #$(foreach b,$(SHB),$(eval $(call t-gen-args,$b,bin/eilish.dir,bin/eilish.dir,jq $(QUOTE){sv_in: .}$(QUOTE) $(CURDIR)/run/vm)))

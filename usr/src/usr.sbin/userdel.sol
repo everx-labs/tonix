@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
@@ -6,8 +6,13 @@ import "../lib/gr.sol";
 
 contract userdel is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
-        (, string[] params, /*string flags*/, ) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+        string out;
+        Ar[] ars;
+        Err[] errors;
+
         if (params.empty()) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
@@ -28,7 +33,6 @@ contract userdel is Utility {
                     ars.push(Ar(aio.UPDATE_TEXT_DATA, etc_group_index, "group", libstring.translate(etc_group, victim_group_entry + "\n", "")));
             }
         }
-        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -43,7 +47,6 @@ contract userdel is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
-
 }

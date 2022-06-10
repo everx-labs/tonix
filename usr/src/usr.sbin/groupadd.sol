@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
@@ -7,16 +7,21 @@ import "../lib/adm.sol";
 
 contract groupadd is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        (, string[] params, , ) = p.get_env();
+        string out;
+        Ar[] ars;
+        Err[] errors;
+        uint8 ec;
         if (params.empty()) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
             out = libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n");
-            return (ec, out, ars, errors);
+            return p;
         }
-        (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
+        (bool force, bool use_group_id, bool is_system_group, , , , , ) = p.flag_values("fgr");
 
         string target_group_name = params[0];
         uint16 target_group_id;
@@ -26,7 +31,7 @@ contract groupadd is Utility {
         if (!line.empty())
             errors.push(Err(er.E_NAME_IN_USE, 0, target_group_name));
         if (use_group_id) {
-            string group_id_s = arg.opt_arg_value("g", args);
+            string group_id_s = p.opt_value("g");
             uint16 n_gid = str.toi(group_id_s);
             if (n_gid == 0)
                 errors.push(Err(er.E_BAD_ARG, 0, group_id_s)); // invalid argument to option
@@ -73,7 +78,7 @@ contract groupadd is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

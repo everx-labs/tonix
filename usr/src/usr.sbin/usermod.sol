@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.59.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
@@ -6,16 +6,20 @@ import "../lib/gr.sol";
 
 contract usermod is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+        string out;
+        Ar[] ars;
+        Err[] errors;
+
         if (params.empty()) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
             out = libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n");
-            return (ec, out, ars, errors);
         }
-        (bool change_primary_group, /*bool supp_groups_list*/, , , , , , ) = arg.flag_values("gG", flags);
+        (bool change_primary_group, /*bool supp_groups_list*/, , , , , , ) = p.flag_values("gG");
         string param_user_name = change_primary_group ? params[0] : "";
 
         (string etc_passwd, string etc_group, uint16 etc_passwd_index, ) = fs.get_passwd_group(inodes, data);
@@ -24,7 +28,7 @@ contract usermod is Utility {
             errors.push(Err(er.E_NOTFOUND, 0, param_user_name)); // specified user doesn't exist
         else {
             if (change_primary_group && !params.empty()) {
-                string param_new_gid_s = arg.opt_arg_value("g", args);
+                string param_new_gid_s = p.opt_value("g");
                 uint16 new_gid = str.toi(param_new_gid_s);
                 (string line, ) = gr.getgid(new_gid, etc_group);
                 if (line.empty())
@@ -36,7 +40,6 @@ contract usermod is Utility {
                 }
             }
         }
-        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -52,7 +55,6 @@ contract usermod is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
-
 }

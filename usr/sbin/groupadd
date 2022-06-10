@@ -1,0 +1,4 @@
+cd /home/boris/tonix/tmp/sbin/groupadd
+jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >groupadd.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main groupadd.args >../proc_out
+cd -

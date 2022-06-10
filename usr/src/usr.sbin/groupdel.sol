@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.59.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
@@ -6,14 +6,18 @@ import "../lib/gr.sol";
 
 contract groupdel is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
-        (, string[] params, /*string flags*/, ) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+        string out;
+        Ar[] ars;
+        Err[] errors;
+
         if (params.empty()) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
             out = libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n");
-            return (ec, out, ars, errors);
         }
         string victim_group_name;
         if (params.length == 1)
@@ -44,7 +48,7 @@ contract groupdel is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

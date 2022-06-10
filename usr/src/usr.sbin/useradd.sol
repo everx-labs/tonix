@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
@@ -7,14 +7,18 @@ import "../lib/adm.sol";
 
 contract useradd is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+        string out;
+        Ar[] ars;
+        Err[] errors;
+
         if (params.empty()) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
             out = libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n");
-            return (ec, out, ars, errors);
         }
         (string etc_passwd, string etc_group, , ) = fs.get_passwd_group(inodes, data);
 
@@ -22,7 +26,7 @@ contract useradd is Utility {
         bool create_home_dir_def = adm.login_def_flag(adm.CREATE_HOME);
 
         (bool is_system_account, bool create_home_flag, bool do_not_create_home_flag, bool create_user_group_flag, bool do_not_create_user_group_flag,
-            bool use_user_id, bool use_group_id, bool supp_groups_list) = arg.flag_values("rmMUNugG", flags);
+            bool use_user_id, bool use_group_id, bool supp_groups_list) = p.flag_values("rmMUNugG");
 
         bool create_home_dir = (create_home_dir_def || create_home_flag) && !do_not_create_home_flag;
         bool create_user_group = (create_user_group_def || create_user_group_flag) && !do_not_create_user_group_flag;
@@ -119,9 +123,7 @@ contract useradd is Utility {
                 } else
                     ars.push(Ar(aio.UPDATE_TEXT_DATA, group_index, "group", group_text));
             }
-        } else
-            ec = EXECUTE_FAILURE;
-        out = "";
+        }
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -142,7 +144,7 @@ contract useradd is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }
