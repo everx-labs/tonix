@@ -1,17 +1,12 @@
-pragma ton-solidity >= 0.59.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract namei is Utility {
 
     using dirent for s_dirent;
-//    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
-//        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
-    function main(svm sv_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-//        s_vmem[] vm = sv.vmem;
-//        s_uma_zone[] uz = sv.zones;
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
         (bool fmodes, bool fowners, bool fmodes_owners, ) = p.flags_set("mol");
         bool modes = fmodes || fmodes_owners;
         bool owners = fowners || fmodes_owners;
@@ -66,7 +61,6 @@ contract namei is Utility {
                 cur_dir = ino;
             }
         }
-        sv.cur_proc = p;
     }
 
     function _next_dirent(s_proc p, s_dirent[] dde, string name) internal pure returns (s_dirent) {
@@ -98,6 +92,6 @@ contract namei is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 }

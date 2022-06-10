@@ -1,22 +1,22 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract mountpoint is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        ec = EXECUTE_SUCCESS;
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
-        bool mounted_device = arg.flag_set("d", flags);
-        bool quiet = arg.flag_set("q", flags);
-        bool arg_device = arg.flag_set("x", flags);
-
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+        bool mounted_device = p.flag_set("d");
+        bool quiet = p.flag_set("q");
+        bool arg_device = p.flag_set("x");
+        string out;
         string spath = params[0];
+        uint16 wd = p.get_cwd();
         (uint16 index, uint8 t, , ) = fs.resolve_relative_path(spath, wd, inodes, data);
         if (arg_device) {
             if (t != ft.FT_BLKDEV)
-                err.append("not_a_block_device " + spath);
+                p.perror("not_a_block_device " + spath);
             else {
                 (string major_id, string minor_id) = inode.get_device_version(inodes[index].device_id);
                 out = major_id + ":" + minor_id;
@@ -45,8 +45,8 @@ contract mountpoint is Utility {
         }
 
         str.aif(out, out.empty(), spath + " is not a mountpoint");
-        if (quiet)
-            out = "";
+        if (!quiet)
+            p.puts(out);
     }
 
     function _list_devices(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (DirEntry[] device_list) {
@@ -72,7 +72,7 @@ contract mountpoint is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

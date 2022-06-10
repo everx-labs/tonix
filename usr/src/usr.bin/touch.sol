@@ -1,19 +1,21 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract touch is Utility {
 
-  function induce(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (string out, Ar[] ars, Err[] /*errors*/) {
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(args);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        Ar[] ars;
+        (uint16 wd, string[] params, , ) = p.get_env();
         Arg[] arg_list;
         for (string param: params) {
             (uint16 index, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
             arg_list.push(Arg(param, t, index, parent, dir_index));
         }
         uint16 ic = sb.get_inode_count(inodes);
-        bool create_files = !arg.flag_set("c", flags);
-        bool update_if_exists = !arg.flag_set("m", flags);
+        bool create_files = !p.flag_set("c");
+        bool update_if_exists = !p.flag_set("m");
         mapping (uint16 => string[]) parent_dirs;
 
         for (Arg a: arg_list) {
@@ -32,7 +34,6 @@ contract touch is Utility {
             if (n_dirents > 0)
                 ars.push(Ar(aio.ADD_DIR_ENTRY, dir_i, "", libstring.join_fields(added_dirents, "\n")));
         }
-        out = "";
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -47,7 +48,7 @@ contract touch is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

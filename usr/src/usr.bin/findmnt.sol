@@ -1,16 +1,13 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract findmnt is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        ( , , string flags, ) = arg.get_env(argv);
-        ec = EXECUTE_SUCCESS;
-
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
         (bool flag_fstab_only, bool flag_mtab_only, , bool like_df, bool first_fs_only, bool no_headings,
-            bool no_truncate, bool all_columns) = arg.flag_values("smkDfnuo", flags);
+            bool no_truncate, bool all_columns) = p.flag_values("smkDfnuo");
         bool df_style = like_df || all_columns;
         bool non_df_style = !like_df || all_columns;
 
@@ -64,7 +61,7 @@ contract findmnt is Utility {
                     break;
             }
         }
-        out = fmt.format_table_ext(columns_format, table, " ", "\n");
+        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -86,7 +83,7 @@ contract findmnt is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

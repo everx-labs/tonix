@@ -1,18 +1,18 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
 
 contract finger is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (, string[] params, string flags, ) = arg.get_env(argv);
-
-        bool flag_multi_line = arg.flag_set("l", flags);
-        bool flag_short_format = arg.flag_set("s", flags);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+        bool flag_multi_line = p.flag_set("l");
+        bool flag_short_format = p.flag_set("s");
         bool short_format = flag_short_format && !flag_multi_line;
         if (params.empty())
-            out = "No one logged on.\n";
+            p.puts("No one logged on");
         else {
             string user_name = params[0];
             string[][] table;
@@ -21,17 +21,15 @@ contract finger is Utility {
             (string etc_passwd, , , ) = fs.get_passwd_group(inodes, data);
             (string line, s_passwd res) = pw.getnam(user_name, etc_passwd);
             if (line.empty())
-                return (EXECUTE_FAILURE, out, "finger: " + user_name + ": no such user\n");
+                p.perror(user_name + ": no such user");
             (string pw_name, , , string pw_gecos, string pw_dir, string pw_shell) = res.unpack();
             if (short_format)
                 table.push([pw_name, "*", "*", "No logins"]);
             else
                 table = [["Login: " + pw_name, "Directory: " + pw_dir],
                         ["Name: " + pw_gecos, "Shell: " + pw_shell]];
-            out = fmt.format_table(table, " ", "\n", fmt.CENTER);
+            p.puts(fmt.format_table(table, " ", "\n", fmt.CENTER));
         }
-        ec = EXECUTE_SUCCESS;
-        err = "";
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -47,7 +45,7 @@ contract finger is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

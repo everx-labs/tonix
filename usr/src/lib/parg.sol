@@ -72,6 +72,10 @@ library parg {
         return p.p_args.ar_misc.get_params();
     }
 
+    function get_cwd(s_proc p) internal returns (uint16) {
+        return xio.inono(p.p_pd.pwd_cdir);
+    }
+
     function get_env(s_proc p) internal returns (uint16 wd, string[] args, string flags, string indices) {
         string pistr = p.p_args.ar_length > 1 ? p.p_args.ar_args[1] : "";
         return (xio.inono(p.p_pd.pwd_cdir), p.p_args.ar_misc.pos_params, p.p_args.ar_misc.flags, pistr);

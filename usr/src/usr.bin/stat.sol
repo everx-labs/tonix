@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -18,11 +18,8 @@ contract stat is Utility {
             res.trs("%" + fstr.substr(i, 1), str.toa(values[i]));
     }
 
-    function main(svm sv_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        s_vmem[] vm = sv.vmem;
-        uma_zone[] uz = sv.sz;
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
         string[] params = p.params();
         (bool terse, bool fs_info, bool format_str, ) = p.flags_set("tfc");
         string sf = format_str ? p.opt_value("c") : terse ?
@@ -61,7 +58,6 @@ Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n
             }
         }
         p.puts(out);
-        sv.cur_proc = p;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -125,7 +121,7 @@ Valid format sequences for file systems:\n\
 "File creation time, maximum length of filenames, file system type in hex, fundamental block size\n\
 and some other attributes are not yet supported",
 "",
-"0.02");
+"0.03");
     }
 
 }

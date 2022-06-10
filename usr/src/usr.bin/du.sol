@@ -17,7 +17,7 @@ contract du is Utility {
         (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, bool include_subdirs, , ) = p.flag_values("0ahcsS");
         string line_end = null_line_end ? "\x00" : "\n";
         if (count_files && summarize)
-            p.perror("du: cannot both summarize and show all entries");
+            p.perror("cannot both summarize and show all entries");
 
         string so;
 

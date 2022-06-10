@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/env.sol";
@@ -8,15 +8,15 @@ contract id is Utility {
 
     using unistd for s_proc;
 
-    function main(string argv, s_proc p_in) external pure returns (s_proc p) {
+    function main(s_proc p_in) external pure returns (s_proc p) {
         p = p_in;
 //        string[] params = p.params();
         (bool effective_gid_only, bool name_not_number, bool real_id, bool effective_uid_only, bool all_group_ids, , , ) =
             p.flag_values("gnruG");
         bool is_ugG = effective_uid_only || effective_gid_only || all_group_ids;
 
-        string user_name = vars.val("USER", argv);
-        string group_name = vars.val("USER", argv);
+        string user_name = p.env_value("USER");
+        string group_name = p.env_value("USER");
         uint16 uid = p.getuid();
         uint16 eid = p.geteuid();
         uint16 gid = p.getgid();

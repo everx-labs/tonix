@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -8,15 +8,8 @@ contract last is Utility {
     uint8 constant AE_LOGOUT        = 2;
     uint8 constant AE_SHUTDOWN      = 3;
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        ( , , string flags, ) = arg.get_env(argv);
-        ec = EXECUTE_SUCCESS;
-//        (bool host_names, bool translate_address, bool full_dates, bool numeric_addresses, bool numeric_addresses, bool numeric_addresses,
-//            bool shutdown_entries, ) = arg.flag_values("adFiRwx", flags);
-        (mapping (uint16 => string) user, ) = arg.get_users_groups(argv);
-
-        bool shutdown_entries = arg.flag_set("x", flags);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
 
         uint16 var_log_dir = fs.resolve_absolute_path("/var/log", inodes, data);
         (uint16 wtmp_index, uint8 wtmp_file_type) = fs.lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
@@ -32,7 +25,7 @@ contract last is Utility {
             Column(true, 30, fmt.LEFT),
             Column(true, 30, fmt.LEFT)];
 
-        mapping (uint16 => uint32) log_ts;
+//        mapping (uint16 => uint32) log_ts;
         /*LoginEvent[] wtmp;
 
         for (LoginEvent le: wtmp) {
@@ -56,8 +49,8 @@ contract last is Utility {
                     fmt.ts(timestamp)]);
         }*/
 
-        out = fmt.format_table_ext(columns_format, table, " ", "\n");
-        out.append("wtmp begins Mon Mar 22 23:44:55 2021\n");
+        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
+        p.puts("wtmp begins Mon Mar 22 23:44:55 2021");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -77,7 +70,6 @@ contract last is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
-
 }

@@ -67,14 +67,17 @@ BOOTU:=Repo
 BINU:=cat cp df ln ls mkdir mv realpath rm rmdir eilish
 SBINU:=fsck mount reboot umount
 #USR.BINU:=basename chfn colrm column cut diff dirname du env expand file findmnt finger fuser getent grep groups head hostid hostname id last login look lsblk lslogins lsof man mountpoint namei newgrp paste patch pathchk printenv ps readlink rev stat tail touch tr uname unexpand wc whatis who whoami
-USR.BINU:=basename chfn colrm column cut diff dirname env expand fuser look lslogins lsof
-USR.BINU2:=du file findmnt finger getent grep groups head hostid hostname id last login lsblk mountpoint namei newgrp readling stat touch wc who
+USR.BINU:=basename chfn colrm column cut diff dirname env expand fuser look lslogins lsof man paste patch pathchk printenv ps rev tail tr uname unexpand whatis whoami
+USR.BINU2:=du file findmnt finger getent grep groups head hostid hostname id last login lsblk mountpoint namei newgrp readlink stat touch wc who
 USR.SBINU:=dumpe2fs groupadd groupdel groupmod mke2fs mkfs useradd userdel usermod
 SHB:=alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
 SYSFSU:=tfs tmpfs
 SYSVMU:=uma_startup umm vmm
 SYSKERNU:=vnp
-
+UTILS:=$(BINU) $(USR.BINU)
+#$(USR.BINU2)
+# $(USR.SBINU)
+# $(SBINU)
 define t-sub
 SRCS+=$$(patsubst %,$2/%.sol,$3)
 CSS+=$$(patsubst %,$1/%.cs,$3)
@@ -136,6 +139,7 @@ $(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
 #$(info $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
 $(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
 $(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/usr.bin,$(USR.BINU)))
+$(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/usr.bin,$(USR.BINU2)))
 #$(eval $(call t-sub,usr/sbin,usr.sbin,$(USR.SBINU)))
 #$(eval $(call t-sub,bin/eilish.dir,bin/eilish.dir,$(SHB)))
 #$(eval $(call t-sub,sys/fs,sys/fs,$(SYSFSU)))
@@ -153,6 +157,10 @@ endef
 b0: $(patsubst %,$(MAN)/%.0,$(HELP_TOPICS))
 	rm -f $(MAN)/0.man
 	jq 'add' $^ >$(MAN)/0.man
+b1: $(patsubst %,$(MAN)/%.1,$(UTILS))
+	rm -f $(MAN)/1.man
+	jq 'add?' $^ >$(MAN)/1.man
+
 #$(MAN)/%.0: $(BIN)/%.boc $(BLD)/%.abi.json
 #$(MAN)/%.0: $(UOBJ)/%.boc $(BLD)/%.abi.json
 #	$(TOC) -j run --boc $< --abi $(word 2,$^) builtin_help {} >$@
@@ -190,6 +198,7 @@ $(foreach b,$(SBINU),$(eval $(call t-gen-bin,$b,sbin,sbin)))
 $(foreach b,$(SHB),$(eval $(call t-gen-builtin,$b)))
 #$(foreach b,$(USR.BINU),$(info $(call t-gen-usr-bin,$b,,)))
 $(foreach b,$(USR.BINU),$(eval $(call t-gen-usr-bin,$b,,)))
+$(foreach b,$(USR.BINU2),$(eval $(call t-gen-usr-bin,$b,1,)))
 #$(foreach b,$(BINU),$(info $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
 #$(foreach b,$(BINU),$(eval $(call t-gen-args,$b,bin,bin,jq --slurpfile fs $(CURDIR)/run/fs $(QUOTE)$$$$fs[] + {p_in: .p$(COMMA) argv: .argv}$(QUOTE) $(CURDIR)/run/proc)))
 #$(foreach b,$(SHB),$(eval $(call t-gen-args,$b,bin/eilish.dir,bin/eilish.dir,jq $(QUOTE){sv_in: .}$(QUOTE) $(CURDIR)/run/vm)))
@@ -299,6 +308,13 @@ tty tt: tx bocs
 #u: $(BIN)/md2.boc $(BIN)/mddb.boc $(BIN)/startup.boc $(BIN)/core.boc
 #u: $(BIN)/startup.boc $(BIN)/core.boc $(patsubst %,$(BIN)/%.boc,$(KI))
 #	./$@
+f=login_x
+m=main
+d:
+	$(SOLC) $f.sol
+	$(LINKER) compile --lib $(LIB) $f.code -o $f.tvc
+	$(LINKER) test $f --gas-limit 1000000 --abi-json $f.abi.json --abi-method constructor --abi-params {}
+	$(LINKER) test $f --decode-c6 --gas-limit 100000000 --abi-json $f.abi.json --abi-method main --abi-params {}
 
 V?=
 #$(V).SILENT:

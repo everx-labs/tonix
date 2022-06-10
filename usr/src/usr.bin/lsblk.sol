@@ -1,16 +1,14 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract lsblk is Utility {
 
-    /* Query devices and file systems status */
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
-        ec = EXECUTE_SUCCESS;
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
         (/*bool print_all_devices*/, bool human_readable, bool print_header, bool print_fsinfo, bool print_permissions, bool full_path, , ) =
-            arg.flag_values("abnfmp", flags);
+            p.flag_values("abnfmp");
         bool print_device_info = !print_fsinfo && !print_permissions;
         string[][] table;
         Column[] columns_format = [
@@ -37,8 +35,7 @@ contract lsblk is Utility {
         if (params.empty()) {
             (DirEntry[] contents, int16 status) = udirent.read_dir(inodes[dev_dir], data[dev_dir]);
             if (status < 0) {
-                out.append(format("Error: {} \n", status));
-//                return (out, errors);
+                p.perror(format("Error: {}", status));
             }
             uint len = uint(status);
             for (uint16 j = 0; j < len; j++) {
@@ -49,7 +46,7 @@ contract lsblk is Utility {
         }
         (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size, , , , , , , , ) = sb.get_sb(inodes, data).unpack();
 
-        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = p.get_users_groups();
 
         for (string s: params) {
             (uint16 dev_file_index, uint8 dev_file_ft) = fs.fetch_dir_entry(s, dev_dir, inodes, data);
@@ -78,10 +75,9 @@ contract lsblk is Utility {
                     sgroup,
                     inode.permissions(mode)]);
             } else
-//                errors.push(Err(er.not_a_block_device, 0, s));
-                err.append(s + ": not a block device\n");
+                p.perror(s + ": not a block device");
         }
-        out = fmt.format_table_ext(columns_format, table, " ", "\n");
+        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _list_devices(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (DirEntry[] device_list) {
@@ -111,7 +107,7 @@ contract lsblk is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

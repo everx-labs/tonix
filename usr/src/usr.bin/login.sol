@@ -1,25 +1,20 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
 
 contract login is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
-        if (!argv.empty() && !inodes.empty() && !data.empty())
-            ec = EXECUTE_SUCCESS;
-        out = "";
-
-        (bool pre_auth, bool use_hostname, bool autologin, bool preserve_env, , , , ) = arg.flag_values("fhpr", flags);
-        string a_host_name = use_hostname ? arg.opt_arg_value("h", argv) : "";
-        string a_user_name = autologin ? arg.opt_arg_value("f", argv) : "";
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        (bool pre_auth, bool use_hostname, bool autologin, bool preserve_env, , , , ) = p.flag_values("fhpr");
+        string a_host_name = p.opt_value("h");
+        string a_user_name = p.opt_value("f");
 
         (string etc_passwd, , , ) = fs.get_passwd_group(inodes, data);
         (string pwd_line, s_passwd res) = pw.getnam(a_user_name, etc_passwd);
         if (pwd_line.empty())
-            return (EXECUTE_FAILURE, out, "login incorrect");
+            p.perror("login incorrect");
 
         (string pw_name, uint16 pw_uid, uint16 pw_gid, string pw_gecos, string pw_dir, string pw_shell) = res.unpack();
         string v_list = vars.as_var_list("-ir", [
@@ -38,7 +33,7 @@ contract login is Utility {
             ]));
         (string[] lines, ) = v_list.split("\n");
         for (string line: lines)
-            out.append(vars.print_reusable(line));
+            p.puts(vars.print_reusable(line));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -54,7 +49,7 @@ contract login is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

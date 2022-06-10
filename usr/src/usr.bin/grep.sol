@@ -1,18 +1,18 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract grep is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        ec = EXECUTE_SUCCESS;
-        (uint16 wd, string[] v_args, string flags, ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        (uint16 wd, string[] v_args, string flags, ) = p.get_env();
         if (v_args.empty()) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
-            out = libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n");
-            return (ec, out, err);
+            p.puts(libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n"));
+            return p;
         }
         string[] params;
         string[] f_args;
@@ -30,10 +30,10 @@ contract grep is Utility {
         for (string param: f_args) {
             (uint16 index, uint8 t, , ) = fs.resolve_relative_path(param, sb.ROOT_DIR, inodes, data);
             if (t != ft.FT_UNKNOWN)
-                out.append(_grep(flags, fs.get_file_contents(index, inodes, data), params) + "\n");
+                p.puts(_grep(flags, fs.get_file_contents(index, inodes, data), params));
             else {
-                err.append("Failed to resolve relative path for" + param + "\n");
-                ec = EXECUTE_FAILURE;
+                p.perror("Failed to resolve relative path for" + param);
+//                ec = EXECUTE_FAILURE;
             }
         }
     }

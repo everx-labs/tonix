@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/pw.sol";
@@ -6,11 +6,11 @@ import "../lib/gr.sol";
 
 contract newgrp is Utility {
 
-    function uadm(string args, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, Ar[] ars, Err[] errors) {
-        (, string[] params, string flags, ) = arg.get_env(args);
-        out = "";
-        ec = EXECUTE_SUCCESS;
-        (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+        Err[] errors;
+        (bool force, bool use_group_id, bool is_system_group, , , , , ) = p.flag_values("fgr");
 
         (, string etc_group, , uint16 group_index) = fs.get_passwd_group(inodes, data);
 
@@ -38,7 +38,6 @@ contract newgrp is Utility {
                 else
                     errors.push(Err(er.E_GID_IN_USE, 0, group_id_s));
         }
-        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -52,7 +51,6 @@ contract newgrp is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
-
 }

@@ -1,11 +1,12 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract getent is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (, string[] params, , ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
         uint n_params = params.length;
         if (n_params > 0) {
             string db_name = params[0];
@@ -17,13 +18,12 @@ contract getent is Utility {
                 for (string line: lines) {
                     (string[] fields, uint n_fields) = line.split(":");
                     if (key.empty() || n_fields > 0 && fields[0] == key)
-                        out.append(line + "\n");
+                        p.puts(line);
                 }
             } else
-                err = "Unknown database: " + db_name + "\n Try `getent --help' or `getent --usage' for more information.";
+                p.perror("Unknown database: " + db_name + "\n Try `getent --help' or `getent --usage' for more information.");
         } else
-            err = "getent: wrong number of arguments\nTry `getent --help' or `getent --usage' for more information.\n";
-        ec = err.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+            p.perror("wrong number of arguments\nTry `getent --help' or `getent --usage' for more information.");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -37,7 +37,7 @@ contract getent is Utility {
 "Written by Boris",
 "",
 "nsswitch.conf",
-"0.01");
+"0.02");
     }
 
 }

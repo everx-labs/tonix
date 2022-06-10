@@ -1,28 +1,29 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract readlink is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        (uint16 wd, string[] params, , ) = p.get_env();
         Err[] errors;
+        string out;
         if (wd >= sb.ROOT_DIR)
-            (out, errors) = _readlink(flags, params, wd, inodes, data);
+            (out, errors) = _readlink(p, params, wd, inodes, data);
         else {
-            err.append("Failed to resolve relative path for" + argv + "\n");
-            ec = EXECUTE_FAILURE;
+            p.perror("Failed to resolve relative path for" + params[0]);
         }
         if (!errors.empty()) {
-            ec = EXECUTE_FAILURE;
             for (Err e: errors)
-                err.append("Failed to read link: " + e.arg + "\n");
-        }
+                p.perror("Failed to read link: " + e.arg);
+        } else
+            p.puts(out);
     }
 
-    function _readlink(string flags, string[] params, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
+    function _readlink(s_proc p, string[] params, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
         (bool canon_existing_dir, bool canon_existing, bool canon_missing, bool no_newline, bool print_errors, bool null_delimiter, , )
-            = arg.flag_values("femsqz", flags);
+            = p.flag_values("femsqz");
         string line_delimiter = null_delimiter ? "\x00" : "\n";
 
         bool canon = canon_existing_dir || canon_existing || canon_missing;
@@ -76,7 +77,6 @@ contract readlink is Utility {
         if (ino > 0 && inodes.exists(ino))
             inode = inodes[ino];
         if (expand_symlinks && t == ft.FT_SYMLINK) {
-//            (t, param, ino) = dirent.get_symlink_target(inode, data[ino]).unpack();
             (t, param, ino) = udirent.get_symlink_target(inode, data[ino]).unpack();
         }
         return Arg(param, t, ino, parent, dir_index);
@@ -100,7 +100,7 @@ contract readlink is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

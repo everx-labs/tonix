@@ -1,22 +1,21 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract file is Utility {
 
-    function main(string argv, s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
         p = p_in;
-        (, string[] params, string flags, ) = arg.get_env(argv);
-        (bool brief_mode, bool dont_pad, bool add_null, bool follow_symlinks, bool print_version, , , ) = arg.flag_values("bN0Lv", flags);
+        (bool brief_mode, bool dont_pad, bool add_null, bool follow_symlinks, bool print_version, , , ) = p.flag_values("bN0Lv");
         string out;
         if (print_version)
             out = "version 2.0\n";
-        for (string param: params) {
+        for (string param: p.params()) {
             s_of f = p.fopen(param, "r");
             if (f.file > 0) {
                 s_stat st;
                 st.stt(f.attr);
-                (, uint16 st_ino, uint16 st_mode, , , , uint16 st_rdev, uint32 st_size, , , , ) = st.unpack();
+                (, uint16 st_ino, , , , , uint16 st_rdev, uint32 st_size, , , , ) = st.unpack();
                 if (!brief_mode)
                     out.append(str.oaif(param, add_null, "\x00") + str.oaif(": ", !dont_pad, "\t"));
                 if (st.is_reg())
@@ -53,7 +52,7 @@ contract file is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

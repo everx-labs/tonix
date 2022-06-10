@@ -1,11 +1,12 @@
-pragma ton-solidity >= 0.59.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract wc is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        (uint16 wd, string[] params, , ) = p.get_env();
 
         bool print_lines = true;
         bool print_words = true;
@@ -22,12 +23,12 @@ contract wc is Utility {
         uint n_texts = params.length;
         bool count_totals = n_texts > 1;
 
-        if (!flags.empty()) {
-            print_bytes = arg.flag_set("c", flags);
-            print_chars = arg.flag_set("m", flags);
-            print_lines = arg.flag_set("l", flags);
-            print_max_width = arg.flag_set("L", flags);
-            print_words = arg.flag_set("w", flags);
+        if (!p.flags_empty()) {
+            print_bytes = p.flag_set("c");
+            print_chars = p.flag_set("m");
+            print_lines = p.flag_set("l");
+            print_max_width = p.flag_set("L");
+            print_words = p.flag_set("w");
         }
 
         string[][] table;
@@ -42,8 +43,7 @@ contract wc is Utility {
         for (string arg: params) {
             (uint16 index, uint8 t, , ) = fs.resolve_relative_path(arg, wd, inodes, data);
             if (t == ft.FT_UNKNOWN) {
-                ec = EXECUTE_FAILURE;
-                err.append(arg + " not found\n");
+                p.perror(arg + " not found");
             } else {
                 string texts = fs.get_file_contents(index, inodes, data);
                 (string[] text, uint n_fields) = texts.split("\n");
@@ -77,7 +77,7 @@ contract wc is Utility {
                 str.toa(total_bytes),
                 str.toa(overall_max_width),
                 "total"]);
-        out = fmt.format_table_ext(columns_format, table, " ", "\n");
+        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -96,7 +96,6 @@ A word is a non-zero-length sequence of characters delimited by white space.",
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
-
 }

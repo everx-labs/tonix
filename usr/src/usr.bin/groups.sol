@@ -1,29 +1,30 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../lib/gr.sol";
 
 contract groups is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        (, string[] params, , ) = arg.get_env(argv);
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
 
-        string user_name = vars.val("USER", argv);
-//        uint16 uid = vars.int_val("UID", argv);
-        uint16 uid = env.getuid(argv);
+//    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
+//        (, string[] params, , ) = arg.get_env(argv);
+        string[] params = p.params();
+        string user_name = p.env_value("USER");
+        uint16 uid = str.toi(p.env_value("UID"));
+///        uint16 uid = env.getuid(argv);
 
         (, string etc_group, , ) = fs.get_passwd_group(inodes, data);
 
         if (params.empty()) {
             (string primary, string[] supp) = gr.initgroups(user_name, uid, etc_group);
-            out.append(primary + " " + libstring.join_fields(supp, " ") + "\n");
+            p.puts(primary + " " + libstring.join_fields(supp, " "));
         }
         for (string param: params) {
             (string primary, string[] supp) = gr.initgroups(param, 0, etc_group);
-            out.append(primary + " : " + primary + " " + libstring.join_fields(supp, " ") + "\n");
+            p.puts(primary + " : " + primary + " " + libstring.join_fields(supp, " "));
         }
-        ec = EXECUTE_SUCCESS;
-        err = "";
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

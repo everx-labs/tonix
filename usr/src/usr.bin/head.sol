@@ -1,14 +1,15 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract head is Utility {
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, Err[] errors) {
-        (, , string flags, string pi) = arg.get_env(argv);
-        (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = arg.flag_values("cnqvz", flags);
-        uint16 num_bytes = use_num_bytes ? str.toi(arg.opt_arg_value("c", argv)) : 0;
-        uint16 num_lines = use_num_bytes ? 0 : use_num_lines ? str.toi(arg.opt_arg_value("n", argv)) : 10;
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        (, , , string pi) = p.get_env();
+        (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = p.flag_values("cnqvz");
+        uint16 num_bytes = use_num_bytes ? p.opt_value_int("c") : 0;
+        uint16 num_lines = use_num_bytes ? 0 : use_num_lines ? p.opt_value_int("n") : 10;
         string line_delimiter = null_delimiter ? "\x00" : "\n";
 
         DirEntry[] contents = udirent.parse_param_index(pi);
@@ -17,12 +18,10 @@ contract head is Utility {
             (uint8 t, string name, uint16 index) = de.unpack();
             if (t != ft.FT_UNKNOWN) {
                 string text = fs.get_file_contents(index, inodes, data);
-                out.append(_print(text, print_headers ? name : "", num_lines, num_bytes, line_delimiter));
+                p.puts(_print(text, print_headers ? name : "", num_lines, num_bytes, line_delimiter));
             } else
-                errors.push(Err(0, er.ENOENT, name));
+                p.perror(name);// er.ENOENT
         }
-        ec = errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
-        err = "";
     }
 
     function _print(string text, string file_name, uint16 num_lines, uint16 num_bytes, string line_delimiter) private pure returns (string out) {
@@ -55,7 +54,7 @@ contract head is Utility {
 "Written by Boris",
 "negative argument values are not yet implemented",
 "tail",
-"0.01");
+"0.02");
     }
 
 }
