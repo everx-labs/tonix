@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.59.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 import "../sys/sys/libpatch.sol";
@@ -29,7 +29,7 @@ contract patch is Utility {
                 }
             }
         } else
-            p.perror("cannot open");
+            p.perror(params[0] + ": cannot open");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -43,6 +43,6 @@ contract patch is Utility {
 "Written by Boris",
 "",
 "diff(1), merge(1)",
-"0.01");
+"0.02");
     }
 }

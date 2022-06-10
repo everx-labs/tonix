@@ -1,32 +1,24 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract man is Utility {
 
-//    function display_man_page(string argv, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
     function main(s_proc p_in, CommandHelp[] help_files) external pure returns (s_proc p) {
         p = p_in;
-//        (string[] params, ,) = arg.get_args(argv);
         string[] params = p.params();
-        string out;
-//        string opt_args = vars.get_map_value("OPT_ARGS", argv);
         uint8 command_format = 1;
-        //if (!vars.val("help", opt_args).empty())
         if (!p.opt_value("help").empty())
             command_format = 2;
-//        else if (!vars.val("version", opt_args).empty())
         if (!p.opt_value("version").empty())
             command_format = 3;
 
         if (params.empty())
-            out.append("What manual page do you want?\nFor example, try 'man man'.\n");
+            p.puts("What manual page do you want?\nFor example, try 'man man'.");
         for (string param: params) {
             (uint8 t_ec, CommandHelp help_file) = _get_man_file(param, help_files);
-            uint8 ec = t_ec;
-            out.append(t_ec == EXECUTE_SUCCESS ? _get_man_text(command_format, help_file) : ("No manual entry for " + param + ".\n"));
+            p.puts(t_ec == EXECUTE_SUCCESS ? _get_man_text(command_format, help_file) : ("No manual entry for " + param + "."));
         }
-        p.puts(out);
     }
 
     function _get_man_file(string arg, CommandHelp[] help_files) internal pure returns (uint8 ec, CommandHelp help_file) {

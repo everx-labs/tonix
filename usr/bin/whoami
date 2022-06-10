@@ -1,1 +1,4 @@
-(cd /home/boris/tonix/tmp/usr/bin/whoami && jq '{p_in: .p}' /home/boris/tonix/run/proc >whoami.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main whoami.args >/home/boris/tonix/run/proc_out )
+cd /home/boris/tonix/tmp/bin/whoami
+jq '{p_in: .p}' ../proc >whoami.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main whoami.args >../proc_out
+cd -

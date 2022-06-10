@@ -1,23 +1,26 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract uname is Utility {
 
-    function main(string argv) external pure returns (uint8 ec, string out, string err) {
-        ( , , string flags, ) = arg.get_env(argv);
-        string host_name = vars.val("HOSTNAME", argv);
-        string arch = vars.val("HOSTTYPE", argv);
-
-        ec = EXECUTE_SUCCESS;
-        err = "";
-        (bool all, bool kernel, bool node, bool hw_platform, bool machine, bool processor, bool os, ) = arg.flag_values("asnimpo", flags);
+    function main(s_proc p_in) external pure returns (s_proc p) {
+        p = p_in;
+//    function main(string argv) external pure returns (uint8 ec, string out, string err) {
+//        ( , , string flags, ) = arg.get_env(argv);
+//        string host_name = vars.val("HOSTNAME", argv);
+//        string arch = vars.val("HOSTTYPE", argv);
+        string host_name = p.env_value("HOSTNAME");
+        string arch = p.env_value("HOSTTYPE");
+        string out;
+        (bool all, bool kernel, bool node, bool hw_platform, bool machine, bool processor, bool os, ) = p.flag_values("asnimpo");
         if (all) out = "Tonix FileSys TVM TONOS TVM\n";
-        if (kernel || flags.empty()) out = "Tonix ";
+        if (kernel || p.flags_empty()) out = "Tonix ";
         if (node) out.append(host_name);
         if (hw_platform || machine) out.append("TVM ");
         if (os) out.append("TON OS ");
         if (processor) out.append(arch + " ");
+        p.puts(out);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {
@@ -39,7 +42,7 @@ contract uname is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

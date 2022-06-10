@@ -1,17 +1,20 @@
-pragma ton-solidity >= 0.59.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
 contract whatis is Utility {
 
-function display_man_page(string argv, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
-        (string[] params, string flags,) = arg.get_args(argv);
+    function main(s_proc p_in, CommandHelp[] help_files) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
+
+//    function display_man_page(string argv, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
+//        (string[] params, string flags,) = arg.get_args(argv);
         if (params.empty())
-            out.append("whatis what?\n");
+            p.puts("whatis what?");
         for (string param: params) {
             (uint8 t_ec, CommandHelp help_file) = _get_man_file(param, help_files);
-            ec = t_ec;
-            out.append(t_ec == EXECUTE_SUCCESS ? _get_man_text(flags, help_file) : (param + ": nothing appropriate.\n"));
+            p.puts(t_ec == EXECUTE_SUCCESS ? _get_man_text(help_file) : (param + ": nothing appropriate."));
         }
     }
 
@@ -22,7 +25,7 @@ function display_man_page(string argv, CommandHelp[] help_files) external pure r
                 return (EXECUTE_SUCCESS, bh);
     }
 
-    function _get_man_text(string /*flags*/, CommandHelp help_file) private pure returns (string) {
+    function _get_man_text(CommandHelp help_file) private pure returns (string) {
         (string name, , string purpose, , , , , , , ) = help_file.unpack();
         return name + " (1)\t\t\t - " + purpose + "\n";
     }
@@ -40,7 +43,7 @@ function display_man_page(string argv, CommandHelp[] help_files) external pure r
 "Written by Boris",
 "Options are not yet implemented",
 "apropos, man, mandb",
-"0.01");
+"0.02");
     }
 
 }

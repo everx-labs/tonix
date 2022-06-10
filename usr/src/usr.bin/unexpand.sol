@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -35,7 +35,7 @@ contract unexpand is Utility {
                     }
                 }
             } else
-                p.perror("cannot open");
+                p.perror(param + ": cannot open");
         }
     }
 

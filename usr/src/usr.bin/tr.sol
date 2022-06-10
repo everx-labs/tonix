@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -7,7 +7,7 @@ contract tr is Utility {
     function main(s_proc p_in) external pure returns (s_proc p) {
         p = p_in;
         string[] params = p.params();
-        (bool delete_chars, bool squeeze_repeats, , ) = p.flags_set("ds");
+        (, bool squeeze_repeats, , ) = p.flags_set("ds");
         string set_from = params.empty() ? params[0] : "";
         string set_to = p.opt_value("d");
         for (string param: params) {
@@ -22,7 +22,7 @@ contract tr is Utility {
                     p.puts(line);
                 }
             } else
-                p.perror("cannot open");
+                p.perror(param + ": cannot open");
         }
     }
     function _command_help() internal override pure returns (CommandHelp) {

@@ -1,1 +1,4 @@
-(cd /home/boris/tonix/tmp/usr/bin/unexpand && jq '{p_in: .p}' /home/boris/tonix/run/proc >unexpand.args && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main unexpand.args >/home/boris/tonix/run/proc_out )
+cd /home/boris/tonix/tmp/bin/unexpand
+jq '{p_in: .p}' ../proc >unexpand.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main unexpand.args >../proc_out
+cd -

@@ -10,29 +10,6 @@ contract alias_ is Shell {
         string[] params = p.params();
         s_of f = p.fopen("alias", "r");
         string token = params.empty() ? "" : params[0];
-        if (!f.ferror()) {
-            string alias_page;
-            alias_page = f.gets_s(0);
-            if (params.empty()) {
-                while (!f.feof()) {
-                    string line = f.fgetln();
-                    (, string name, string value) = vars.split_var_record(line);
-                    value.quote();
-                    p.puts("alias " + name + "=" + value);
-                }
-            } else {
-                string cur_val = vars.val(token, alias_page);
-                if (cur_val.empty()) {
-                    p.puts("-tosh: alias: " + token + ": not found");
-                } else {
-                    cur_val.quote();
-                    p.puts("alias " + token + "=" + cur_val);
-                }
-            }
-        } else
-            p.perror("Failed to read alias page from pool");
-
-        p.puts("======");
 
         if (params.empty()) {
             string[] ali = p.map_file("alias");

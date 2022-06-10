@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -13,12 +13,12 @@ contract pathchk is Utility {
 
         for (string param: params) {
             if (param.empty()) {
-                p.perror("pathchk: " + (no_opts ? ("\'" + param + "\': No such file or directory\n") : "empty file name\n"));
+                p.perror(no_opts ? ("\'" + param + "\': No such file or directory\n") : "empty file name");
                 continue;
             }
             string first = param.substr(0, 1);
             if (first == "-" && leading_hyphens)
-                p.puts("pathchk: leading \'-\' in a component of file name \'" + param + "\'\n");
+                p.puts("leading \'-\' in a component of file name \'" + param + "\'");
         }
     }
 
