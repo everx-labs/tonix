@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/cut
 jq '{p_in: .p}' ../proc >cut.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main cut.args >../proc_out
-cd -
+cd - > /dev/null

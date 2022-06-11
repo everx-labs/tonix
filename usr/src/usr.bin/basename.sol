@@ -1,12 +1,13 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil.sol";
+import "../lib/path.sol";
 
-contract basename is Utility {
+contract basename is putil {
 
     using path for string;
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         string[] params = p.params();
         if (params.empty())

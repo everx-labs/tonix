@@ -1,16 +1,15 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil.sol";
 import "../lib/env.sol";
 import "../lib/unistd.sol";
 
-contract id is Utility {
+contract id is putil {
 
     using unistd for s_proc;
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
-//        string[] params = p.params();
         (bool effective_gid_only, bool name_not_number, bool real_id, bool effective_uid_only, bool all_group_ids, , , ) =
             p.flag_values("gnruG");
         bool is_ugG = effective_uid_only || effective_gid_only || all_group_ids;
@@ -22,10 +21,10 @@ contract id is Utility {
         uint16 gid = p.getgid();
         string out;
         if ((name_not_number || real_id) && !is_ugG)
-            p.perror("id: cannot print only names or real IDs in default format");
+            p.perror("cannot print only names or real IDs in default format");
 
         else if (effective_gid_only && effective_uid_only)
-            p.perror("id: cannot print \"only\" of more than one choice");
+            p.perror("cannot print \"only\" of more than one choice");
         else if (effective_gid_only)
             out = name_not_number ? group_name : str.toa(gid);
         else if (effective_uid_only)

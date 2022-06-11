@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/env
 jq '{p_in: .p}' ../proc >env.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main env.args >../proc_out
-cd -
+cd - > /dev/null

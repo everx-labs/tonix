@@ -1,0 +1,5 @@
+cd /home/boris/tonix/tmp/sbin/mkfs
+jq '{sv_in: .sv}' ../vm >mkfs.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main mkfs.args >../sbin_out
+jq -rj '.sv.cur_proc' ../sbin_out >/home/boris/tonix/tmp/sbin/proc_out
+cd - > /dev/null

@@ -1,15 +1,15 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
 import "../lib/adm.sol";
 import "../lib/gr.sol";
 import "../lib/unistd.sol";
+import "putil.sol";
 
-contract lslogins is Utility {
+contract lslogins is putil {
 
     using unistd for s_proc;
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal pure override returns (s_proc p) {
         p = p_in;
         string[] params = p.params();
         (bool flag_system, bool flag_user, bool colon, bool newline, bool raw, bool nulll, , ) = p.flag_values("sucnrz");

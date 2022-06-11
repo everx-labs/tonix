@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/fuser
 jq '{p_in: .p}' ../proc >fuser.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main fuser.args >../proc_out
-cd -
+cd - > /dev/null

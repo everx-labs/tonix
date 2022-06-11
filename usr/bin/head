@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/head
 jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >head.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main head.args >../proc_out
-cd -
+cd - > /dev/null

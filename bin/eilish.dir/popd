@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/eilish.dir/popd
 jq '{sv_in: .}' ../vm >popd.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main popd.args >../vm_out
-cd -
+cd - > /dev/null

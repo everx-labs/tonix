@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/pathchk
 jq '{p_in: .p}' ../proc >pathchk.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main pathchk.args >../proc_out
-cd -
+cd - > /dev/null

@@ -1,12 +1,12 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil.sol";
 import "../sys/sys/libpatch.sol";
 import "../sys/sys/libstr.sol";
 
-contract patch is Utility {
+contract patch is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         string[] params = p.params();
         if (params.length < 2) {

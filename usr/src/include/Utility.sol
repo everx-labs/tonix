@@ -14,9 +14,10 @@ import "../lib/unistd.sol";
 import "../lib/ucred.sol";
 import "../lib/io.sol";
 import "../lib/parg.sol";
+import "../lib/libhelp.sol";
 import "../sys/sys/uma.sol";
 
-struct CommandHelp {
+/*struct CommandHelp {
     string name;
     string synopsis;
     string purpose;
@@ -27,7 +28,7 @@ struct CommandHelp {
     string bugs;
     string see_also;
     string version;
-}
+}*/
 
 struct Arg {
     string path;

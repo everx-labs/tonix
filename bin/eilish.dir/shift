@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/eilish.dir/shift
 jq '{sv_in: .}' ../vm >shift.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main shift.args >../vm_out
-cd -
+cd - > /dev/null

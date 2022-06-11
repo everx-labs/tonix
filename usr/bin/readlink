@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/readlink
 jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >readlink.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main readlink.args >../proc_out
-cd -
+cd - > /dev/null

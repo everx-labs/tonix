@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/getent
 jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >getent.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main getent.args >../proc_out
-cd -
+cd - > /dev/null

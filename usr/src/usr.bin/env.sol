@@ -1,10 +1,12 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil.sol";
+import "../lib/er.sol";
+import "../lib/vars.sol";
 
-contract env_ is Utility {
+contract env_ is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
 //        string delimiter = p.flag_set("0") ? "\x00" : "\n";
         string op;

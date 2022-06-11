@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/look
 jq '{p_in: .p}' ../proc >look.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main look.args >../proc_out
-cd -
+cd - > /dev/null

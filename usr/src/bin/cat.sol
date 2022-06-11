@@ -1,10 +1,10 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "../include/putil.sol";
 
-contract cat is Utility {
+contract cat is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         (bool number_lines, bool number_nonempty_lines, bool show_ends, bool show_nonprint_ends, bool suppress_repeated_empty_lines,
             bool show_tabs, bool show_nonprint_tabs, bool show_all) = p.flag_values("nbEesTtA");

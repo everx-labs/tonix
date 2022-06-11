@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/sbin/fsck
 jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >fsck.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main fsck.args >../proc_out
-cd -
+cd - > /dev/null

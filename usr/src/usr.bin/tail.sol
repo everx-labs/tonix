@@ -1,10 +1,11 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil.sol";
 
-contract tail is Utility {
+contract tail is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = p.flag_values("cnqvz");
         uint16 num_bytes = use_num_bytes ? p.opt_value_int("c") : 0;
@@ -14,11 +15,12 @@ contract tail is Utility {
 
         bool print_headers = always_headers || !never_headers && params.length > 1;
         for (string param: params) {
-            s_of f = p.fopen(param, "r");
-            if (!f.ferror()) {
+//            s_of f = p.fopen(param, "r");
+            string text = p.read_file(param);
+//            if (!f.ferror()) {
                 if (print_headers)
                     p.puts("==> " + param + " <==");
-                string text = f.buf.sbuf_data();
+//                string text = f.buf.sbuf_data();
                 if (num_lines > 0) {
                     (string[] lines, uint n_lines) = text.split("\n");
                     uint len = math.min(n_lines, num_lines);
@@ -31,8 +33,8 @@ contract tail is Utility {
                         out.translate("\n", "\x00");
                     p.puts(out);
                 }
-            } else
-                p.perror(param + ": cannot open");
+  //          } else
+//                p.perror(param + ": cannot open");
         }
     }
 

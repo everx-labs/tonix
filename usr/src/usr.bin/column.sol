@@ -1,10 +1,10 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil.sol";
 
-contract column is Utility {
+contract column is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         (bool use_delimiter, bool use_width, bool dont_ignore_empty_lines, bool create_table) = p.flags_set("scet");
         uint16 width = use_width ? p.opt_value_int("c") : 140;

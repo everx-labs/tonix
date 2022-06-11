@@ -1,10 +1,10 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil.sol";
 
-contract cut is Utility {
+contract cut is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         string[] params = p.params();
         (bool set_fields, bool use_delimiter, bool only_delimited, bool null_line_end, bool set_bytes, bool set_chars, , ) =

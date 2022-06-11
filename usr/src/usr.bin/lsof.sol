@@ -1,12 +1,16 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
-import "../lib/parg.sol";
-contract lsof is Utility {
+import "putil.sol";
+//import "../lib/parg.sol";
+import "../lib/libstat.sol";
+import "../lib/ft.sol";
 
-    using parg for s_proc;
+contract lsof is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    using libstat for s_stat;
+//    using parg for s_proc;
+
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         (bool ppid, bool fsize, bool foffset, bool numuid) = p.flags_set("Rsol");
         (mapping (uint16 => string) user, ) = p.get_users_groups();

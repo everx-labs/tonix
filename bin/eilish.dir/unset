@@ -1,4 +1,4 @@
 cd /home/boris/tonix/tmp/bin/eilish.dir/unset
 jq '{sv_in: .}' ../vm >unset.args
 ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main unset.args >../vm_out
-cd -
+cd - > /dev/null

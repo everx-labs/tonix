@@ -1,12 +1,12 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "putil.sol";
 import "../lib/adm.sol";
 import "../lib/unistd.sol";
 
-contract ps is Utility {
+contract ps is putil {
 
-    function main(s_proc p_in) external pure returns (s_proc p) {
+    function _main(s_proc p_in) internal override pure returns (s_proc p) {
         p = p_in;
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on,
             bool default_format, bool user_message_status, , bool users_logged_in) = p.flag_values("bHlqsTwu");
