@@ -11,16 +11,19 @@ contract du is Utility {
         }
     }
 
-    function main(string argv, s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
         p = p_in;
         string[] params = p.params();
         (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, bool include_subdirs, , ) = p.flag_values("0ahcsS");
         string line_end = null_line_end ? "\x00" : "\n";
-        if (count_files && summarize)
+        if (count_files && summarize) {
             p.perror("cannot both summarize and show all entries");
+            return p;
+        }
 
         string so;
 
+        (, , string argv) = p.get_args();
         for (string param: params) {
             s_of f = p.fopen(param, "r");
             s_fts file_system = fts.fts_open(argv, fts.FTS_COMFOLLOW | fts.FTS_NOCHDIR, 1);
@@ -37,24 +40,19 @@ contract du is Utility {
                 uint16 index = st_ino;
                 Inode inode = inodes[index];
                 bytes dir_data = data[index];
-//                uint32 file_size = inode.file_size;
                 uint32 file_size = st_size;
                 (string[][] table, uint32 total) = st_mode.is_dir() ? _count_dir(count_files, include_subdirs, human_readable, param, inode, dir_data, inodes, data) :
                     ([[fmt.scale(file_size, human_readable ? fmt.KILO : 1), param]], file_size);
                 if (produce_total)
                     table.push([format("{}", total), "total"]);
-//                out.append(fmt.format_table(table, "\t", line_end, fmt.LEFT));
                 p.puts(fmt.format_table(table, "\t", line_end, fmt.LEFT));
             } else
                 p.perror("cannot open");
             fts.fts_close(file_system);
         }
-//        ec = err.empty() && errors.empty() ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
     }
 
     function _count_dir(bool count_files, bool include_subdirs, bool human_readable, string dir_name, Inode inode, bytes dir_data, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) private pure returns (string[][] lines, uint32 total) {
-//        (bool count_files, bool include_subdirs, bool human_readable, , , , , ) = arg.flag_values("aSh", f);
-
         (DirEntry[] contents, int16 status) = udirent.read_dir_data(dir_data);
 
         if (status > 0) {
@@ -111,7 +109,7 @@ contract du is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

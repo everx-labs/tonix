@@ -85,45 +85,6 @@ library unistd {
         p.p_xexit = errno.ENOENT;
     }
 
-    /*function fopen(s_proc p, string path, uint16 mode) internal returns (s_sbuf s) {
-        s_of[] fdt = p.p_fd.fdt_ofiles;
-        uint n_files = p.p_fd.fdt_nfiles;
-        for (uint i = 0; i < n_files; i++) {
-            s_of f = fdt[i];
-            if (f.path == path) {
-//                uint32 offset = f.offset;
-                s_stat st;
-                st.stt(f.attr);
-                if (st.st_uid == p.p_ucred.cr_uid || st.st_uid == p.p_ucred.cr_groups[0]) {
-                    return f.buf;
-                } else
-                    p.p_xexit = errno.EPERM;
-                break;
-            }
-        }
-        if (p.p_xexit == 0)
-            p.p_xexit = errno.ENOENT;
-    }
-    */
-        /*
-        if (path == "/")
-            return errno.ESUCCESS;
-        string s = "." + path;
-        (string[] parts, uint n_parts) = s.split("/");
-        uint16 cur_dir = sb.ROOT_DIR;
-        for (uint i = 0; i < n_parts; i++) {
-//            (uint16 index, uint8 t, uint16 dir_idx) = lookup_dir_ext(inodes[cur_dir], data[cur_dir], parts[i]);
-//            cur_dir = p.open(path, sfcntl.O_RDONLY | sfcntl.O_DIRECTORY);
-            cur_dir = syscall(p, ssyscall.SYS_open, sfcntl.O_RDONLY | sfcntl.O_DIRECTORY);
-            if (cur_dir == 0)
-                return errno.ENOENT;
-//            if (t != ft.FT_DIR)
-//                return index;
-//            cur_dir = index;
-        }
-        return cur_dir;
-*/
-
     function alarm(s_proc p, uint32) internal returns (uint16) {}
     function chdir(s_proc p, string path) internal returns (uint16) {
         p.p_pd.pwd_cdir.path = path;
@@ -245,7 +206,7 @@ library unistd {
     function setpgid(s_proc p, uint16, uint16) internal returns (uint16) {}
     function setsid(s_proc p) internal returns (s_xsession) {
         uint16 pid = p.p_pid;
-        s_xtty k_ttyp;
+        uint16 k_ttyp;
         string s_login;
         uint16 s_sid;
         if (pid == p.p_oppid || pid == p.p_leader)
@@ -255,12 +216,6 @@ library unistd {
     }
     function setuid(s_proc p, uint16 uid) internal returns (uint16) {
         p.p_ucred.setuid(uid);
-        /*uint16 eu = p.p_ucred.cr_uid;
-        if (uid == eu || uid == p.p_ucred.cr_ruid) {
-            p.p_ucred.cr_svuid = p.p_ucred.cr_uid;
-            p.p_ucred.cr_uid = uid;
-        } else
-            p.p_xexit = errno.EPERM;*/
     }
     function sleep(s_proc p, uint32) internal returns (uint16) {}
     function sysconf(s_proc p, uint16) internal returns (uint32) {

@@ -115,15 +115,9 @@ library io {
     int8 constant FD_NONE = -100;
 
     function execve(s_proc p, string path, string[] argv, string[] envp) internal returns (uint16 pid) {
-//        p.p_comm = argv[0];
-    /*"p_args": {
-      "ar_length": "0",
-      "ar_args": ""
-    },*/
-
     }
 
-    function _mode_to_flags(string mode) internal returns (uint16 flags) {
+    function mode_to_flags(string mode) internal returns (uint16 flags) {
         if (mode == "r" || mode == "rb")
             flags |= O_RDONLY;
         if (mode == "w" || mode == "wb")
@@ -155,16 +149,17 @@ library io {
     }
 
     function _fetch(s_proc p, string path) internal returns (uint) {
-        s_of[] fdt = p.p_fd.fdt_ofiles;
-        uint n_files = p.p_fd.fdt_nfiles;
-        for (uint i = 0; i < n_files; i++)
+        return fetch_fdt(p.p_fd.fdt_ofiles, path);
+    }
+
+    function fetch_fdt(s_of[] fdt, string path) internal returns (uint) {
+        for (uint i = 0; i < fdt.length; i++)
             if (fdt[i].path == path)
                 return i + 1;
     }
-
     function fopen(s_proc p, string path, string mode) internal returns (s_of f) {
-        uint16 flags = _mode_to_flags(mode);
-        uint q = _fetch(p, path);
+        uint16 flags = mode_to_flags(mode);
+        uint q = fetch_fdt(p.p_fd.fdt_ofiles, path);
         if (q > 0) {
             f = p.p_fd.fdt_ofiles[q - 1];
             s_stat st;
@@ -176,7 +171,7 @@ library io {
     }
 
     function fdopen(s_proc p, uint16 fildes, string mode) internal returns (s_of f) {
-        uint16 flags = _mode_to_flags(mode);
+        uint16 flags = mode_to_flags(mode);
         if (fildes < p.p_fd.fdt_nfiles) {
             f = p.p_fd.fdt_ofiles[fildes];
             s_stat st;
@@ -188,14 +183,12 @@ library io {
     }
 
     function opendir(s_proc p, string filename) internal returns (s_of f) {
-//        f = fopen(p, filename, "r");
-        uint q = _fetch(p, filename);
+        uint q = fetch_fdt(p.p_fd.fdt_ofiles, filename);
         if (q > 0) {
             f = p.p_fd.fdt_ofiles[q - 1];
             f.file = uint16(q - 1);
             return f;
         }
-//        p.p_fd.fdt_ofiles[f.file] = f;
     }
 
     function fdopendir(s_proc p, uint16 fd) internal returns (s_of f) {
@@ -289,19 +282,10 @@ library io {
     }
 
     function fcloseall(s_proc p) internal {
-//        for
     }
     function fdclose(s_of stream, uint16) internal returns (int) {}
 
      function popen(string command, string ctype) internal returns (s_of) {
-         /*bytes bts = bytes(ctype);
-         if (bts[0] == 'r') {
-         } else if (bts[0] == 'w') {
-
-         }*/
-        //`r' for reading, `w' for writing, or `r+' for reading and writing.
-
-     //A letter `e' may be appended to that to request that the underlying file
      }
      function pclose(s_of stream) internal returns (uint16) {}
 

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "../include/Shell.sol";
 
@@ -45,7 +45,8 @@ contract eilish is Shell {
         }
     }
 
-    function main(svm sv_in, string input) external pure returns (svm sv, uint8 ec, string out, string res, string redir_in, string redir_out) {
+//    function main(svm sv_in, string input) external pure returns (svm sv, uint8 ec, string out, string res, string redir_in, string redir_out) {
+    function main(svm sv_in, string input) external pure returns (svm sv) {
         sv = sv_in;
 
         string[] pages;
@@ -72,7 +73,7 @@ contract eilish is Shell {
         f.fflush();
         p.p_fd.fdt_ofiles[3] = f;
         if (input.empty())
-            return (sv, EXECUTE_FAILURE, "", "", "", "");
+            return sv;
         (string cmd_raw, string argv) = input.csplit(" ");
         string cmd_expanded = vars.val(cmd_raw, aliases);
         string sinput = cmd_expanded.empty() ? input : cmd_expanded + " " + argv;
@@ -81,8 +82,12 @@ contract eilish is Shell {
         string cmd_opt_string = vars.val(cmd, opt_string);
 
         string sflags;
+        string redir_in;
+        string redir_out;
+        uint8 ec;
         string[][2] opt_values;
         string pos_params;
+        string res;
         string err;
         string[] params;
         uint n_params;
@@ -135,8 +140,15 @@ contract eilish is Shell {
             pas.push(s_dirent(0, 0, pm));
         p.p_args.ar_misc = s_ar_misc(sinput, sflags, sargs, uint16(n_params), params, ec, last_param,
             err, redir_in, redir_out, pas, opt_values);
-        out = vars.as_var_list("", [
+
+        /*string[] pa;
+        pa.push(vars.as_attributed_hashmap("COMMAND_LINE", args));
+        p.p_args.ar_args = pa;
+        p.p_args.ar_length = uint16(pa.length);*/
+
+        p.p_args.ar_args = [vars.as_var_list("", [
             ["COMMAND", cmd],
+            ["COMMAND_LINE", res],
             ["PARAMS", pos_params],
             ["FLAGS", sflags],
             ["ARGV", sinput],
@@ -146,7 +158,7 @@ contract eilish is Shell {
             ["_", last_param],
             ["OPTERR", err],
             ["REDIR_IN", redir_in],
-            ["REDIR_OUT", redir_out]]);
+            ["REDIR_OUT", redir_out]]), res];
         sv.cur_proc = p;
     }
 

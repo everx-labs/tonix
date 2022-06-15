@@ -1,16 +1,14 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 
-contract echo is Shell {
+contract echo is pbuiltin {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        p.puts(libstring.join_fields(p.params(), " "));
-        if (!p.flag_set("n"))
+    function _main(s_proc p_in, string[] params, shell_env) internal pure override returns (s_proc p) {
+        p = p_in;
+        p.puts(libstring.join_fields(params, " "));
+        if (!p_in.flag_set("n"))
             p.puts("\n");
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

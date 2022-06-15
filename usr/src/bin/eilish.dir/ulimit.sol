@@ -1,12 +1,20 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+/*import "Shell.sol";
 
 contract ulimit is Shell {
 
     function main(svm sv_in) external pure returns (svm sv) {
         sv = sv_in;
-        s_proc p = sv.cur_proc;
+        s_proc p = sv.cur_proc;*/
+import "pbuiltin.sol";
+
+contract ulimit is pbuiltin {
+
+    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
+        p = p_in;
+        string page;// = e.e_dirstack; //vmem.vmem_fetch_page(sv.vmem[1], 12);
+
 //        string[] params = p.params();
 //        (bool socket_buffer_size, bool core_file_size, bool data_seg_size, bool scheduling_priority, bool file_size, bool pending_signals,
 //            bool max_locked_memory, bool max_memory_size) = p.flag_values("bcdefilm");
@@ -16,7 +24,7 @@ contract ulimit is Shell {
 //            p.flag_values("xPTSHa");
         (bool soft_resource_limit, bool hard_resource_limit, bool print_all, , , , , ) = p.flag_values("SHa");
         bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], 12); // 13?
+        string pool;// = vmem.vmem_fetch_page(sv.vmem[1], 12); // 13?
         if (print_all) {
             (string[] items, ) = pool.split_line("\n", "\n");
             for (string item: items) {
@@ -25,7 +33,7 @@ contract ulimit is Shell {
 //                out.append(name + " " + value + "\n");
             }
         }
-        sv.cur_proc = p;
+//        sv.cur_proc = p;
     }
 
 /*/proc/27196/limits
@@ -47,7 +55,7 @@ Max nice priority         0                    0
 Max realtime priority     0                    0
 Max realtime timeout      unlimited            unlimited            us*/
 
-    function _table(TvmCell[] cls) internal pure returns (string out) {
+    /*function _table(TvmCell[] cls) internal pure returns (string out) {
         Column[] columns_format = [
             Column(true, 3, fmt.LEFT),
             Column(true, 5, fmt.LEFT),
@@ -64,7 +72,7 @@ Max realtime timeout      unlimited            unlimited            us*/
     }
 
     function v1(string args, string pool) external pure returns (uint8 ec, string out) {
-    }
+    }*/
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(

@@ -1,30 +1,36 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "pbuiltin_special.sol";
 
-contract alias_ is Shell {
+contract alias_ is pbuiltin_special {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
-        s_of f = p.fopen("alias", "r");
+    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
+        pages[0] = e.e_aliases;
+    }
+
+    function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
+        e = e_in;
+        e.e_aliases = page;
+    }
+
+    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+        p = p_in;
         string token = params.empty() ? "" : params[0];
 
         if (params.empty()) {
-            string[] ali = p.map_file("alias");
+            (string[] ali, ) = page.split("\n");
             for (string l: ali) {
                 (, string name, string value) = vars.split_var_record(l);
                 value.quote();
                 p.puts("alias " + name + "=" + value);
             }
         } else {
-            string alias_page = p.read_file("alias");
+            string alias_page = page;//p.read_file("alias");
             string cur_tval = vars.val(token, alias_page);
-            (, , string argv) = p.get_args();
-            if (argv.strchr("=") > 0) {
+            (, , string args) = p.get_args();
+            if (args.strchr("=") > 0) {
                 (string name, ) = token.csplit("=");
-                string value = argv.val("=", "\n");
+                string value = args.val("=", "\n");
                 string new_value = vars.var_record("", name, value);
                 string cur_val = vars.val(name, alias_page);
                 if (cur_val.empty())
@@ -42,19 +48,19 @@ contract alias_ is Shell {
             p.puts("Result: ");
             p.puts(alias_page);
         }
-        sv.cur_proc = p;
+//        sv.cur_proc = p;
     }
 
-    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, , string argv) = arg.get_args(args);
-        string alias_page = pool;
-
-        string initial_val = alias_page;
+    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
+        p = p_in;
+        string alias_page = page_in;
+        page = alias_page;
         string token = params.empty() ? "" : params[0];
-        ec = EXECUTE_SUCCESS;
-        if (argv.strchr("=") > 0) {
+        string sargs = p.p_args.ar_misc.sargs;
+
+        if (sargs.strchr("=") > 0) {
             (string name, ) = token.csplit("=");
-            string value = argv.val("=", "\n");
+            string value = sargs.val("=", "\n");
             string new_value = vars.var_record("", name, value);
             string cur_val = vars.val(name, alias_page);
             if (cur_val.empty())
@@ -62,8 +68,8 @@ contract alias_ is Shell {
             else
                 alias_page.translate(cur_val, new_value);
         }
-        if (initial_val != alias_page)
-            res = libstring.translate(pool, initial_val, alias_page);
+        if (page_in != alias_page)
+            page.translate(page_in, alias_page);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

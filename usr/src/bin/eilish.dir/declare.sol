@@ -1,13 +1,27 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "pbuiltin_special.sol";
 
-contract declare is Shell {
+contract declare is pbuiltin_special {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
+    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
+        if (p.flag_set("f"))
+            pages[9] = e.e_functions;
+        else
+            pages[8] = e.e_vars;
+    }
+
+    function _update_shell_env(shell_env e_in, uint8 n, string page) internal pure override returns (shell_env e) {
+        e = e_in;
+        if (n == 8)
+            e.e_vars = page;
+        else if (n == 9)
+            e.e_functions = page;
+//        e.e_exports.append(page);
+    }
+
+    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+        p = p_in;
 
         bool function_names_only = p.flag_set("F");
 
@@ -20,9 +34,8 @@ contract declare is Shell {
             sattrs.append("-f");
         sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
 
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], 3);
         if (params.empty()) {
-            (string[] lines, ) = pool.split("\n");
+            (string[] lines, ) = page.split("\n");
             for (string line: lines) {
                 (string attrs, string name, string value) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
@@ -32,31 +45,27 @@ contract declare is Shell {
             }
         }
         for (string param: params) {
-            string cur_record = vars.get_pool_record(param, pool);
+            string cur_record = vars.get_pool_record(param, page);
             if (!cur_record.empty()) {
                 (string cur_attrs, ) = cur_record.csplit(" ");
                 if (vars.match_attr_set(sattrs, cur_attrs))
                     p.puts(vars.print_reusable(cur_record));
-            } else {
+            } else
                 p.perror(param + ": not found");
-            }
         }
-        sv.cur_proc = p;
     }
 
-    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        string page = pool;
+    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
+        p = p_in;
+        page = page_in;
         string sattrs;
         string[] a_attrs = ["a", "A", "x", "i", "r", "t", "n", "f"];
         for (string attr: a_attrs)
-            if (arg.flag_set(attr, flags))
+            if (p.flag_set(attr))
                 sattrs.append(attr);
         sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
-        ec = EXECUTE_SUCCESS;
-        for (string p: params)
-            page = vars.set_var(sattrs, p, page);
-        res = page;
+        for (string param: params)
+            page = vars.set_var(sattrs, param, page);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -1,14 +1,13 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "../../lib/fs.sol";
+import "pbuiltin.sol";
 
-contract dirs is Shell {
+contract dirs is pbuiltin {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
-        string page = vmem.vmem_fetch_page(sv.vmem[1], 12);
+    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
+        p = p_in;
+        string page = e.e_dirstack; //vmem.vmem_fetch_page(sv.vmem[1], 12);
 
         (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, , , , ) =
             p.flag_values("clpv");
@@ -16,16 +15,14 @@ contract dirs is Shell {
         if (print)
             p.puts(page);
         else if (clear_dir_stack)
-            sv.vmem[1].vm_pages[12] = "";
-        sv.cur_proc = p;
-//        string home_dir = vars.val("HOME", page);
+            //sv.vmem[1].vm_pages[12] = "";
+            e.e_dirstack = "";
     }
 
-    function _print_dir_contents(uint16 start_dir_index, mapping (uint16 => bytes) data) internal pure returns (uint8 ec, string out) {
+    function _print_dir_contents(uint16 start_dir_index, mapping (uint16 => bytes) data) internal pure returns (string out) {
         (DirEntry[] contents, int16 status) = udirent.read_dir_data(data[start_dir_index]);
         if (status < 0) {
             out.append(format("Error: {} \n", status));
-            ec = EXECUTE_FAILURE;
         } else {
             uint len = uint(status);
             for (uint16 j = 0; j < len; j++) {

@@ -73,7 +73,7 @@ struct s_proc {
 struct s_xsession {
     uint16 s_count;      // Ref cnt; pgrps in session - atomic.
     s_proc s_leader;     // Session leader.
-    s_xtty k_ttyp;        // Controlling tty.
+    uint16 k_ttyp;        // Controlling tty.
     uint16 s_sid;        // Session ID.
     string s_login;      // Setlogin() name:
 }

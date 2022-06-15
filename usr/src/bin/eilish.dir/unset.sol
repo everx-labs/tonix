@@ -1,30 +1,45 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "pbuiltin_special.sol";
 
-contract unset is Shell {
+contract unset is pbuiltin_special {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
+        if (p.flag_set("f"))
+            pages[9] = e.e_functions;
+        else
+            pages[8] = e.e_vars;
+    }
+
+    function _update_shell_env(shell_env e_in, uint8 n, string page) internal pure override returns (shell_env e) {
+        e = e_in;
+        if (n == 8)
+            e.e_vars = page;
+        else if (n == 9)
+            e.e_functions = page;
+    }
+
+    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+        p = p_in;
+        p.puts(page);
+    }
+
+    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
+        p = p_in;
         bool unset_vars = p.flag_set("v");
         bool unset_functions = p.flag_set("f");
         string sattrs = unset_functions ? "-f" : unset_vars ? "+f" : "";
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], unset_functions ? 9 : 8);
-        for (string arg: p.params()) {
-            string line = vars.get_pool_record(arg, pool);
-            if (!line.empty()) {
-                (string attrs, ) = line.csplit(" ");
-                if (vars.match_attr_set(sattrs, attrs)) {
-                    pool.translate(line + "\n", "");
-                }
-            } else {
-                p.perror(arg + " not found");
-                // not found
+        page = page_in;
+            for (string arg: params) {
+                string line = vars.get_pool_record(arg, page);
+                if (!line.empty()) {
+                    (string attrs, ) = line.csplit(" ");
+                    if (vars.match_attr_set(sattrs, attrs)) {
+                        page.translate(line + "\n", "");
+                    }
+                } else
+                    p.perror(arg + " not found");
             }
-        }
-        sv.vmem[1].vm_pages[unset_functions ? 9 : 8] = pool;
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

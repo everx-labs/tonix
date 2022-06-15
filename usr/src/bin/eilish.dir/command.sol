@@ -18,28 +18,27 @@ contract command is Shell {
     uint16 constant CDESC_FORCE_PATH= 32; // type -ap or type -P
     uint16 constant CDESC_NOFUNCS   = 64; // type -f
 
-    function main(svm sv_in, string args) external pure returns (svm sv, s_proc p, string exec_line, string exports) {
+    function main(svm sv_in) external pure returns (svm sv, s_proc p) {
         sv = sv_in;
         p = sv.cur_proc;
         s_vmem vmm = sv.vmem[1];
         string cmd = p.p_comm;
         string varss = vmem.vmem_fetch_page(vmm, 8);
-        string users = vmem.vmem_fetch_page(vmm, 6);
-        string groups = vmem.vmem_fetch_page(vmm, 7);
         string hash_pool = vmem.vmem_fetch_page(vmm, 4);
 
         string pattern = "[" + cmd + "]";
         string path;
-        (string[] lines, uint n_lines) = hash_pool.split("\n");
+        (string[] lines, ) = hash_pool.split("\n");
         for (string line: lines) {
             if (line.strstr(pattern) > 0) {
                 path = line.val("[", "]");
                 break;
             }
         }
-        path = path.empty() ? "usr/bin" : path;
-        string[] env;
-        string cl;
+//        path = path.empty() ? "usr/bin" : path;
+        if (path.empty()) {
+            sv.cur_proc.p_args.ar_misc.ec = EXECUTE_FAILURE;
+        }
         /*uma_zone sz = sv.sz[5];
         s_uma_slab s = sz.uz_keg.uk_domain[0].ud_part_slab[0];
         s_uma_slab s = sz.uz_keg.keg_fetch_slab();
@@ -55,17 +54,22 @@ contract command is Shell {
             p.p_fd.fdt_ofiles.push(f);
         p.p_fd.fdt_nfiles = uint16(p.p_fd.fdt_ofiles.length);
 
-        (exports, env, cl) = _export_env(args, varss, users, groups);
+        string[] env;
+        (lines, ) = varss.split("\n");
+        for (string line: lines) {
+            (string attrs, string name, string value) = vars.split_var_record(line);
+            if (vars.match_attr_set("-x", attrs))
+                env.push(name + "=" + value);
+        }
 
-        string[] pa;
-        string pi = vars.as_attributed_hashmap("PARAM_INDEX", param_index);
+        string exec_line = "./" + path + "/" + cmd + " " + p.p_args.ar_misc.sargs;
+        p.p_oppid = sv.cur_proc.p_pid;
+        p.p_pid = p.p_oppid + 1;
         p.environ = env;
-        pa.push(cl);
-        pa.push(pi);
-        p.p_args.ar_args = pa;
-        p.p_args.ar_length = uint16(pa.length);
-        exec_line = "./" + path + "/" + cmd + " " + p.p_args.ar_misc.sargs;
-        sv.cur_proc = p;
+        p.p_args.ar_args.push(vars.as_attributed_hashmap("PARAM_INDEX", param_index));
+        p.p_args.ar_args.push(exec_line);
+        p.p_args.ar_length = uint16(p.p_args.ar_args.length);
+//        sv.cur_proc = p;
     }
 
     function print(string args, string pool) external pure returns (uint8 ec, string out) {
@@ -105,21 +109,13 @@ contract command is Shell {
         }
     }
 
-    function _export_env(string args, string varss, string users, string groups) internal pure returns (string exports, string[] env, string cl) {
-        string shell_vars;
+    function _export_env(string varss) internal pure returns (string[] env) {
         (string[] lines, ) = varss.split("\n");
         for (string line: lines) {
             (string attrs, string name, string value) = vars.split_var_record(line);
-            if (vars.match_attr_set("-x", attrs)) {
-                shell_vars.append(line + "\n");
+            if (vars.match_attr_set("-x", attrs))
                 env.push(name + "=" + value);
-            }
         }
-        exports.append(vars.as_attributed_hashmap("SHELL_VARS", shell_vars));
-        exports.append(vars.as_attributed_hashmap("USERS", users));
-        exports.append(vars.as_attributed_hashmap("GROUPS", groups));
-        cl = vars.as_attributed_hashmap("COMMAND_LINE", args);
-        exports.append(cl);
     }
 
     function _file_stati(s_proc p, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (s_of[] fdt, s_dirent[] pa, string out) {
@@ -179,45 +175,6 @@ contract command is Shell {
         f.fclose();
         sv.cur_proc = p;
         sv.sz = uz;
-    }
-
-    function execute_command(svm sv_in, string args, string comp_spec, string varss, string users, string groups) external pure returns (svm sv, s_proc p, string exec_line, string exports) {
-        sv = sv_in;
-        p = sv.cur_proc;
-        string cmd = p.p_comm;
-        string fn_name = "main";
-        if (parg.opt_value(p, "help").empty()) {
-            string fn_map = vars.get_pool_record(cmd, comp_spec);
-            if (!fn_map.empty())
-                (, fn_name, ) = vars.split_var_record(fn_map);
-        } else
-            fn_name = "print_usage";
-
-        string[] env;
-        string cl;
-        uma_zone sz = sv.sz[5];
-        uma_keg k = sz.uz_keg;
-        uma_slab s; //= k.fetch_slab();
-        bytes b = s.us_data;
-        bytes[] vd = sv.vmem[0].vm_pages;
-        (mapping (uint16 => Inode) inodes2, mapping (uint16 => bytes) data2) = fs.read_fs(b, vd);
-        (s_of[] fdt, s_dirent[] pas, string param_index) = _file_stati(p, inodes2, data2);
-        p.p_args.ar_misc.pos_args = pas;
-        for (s_of f: fdt)
-            p.p_fd.fdt_ofiles.push(f);
-        p.p_fd.fdt_nfiles = uint16(p.p_fd.fdt_ofiles.length);
-
-        (exports, env, cl) = _export_env(args, varss, users, groups);
-
-        string[] pa;
-        string pi = vars.as_attributed_hashmap("PARAM_INDEX", param_index);
-        p.environ = env;
-        pa.push(cl);
-        pa.push(pi);
-        p.p_args.ar_args = pa;
-        p.p_args.ar_length = uint16(pa.length);
-        exec_line = "./command " + fn_name + " " + cmd + " " + p.p_args.ar_misc.sargs;
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

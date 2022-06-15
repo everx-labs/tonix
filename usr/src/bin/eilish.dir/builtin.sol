@@ -1,10 +1,10 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Shell.sol";
 
 contract builtin is Shell {
 
-    function main(svm sv_in, string args, string builtins) external pure returns (svm sv, string res) {
+    function main(svm sv_in, string args) external pure returns (svm sv, string res) {
         sv = sv_in;
         s_proc p = sv.cur_proc;
         string cmd = vars.val("COMMAND", args);
@@ -77,7 +77,7 @@ contract builtin is Shell {
         else if (cmd == "command")
             fn = f_v || f_V ? "print" : "execute_command";
         else if (cmd == "ulimit") {
-            (bool v1, bool v2, bool v3, bool v4, bool v5, bool v6, bool v7, bool v8) = arg.flag_values("12345678", flags);
+            (bool v1, , , , , , , ) = arg.flag_values("12345678", flags);
             if (params.empty()) fn = "print";
             else if (v1) fn = "v1";
             else fn = "execute";

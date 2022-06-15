@@ -113,7 +113,7 @@ contract mkfs is Utility {
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

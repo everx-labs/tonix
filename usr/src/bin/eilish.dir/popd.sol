@@ -1,26 +1,20 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 
-contract popd is Shell {
+contract popd is pbuiltin {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
-        string page = vmem.vmem_fetch_page(sv.vmem[1], 12);
-        (string[] dir_stack, uint n_dirs) = page.split("\n");
-
+    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
+        p = p_in;
+        (string[] dir_stack, uint n_dirs) = e.e_dirstack.split("\n");
         if (params.empty()) {
             if (n_dirs < 2)
                 p.perror("directory stack empty");
             else {
                 dir_stack.pop();
-                page = libstring.join_fields(dir_stack, "\n");
-                sv.vmem[1].vm_pages[12] = page;
+                e.e_dirstack = libstring.join_fields(dir_stack, "\n");
             }
         }
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

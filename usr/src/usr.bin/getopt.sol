@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
 
@@ -11,10 +11,9 @@ contract getopt is Utility {
         string name;
     }
 
-    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
-        err = "";
-        ( , string[] params, string flags, ) = arg.get_env(argv);
-        ec = EXECUTE_SUCCESS;
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+        p = p_in;
+        string[] params = p.params();
         uint p = input.strrchr(">");
         uint q = input.strrchr("<");
         (string c, string sargs) = input.csplit(" ");

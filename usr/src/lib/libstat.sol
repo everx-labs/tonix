@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.1;
 
 import "libstatmode.sol";
 import "utypes.sol";

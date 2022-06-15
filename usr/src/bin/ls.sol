@@ -4,12 +4,12 @@ import "../include/Utility.sol";
 
 contract ls is Utility {
 
-    function main(string argv, s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
         p = p_in;
-        (uint16 wd, string[] params, string flags, ) = arg.get_env(argv);
+        (uint16 wd, string[] params, string flags, ) = p.get_env();
         if (params.empty())
-            params.push(vars.val("PWD", argv));
-        (mapping (uint16 => string) user, mapping (uint16 => string) group) = arg.get_users_groups(argv);
+            params.push(p.env_value("PWD"));
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = p.get_users_groups();
 
         for (string param: params) {
             (uint16 index, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
@@ -211,7 +211,7 @@ Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.",
 "Written by Boris",
 "",
 "",
-"0.01");
+"0.02");
     }
 
 }

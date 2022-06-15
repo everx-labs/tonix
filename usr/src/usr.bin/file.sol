@@ -30,7 +30,7 @@ contract file is Utility {
                 }
                 out.append("\n");
             } else
-                p.perror("cannot open");
+                p.perror(param + ": cannot open");
         }
         p.puts(out);
     }

@@ -1,22 +1,28 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "pbuiltin_special.sol";
 
-contract shopt is Shell {
+contract shopt is pbuiltin_special {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
+    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
+            pages[13] = e.e_options;
+    }
 
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], 3);
+    function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
+        e = e_in;
+        e.e_options = page;
+    }
+
+    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+        p = p_in;
+
         bool print_reusable = p.flag_set("p");
         bool set_opt = p.flag_set("s");
         bool unset_opt = p.flag_set("u");
         string sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
 
         if (params.empty()) {
-            (string[] lines, ) = pool.split("\n");
+            (string[] lines, ) = page.split("\n");
             for (string line: lines) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
@@ -25,32 +31,26 @@ contract shopt is Shell {
             }
         }
         for (string param: params) {
-            string line = vars.get_pool_record(param, pool);
+            string line = vars.get_pool_record(param, page);
             if (!line.empty()) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
                     p.puts(print_reusable ? "shopt " + attrs + " " + name :
                     name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
-            } else {
+            } else
                 p.perror(param + " not found");
-            }
         }
-        sv.cur_proc = p;
     }
 
-
-    function modify(string args, string pool) external pure returns (uint8 ec, string res) {
-        (string[] params, string flags, ) = arg.get_args(args);
-        bool set_opt = arg.flag_set("s", flags);
-        bool unset_opt = arg.flag_set("u", flags);
-        string page = pool;
+    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
+        p = p_in;
+        bool set_opt = p.flag_set("s");
+        bool unset_opt = p.flag_set("u");
+        page = page_in;
         string sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
-
-        ec = EXECUTE_SUCCESS;
-        for (string p: params)
-            page = vars.set_var(sattrs, p, page);
-        res = page;
-    }
+        for (string param: params)
+            page = vars.set_var(sattrs, param, page);
+      }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(

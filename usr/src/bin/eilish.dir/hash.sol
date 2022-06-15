@@ -17,7 +17,7 @@ contract hash is Shell {
 
         if (no_args) {
             if (pool.empty())
-                p.puts("hash: hash table empty");
+                p.perror("hash table empty");
             else {
                 if (!print_reusable)
                     p.puts("hits\tcommand");
@@ -62,10 +62,6 @@ contract hash is Shell {
                 string path = vars.get_array_name(arg, pool);
                 if (!path.empty())
                     page.translate(arg + " ", "");
-                else {
-                    ec = EXECUTE_FAILURE;
-//                        out.append("-tosh: hash: " + arg + ": not found\n");
-                }
             }
         }
         res = page;

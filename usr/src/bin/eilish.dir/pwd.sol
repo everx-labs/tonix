@@ -1,15 +1,14 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.1;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 import "../../lib/unistd.sol";
 
-contract pwd is Shell {
+contract pwd is pbuiltin {
 
     using unistd for s_proc;
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function _main(s_proc p_in, string[] , shell_env) internal pure override returns (s_proc p) {
+        p = p_in;
         if (!p.flag_set("P")) {
             string wd = p.getwd();
             if (wd.empty()) {
@@ -17,7 +16,6 @@ contract pwd is Shell {
             } else
                 p.puts(wd);
         }
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {
