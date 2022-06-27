@@ -1,8 +1,8 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 //import "ktypes.sol";
 import "stypes.sol";
-import "../include/errno.sol";
-import "../lib/str.sol";
+import "liberr.sol";
+import "str.sol";
 
 library sbuf {
 
@@ -38,7 +38,7 @@ library sbuf {
 
     function sbuf_new(s_sbuf s, string buf, uint32 length, uint32 flags) internal returns (s_sbuf) {
         uint16 len = buf.strlen();
-        uint8 error = len > length ? errno.ENOMEM : 0;
+        uint8 error = len > length ? err.ENOMEM : 0;
         s = s_sbuf(buf, error, length, len, flags, 0, 0);
         return s;
     }
@@ -66,33 +66,42 @@ library sbuf {
         s.len = 0;
     }
 
-    function sbuf_setpos(s_sbuf s, uint16 pos) internal returns (uint16) {
+    function sbuf_setpos(s_sbuf s, uint16 pos) internal returns (uint8) {
         if (pos < s.len)
             s.len = pos;
+        return s.error;
     }
 
-    function sbuf_bcat(s_sbuf s, bytes buf, uint16 len) internal returns (uint16) {
+    function sbuf_bcat(s_sbuf s, bytes buf, uint16 len) internal returns (uint8) {
         s = _add(s, buf, len, true);
+        return s.error;
     }
-    function sbuf_bcpy(s_sbuf s, bytes buf, uint16 len) internal returns (uint16) {
+    function sbuf_bcpy(s_sbuf s, bytes buf, uint16 len) internal returns (uint8) {
         s = _add(s, buf, len, false);
+        return s.error;
     }
-    function sbuf_cat(s_sbuf s, string ss) internal returns (uint16) {
+    function sbuf_cat(s_sbuf s, string ss) internal returns (uint8) {
         s = _add(s, ss, ss.strlen(), true);
+        return s.error;
     }
-    function sbuf_cpy(s_sbuf s, string ss) internal returns (uint16) {
+    function sbuf_cpy(s_sbuf s, string ss) internal returns (uint8) {
         s = _add(s, ss, ss.strlen(), false);
+        return s.error;
     }
-    function sbuf_nl_terminate(s_sbuf s) internal returns (uint16) {
+    function sbuf_nl_terminate(s_sbuf s) internal returns (uint8) {
         if (s.len > 0 && s.buf[s.len - 1] != '\n')
             s = _add(s, '\n', 1, true);
+        return s.error;
     }
-    function sbuf_putc(s_sbuf s, byte b) internal returns (uint16) {
-        string str = string(s.buf) + b;
-        s.buf = bytes(str);
-        s.len++;
+    function sbuf_putc(s_sbuf s, byte b) internal returns (uint8) {
+//        string str = string(s.buf) + b;
+//        s.buf = bytes(str);
+//        s.buf.append(b);
+//        s.len++;
+        s = _add(s, bytes(b), 1, true);
+        return s.error;
     }
-    function sbuf_trim(s_sbuf s) internal returns (uint16) {
+    function sbuf_trim(s_sbuf s) internal returns (uint8) {
         bytes buf = s.buf;
         uint16 len = s.len;
         if (len > 0) {
@@ -101,14 +110,15 @@ library sbuf {
                 i--;
             s.len = i;
         }
+        return s.error;
     }
-    function sbuf_error(s_sbuf s) internal returns (uint16) {
+    function sbuf_error(s_sbuf s) internal returns (uint8) {
         return s.error;
     }
 
     function sbuf_finish(s_sbuf s) internal returns (uint8) {
         if (s.len > s.size)
-            s.error = errno.ENOMEM;
+            s.error = err.ENOMEM;
         s.flags |= SBUF_FINISHED;
         return s.error;
     }

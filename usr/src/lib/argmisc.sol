@@ -1,22 +1,25 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "stypes.sol";
-import "../lib/str.sol";
+import "str.sol";
 
 library argmisc {
 
     using str for string;
 
-    function flag_set(s_ar_misc m, string name) internal returns (bool) {
-        return m.flags.empty() ? false : m.flags.strchr(name) > 0;
+    function flag_set(s_ar_misc m, byte b) internal returns (bool) {
+        return m.flags.empty() ? false : str.strchr(m.flags, b) > 0;
     }
 
     function flag_values(s_ar_misc m, string flags_query) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
         uint len = flags_query.byteLength();
         string flags_set = m.flags;
         bool[] tmp;
-        for (uint i = 0; i < len; i++)
-            tmp.push(flags_set.strchr(flags_query.substr(i, 1)) > 0);
+        uint i;
+        for (byte b: bytes(flags_query)) {
+            tmp.push(str.strchr(flags_set, b) > 0);
+            i++;
+        }
         return (len > 0 ? tmp[0] : false,
                 len > 1 ? tmp[1] : false,
                 len > 2 ? tmp[2] : false,
@@ -31,8 +34,11 @@ library argmisc {
         uint len = flags_query.strlen();
         string flags = m.flags;
         bool[] tmp;
-        for (uint i = 0; i < len; i++)
-            tmp.push(flags.strchr(flags_query.substr(i, 1)) > 0);
+        uint i;
+        for (byte b: bytes(flags_query)) {
+            tmp.push(str.strchr(flags, b) > 0);
+            i++;
+        }
         return (len > 0 ? tmp[0] : false,
                 len > 1 ? tmp[1] : false,
                 len > 2 ? tmp[2] : false,

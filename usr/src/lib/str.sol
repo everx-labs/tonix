@@ -1,24 +1,37 @@
-pragma ton-solidity >= 0.57.0;
+pragma ton-solidity >= 0.61.2;
 
 /* Generic string manipulation routines */
 library str {
 
     /* Returns the position of the first occurrence of the character 'c'
      * in the string 's', counted from 1, or 0 if the character is not found. */
-    function strchr(string s, string c) internal returns (uint) {
-        for (uint i = 0; i < s.byteLength(); i++)
-            if (s.substr(i, 1) == c)
+    function strchr(bytes s, byte c) internal returns (uint) {
+        uint i;
+        for (byte b: s) {
+            if (b == c)
                 return i + 1;
+            i++;
+        }
     }
 
     /* Returns the position of the last occurrence of the character 'c'
      * in the string 's', counted from 1, or 0 if the character is not found. */
-    function strrchr(string s, string c) internal returns (uint) {
+    function strrchr(bytes s, byte c) internal returns (uint) {
+        for (uint i = s.length; i > 0; i--)
+            if (s[i - 1] == c)
+                return i;
+    }
+
+    function strchr_old(string s, string c) internal returns (uint) {
+        for (uint i = 0; i < s.byteLength(); i++)
+            if (s.substr(i, 1) == c)
+                return i + 1;
+    }
+    function strrchr_old(string s, string c) internal returns (uint) {
         for (uint i = s.byteLength(); i > 0; i--)
             if (s.substr(i - 1, 1) == c)
                 return i;
     }
-
     /* Returns the position of the beginning of the first occurrence of the substring 'pattern'
      * in the string 'text', counted from 1, or 0 if the substring is not found. */
     function strstr(string text, string pattern) internal returns (uint) {
@@ -51,7 +64,8 @@ library str {
         while (pos < len && text.substr(pos, 1) == delimiter)
             pos++;
         string stail = pos > 0 && pos < len ? text.substr(pos) : text;
-        uint end = strchr(stail, delimiter);
+//        uint end = strchr(stail, delimiter);
+        uint end = strchr(stail, bytes(delimiter)[0]);
         return end > 0 ? stail.substr(0, end - 1) : stail;
     }
 
@@ -83,7 +97,10 @@ library str {
     }
 
     function strlen(string s) internal returns (uint16) {
-        return uint16(s.byteLength());
+//        return uint16(s.byteLength());
+        ( , uint nbits, ) = s.dataSize(0xFFFFFFFF);
+        return uint16(nbits >> 3);
+
     }
 
     function strcat(string s, string app) internal {

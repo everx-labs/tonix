@@ -1,21 +1,22 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin_special.sol";
 
 contract shopt is pbuiltin_special {
 
     function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
-            pages[13] = e.e_options;
+        pages[13] = e.options;
     }
 
     function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
         e = e_in;
-        e.e_options = page;
+        e.options = page;
     }
 
-    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
-        p = p_in;
-
+//    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+//        p = p_in;
+    function _print(s_proc p, s_of f, string[] params, string page) internal pure override returns (s_of res) {
+        res = f;
         bool print_reusable = p.flag_set("p");
         bool set_opt = p.flag_set("s");
         bool unset_opt = p.flag_set("u");
@@ -26,7 +27,7 @@ contract shopt is pbuiltin_special {
             for (string line: lines) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
-                    p.puts(print_reusable ? "shopt " + attrs + " " + name :
+                    res.fputs(print_reusable ? "shopt " + attrs + " " + name :
                     name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
             }
         }
@@ -35,10 +36,10 @@ contract shopt is pbuiltin_special {
             if (!line.empty()) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
-                    p.puts(print_reusable ? "shopt " + attrs + " " + name :
+                    res.fputs(print_reusable ? "shopt " + attrs + " " + name :
                     name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
             } else
-                p.perror(param + " not found");
+                res.fputs(param + " not found");
         }
     }
 

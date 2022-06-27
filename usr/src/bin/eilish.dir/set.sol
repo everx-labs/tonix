@@ -1,16 +1,16 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin_special.sol";
 import "compspec.sol";
 
 contract set is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[libcompspec.CI_FILE] = e.e_functions;
-        pages[libcompspec.CI_EXPORT] = e.e_vars;
-        pages[libcompspec.CI_FUNCTION] = e.e_functions;
-        pages[libcompspec.CI_HELPTOPIC] = e.e_dirstack;
-        pages[libcompspec.CI_ALIAS]     = e.e_aliases;
+    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
+        pages[libcompspec.CI_FILE] = e.functions;
+        pages[libcompspec.CI_EXPORT] = e.vars;
+        pages[libcompspec.CI_FUNCTION] = e.functions;
+        pages[libcompspec.CI_HELPTOPIC] = e.dirstack;
+        pages[libcompspec.CI_ALIAS]     = e.aliases;
 //        pages[libcompspec.CI_ARRAYVAR]  = 1;
 //        pages[libcompspec.CI_BINDING]   = 2;
         pages[libcompspec.CI_BUILTIN]   = e.read_file("builtin");
@@ -18,9 +18,9 @@ contract set is pbuiltin_special {
         pages[libcompspec.CI_DIRECTORY] = e.read_file("dirname");
         pages[libcompspec.CI_DISABLED]  = "";
         pages[libcompspec.CI_ENABLED]   = e.read_file("builtin");
-        pages[libcompspec.CI_EXPORT]    = e.e_exports;
+        pages[libcompspec.CI_EXPORT]    = e.exports;
         pages[libcompspec.CI_FILE]      = e.read_file("filename");
-        pages[libcompspec.CI_FUNCTION]  = e.e_functions;
+        pages[libcompspec.CI_FUNCTION]  = e.functions;
         pages[libcompspec.CI_GROUP]     = e.read_file("group");
 //        pages[libcompspec.CI_HELPTOPIC] = 12;
 //        pages[libcompspec.CI_HOSTNAME]  = 13;
@@ -33,19 +33,21 @@ contract set is pbuiltin_special {
 //        pages[libcompspec.CI_SIGNAL]    = 20;
 //        pages[libcompspec.CI_STOPPED]   = 21;
         pages[libcompspec.CI_USER]      = e.read_file("user");
-        pages[libcompspec.CI_VARIABLE]  = e.e_vars;
+        pages[libcompspec.CI_VARIABLE]  = e.vars;
 
     }
 
-    function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
+    function _update_shell_env(shell_env e_in, uint8, string ) internal pure override returns (shell_env e) {
         e = e_in;
     }
 
-    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
-        p = p_in;
-        p.puts(page);
+//    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+//        p = p_in;
+    function _print(s_proc, s_of f, string[] , string page) internal pure override returns (s_of res) {
+        res = f;
+        res.fputs(page);
     }
-    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
+    function _modify(s_proc p_in, string[] , string page_in) internal pure override returns (s_proc p, string page) {
         page = page_in;
         p = p_in;
     }

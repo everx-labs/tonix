@@ -1,22 +1,25 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
 import "Shell.sol";
+import "../../lib/libshellenv.sol";
 
 contract help is Shell {
-
-    function main(svm sv_in, BuiltinHelp[] help_files) external pure returns (svm sv) {
+    using libshellenv for shell_env;
+//    function main(svm sv_in, BuiltinHelp[] help_files) external pure returns (svm sv) {
+    function main(svm sv_in, shell_env e_in, BuiltinHelp[] help_files) external pure returns (shell_env e, svm sv) {
         sv = sv_in;
+        e = e_in;
         s_proc p = sv.cur_proc;
 
         string[] params = p.params();
         uint8 command_format = _get_help_format(p);
 
         if (params.empty())
-            p.puts(_print_help_msg(help_files));
+            e.puts(_print_help_msg(help_files));
 
         for (string arg: params) {
             (uint8 t_ec, BuiltinHelp help_file) = _get_help_file(arg, help_files);
-            p.puts(t_ec == EXECUTE_SUCCESS ?
+            e.puts(t_ec == EXECUTE_SUCCESS ?
                 _help_cmd(command_format, help_file) :
                 "-eilish: help: no help topics match `" + arg + "'.  Try `help help' or `man -k " + arg + "' or `info " + arg + "'.");
         }

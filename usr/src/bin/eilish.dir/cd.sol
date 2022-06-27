@@ -1,31 +1,23 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
-/*import "Shell.sol";
-
-contract cd is Shell {
-
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
-
-        string page = vmem.vmem_fetch_page(sv.vmem[1], 3);*/
 import "pbuiltin_special.sol";
 import "../../lib/env.sol";
 
 contract cd is pbuiltin_special {
 
     function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[8] = e.e_vars;
+        pages[8] = e.vars;
     }
 
     function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
         e = e_in;
-        e.e_vars = page;
+        e.vars = page;
     }
 
-    function _print(s_proc p_in, string[] , string) internal pure override returns (s_proc p) {
-        p = p_in;
+//    function _print(s_proc p_in, string[] , string) internal pure override returns (s_proc p) {
+//        p = p_in;
+    function _print(s_proc , s_of f, string[] , string ) internal pure override returns (s_of res) {
+        res = f;
     }
 
     function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
@@ -53,14 +45,10 @@ contract cd is pbuiltin_special {
                     page = env.put("OLDPWD=" + scur_dir, page);
                     page = env.put("PWD=" + new_dir, page);
                     page = env.put("WD=" + format("{}", de.d_fileno), page);
-//                    sv.vmem[1].vm_pages[3] = page;
                 }
-//                sv.cur_proc = p;
-//                return sv;
             }
         }
         p.perror(arg + ": no such file or directory");
-//        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

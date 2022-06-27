@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/sbin/userdel
-jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >userdel.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main userdel.args >../proc_out
-cd -

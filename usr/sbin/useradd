@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/sbin/useradd
-jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >useradd.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main useradd.args >../proc_out
-cd -

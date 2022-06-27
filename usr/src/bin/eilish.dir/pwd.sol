@@ -1,20 +1,20 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin.sol";
 import "../../lib/unistd.sol";
 
 contract pwd is pbuiltin {
 
-    using unistd for s_proc;
+//    using unistd for s_proc;
 
-    function _main(s_proc p_in, string[] , shell_env) internal pure override returns (s_proc p) {
-        p = p_in;
+    function _main(s_proc p, string[] , shell_env e_in) internal pure override returns (shell_env e) {
+        e = e_in;
         if (!p.flag_set("P")) {
-            string wd = p.getwd();
-            if (wd.empty()) {
-                p.perror("current directory cannot be read");
-            } else
-                p.puts(wd);
+            string wd = unistd.getwd(p);
+            if (wd.empty())
+                e.perror("current directory cannot be read");
+            else
+                e.puts(wd);
         }
     }
 

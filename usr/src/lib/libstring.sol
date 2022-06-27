@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.57.0;
+pragma ton-solidity >= 0.61.2;
 
 import "str.sol";
 
@@ -28,7 +28,8 @@ library libstring {
 
     function split_line(string text, string field_separator, string line_delimiter) internal returns (string[] res, uint n_fields) {
         if (!text.empty()) {
-            uint p = text.strrchr(line_delimiter);
+//            uint p = text.strrchr(line_delimiter);
+            uint p = str.strrchr(text, bytes(line_delimiter)[0]);
             uint text_len = text.byteLength();
             if (p == text_len)
                 text = text.substr(0, text_len - 1);
@@ -116,7 +117,7 @@ library libstring {
         return p > 0 ? (text.substr(0, p - 1), text.substr(p + delimiter.strlen() - 1)) : (text, "");
     }
     function csplit(string text, string delimiter) internal returns (string, string) {
-        uint p = text.strchr(delimiter);
+        uint p = str.strchr(text, bytes(delimiter)[0]);
         return p > 0 ? (text.substr(0, p - 1), text.substr(p)) : (text, "");
     }
 

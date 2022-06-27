@@ -1,20 +1,20 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin_special.sol";
 
 contract unalias is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[0] = e.e_aliases;
+    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
+        pages[0] = e.aliases;
     }
 
     function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
         e = e_in;
-        e.e_aliases = page;
+        e.aliases = page;
     }
 
-    function _print(s_proc p_in, string[] , string ) internal pure override returns (s_proc p) {
-        p = p_in;
+    function _print(s_proc, s_of f, string[] , string ) internal pure override returns (s_of res) {
+        res = f;
     }
     function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
         p = p_in;

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "fmt.sol";
 
@@ -68,11 +68,18 @@ library vars {
         return (str.unwrp(key), str.unwrp(value));
     }
 
-    function match_attr_set(string part_attrs, string cur_attrs) internal returns (bool) {
-        uint part_attrs_len = part_attrs.byteLength() / 2;
+    function match_attr_set(string spart_attrs, string cur_attrs) internal returns (bool) {
+//        uint part_attrs_len = part_attrs.byteLength() / 2;
+//        for (uint i = 0; i < part_attrs_len; i++) {
+//            string attr_sign = part_attrs.substr(i * 2, 1);
+//            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
+        bytes part_attrs = bytes(spart_attrs);
+        uint part_attrs_len = part_attrs.length / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
-            string attr_sign = part_attrs.substr(i * 2, 1);
-            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
+//            string attr_sign = part_attrs.substr(i * 2, 1);
+//            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
+            byte attr_sign = part_attrs[i * 2];
+            byte attr_sym = part_attrs[i * 2 + 1];
 
             bool flag_cur = str.strchr(cur_attrs, attr_sym) > 0;
             bool flag_match = (flag_cur && attr_sign == "-");
@@ -82,18 +89,20 @@ library vars {
         return true;
     }
 
-    function meld_attr_set(string part_attrs, string cur_attrs) internal returns (string res) {
+    function meld_attr_set(string spart_attrs, string cur_attrs) internal returns (string res) {
         res = cur_attrs;
-        uint part_attrs_len = part_attrs.byteLength() / 2;
+        bytes part_attrs = bytes(spart_attrs);
+        uint part_attrs_len = part_attrs.length / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
-            string attr_sign = part_attrs.substr(i * 2, 1);
-            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
-
+//            string attr_sign = part_attrs.substr(i * 2, 1);
+//            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
+            byte attr_sign = part_attrs[i * 2];
+            byte attr_sym = part_attrs[i * 2 + 1];
             bool flag_cur = str.strchr(cur_attrs, attr_sym) > 0;
             if (!flag_cur && attr_sign == "-")
-                res.append(attr_sym);
+                res.append(string(attr_sym));
             else if (flag_cur && attr_sign == "+")
-                res = res.translate(attr_sym, "");
+                res = res.translate(string(attr_sym), "");
         }
         if (res == "-")
             return "--";

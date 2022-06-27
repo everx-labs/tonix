@@ -1,8 +1,9 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "io.sol";
 import "ucred.sol";
-library ssyscall {
+import "liberr.sol";
+library libsyscall {
 
     using sucred for s_ucred;
 
@@ -133,7 +134,7 @@ library ssyscall {
         uint16 rv;
         uint8 scg = _syscall_group(number);
         if (scg == 0)
-            e = errno.ENOSYS;
+            e = err.ENOSYS;
         else if (scg == 1) {
             e = 0;
             rv = _ucred_1(td, number);
@@ -146,14 +147,13 @@ library ssyscall {
         td.tdu_retval = rv;
     }
 
-    function syscall(s_proc p, uint16 number) internal returns (uint16) {
-
+    function syscall(s_proc p, uint16 number) internal returns (uint8) {
         s_ucred td_realucred = p.p_ucred;   // Reference to credentials.
         s_ucred td_ucred = p.p_ucred;       // Used credentials, temporarily switchable.
         s_plimit td_limit = p.p_limit;      // Resource limits.
         string td_name = _syscall_name(number);         // Thread name.
 //        s_xfile xfile;
-        uint16 td_errno;        // Error from last syscall.
+        uint8 td_errno;        // Error from last syscall.
         td_states td_state;     // thread state
         uint32 tdu_retval;
 

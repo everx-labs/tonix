@@ -1,11 +1,10 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
 import "stypes.sol";
+import "liberr.sol";
 //import "../kern/ucred.sol";
 
 library sucred {
-
-//    using ucred for s_ucred;
 
     uint16 constant SYS_setuid              = 23;
     uint16 constant SYS_getuid              = 24;
@@ -17,18 +16,6 @@ library sucred {
     uint16 constant SYS_setgid              = 181;
     uint16 constant SYS_setegid             = 182;
     uint16 constant SYS_seteuid             = 183;
-
-  /*  uint16 cr_ref;              // (c) reference count
-    uint16 cr_users;            // (c) proc + thread using this cred
-    uint16 cr_uid;              // effective user id
-    uint16 cr_ruid;             // real user id
-    uint16 cr_svuid;            // saved user id
-    uint8 cr_ngroups;           // number of groups
-    uint16 cr_rgid;             // real group id
-    uint16 cr_svgid;            // saved group id
-    s_loginclass cr_loginclass; // login class
-    uint16 cr_flags;            // credential flags
-    uint16[] cr_groups;         // groups*/
 
     function getuid(s_ucred cr) internal returns (uint16) {
         return cr.cr_ruid;
@@ -48,7 +35,7 @@ library sucred {
             cr.cr_svuid = cr.cr_uid;
             cr.cr_uid = uid;
         } else
-            return errno.EPERM;
+            return err.EPERM;
     }
     function seteuid(s_ucred cr, uint16 euid) internal returns (uint8) {
         cr.cr_uid = euid;
@@ -80,7 +67,7 @@ library sucred {
             ngroups = cr.cr_ngroups - 1;
         else {
             if (gidsetlen < ngroups)
-                ngroups = errno.EINVAL;
+                ngroups = err.EINVAL;
             else
             gidset = cr.cr_groups;
             ngroups = cr.cr_ngroups;
@@ -89,9 +76,9 @@ library sucred {
 
     function setgroups(s_ucred cr, uint8 ngroups, uint16[] gidset) internal returns (uint8 e) {
         if (ngroups > param.NGROUPS)
-            return errno.EINVAL;
+            return err.EINVAL;
         if (cr.cr_uid > 0)
-            return errno.EPERM;
+            return err.EPERM;
         cr.cr_groups = gidset;
         cr.cr_ngroups = ngroups;
     }

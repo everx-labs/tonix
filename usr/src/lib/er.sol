@@ -1,7 +1,6 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "libstring.sol";
-//import "../sys/std.sol";
 import "xio.sol";
 import "sbuf.sol";
 
@@ -16,21 +15,21 @@ library er {
     using libstring for string;
     using sbuf for s_sbuf;
 
-    uint8 constant ESUCCESS     = 0;
-    uint8 constant ENOENT       = 1; // "No such file or directory" A component of pathname does not exist or is a dangling symbolic link; pathname is an empty string and AT_EMPTY_PATH was not specified in flags.
-    uint8 constant EEXIST       = 2; // "File exists"
-    uint8 constant ENOTDIR      = 3; //  "Not a directory" A component of the path prefix of pathname is not a directory.
-    uint8 constant EISDIR       = 4; //"Is a directory"
-    uint8 constant EACCES       = 5; // "Permission denied" Search permission is denied for one of the directories in the path prefix of pathname.  (See also path_resolution(7).)
-    uint8 constant ENOTEMPTY    = 6; // "Directory not empty"
-    uint8 constant EPERM        = 7; // "Not owner"
-    uint8 constant EINVAL       = 8; //"Invalid argument"
-    uint8 constant EROFS        = 9; //"Read-only file system"
-    uint8 constant EFAULT       = 10; //Bad address.
-    uint8 constant EBADF        = 11; // "Bad file number" fd is not a valid open file descriptor.
-    uint8 constant EBUSY        = 12; // "Device busy"
-    uint8 constant ENOSYS       = 13; // "Operation not applicable"
-    uint8 constant ENAMETOOLONG = 14; // pathname is too long.
+    uint8 constant ESUCCESS  = 0;
+    uint8 constant ENOENT    = 1;  // No such file or directory: a component of pathname does not exist or is a dangling symbolic link; pathname is an empty string and AT_EMPTY_PATH was not specified in flags
+    uint8 constant EEXIST    = 2;  // File exists
+    uint8 constant ENOTDIR   = 3;  // Not a directory: A component of the path prefix of pathname is not a directory
+    uint8 constant EISDIR    = 4;  // Is a directory
+    uint8 constant EACCES    = 5;  // Permission denied: search permission is denied for one of the directories in the path prefix of pathname
+    uint8 constant ENOTEMPTY = 6;  // Directory not empty
+    uint8 constant EPERM     = 7;  // Not owner
+    uint8 constant EINVAL    = 8;  // Invalid argument
+    uint8 constant EROFS     = 9;  // Read-only file system
+    uint8 constant EFAULT    = 10; // Bad address
+    uint8 constant EBADF     = 11; // Bad file number: fd is not a valid open file descriptor
+    uint8 constant EBUSY     = 12; // Device busy
+    uint8 constant ENOSYS    = 13; // Operation not applicable
+    uint8 constant ENAMETOOLONG = 14; // Pathname is too long
 
     uint8 constant invalid_option       = 7;
     uint8 constant extra_operand        = 8;
@@ -77,7 +76,7 @@ library er {
         if (ec == EBADF) return "Bad file number: fd is not a valid open file descriptor";
         if (ec == EBUSY) return "Device busy";
         if (ec == ENOSYS) return "Operation not applicable";
-        if (ec == ENAMETOOLONG) return "pathname is too long";
+        if (ec == ENAMETOOLONG) return "Pathname is too long";
         return "unknown error";
     }
 

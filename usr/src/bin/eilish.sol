@@ -1,6 +1,7 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
 import "../include/Shell.sol";
+import "../lib/libshellenv.sol";
 
 struct Command {
     string cmd;
@@ -11,6 +12,7 @@ struct Command {
 
 contract eilish is Shell {
 
+    using libshellenv for shell_env;
     function compound(string input, string aliases) external pure returns (Command[] res) {
         return _compound(input, aliases);
     }
@@ -45,9 +47,10 @@ contract eilish is Shell {
         }
     }
 
-//    function main(svm sv_in, string input) external pure returns (svm sv, uint8 ec, string out, string res, string redir_in, string redir_out) {
-    function main(svm sv_in, string input) external pure returns (svm sv) {
+   function main(svm sv_in, string input, shell_env e_in) external pure returns (svm sv, shell_env e) {
         sv = sv_in;
+        s_proc p = sv.cur_proc;
+        e = e_in;
 
         string[] pages;
         string aliases;
@@ -62,18 +65,20 @@ contract eilish is Shell {
             pool = pages[3];
         }
 
-        s_proc p = sv.cur_proc;
         s_of f = p.stdout();
         f.fflush();
         p.p_fd.fdt_ofiles[io.STDOUT_FILENO] = f;
+        e.ofiles[libfdt.STDOUT_FILENO] = f;
         f = p.stderr();
         f.fflush();
         p.p_fd.fdt_ofiles[io.STDERR_FILENO] = f;
+        e.ofiles[libfdt.STDERR_FILENO] = f;
         f = p.p_fd.fdt_ofiles[3];
         f.fflush();
         p.p_fd.fdt_ofiles[3] = f;
+        e.ofiles[3] = f;
         if (input.empty())
-            return sv;
+            return (sv, e);
         (string cmd_raw, string argv) = input.csplit(" ");
         string cmd_expanded = vars.val(cmd_raw, aliases);
         string sinput = cmd_expanded.empty() ? input : cmd_expanded + " " + argv;
@@ -88,7 +93,7 @@ contract eilish is Shell {
         string[][2] opt_values;
         string pos_params;
         string res;
-        string err;
+        string serr;
         string[] params;
         uint n_params;
         string last_param;
@@ -98,13 +103,13 @@ contract eilish is Shell {
             (sbody, redir_out) = argv.csplit(">");
             (sargs, redir_in) = sbody.csplit("<");
             (params, n_params) = sargs.split(" ");
-            (sflags, opt_values, err, pos_params, ) = _parse_params(params, cmd_opt_string);
-            if (!err.empty())
+            (sflags, opt_values, serr, pos_params, ) = _parse_params(params, cmd_opt_string);
+            if (!serr.empty())
                 ec = EX_BADUSAGE;
             for (string arg: params) {
-                if (arg.strchr("$") > 0) {
+                if (str.strchr(arg, '$') > 0) {
                     string ref = arg.val("$", " ");
-                    if (ref.strchr("{") > 0)
+                    if (str.strchr(ref, '{') > 0)
                         ref.unwrap();
                     string ref_val = vars.val(ref, pool);
                     pos_params.translate(arg, ref_val);
@@ -123,10 +128,10 @@ contract eilish is Shell {
             res = "./tosh execute_function " + sinput;
         } else {
             if (!cmd_type.empty())
-                err.append("unknown commmand type: " + cmd_type);
+                serr.append("unknown commmand type: " + cmd_type);
             else
-                err.append("command not found: " + cmd);
-            res = "echo " + err;
+                serr.append("command not found: " + cmd);
+            res = "echo " + serr;
             ec = EXECUTE_FAILURE;
         }
 
@@ -139,7 +144,7 @@ contract eilish is Shell {
         for (string pm: params)
             pas.push(s_dirent(0, 0, pm));
         p.p_args.ar_misc = s_ar_misc(sinput, sflags, sargs, uint16(n_params), params, ec, last_param,
-            err, redir_in, redir_out, pas, opt_values);
+            serr, redir_in, redir_out, pas, opt_values);
 
         /*string[] pa;
         pa.push(vars.as_attributed_hashmap("COMMAND_LINE", args));
@@ -156,7 +161,7 @@ contract eilish is Shell {
             ["@", sargs],
             ["?", str.toa(ec)],
             ["_", last_param],
-            ["OPTERR", err],
+            ["OPTERR", serr],
             ["REDIR_IN", redir_in],
             ["REDIR_OUT", redir_out]]), res];
         sv.cur_proc = p;
@@ -212,58 +217,66 @@ contract eilish is Shell {
         (sargs, redir_in) = sbody.csplit("<");
     }
 
-    function _parse_params(string[] params, string opt_string) internal pure returns (string sflags, string[][2] opt_values, string err, string pos_params, string sattrs) {
+    function _parse_params(string[] params, string opt_string) internal pure returns (string sflags, string[][2] opt_values, string serr, string pos_params, string sattrs) {
         uint n_params = params.length;
         uint opt_str_len = opt_string.byteLength();
         bool expect_options = true;
         for (uint i = 0; i < n_params; i++) {
             string token = params[i];
-            uint t_len = token.byteLength();
+            bytes bt = bytes(params[i]);
+            uint t_len = bt.length;//token.byteLength();
             if (t_len == 0)
                 continue;
-            if (expect_options && token.substr(0, 1) == "-") {
+//            if (expect_options && token.substr(0, 1) == "-") {
+            if (expect_options && bt[0] == '-') {
                 string o;
+                bytes bo;
                 string val;
                 if (t_len == 1)
                     continue; // stdin redirect
-                if (token.substr(1, 1) == "-") {
+//                if (token.substr(1, 1) == "-") {
+                if (bt[1] == '-') {
                     if (t_len == 2) { // arg separator
                         expect_options = false;
                         continue;
                     }
                     o = token.substr(2); // long option
+                    bo = bt[2 : ];
                 } else {
                     // short option(s)
                     o = token.substr(1);
+                    bo = bt[1 : ];
                     if (t_len > 2) {     // short option sequence has no value
                         for (uint j = 1; j < t_len; j++)
                             sflags.append(token.substr(j, 1));
                         continue;
                     }
                 }
-                uint o_len = o.byteLength();
+                uint o_len = bo.length;//o.byteLength();
                 if (o_len == 1) {
-                    uint p = str.strchr(opt_string, o); // _strstr() for long options ?
+                    byte b = bo[0];//bytes(o)[0];
+                    uint p = str.strchr(opt_string, b); // _strstr() for long options ?
                     if (p > 0) {
                         if (p < opt_str_len && opt_string.substr(p, 1) == ":") {
                             if (i + 1 < n_params) {
                                 val = params[i + 1];
                                 i++;
                             } else
-                                err.append(format("error: missing option {} value in {} at {} pos {}\n", o, opt_string, p, i));
+                                serr.append(format("error: missing option {} value in {} at {} pos {}\n", o, opt_string, p, i));
                         } else
-                            val = o;
+                            val = o;//o;
                         opt_values.push([o, val]);
                         sflags.append(o);
                     } else
-                        err.append("error: unrecognized option: " + o + " opt_string: " + (opt_string.empty() ? "empty" : opt_string) + "\n");
+                        serr.append("error: unrecognized option: " + o + " opt_string: " + (opt_string.empty() ? "empty" : opt_string) + "\n");
                 } else {
                     if (o == "help" || o == "version")
                         opt_values.push([o, o]);
                     else
-                        err.append("error: unrecognized option: " + o + ". Long options are not yet supported\n");
+                        serr.append("error: unrecognized option: " + o + ". Long options are not yet supported\n");
                 }
-            } else if (token.substr(0, 1) == "+")
+//            } else if (token.substr(0, 1) == "+")
+            } else if (bt[0] == '+')
                 sattrs.append(token);
             else {
                 if (pos_params.empty())

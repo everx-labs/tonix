@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/sbin/groupdel
-jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >groupdel.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main groupdel.args >../proc_out
-cd -

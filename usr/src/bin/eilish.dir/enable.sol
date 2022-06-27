@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin_dict.sol";
 import "compspec.sol";
@@ -18,7 +18,7 @@ contract enable is pbuiltin_dict {
         string m = p.opt_value("f");
         string[] vp = sv.vmem[1].vm_pages;
         if (!m.empty()) {
-            if (m == "alias") pages[libcompspec.CI_ALIAS] = e.e_aliases;
+            if (m == "alias") pages[libcompspec.CI_ALIAS] = e.aliases;
             if (m == "opt_string") pages[1] = vp[1];
             if (m == "index") pages[2] = vp[2];
             if (m == "builtin") pages[libcompspec.CI_BUILTIN] = vp[5];
@@ -26,39 +26,42 @@ contract enable is pbuiltin_dict {
             if (m == "dirname") pages[libcompspec.CI_DIRECTORY] = vp[12];
             if (m == "disabled") pages[libcompspec.CI_DISABLED] = "";
             if (m == "enabled") pages[libcompspec.CI_ENABLED] = vp[5];
-            if (m == "export") pages[libcompspec.CI_EXPORT] = e.e_exports;
+            if (m == "export") pages[libcompspec.CI_EXPORT] = e.exports;
             if (m == "filename") pages[libcompspec.CI_FILE]= "";
-            if (m == "function") pages[libcompspec.CI_FUNCTION] = e.e_functions;
+            if (m == "function") pages[libcompspec.CI_FUNCTION] = e.functions;
             if (m == "group") pages[libcompspec.CI_GROUP] = vp[7];
             if (m == "keyword") pages[libcompspec.CI_KEYWORD] = vp[10];
             if (m == "user") pages[libcompspec.CI_USER] = vp[6];
-            if (m == "variable") pages[libcompspec.CI_VARIABLE] = e.e_vars;
-            if (m == "dir_stack") pages[libcompspec.CI_DIRECTORY] = e.e_dirstack;
-            if (m == "") pages[13] = e.e_exports;
+            if (m == "variable") pages[libcompspec.CI_VARIABLE] = e.vars;
+            if (m == "dir_stack") pages[libcompspec.CI_DIRECTORY] = e.dirstack;
+            if (m == "") pages[13] = e.exports;
         } else
             pages[5] = vp[5];
 
     }
-    function _update_shell_env(shell_env e_in, svm sv, uint8 n, string page) internal pure override returns (shell_env e) {
+    function _update_shell_env(shell_env e_in, svm , uint8 n, string page) internal pure override returns (shell_env e) {
         e = e_in;
         s_sbuf s;
         s.sbuf_new(page, page.byteLength(), 0);
         s.sbuf_finish();
         s_of f = s_of(0, io.SRD, 0, libcompspec.option_map_name(n, ""), 0, s);
-        if (n >= e.e_ofiles.length)
-            e.e_ofiles.push(f);
+        if (n >= e.ofiles.length)
+            e.ofiles.push(f);
         else
-            e.e_ofiles[n + libcompspec.CI_HELPTOPIC] = f;
+            e.ofiles[n + libcompspec.CI_HELPTOPIC] = f;
     }
 
-    function _print(svm sv_in, string[] params, string page_in, bool print_all, bool reverse) internal pure override returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function _print(s_proc p, s_of f, string[] params, string page_in, bool print_all, bool ) internal pure override returns (s_of res) {
+        res = f;
         string sattrs;
-        string[] a_attrs = ["f", "n", "d", "s"];
-        for (string attr: a_attrs)
-            if (p.flag_set(attr))
-                sattrs.append(attr);
+//        string[] a_attrs = ["f", "n", "d", "s"];
+//        for (string attr: a_attrs)
+//            if (p.flag_set(attr))
+//                sattrs.append(attr);
+        bytes battrs = bytes("fnds");
+        for (byte b: battrs)
+            if (p.flag_set(b))
+                sattrs.append(bytes(b));
 
         sattrs = print_all ? "" : ("-" + (sattrs.empty() ? "-" : sattrs));
         string pool = page_in;
@@ -67,7 +70,7 @@ contract enable is pbuiltin_dict {
             for (string line: lines) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
-                    p.puts("enable " + name);
+                    res.fputs("enable " + name);
             }
         }
         for (string param: params) {
@@ -76,11 +79,10 @@ contract enable is pbuiltin_dict {
             if (!cur_record.empty()) {
                 (string cur_attrs, ) = cur_record.csplit(" ");
                 if (vars.match_attr_set(sattrs, cur_attrs))
-                    p.puts("enable " + name);
+                    res.fputs("enable " + name);
             } else
-                p.perror(name + " not found");
+                res.fputs(name + " not found");
         }
-        sv.cur_proc = p;
     }
 
     function _modify(svm sv_in, string[] params, string page_in) internal pure override returns (svm sv, string page) {
@@ -88,10 +90,13 @@ contract enable is pbuiltin_dict {
         page = page_in;
         s_proc p = sv.cur_proc;
         string sattrs;
-        string[] a_attrs = ["f", "n", "d", "s"];
-        for (string attr: a_attrs)
-            if (p.flag_set(attr))
-                sattrs.append(attr);
+//        string[] a_attrs = ["f", "n", "d", "s"];
+//        for (string attr: a_attrs)
+//            if (p.flag_set(attr))
+        bytes battrs = bytes("fnds");
+        for (byte b: battrs)
+            if (p.flag_set(b))
+                sattrs.append(bytes(b));
 
         sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
 
@@ -124,12 +129,12 @@ contract enable is pbuiltin_dict {
                 s_of f = s_of(0, io.SRD, 0, m, 0, s);
                 p.p_fd.fdt_ofiles.push(f);
                 p.p_fd.fdt_nfiles++;
-                if (index + libcompspec.CI_HELPTOPIC >= e.e_ofiles.length)
-                    e.e_ofiles.push(f);
+                if (index + libcompspec.CI_HELPTOPIC >= e.ofiles.length)
+                    e.ofiles.push(f);
                 else
-                    e.e_ofiles[index + libcompspec.CI_HELPTOPIC] = f;
+                    e.ofiles[index + libcompspec.CI_HELPTOPIC] = f;
             } else
-                p.perror(m + " not found");
+                e.perror(m + " not found");
         }
         sv.cur_proc = p;
     }

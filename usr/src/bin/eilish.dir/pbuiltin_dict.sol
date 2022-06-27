@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 // special: break : continue . eval exec exit export readonly return set shift times trap unset
 
@@ -12,35 +12,38 @@ abstract contract pbuiltin_dict is pbuiltin_base {
         sv = sv_in;
         s_proc p = sv.cur_proc;
         e = e_in;
-
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         string[] params = p.params();
         (mapping (uint8 => string) pages, bool do_print, bool do_modify, bool do_load, bool print_names, bool print_values) = _select(sv, e);
-        if (do_print)
+        if (do_print) {
             for ((, string page): pages)
-                sv = _print(sv, params, page, print_names, print_values);
+                res = _print(p, res, params, page, print_names, print_values);
+            e.ofiles[libfdt.STDOUT_FILENO] = res;
+        }
         if (do_modify) {
             string page_out;
             for ((uint8 n, string page): pages) {
                 (sv, page_out) = _modify(sv, params, page);
                 if (page != page_out) {
-                    p.puts("Updating page: " + page + " -> " + page_out);
+                    e.puts("Updating page: " + page + " -> " + page_out);
                     e = _update_shell_env(e, sv, n, page_out);
-                    p.puts("Updated env: " + e.print_shell_env());
+                    e.puts("Updated env: " + e.print_shell_env());
                 } else
-                    p.puts("Nothing to update");
+                    e.puts("Nothing to update");
             }
         }
         if (do_load) {
-            sv.cur_proc.puts("Loading...");
+            e.puts("Loading...");
             string page_out;
-            for ((uint8 n, string page): pages)
+            for ((, string page): pages)
                 (sv, e, page_out) = _load(sv, e, page);
-            sv.cur_proc.puts("Updated env: " + e.print_shell_env());
+            e.puts("Updated env: " + e.print_shell_env());
         }
+
     }
 
     function _select(svm sv, shell_env e_in) internal pure virtual returns (mapping (uint8 => string), bool, bool, bool, bool, bool);
-    function _print(svm sv_in, string[] params, string page_in, bool, bool) internal pure virtual returns (svm);
+    function _print(s_proc, s_of, string[] params, string page_in, bool, bool) internal pure virtual returns (s_of);
     function _modify(svm sv_in, string[] params, string page_in) internal pure virtual returns (svm, string);
     function _load(svm sv_in, shell_env e_in, string page_in) internal pure virtual returns (svm, shell_env, string);
     function _update_shell_env(shell_env e_in, svm sv, uint8 n, string page) internal pure virtual returns (shell_env);

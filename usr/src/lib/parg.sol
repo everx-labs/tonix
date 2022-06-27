@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
 import "argmisc.sol";
 import "libstring.sol";
@@ -48,8 +48,8 @@ library parg {
 
     }
 
-    function flag_set(s_proc p, string name) internal returns (bool) {
-        return p.p_args.ar_misc.flag_set(name);
+    function flag_set(s_proc p, byte b) internal returns (bool) {
+        return p.p_args.ar_misc.flag_set(b);
     }
 
     function flag_values(s_proc p, string flags_query) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {

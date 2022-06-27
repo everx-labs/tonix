@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
 import "putil.sol";
 import "../lib/path.sol";
@@ -7,11 +7,12 @@ contract basename is putil {
 
     using path for string;
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         string[] params = p.params();
         if (params.empty())
-            p.perror("missing operand");
+            e.perror("missing operand");
 
         bool multiple_args = p.flag_set("a");
         string line_terminator = p.flag_set("z") ? "\x00" : "\n";
@@ -19,13 +20,14 @@ contract basename is putil {
         if (multiple_args)
             for (string s: params) {
                 s.dirp();
-                p.puts(s + line_terminator);
+                res.fputs(s + line_terminator);
             }
         else {
             string s = params[0];
             s.dirp();
-            p.puts(s + line_terminator);
+            res.fputs(s + line_terminator);
         }
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

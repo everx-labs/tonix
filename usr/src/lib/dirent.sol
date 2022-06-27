@@ -1,10 +1,9 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "xio.sol";
 import "stypes.sol";
 import "libstat.sol";
-import "../include/errno.sol";
-//import "../lib/str.sol";
+import "liberr.sol";
 import "libstring.sol";
 library dirent {
 
@@ -48,7 +47,7 @@ library dirent {
         uint p = s.strchr("\t");
         if (p > 1) {
             optional(int) index_u = stoi(s.substr(p));
-            return s_dirent(index_u.hasValue() ? uint16(index_u.get()) : errno.ENOENT, file_type(s.substr(0, 1)), s.substr(1, p - 2));
+            return s_dirent(index_u.hasValue() ? uint16(index_u.get()) : err.ENOENT, file_type(s.substr(0, 1)), s.substr(1, p - 2));
         }
     }
 

@@ -1,9 +1,10 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
 import "Shell.sol";
 import "../../lib/xio.sol";
 import "../../lib/ustd.sol";
 import "../../sys/sys/libkeg.sol";
+import "../../lib/libshellenv.sol";
 
 contract command is Shell {
 
@@ -18,9 +19,11 @@ contract command is Shell {
     uint16 constant CDESC_FORCE_PATH= 32; // type -ap or type -P
     uint16 constant CDESC_NOFUNCS   = 64; // type -f
 
-    function main(svm sv_in) external pure returns (svm sv, s_proc p) {
+//    function main(svm sv_in) external pure returns (svm sv, s_proc p) {
+   function main(svm sv_in, shell_env e_in) external pure returns (svm sv, s_proc p, shell_env e) {
         sv = sv_in;
         p = sv.cur_proc;
+        e = e_in;
         s_vmem vmm = sv.vmem[1];
         string cmd = p.p_comm;
         string varss = vmem.vmem_fetch_page(vmm, 8);
@@ -72,7 +75,7 @@ contract command is Shell {
 //        sv.cur_proc = p;
     }
 
-    function print(string args, string pool) external pure returns (uint8 ec, string out) {
+    /*function print(string args, string pool) external pure returns (uint8 ec, string out) {
         (string[] params, string flags, ) = arg.get_args(args);
         bool descr = arg.flag_set("v", flags);
         bool verbose = arg.flag_set("V", flags);
@@ -107,7 +110,7 @@ contract command is Shell {
             }
             out.append(value + "\n");
         }
-    }
+    }*/
 
     function _export_env(string varss) internal pure returns (string[] env) {
         (string[] lines, ) = varss.split("\n");

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin_special.sol";
 
@@ -6,21 +6,23 @@ contract readonly is pbuiltin_special {
 
     function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
         if (p.flag_set("f"))
-            pages[9] = e.e_functions;
+            pages[9] = e.functions;
         else
-            pages[8] = e.e_vars;
+            pages[8] = e.vars;
     }
 
     function _update_shell_env(shell_env e_in, uint8 n, string page) internal pure override returns (shell_env e) {
         e = e_in;
         if (n == 8)
-            e.e_vars = page;
+            e.vars = page;
         else if (n == 9)
-            e.e_functions = page;
+            e.functions = page;
     }
 
-    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
-        p = p_in;
+//    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+//        p = p_in;
+    function _print(s_proc p, s_of f, string[] params, string page) internal pure override returns (s_of res) {
+        res = f;
         bool functions_only = p.flag_set("f");
         string sattrs = "-r";
         if (functions_only)
@@ -31,7 +33,7 @@ contract readonly is pbuiltin_special {
                 for (string line: lines) {
                     (string attrs, ) = line.csplit(" ");
                     if (vars.match_attr_set(sattrs, attrs))
-                        p.puts(vars.print_reusable(line));
+                        res.fputs(vars.print_reusable(line));
                 }
             }
             for (string param: params) {
@@ -40,9 +42,9 @@ contract readonly is pbuiltin_special {
                 if (!cur_record.empty()) {
                     (string cur_attrs, ) = cur_record.csplit(" ");
                     if (vars.match_attr_set(sattrs, cur_attrs))
-                        p.puts(vars.print_reusable(cur_record));
+                        res.fputs(vars.print_reusable(cur_record));
                 } else
-                    p.perror(name + " not found");
+                    res.fputs(name + " not found");
             }
     }
 

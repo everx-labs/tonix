@@ -1,20 +1,22 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin_special.sol";
 
 contract alias_ is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[0] = e.e_aliases;
+    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
+        pages[0] = e.aliases;
     }
 
     function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
         e = e_in;
-        e.e_aliases = page;
+        e.aliases = page;
     }
 
-    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
-        p = p_in;
+//    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+//        p = p_in;
+    function _print(s_proc p, s_of f, string[] params, string page) internal pure override returns (s_of res) {
+        res = f;
         string token = params.empty() ? "" : params[0];
 
         if (params.empty()) {
@@ -22,13 +24,13 @@ contract alias_ is pbuiltin_special {
             for (string l: ali) {
                 (, string name, string value) = vars.split_var_record(l);
                 value.quote();
-                p.puts("alias " + name + "=" + value);
+                res.fputs("alias " + name + "=" + value);
             }
         } else {
             string alias_page = page;//p.read_file("alias");
             string cur_tval = vars.val(token, alias_page);
             (, , string args) = p.get_args();
-            if (args.strchr("=") > 0) {
+            if (str.strchr(args, '=') > 0) {
                 (string name, ) = token.csplit("=");
                 string value = args.val("=", "\n");
                 string new_value = vars.var_record("", name, value);
@@ -39,14 +41,14 @@ contract alias_ is pbuiltin_special {
                     alias_page.translate(cur_val, new_value);
             } else {
                 if (cur_tval.empty())
-                    p.perror(token + ": not found");
+                    res.fputs(token + ": not found");
                 else {
                     cur_tval.quote();
-                    p.puts("alias " + token + "=" + cur_tval);
+                    res.fputs("alias " + token + "=" + cur_tval);
                 }
             }
-            p.puts("Result: ");
-            p.puts(alias_page);
+            res.fputs("Result: ");
+            res.fputs(alias_page);
         }
 //        sv.cur_proc = p;
     }

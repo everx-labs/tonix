@@ -1,33 +1,10 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
-import "../lib/str.sol";
+import "str.sol";
 import "stypes.sol";
 import "io.sol";
 import "sbuf.sol";
-/*struct s_of {
-    uint attr;
-    uint16 flags;
-    uint16 file;
-    string path;
-    uint32 offset;
-    bytes buf;
-}*/
-
-/*struct s_stat {
-    uint16 st_dev;      // ID of device containing file
-    uint16 st_ino;      // Inode number
-    uint16 st_mode;     // File type and mode
-    uint16 st_nlink;    // Number of hard links
-    uint16 st_uid;      // User ID of owner
-    uint16 st_gid;      // Group ID of owner
-    uint16 st_rdev;     // Device ID (if special file)
-    uint32 st_size;     // Total size, in bytes
-    uint16 st_blksize;  // Block size for filesystem I/O
-    uint16 st_blocks;   // Number of 512B blocks allocated
-    uint32 st_mtim;     // Time of last modification
-    uint32 st_ctim;     // Time of last status change
-}*/
-
+import "libfdt.sol";
 /*struct s_file {
     uint32 p;       // (*) current position in (some) buffer
     uint16 flags;   // (*) flags, below; this FILE is free if 0
@@ -40,6 +17,7 @@ library xio {
 
     using str for string;
     using sbuf for s_sbuf;
+    using libfdt for  s_of[];
 
     uint16 constant BUFSIZ  = 1024;   // size of buffer used by setbuf
     int16 constant EOF = -1;
@@ -48,14 +26,6 @@ library xio {
     string constant P_tmpdir = "/tmp/";
     uint16 constant L_tmpnam = 1024; // XXX must be == PATH_MAX
     uint32 constant TMP_MAX = 0xFFFFFFFF;//308915776;
-
-    /*uint16 constant SEEK_SET = 0; // set file offset to offset
-    uint16 constant SEEK_CUR = 1; // set file offset to current plus offset
-    uint16 constant SEEK_END = 2; // set file offset to EOF plus offset*/
-
-    uint16 constant STDIN_FILENO = 0;
-    uint16 constant STDOUT_FILENO = 1;
-    uint16 constant STDERR_FILENO = 2;
 
     uint16 constant L_cuserid = 17;  // size for cuserid(3); MAXLOGNAME, legacy
     uint16 constant L_ctermid = 1024;// size for ctermid(3); PATH_MAX
@@ -102,11 +72,9 @@ library xio {
         if (mode == "r+" || mode == "rb+" || mode == "r+b")
             flags |= io.O_RDWR;
         if (mode == "w+" || mode == "wb+" || mode == "w+b")
-            //Truncate to zero length or create file for update.
-            flags |= io.O_TRUNC | io.O_CREAT;
+            flags |= io.O_TRUNC | io.O_CREAT; //Truncate to zero length or create file for update
         if (mode == "a+" || mode == "ab+" || mode == "a+b")
-            // Append; open or create file for update, writing at end-of-file.
-            flags |= io.O_APPEND | io.O_CREAT;
+            flags |= io.O_APPEND | io.O_CREAT; // Append; open or create file for update, writing at end-of-file
     }
 
     function clearerr(s_of f) internal {
@@ -308,12 +276,4 @@ library xio {
         (uint attr, uint16 flags, uint16 file, string path, uint32 offset, s_sbuf buf) = f.unpack();
         return format("A {} flags {} fd {} path {} off {} buf {}", attr, flags, file, path, offset, buf.buf);
     }
-    /*struct s_of {
-    uint attr;
-    uint16 flags;
-    uint16 file;
-    string path;
-    uint32 offset;
-    bytes buf;
-}*/
 }

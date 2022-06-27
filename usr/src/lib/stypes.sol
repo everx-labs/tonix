@@ -1,6 +1,6 @@
-pragma ton-solidity >= 0.58.0;
-import "../lib/utypes.sol";
-import "../include/errno.sol";
+pragma ton-solidity >= 0.61.2;
+import "utypes.sol";
+//import "../include/errno.sol";
 import "../include/param.sol";
 import "../sys/sys/uma.sol";
 import "../sys/sys/uma_int.sol";
@@ -14,17 +14,16 @@ struct svm {
     s_vmem[] vmem;
 }
 
-
 struct s_iovec {
-    uint32 iov_base; // Base address.
-    uint32 iov_len; // Length.
+    uint32 iov_base; // Base address
+    uint32 iov_len;  // Length
 }
 enum uio_rw {
     UIO_READ,
     UIO_WRITE
 }
-// Segment flag values.
-enum uio_seg {
+
+enum uio_seg {    // Segment flag values
     UIO_USERSPACE,// from user data space
     UIO_SYSSPACE, // from system space
     UIO_NOCOPY    // don't copy, already in object
@@ -35,13 +34,13 @@ struct s_uio {
     uint32 uio_offset;  // offset in target object
     uint32 uio_resid;   // remaining bytes to process
     uio_seg uio_segflg; // address space
-    uio_rw uio_rwo;      // operation
+    uio_rw uio_rwo;     // operation
     s_thread uio_td;    // owner
 }
 
-struct s_sysent {       // system call table
-    uint16 sy_call;     // implementing function
-    uint8 sy_narg;       // number of arguments
+struct s_sysent {   // system call table
+    uint16 sy_call; // implementing function
+    uint8 sy_narg;  // number of arguments
 }
 
 struct s_loadavg {
@@ -49,8 +48,7 @@ struct s_loadavg {
     uint32 fscale;
 }
 
-// Mount options list
-struct s_vfsopt {
+struct s_vfsopt { // Mount options list
     string name;
     bytes value;
     uint16 len;
@@ -71,10 +69,8 @@ struct s_mntoptnames {
     string o_name;
 }
 
-/*
- * Filesystem configuration information. One of these exists for each type of filesystem supported by the kernel. These are searched at
- * mount time to identify the requested filesystem. * XXX: Never change the first two arguments!
- */
+// Filesystem configuration information. One of these exists for each type of filesystem supported by the kernel.
+// These are searched at mount time to identify the requested filesystem
  struct s_vfsconf {
     uint16 vfc_version;     // ABI version number
     string vfc_name;        // filesystem type name
@@ -83,7 +79,6 @@ struct s_mntoptnames {
     uint16 vfc_typenum;     // historic filesystem type number
     uint16 vfc_refcount;    // number mounted of this type
     uint16 vfc_flags;       // permanent flags
-    uint16 vfc_prison_flag; // prison allow.mount.* flag
     s_vfsopt[] vfc_opts;    // mount options
 }
 
@@ -91,7 +86,6 @@ struct s_mount {
     uint16 mnt_vfs_ops;         // pending vfs ops
     uint16 mnt_kern_flag;       // kernel only flags
     uint64 mnt_flag;            // flags shared with user
-//    s_mount_pcpu mnt_pcpu;      // per-CPU data
     s_vnode mnt_rootvnode;
     s_vnode mnt_vnodecovered;   // vnode we mounted on
     s_vfsops mnt_op;            // operations on fs
@@ -114,9 +108,8 @@ struct s_mount {
     string mnt_label;                // MAC label for the fs
 }
 
-// Vnode attributes.  A field value of VNOVAL represents a field whose value is unavailable (getattr) or which is not to be changed (setattr).
-struct s_vattr {
-    vtype va_type;      // vnode type (for create)
+struct s_vattr { // Vnode attributes.  A field value of VNOVAL represents a field whose value is unavailable (getattr) or which is not to be changed (setattr)
+    vtype va_type;       // vnode type (for create)
     uint16 va_mode;      // files access mode and type
     uint16 va_uid;       // owner user id
     uint16 va_gid;       // owner group id
@@ -136,8 +129,7 @@ struct s_vattr {
     uint16 va_filerev;   // file modification number
     uint32 va_vaflags;   // operations flags, see below
 }
-// This structure describes the vnode operation taking place.
-struct k_vnodeop_desc {
+struct k_vnodeop_desc { // This structure describes the vnode operation taking place
     string vdesc_name;          // a readable name for debugging
     uint16 vdesc_flags;         // VDESC_* flags
     uint16 vdesc_vop_offset;
@@ -149,23 +141,22 @@ struct k_vnodeop_desc {
 }
 
 struct s_fadvise_info {
-    uint32 fa_advice;      // (f) FADV_* type.
-    uint32 fa_start;       // (f) Region start.
-    uint32 fa_end;         // (f) Region end.
+    uint32 fa_advice; // FADV_* type
+    uint32 fa_start;  // Region start
+    uint32 fa_end;    // Region end
 }
 struct s_file {
-    uint16 f_flag;    // see fcntl.h
+    uint16 f_flag;    // see fcntl
     bytes f_data;     // file descriptor specific data
 //  s_vnode f_vnode;  // NULL or applicable vnode
-    s_ucred f_cred;   // associated credentials.
+    s_ucred f_cred;   // associated credentials
     uint8 f_type;     // descriptor type
-    uint32[2] f_nextoff; // next expected read/write offset.
+    uint32[2] f_nextoff; // next expected read/write offset
     s_fadvise_info fvn_advice;
     uint32 f_offset;
 }
 
- //Structure holding information for a publicly exported filesystem (WebNFS). Currently the specs allow just for one such filesystem.
-struct nfs_public {
+struct nfs_public {  // Structure holding information for a publicly exported filesystem (WebNFS). Currently the specs allow just for one such filesystem
     bool np_valid;    // Do we hold valid information
     uint16 np_handle; // Filehandle for pub fs (internal)
     s_mount np_mount; // Mountpoint of exported fs
@@ -247,12 +238,12 @@ struct s_nameidata {
 }
 
 struct s_namecache {
-	uint16 nc_dvp;	  // vnode of parent of name
-	uint32 nc_dvpid;  // capability number of nc_dvp
-	uint16 nc_vp;	  // vnode the name refers to
-	uint32 nc_vpid;   // capability number of nc_vp
-	uint8 nc_nlen;	  // length of name
-	string nc_name;	  // segment name
+	uint16 nc_dvp;	 // vnode of parent of name
+	uint32 nc_dvpid; // capability number of nc_dvp
+	uint16 nc_vp;	 // vnode the name refers to
+	uint32 nc_vpid;  // capability number of nc_vp
+	uint8 nc_nlen;	 // length of name
+	string nc_name;	 // segment name
 }
 
 struct s_vnode {
@@ -265,23 +256,23 @@ struct s_vnode {
     s_namecache[] v_cache_src; // Cache entries from us
     s_namecache[] v_cache_dst; // Cache entries to us
     s_namecache v_cache_dd;    // Cache entry for .. vnode
-    s_bufobj v_bufobj;      // Buffer cache object
-    uint16 v_iflag;          // vnode flags (see below)
-    uint16 v_vflag;         // vnode flags
-    uint16 v_mflag;         // mnt-specific vnode flags
+    s_bufobj v_bufobj;   // Buffer cache object
+    uint16 v_iflag;      // vnode flags (see below)
+    uint16 v_vflag;      // vnode flags
+    uint16 v_mflag;      // mnt-specific vnode flags
 }
 
 struct s_ucred {
-    uint16 cr_users;       // (c) proc + thread using this cred
-    uint16 cr_uid;         // effective user id
-    uint16 cr_ruid;        // real user id
-    uint16 cr_svuid;       // saved user id
-    uint8 cr_ngroups;      // number of groups
-    uint16 cr_rgid;        // real group id
-    uint16 cr_svgid;       // saved group id
-    string cr_loginclass;  // login class
-    uint16 cr_flags;       // credential flags
-    uint16[] cr_groups;    // groups
+    uint16 cr_users;  // proc + thread using this cred
+    uint16 cr_uid;    // effective user id
+    uint16 cr_ruid;   // real user id
+    uint16 cr_svuid;  // saved user id
+    uint8 cr_ngroups; // number of groups
+    uint16 cr_rgid;   // real group id
+    uint16 cr_svgid;  // saved group id
+    string cr_loginclass; // login class
+    uint16 cr_flags;  // credential flags
+    uint16[] cr_groups; // groups
 }
 
 struct s_ar_misc {
@@ -304,8 +295,8 @@ struct s_opt_arg {
     string opt_value;
 }
 struct s_pargs {
-    uint16 ar_length; // Length.
-    string[] ar_args; // Arguments.
+    uint16 ar_length; // Length
+    string[] ar_args; // Arguments
     s_ar_misc ar_misc;
 }
 
@@ -317,38 +308,37 @@ struct s_ps_strings {
 }
 
 struct s_proc {
-    s_ucred p_ucred;     // Process owner's identity.
-    s_xfiledesc p_fd;    // Open files.
+    s_ucred p_ucred;     // Process owner's identity
+    s_xfiledesc p_fd;    // Open files
     s_xpwddesc p_pd;     // Cwd, chroot, jail, umask
-    s_plimit p_limit;    // Resource limits.
-    uint32 p_flag;       // P_* flags.
-    uint16 p_pid;        // Process identifier.
-    uint16 p_oppid;      // Real parent pid.
-    string p_comm;       // Process name.
-    s_sysent[] p_sysent; // Syscall dispatch info.
-    s_pargs p_args;      // Process arguments.
+    s_plimit p_limit;    // Resource limits
+    uint32 p_flag;       // P_* flags
+    uint16 p_pid;        // Process identifier
+    uint16 p_oppid;      // Real parent pid
+    string p_comm;       // Process name
+    s_sysent[] p_sysent; // Syscall dispatch info
+    s_pargs p_args;      // Process arguments
     string[] environ;
-    uint16 p_xexit;      // Exit code.
-    uint16 p_numthreads; // Number of threads.
+    uint8 p_xexit;      // Exit code
+    uint16 p_numthreads; // Number of threads
     uint16 p_leader;
 }
 
 struct s_thread {
-    s_proc td_proc;         // Associated process.
-    uint16 td_tid;          // Thread ID.
-    uint16 td_flags;        // TDF_* flags.
-    uint16 td_dupfd;        // Ret value from fdopen. XXX
-    s_ucred td_realucred;   // Reference to credentials.
-    s_ucred td_ucred;       // Used credentials, temporarily switchable.
-    s_plimit td_limit;      // Resource limits.
-    string td_name;         // Thread name.
-    uint16 td_errno;        // Error from last syscall.
+    s_proc td_proc;         // Associated process
+    uint16 td_tid;          // Thread ID
+    uint16 td_flags;        // TDF_* flags
+    uint16 td_dupfd;        // Ret value from fdopen
+    s_ucred td_realucred;   // Reference to credentials
+    s_ucred td_ucred;       // Used credentials, temporarily switchable
+    s_plimit td_limit;      // Resource limits
+    string td_name;         // Thread name
+    uint8 td_errno;        // Error from last syscall
     td_states td_state;     // thread state
     uint32 tdu_retval;
 }
 
-// Header element for a unr number space.
-struct s_unrhdr {
+struct s_unrhdr {  // Header element for a unr number space.
     uint16 low;    // Lowest item
     uint16 high;   // Highest item
     uint16 busy;   // Count of allocated items
@@ -358,19 +348,19 @@ struct s_unrhdr {
 }
 
 struct s_prstatus {
-    uint16 pr_version;   // Version number of struct (1)
-    uint16 pr_osreldate; // Kernel version (1)
-    uint16 pr_cursig;    // Current signal (1)
-    uint16 pr_pid;       // LWP (Thread) ID (1)
+    uint16 pr_version;   // Version number of struct
+    uint16 pr_osreldate; // Kernel version
+    uint16 pr_cursig;    // Current signal
+    uint16 pr_pid;       // LWP (Thread) ID
 }
 struct s_prpsinfo {
-    uint16 pr_version;  // Version number of struct (1)
-    string pr_fname;    // Command name, null terminated (1) [PRFNAMESZ+1]
-    string pr_psargs;   // Arguments, null terminated (1) [PRARGSZ+1];
-    uint16 pr_pid;      // Process ID (1a)
+    uint16 pr_version;  // Version number of struct
+    string pr_fname;    // Command name, null terminated [PRFNAMESZ+1]
+    string pr_psargs;   // Arguments, null terminated [PRARGSZ+1];
+    uint16 pr_pid;      // Process ID
 }
 struct s_thrmisc {
-    string pr_tname; // Thread name, null terminated (1) [MAXCOMLEN+1];
+    string pr_tname; // Thread name, null terminated [MAXCOMLEN+1];
 }
 
 enum pfstype { pfstype_none, pfstype_root, pfstype_dir, pfstype_this, pfstype_parent, pfstype_file, pfstype_symlink, pfstype_procdir }
@@ -409,30 +399,30 @@ struct s_xpwddesc {
 }
 
 struct s_buf {
-    uint32 b_bcount;  //  originally requested buffer size, can serve as a bounds check against EOF.  For most, but not all uses, b_bcount == b_bufsize.
+    uint32 b_bcount;  //  originally requested buffer size, can serve as a bounds check against EOF.  For most, but not all uses, b_bcount == b_bufsize
     uint32 b_data;
     uint8  b_error;
     uint16 b_iocmd;   // BIO_* bio_cmd from bio.h
     uint16 b_ioflags; // BIO_* bio_flags from bio.h
     uint32 b_iooffset;
-    uint32 b_resid;  // Number of bytes remaining in I/O.  After an I/O operation completes, b_resid is usually 0 indicating 100% success.
+    uint32 b_resid;  // Number of bytes remaining in I/O.  After an I/O operation completes, b_resid is usually 0 indicating 100% success
     uint64 b_ckhash; // B_CKHASH requested check-hash
-    uint32 b_blkno;  // Underlying physical block number.
-    uint32 b_offset; // Offset into file.
+    uint32 b_blkno;  // Underlying physical block number
+    uint32 b_offset; // Offset into file
     uint32 b_vflags; // BV_* flags
     uint32 b_flags;  // B_* flags.
     uint16 b_xflags; // extra flags
-    uint32 b_bufsize;// Allocated buffer size.
+    uint32 b_bufsize;// Allocated buffer size
     uint32 b_kvasize;// size of kva for buffer
-    // Buffers support piecemeal, unaligned ranges of dirty data that need to be written to backing store.
-    // The range is typically clipped at b_bcount (not b_bufsize).
-    uint32 b_dirtyoff; // Offset in buffer of dirty region.
-    uint32 b_dirtyend; // Offset of end of dirty region.
+    // Buffers support piecemeal, unaligned ranges of dirty data that need to be written to backing store
+    // The range is typically clipped at b_bcount (not b_bufsize)
+    uint32 b_dirtyoff; // Offset in buffer of dirty region
+    uint32 b_dirtyend; // Offset of end of dirty region
     uint32 b_kvabase;  // base kva for buffer
-    uint32 b_lblkno;   // Logical block number.
-    uint16 b_vp;       // Device vnode.
-    s_ucred b_rcred;   // Read credentials reference.
-    s_ucred b_wcred;   // Write credentials reference.
+    uint32 b_lblkno;   // Logical block number
+    uint16 b_vp;       // Device vnode
+    s_ucred b_rcred;   // Read credentials reference
+    s_ucred b_wcred;   // Write credentials reference
     uint16 b_npages;
 }
 
@@ -443,8 +433,8 @@ struct s_bufv {
 
 struct s_bufobj {
     bytes bo_private;    // private pointer
-    s_buf[] bo_clean;     // Clean buffers
-    s_buf[] bo_dirty;     // Dirty buffers
+    s_buf[] bo_clean;    // Clean buffers
+    s_buf[] bo_dirty;    // Dirty buffers
     uint16 bo_numoutput; // Writes in progress
     uint16 bo_flag;      // Flags
     uint16 bo_bsize;     // Block size for i/o

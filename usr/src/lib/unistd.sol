@@ -1,14 +1,13 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "stypes.sol";
-//import "ustd.sol";
-import "../include/errno.sol";
-import "../lib/libstring.sol";
-import "../lib/sb.sol";
-import "../lib/libstat.sol";
+import "liberr.sol";
+import "libstring.sol";
+import "sb.sol";
+import "libstat.sol";
 import "ucred.sol";
 import "io.sol";
-import "syscall.sol";
+import "libsyscall.sol";
 import "sbuf.sol";
 import "../include/param.sol";
 import "../include/conf.sol";
@@ -24,11 +23,7 @@ library unistd {
     using io for s_thread;
     using sbuf for s_sbuf;
     using sucred for s_ucred;
-    using ssyscall for s_thread;
-
-    uint8 constant STDIN_FILENO  = 0; // standard input file descriptor
-    uint8 constant STDOUT_FILENO = 1; // standard output file descriptor
-    uint8 constant STDERR_FILENO = 2; // standard error file descriptor
+    using libsyscall for s_thread;
 
     uint8 constant F_ULOCK       = 0; // unlock locked section
     uint8 constant F_LOCK        = 1; // lock a section for exclusive use
@@ -79,10 +74,10 @@ library unistd {
                 if (st.st_uid == p.p_ucred.cr_uid || st.st_uid == p.p_ucred.cr_groups[0] && mode >= 0)
                     return f.file;
                 else
-                    return errno.EPERM;
+                    return err.EPERM;
             }
         }
-        p.p_xexit = errno.ENOENT;
+        p.p_xexit = err.ENOENT;
     }
 
     function alarm(s_proc p, uint32) internal returns (uint16) {}
@@ -101,10 +96,10 @@ library unistd {
                 fdt.pop();
                 p.p_fd.fdt_ofiles = fdt;
                 p.p_fd.fdt_nfiles--;
-                return errno.ESUCCESS;
+                return err.ESUCCESS;
             }
         }
-        p.p_xexit = errno.EBADF;
+        p.p_xexit = err.EBADF;
     }
 
     function closefrom(s_proc p, uint16 fd) internal {
@@ -133,7 +128,7 @@ library unistd {
     function fpathconf(s_proc p, uint16, uint16) internal returns (uint32) {}
     function getcwd(s_proc p, uint16 size) internal returns (string buf) {
         if (size == 0)
-            p.p_xexit = errno.EINVAL;
+            p.p_xexit = err.EINVAL;
         return p.p_pd.pwd_cdir.path;
     }
     function getegid(s_proc p) internal returns (uint16) {
@@ -168,7 +163,7 @@ library unistd {
     function getuid(s_proc p) internal returns (uint16) {
 //        return p.p_ucred.cr_uid;
 //        return p.p_ucred.getuid();
-        s_thread t = __syscall0(p, ssyscall.SYS_getuid);
+        s_thread t = __syscall0(p, libsyscall.SYS_getuid);
         return uint16(t.tdu_retval);
     }
     function isatty(s_proc p, uint16) internal returns (uint16) {}
@@ -195,7 +190,7 @@ library unistd {
                 return (string(f.buf.buf).substr(offset, cap), cap);
             }
         }
-        p.p_xexit = errno.EBADF;
+        p.p_xexit = err.EBADF;
     }
     function rmdir(s_proc p, string ) internal returns (uint16) {}
     function setgid(s_proc p, uint16 gid) internal returns (uint16) {
@@ -210,7 +205,7 @@ library unistd {
         string s_login;
         uint16 s_sid;
         if (pid == p.p_oppid || pid == p.p_leader)
-            p.p_xexit = errno.EPERM;
+            p.p_xexit = err.EPERM;
         else
             return s_xsession(1, p, k_ttyp, s_sid, s_login);
     }
@@ -243,11 +238,11 @@ library unistd {
                 return cap;
             }
         }
-        p.p_xexit = errno.EBADF;
+        p.p_xexit = err.EBADF;
     }
     function confstr(s_proc p, string[122] conf, uint16 name, uint16 len) internal returns (string buf) {
         if (name > sconf._SC_CPUSET_SIZE)
-            p.p_xexit = errno.EINVAL;
+            p.p_xexit = err.EINVAL;
         buf = conf[name];
         return buf.byteLength() < len ? buf : buf.substr(0, len);
     }
@@ -277,7 +272,7 @@ library unistd {
         for (s_proc pp: pt)
             if (pp.p_pid == pid)
                 return pp.p_leader;
-        p.p_xexit = errno.ESRCH;
+        p.p_xexit = err.ESRCH;
     }
 
     function fchdir(s_proc p, uint16 fd) internal returns (uint16) {
@@ -289,7 +284,7 @@ library unistd {
         for (s_proc pp: pt)
             if (pp.p_pid == pid)
                 return pp.p_oppid;
-        p.p_xexit = errno.ESRCH;
+        p.p_xexit = err.ESRCH;
     }
     function lchown(s_proc p, string , uint16, uint16) internal returns (uint16) {}
     function pread(s_proc p, uint16 fd, uint16 nbytes, uint32 offset) internal returns (bytes buf, uint32) {
@@ -305,7 +300,7 @@ library unistd {
                 return (string(f.buf.buf).substr(offset, cap), cap);
             }
         }
-        p.p_xexit = errno.EBADF;
+        p.p_xexit = err.EBADF;
     }
     function pwrite(s_proc p, uint16 fd, bytes buf, uint16 nbytes, uint32 offset) internal returns (uint32) {
         s_of[] fdt = p.p_fd.fdt_ofiles;
@@ -323,7 +318,7 @@ library unistd {
                 return cap;
             }
         }
-        p.p_xexit = errno.EBADF;
+        p.p_xexit = err.EBADF;
     }
 
     function truncate(s_proc p, string , uint32) internal returns (uint16) {}
@@ -498,9 +493,9 @@ library unistd {
         s_ucred td_realucred = p.p_ucred;   // Reference to credentials.
         s_ucred td_ucred = p.p_ucred;       // Used credentials, temporarily switchable.
         s_plimit td_limit = p.p_limit;      // Resource limits.
-        string td_name = ssyscall._syscall_name(number);         // Thread name.
+        string td_name = libsyscall._syscall_name(number);         // Thread name.
 //        s_xfile xfile;
-        uint16 td_errno;        // Error from last syscall.
+        uint8 td_errno;        // Error from last syscall.
         td_states td_state;     // thread state
         uint32 tdu_retval;
         s_thread t = s_thread(p, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);

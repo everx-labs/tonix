@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin_special.sol";
 
@@ -6,18 +6,19 @@ contract export is pbuiltin_special {
 
     function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
         if (p.flag_set("f"))
-            pages[9] = e.e_exports;
+            pages[9] = e.exports;
         else
-            pages[8] = e.e_exports;
+            pages[8] = e.exports;
     }
 
     function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
         e = e_in;
-        e.e_exports = page;
+        e.exports = page;
     }
 
-    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
-        p = p_in;
+//    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
+    function _print(s_proc p, s_of f, string[] params, string page) internal pure override returns (s_of res) {
+        res = f;
         bool functions_only = p.flag_set("f");
         string sattrs = "-x";
         if (functions_only)
@@ -27,7 +28,7 @@ contract export is pbuiltin_special {
                 for (string line: lines) {
                     (string attrs, ) = line.csplit(" ");
                     if (vars.match_attr_set(sattrs, attrs))
-                        p.puts(vars.print_reusable(line));
+                        res.fputs(vars.print_reusable(line));
                 }
             }
             for (string param: params) {
@@ -36,9 +37,9 @@ contract export is pbuiltin_special {
                 if (!cur_record.empty()) {
                     (string cur_attrs, ) = cur_record.csplit(" ");
                     if (vars.match_attr_set(sattrs, cur_attrs))
-                        p.puts(vars.print_reusable(cur_record));
+                        res.fputs(vars.print_reusable(cur_record));
                 } else
-                    p.perror(name + " not found");
+                    res.fputs(name + " not found");
             }
     }
     function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {

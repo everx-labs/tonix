@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 enum vtype      { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD, VMARKER }
 enum vgetstate  { VGET_NONE, VGET_HOLDCNT, VGET_USECOUNT }
@@ -35,6 +35,15 @@ struct s_stat {
     uint16 st_blocks;   // Number of 512B blocks allocated
     uint32 st_mtim;     // Time of last modification
     uint32 st_ctim;     // Time of last status change
+}
+
+struct s_of {
+    uint attr;
+    uint16 flags;
+    uint16 file;
+    string path;
+    uint32 offset;
+    s_sbuf buf;
 }
 
 struct s_sockaddr {
@@ -234,15 +243,6 @@ struct s_uprof {     // Profile arguments.
 
 struct s_sched_param {
     uint16 sched_priority;
-}
-
-struct s_of {
-    uint attr;
-    uint16 flags;
-    uint16 file;
-    string path;
-    uint32 offset;
-    s_sbuf buf;
 }
 
 /*struct s_file {

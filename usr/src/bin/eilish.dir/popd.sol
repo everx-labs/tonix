@@ -1,18 +1,18 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "pbuiltin.sol";
 
 contract popd is pbuiltin {
 
-    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
-        p = p_in;
-        (string[] dir_stack, uint n_dirs) = e.e_dirstack.split("\n");
+    function _main(s_proc, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+        e = e_in;
+        (string[] dir_stack, uint n_dirs) = e.dirstack.split("\n");
         if (params.empty()) {
             if (n_dirs < 2)
-                p.perror("directory stack empty");
+                e.perror("directory stack empty");
             else {
                 dir_stack.pop();
-                e.e_dirstack = libstring.join_fields(dir_stack, "\n");
+                e.dirstack = libstring.join_fields(dir_stack, "\n");
             }
         }
     }

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
 import "putil.sol";
 import "../lib/path.sol";
@@ -7,11 +7,15 @@ contract dirname is putil {
 
     using path for string;
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+//    function _main(s_proc p_in) internal override pure returns (s_proc p) {
+//        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         string line_terminator = p.flag_set("z") ? "\x00" : "\n";
         for (string s: p.params())
-            p.puts(s.dirp() + line_terminator);
+            res.fputs(s.dirp() + line_terminator);
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

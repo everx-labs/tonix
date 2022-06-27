@@ -1,21 +1,21 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.61.2;
 
-import "Shell.sol";
+//import "Shell.sol";
+//contract type_ is Shell {
+import "pbuiltin.sol";
+import "../../lib/vars.sol";
+contract type_ is pbuiltin {
 
-contract type_ is Shell {
-
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
-
+//    function main(svm sv_in) external pure returns (svm sv) {
+    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+        e = e_in;
         bool f_terse = p.flag_set("t");
-        s_of f = p.fopen("pool", "r");
+        s_of f = e.fopen("pool", "r");
         string pool;
         if (!f.ferror()) {
             pool = f.fgets(0);
         } else
-            p.perror("Failed to read objects pool");
+            e.perror("Failed to read objects pool");
 //        (bool all_locations, bool func_lookup, bool disk_file_name, bool path_search, , , , ) = arg.flag_values("afpP", flags);
 
         for (string arg: params) {
@@ -39,11 +39,10 @@ contract type_ is Shell {
                 else
                     value = f_terse ? "file" : (arg + " is " + "/bin/" + arg);
             } else {
-                p.perror(arg + ": not found");
+                e.perror(arg + ": not found");
             }
-            p.puts(value);
+            e.puts(value);
         }
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -1,78 +1,82 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.61.2;
 
 import "stypes.sol";
 import "io.sol";
+import "libfdt.sol";
 struct shell_env {
-    s_of[] e_ofiles;    // Open files inherited upon invocation of the shell, plus open files controlled by exec
-    s_of e_cwd;         // Working directory as set by cd
-    uint16 e_umask;     // File creation mask set by umask
-    string e_params;    // Shell parameters that are set by variable assignment (see the set special built-in)
-    string e_exports;   // Environment inherited by the shell when it begins (see the export special built-in)
-    string e_traps;
-    string e_vars;
-    string e_functions; // Shell functions
-    string e_options;   // Options turned on at invocation or by set
-    uint16 e_apid;      // Process IDs of the last commands in asynchronous lists known to this shell environment
-    string e_aliases;   // Shell aliases
-    string e_dirstack;
+    s_of[] ofiles;    // Open files inherited upon invocation of the shell, plus open files controlled by exec
+    s_of cwd;         // Working directory as set by cd
+    uint16 umask;     // File creation mask set by umask
+    string params;    // Shell parameters that are set by variable assignment (see the set special built-in)
+    string exports;   // Environment inherited by the shell when it begins (see the export special built-in)
+    string traps;
+    string vars;
+    string functions; // Shell functions
+    string options;   // Options turned on at invocation or by set
+    uint16 apid;      // Process IDs of the last commands in asynchronous lists known to this shell environment
+    string aliases;   // Shell aliases
+    string dirstack;
 }
-
-struct proc_env {
-    s_of[] e_ofiles; // Open files inherited on invocation of the shell, open files controlled by the exec special built-in plus any modifications, and additions specified by any redirections to the utility
-    s_of e_cwd; // Current working directory
-    uint16 e_umask; // File creation mask
-    string[] e_environ; // Variables with the export attribute, along with those explicitly exported for the duration of the command, shall be passed to the utility environment variables
-}
-
-// regular: alias bg cd command false fc fg getopts hash jobs kill newgrp pwd read true type ulimit umask unalias wait
-// special: break : continue . eval exec exit export readonly return set shift times trap unset
 
 library libshellenv {
     using xio for s_of;
+    using sbuf for s_sbuf;
+    using libfdt for s_of[];
 
-    function fdt(proc_env e) internal returns (s_of[]) {
-        return e.e_ofiles;
+    function perror(shell_env e, string reason) internal {
+        s_of f = e.ofiles[libfdt.STDERR_FILENO];
+        uint8 ec = f.buf.error;
+        string err_msg = err.strerror(ec);
+//        string err_msg = p.p_comm + ": ";
+        if (!reason.empty())
+            err_msg.append(reason + " ");
+        f.fputs(err_msg);
+        e.ofiles[libfdt.STDERR_FILENO] = f;
     }
-    function cwd(proc_env e) internal returns (s_of) {
-        return e.e_cwd;
+    function puts(shell_env e, string str) internal {
+        s_of f = e.ofiles[libfdt.STDOUT_FILENO];
+        f.fputs(str);
+        e.ofiles[libfdt.STDOUT_FILENO] = f;
     }
-    function umask(proc_env e) internal returns (uint16) {
-        return e.e_umask;
+    function fputs(shell_env e, string str, s_of f) internal {
+        uint16 idx = f.fileno();
+        if (idx >= 0 && idx < e.ofiles.length) {
+            f.fputs(str);
+            e.ofiles[idx] = f;
+        }
     }
-    function env(proc_env e) internal returns (string[]) {
-        return e.e_environ;
+    function putchar(shell_env e, byte c) internal {
+        s_sbuf s = e.ofiles[libfdt.STDOUT_FILENO].buf;
+        s.sbuf_putc(c);
+        e.ofiles[libfdt.STDOUT_FILENO].buf = s;
     }
-    function params(shell_env e) internal returns (string) {
-        return e.e_params;
+    function stdin(shell_env e) internal returns (s_of) {
+        return e.ofiles[libfdt.STDIN_FILENO];
     }
-    function exports(shell_env e) internal returns (string) {
-        return e.e_exports;
+    function stdout(shell_env e) internal returns (s_of) {
+        return e.ofiles[libfdt.STDOUT_FILENO];
     }
-    function vars(shell_env e) internal returns (string) {
-        return e.e_vars;
+    function stderr(shell_env e) internal returns (s_of) {
+        return e.ofiles[libfdt.STDERR_FILENO];
     }
-    function functions(shell_env e) internal returns (string) {
-        return e.e_functions;
-    }
-    function options(shell_env e) internal returns (string) {
-        return e.e_options;
-    }
-    function last(shell_env e) internal returns (uint16) {
-        return e.e_apid;
-    }
-    function aliases(shell_env e) internal returns (string) {
-        return e.e_aliases;
-    }
-    function traps(shell_env e) internal returns (string) {
-        return e.e_traps;
+
+    function fopen(shell_env e, string path, string mode) internal returns (s_of f) {
+        uint16 flags = io.mode_to_flags(mode);
+        uint q = e.ofiles.fdfetch(path);
+        if (q > 0) {
+            f = e.ofiles[q - 1];
+            f.flags |= flags;
+        } else
+            f.flags |= io.SERR;
     }
 
     function shopen(shell_env e, string path, string mode) internal returns (s_of f) {
         uint16 flags = io.mode_to_flags(mode);
-        uint q = io.fetch_fdt(e.e_ofiles, path);
-        if (q > 0)
-            f = e.e_ofiles[q - 1];
-        else
+        uint q = io.fetch_fdt(e.ofiles, path);
+        if (q > 0) {
+            f = e.ofiles[q - 1];
+            f.flags |= flags;
+        } else
             f.flags |= io.SERR;
     }
 
@@ -100,17 +104,6 @@ library libshellenv {
             s_ofiles, e_cwd.path, e_umask, e_params, e_exports, e_traps, e_vars, e_functions, e_options, e_apid, e_aliases, e_dirstack);
     }
 
-    function print_proc_env(proc_env e) internal returns (string) {
-        (s_of[] e_ofiles, s_of e_cwd, uint16 e_umask, string[] e_environ) = e.unpack();
-        string s_ofiles;
-        for (s_of f: e_ofiles)
-            s_ofiles.append(f.path + " ");
-        string s_env;
-        for (string s: e_environ)
-            s_env.append(s + " ");
-        return format("open files {} cwd {} umask {} environ {}\n",
-            s_ofiles, e_cwd.path, e_umask, s_env);
-    }
     function set_shell_env(shell_env e, svm sv) internal {
         s_proc p = sv.cur_proc;
         s_vmem vmm = sv.vmem[1];
@@ -124,12 +117,6 @@ library libshellenv {
         string e_aliases = vmem.vmem_fetch_page(vmm, 0);
         string e_dirstack = vmem.vmem_fetch_page(vmm, 12);
         e = shell_env(p.p_fd.fdt_ofiles, p.p_pd.pwd_cdir, p.p_pd.pd_cmask, e_params, e_exports, e_traps, e_vars, e_functions, e_options, e_apid, e_aliases, e_dirstack);
-    }
-    function set(proc_env e, shell_env es) internal {
-        e = proc_env(es.e_ofiles, es.e_cwd, es.e_umask, [es.e_exports]);
-    }
-    function inherit(proc_env e, s_proc p) internal {
-        e = proc_env(p.p_fd.fdt_ofiles, p.p_pd.pwd_cdir, p.p_pd.pd_cmask, p.environ);
     }
     function get(shell_env e, svm sv_in) internal returns (svm sv) {
         sv = sv_in;
