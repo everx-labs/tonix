@@ -1,17 +1,18 @@
-#set -x
-cd /home/boris/tonix/tmp/bin/eilish.dir/command
-jq '{sv_in: .}' ../vm | jq --rawfile args /home/boris/tonix/run/args '{$args} + .' >command.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main command.args >co
+set -x
+cd /home/boris/tonix/proc/curproc
+jq '{sv_in: .}' vm | jq --slurpfile v /home/boris/tonix/proc/curproc/shell_env '. + {e_in:$v[]}' >command.args
+$(cd /home/boris/tonix/tmp/bin/eilish.dir/command && tonos-cli -j runx -m main /home/boris/tonix/proc/curproc/command.args >/home/boris/tonix/proc/curproc/co)
 jq -er '."Error"? // empty' co && exit $?
-#jq -rj '.exports' co >/home/boris/tonix/run/export
-#jq -rj '.sv.cur_proc' co | jq --rawfile argv /home/boris/tonix/run/export '{$argv} + {p: .}' >/home/boris/tonix/run/proc
-jq -rj '.exports' co >../../exports
-jq -rj '.sv.cur_proc' co | jq --rawfile argv ../../exports '{$argv} + {p: .}' >../../proc
-jq '.sv' co >../vm
-jq -r '.exec_line' co >>/home/boris/tonix/var/log/commands
-cd - > /dev/null
-eval "`jq -rj '.exec_line' /home/boris/tonix/tmp/bin/eilish.dir/command/co`"
-#jq -er '."Error"? // empty' /home/boris/tonix/run/proc_out && exit $?
-jq -er '."Error"? // empty' tmp/bin/proc_out && exit $?
-cp tmp/bin/proc_out tmp/bin/proc_out.cmd
-jq '.p' tmp/bin/proc_out.cmd >tmp/bin/proc_out
+jq '.sv' co >vm
+cid=`jq -rj '.p.p_pid' co`
+cmd=`jq -rj '.p.p_comm' co`
+jq '{e_in:{ofiles: .p.p_fd.fdt_ofiles,cwd:.p.p_pd.pwd_cdir,umask:.p.p_pd.pd_cmask,environ:.p.environ},p_in:.p}' co >parg
+cat cmdline >>/home/boris/tonix/var/log/commands
+$(cd /home/boris/tonix/tmp/bin/$cmd && tonos-cli -j runx -m main /home/boris/tonix/proc/curproc/parg >/home/boris/tonix/proc/curproc/cmd_out)
+jq -er '."Error"? // empty' cmd_out && exit $?
+jq '.p' cmd_out >proc_out
+jq '.e' cmd_out >penv_out
+jq -rj '.ofiles[1].buf.buf' penv_out | xxd -p -r >stdout
+jq -rj '.ofiles[2].buf.buf' penv_out | xxd -p -r >stderr
+/home/boris/tonix/flush_std stdout stderr
+cd /home/boris/tonix

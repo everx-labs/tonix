@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/bin/eilish.dir/hash
-jq '{sv_in: .}' ../vm >hash.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main hash.args >../vm_out
-cd - > /dev/null
