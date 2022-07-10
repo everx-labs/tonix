@@ -1,73 +1,62 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
-import "pbuiltin_dict.sol";
-import "../../lib/ft.sol";
-import "../../lib/libstatmode.sol";
-import "../../lib/libstat.sol";
-contract compgen is pbuiltin_dict {
+import "pbuiltin_base.sol";
+import "ft.sol";
+import "libstat.sol";
+import "libcompspec.sol";
+import "vars.sol";
+contract compgen is pbuiltin_base {
 
-    using libstat for s_stat;
-    function _modify(svm sv_in, string[] params, string page_in) internal pure override returns (svm, string) {}
-    function _load(svm sv_in, shell_env e_in, string page_in) internal pure override returns (svm sv, shell_env e, string page) {
+    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
         sv = sv_in;
+        s_proc p = sv.cur_proc;
         e = e_in;
-        page = page_in;
-        s_proc p = sv.cur_proc;
-        (bool ppid, bool fsize, , bool numuid) = (true, true, true, true);
-        (mapping (uint16 => string) user, ) = p.get_users_groups();
-        (, , , , , uint16 p_pid, uint16 p_oppid, string p_comm, , , , , , ) = p.unpack();
-        p.puts("COMMAND\tPID\tPPID\tUSER\tFD\tTYPE\tDEVICE\tSIZE/OFF\tNODE\tNAME");
-        s_of[] fds = e.ofiles;
-        for (s_of f: fds) {
-            (uint attr, uint16 flags, uint16 file, string path, uint32 offset, ) = f.unpack();
-            s_stat st;
-            st.stt(attr);
-            (uint16 st_dev, uint16 st_ino, uint16 st_mode, , uint16 st_uid, , , uint32 st_size,
-                , , , ) = st.unpack();
-            string sm = (flags & io.SRD) > 0 ? "r" : (flags & io.SWR) > 0 ? "w" : (flags & io.SRW) > 0 ? "rw" : "?";
-            uint32 sizoff = fsize ? st_size : offset;
-            p.puts(format("{}\t{}\t{}\t{}\t{}{}\t{}\t{},{}\t{}\t{}\t{}", p_comm, p_pid, ppid ? str.toa(p_oppid) : "", numuid ? str.toa(st_uid) : user[st_uid], file, sm, ft.ft_desc(st_mode),
-                st_dev >> 8, st_dev & 0xFF, sizoff, st_ino, path));
-        }
-        sv.cur_proc = p;
-    }
-    function _update_shell_env(shell_env e_in, svm sv, uint8 n, string page) internal pure override returns (shell_env) {}
+        string[] params = p.params();
+        uint8[] pages;
 
-    function _select(svm sv, shell_env e) internal pure override returns (mapping (uint8 => string) pages, bool do_print, bool do_modify, bool do_load, bool print_names, bool print_values) {
-        s_proc p = sv.cur_proc;
-        do_print = !p.flags_empty();
+        bool do_print = !p.flags_empty();
         (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = p.flag_values("abcdefgj");
-        (bool fk, bool fs, bool fu, bool fv, bool fz, , , ) = p.flag_values("ksuvz");
-        do_modify = false;
-        do_load = fz;
-        print_names = fa || fb || fe || fv;
-        print_values = fc || fd || ff || fg || fj || fk || fs || fu;
+        (bool fk, bool fs, bool fu, bool fv, , , , ) = p.flag_values("ksuv");
+        bool print_all = params.empty();
+        bool print_reusable = fc;
+        bool print_names = fa || fb || fe || fv;
+        bool print_values = fd || ff || fg || fj || fk || fs || fu;
+        if (fa) pages.push(sh.ALIAS);
+        if (fb) pages.push(sh.BUILTIN);
+        if (fc) pages.push(sh.COMMAND);
+        if (fd) pages.push(sh.DIRECTORY);
+        if (fe) pages.push(sh.EXPORT);
+        if (ff) pages.push(sh.FILE);
+        if (fg) pages.push(sh.GROUP);
+        if (fk) pages.push(sh.KEYWORD);
+        if (fu) pages.push(sh.USER);
+        if (fv) pages.push(sh.VARIABLE);
 
-        string[] vp = sv.vmem[1].vm_pages;
-        if (fa) pages[0] = e.aliases;
-        if (fb) pages[5] = vp[5];
-        if (fc) pages[11] = vp[11];
-        if (fe) pages[13] = e.exports;
-        if (fg) pages[7] = vp[7];
-        if (fk) pages[10] = vp[10];
-        if (fu) pages[6] = vp[6];
-        if (fv) pages[8] = e.vars;
-        if (fz) pages[14] = e.vars;
+        if (do_print) {
+            s_of res = e.ofiles[libfdt.STDOUT_FILENO];
+            for (uint8 n: pages)
+                res = _print(res, params, e.environ[n], print_all, print_reusable, print_names, print_values);
+            e.ofiles[libfdt.STDOUT_FILENO] = res;
+        }
     }
 
-//    function _print(svm sv_in, string[] params, string page, bool print_names, bool print_values) internal pure override returns (svm sv) {
-    function _print(s_proc , s_of f, string[] params, string page, bool print_names, bool print_values) internal pure override returns (s_of res) {
+    function _print(s_of f, string[] params, string[] page, bool print_all, bool print_reusable, bool print_names, bool print_values) internal pure returns (s_of res) {
         res = f;
-//        sv = sv_in;
-//        s_proc p = sv.cur_proc;
-
-        string param = params.empty() ? "" : params[0];
+        string param = print_all ? "" : params[0];
         uint p_len = param.byteLength();
-        (string[] lines, ) = page.split("\n");
-        for (string line: lines) {
+        for (string line: page) {
             (, string name, string value) = vars.split_var_record(line);
-            if (name.byteLength() >= p_len && name.substr(0, p_len) == param)
-                res.fputs(print_names ? name : print_values ? value : "");
+            if (name.byteLength() >= p_len && name.substr(0, p_len) == param) {
+                if (print_names)
+                    res.fputs(name);
+                else if (print_values)
+                    res.fputs(value);
+                else if (print_reusable) {
+                    (string[] keys, ) = vars.unmap(value);
+                    for (string k: keys)
+                        res.fputs(k);
+                }
+            }
         }
     }
     function _builtin_help() internal pure override returns (BuiltinHelp) {

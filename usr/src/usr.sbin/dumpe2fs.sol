@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.60.0;
 
 import "Utility.sol";
-import "../lib/vfs.sol";
+import "vfs.sol";
 
 contract dumpe2fs is Utility {
 

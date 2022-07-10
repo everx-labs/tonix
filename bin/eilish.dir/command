@@ -1,14 +1,15 @@
 set -x
 cd /home/boris/tonix/proc/curproc
-jq '{sv_in: .}' vm | jq --slurpfile v /home/boris/tonix/proc/curproc/shell_env '. + {e_in:$v[]}' >command.args
-$(cd /home/boris/tonix/tmp/bin/eilish.dir/command && tonos-cli -j runx -m main /home/boris/tonix/proc/curproc/command.args >/home/boris/tonix/proc/curproc/co)
+jq '{sv_in: .}' vm | jq --slurpfile v shell_env '. + {e_in:$v[]}' >command.args
+#$(cd /home/boris/tonix/tmp/bin/eilish.dir/command && tonos-cli -j runx -m main /home/boris/tonix/proc/curproc/command.args >/home/boris/tonix/proc/curproc/co)
+tonos-cli -c /home/boris/tonix/etc/command.conf runx command.args >co
 jq -er '."Error"? // empty' co && exit $?
 jq '.sv' co >vm
 cid=`jq -rj '.p.p_pid' co`
 cmd=`jq -rj '.p.p_comm' co`
 jq '{e_in:{ofiles: .p.p_fd.fdt_ofiles,cwd:.p.p_pd.pwd_cdir,umask:.p.p_pd.pd_cmask,environ:.p.environ},p_in:.p}' co >parg
 cat cmdline >>/home/boris/tonix/var/log/commands
-$(cd /home/boris/tonix/tmp/bin/$cmd && tonos-cli -j runx -m main /home/boris/tonix/proc/curproc/parg >/home/boris/tonix/proc/curproc/cmd_out)
+tonos-cli -c /home/boris/tonix/tmp/bin/$cmd.conf runx parg >cmd_out
 jq -er '."Error"? // empty' cmd_out && exit $?
 jq '.p' cmd_out >proc_out
 jq '.e' cmd_out >penv_out

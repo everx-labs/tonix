@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.60.0;
 
 import "Shell.sol";
-import "compspec.sol";
+import "libcompspec.sol";
 
 contract compopt is Shell, compspec {
 

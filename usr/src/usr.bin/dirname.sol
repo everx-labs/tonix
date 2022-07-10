@@ -1,14 +1,12 @@
 pragma ton-solidity >= 0.61.2;
 
 import "putil.sol";
-import "../lib/path.sol";
+import "path.sol";
 
 contract dirname is putil {
 
     using path for string;
 
-//    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-//        p = p_in;
     function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];

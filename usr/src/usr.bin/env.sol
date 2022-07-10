@@ -1,13 +1,15 @@
 pragma ton-solidity >= 0.61.0;
 
 import "putil.sol";
-import "../lib/er.sol";
-import "../lib/vars.sol";
+import "er.sol";
+import "vars.sol";
 
 contract env_ is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
+
 //        string delimiter = p.flag_set("0") ? "\x00" : "\n";
         string op;
         string param;
@@ -31,10 +33,10 @@ contract env_ is putil {
             } else {
                 if (op.empty()) {
                     op = name;
-                    p.puts("op = " + name + "\n");
+                    res.fputs("op = " + name + "\n");
                 } else if (param.empty()) {
                     param = name;
-                    p.puts("param = " + name + "\n");
+                    res.fputs("param = " + name + "\n");
                 } else if (sval.empty()) {
                     sval = name;
                     optional (int) ov = stoi(sval);
@@ -43,7 +45,8 @@ contract env_ is putil {
                 }
             }
         }
-        p.puts(sout);
+        res.fputs(sout);
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _export_env(string args, string pool) internal pure returns (string exports) {

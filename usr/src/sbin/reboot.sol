@@ -1,8 +1,8 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
-import "../lib/pw.sol";
-import "../lib/unistd.sol";
+import "Utility.sol";
+import "pw.sol";
+import "unistd.sol";
 
 contract reboot is Utility {
 
@@ -32,7 +32,7 @@ contract reboot is Utility {
         s_pargs p_args;      // Process arguments.
         s_sysent[] p_sysent; // Syscall dispatch info.
         string[] environ;
-        uint16 p_xexit;      // Exit code.
+        uint8 p_xexit;      // Exit code.
         p = s_proc(p_ucred, p_fd, p_pd, p_limit, p_flag, pid, pid, p_comm, p_sysent, p_args, environ, p_xexit, n_ref, pid);
     }
 

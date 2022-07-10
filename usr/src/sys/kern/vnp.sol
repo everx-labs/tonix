@@ -1,14 +1,13 @@
 pragma ton-solidity >= 0.60.0;
 
-import "../../include/Utility.sol";
-import "../sys/vn.sol";
-import "../sys/uma.sol";
+import "Utility.sol";
+import "vn.sol";
+import "uma.sol";
 
 contract vnp is Utility {
 
     using vn for s_vnode;
 
-//    function main(s_proc p_in, s_vnode[] vt_in) external pure returns (s_proc p, s_vnode[] vt) {
     function main(s_proc p_in, s_vnode[] vt_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p, s_vnode[] vt) {
         p = p_in;
         vt = vt_in;
@@ -34,8 +33,6 @@ contract vnp is Utility {
             if (ii < vlen)
                 vv = vt[ii];
         }
-//        (uint8 cn_nameiop, uint32 cn_flags, s_proc cn_proc, s_ucred cn_cred, string cn_pnbuf,
-//            string cn_nameptr, uint8 cn_namelen, uint32 cn_hash) = cnp.unpack();
         s_ucred pu = p.p_ucred;
         s_of[] fdt = p.p_fd.fdt_ofiles;
         s_componentname rcn = s_componentname(nameiop.LOOKUP, 0, p, pu, "/", "/", 1, 11);

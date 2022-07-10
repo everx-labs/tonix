@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "Utility.sol";
 
 contract mount is Utility {
 
@@ -17,7 +17,6 @@ contract mount is Utility {
         p = p_in;
         string[] params = p.params();
         string fstype = p.opt_value("t");
-//    function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err) {
 //        (bool force, bool use_group_id, bool is_system_group, , , , , ) = arg.flag_values("fgr", flags);
         string mountinfo; // = fs.get_file_contents_at_path("/proc/self/mountinfo", inodes, data);
 //        string fstab = fs.get_file_contents_at_path("/etc/fstab", inodes, data);

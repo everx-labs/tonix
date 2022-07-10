@@ -1,13 +1,12 @@
 pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-import "../lib/vfs.sol";
+import "vfs.sol";
 
 contract mkfs is Utility {
 
     function main(s_proc p_in) external pure returns (s_proc p) {
         p = p_in;
-//        string[] params = p.params();
         string fstype = p.opt_value("t");
         if (fstype == "procfs") {
             string[][2] w = [

@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.60.0;
 
-import "../sys/protos.sol";
-import "../../lib/fmt.sol";
+import "protos.sol";
+import "fmt.sol";
 
 struct model {
     uint16 alloc_type;

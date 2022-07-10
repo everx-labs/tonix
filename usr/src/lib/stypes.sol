@@ -1,9 +1,8 @@
 pragma ton-solidity >= 0.61.2;
 import "utypes.sol";
-//import "../include/errno.sol";
-import "../include/param.sol";
-import "../sys/sys/uma.sol";
-import "../sys/sys/uma_int.sol";
+import "param.sol";
+import "uma.sol";
+import "uma_int.sol";
 import "vmem.sol";
 
 enum nameiop { LOOKUP, CREATE, DELETE, RENAME }
@@ -325,16 +324,17 @@ struct s_proc {
 }
 
 struct s_thread {
-    s_proc td_proc;         // Associated process
-    uint16 td_tid;          // Thread ID
-    uint16 td_flags;        // TDF_* flags
-    uint16 td_dupfd;        // Ret value from fdopen
-    s_ucred td_realucred;   // Reference to credentials
-    s_ucred td_ucred;       // Used credentials, temporarily switchable
-    s_plimit td_limit;      // Resource limits
-    string td_name;         // Thread name
-    uint8 td_errno;        // Error from last syscall
-    td_states td_state;     // thread state
+//    s_proc td_proc;    // Associated process
+    uint16 td_proc;    // Associated process
+    uint16 td_tid;     // Thread ID
+    uint16 td_flags;   // TDF_* flags
+    uint16 td_dupfd;   // Ret value from fdopen
+    s_ucred td_realucred; // Reference to credentials
+    s_ucred td_ucred;  // Used credentials, temporarily switchable
+    s_plimit td_limit; // Resource limits
+    string td_name;    // Thread name
+    uint8 td_errno;    // Error from last syscall
+    td_states td_state; // thread state
     uint32 tdu_retval;
 }
 

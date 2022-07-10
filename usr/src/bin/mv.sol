@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "Utility.sol";
 
 contract mv is Utility {
 

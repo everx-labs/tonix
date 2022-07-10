@@ -1,20 +1,22 @@
 pragma ton-solidity >= 0.61.0;
 
 import "putil.sol";
-import "../sys/sys/libpatch.sol";
-import "../sys/sys/libstr.sol";
+import "libpatch.sol";
+import "libstr.sol";
 
 contract patch is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         string[] params = p.params();
         if (params.length < 2) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
-            p.puts(libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n"));
-            return p;
+            res.fputs(libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n"));
+            e.ofiles[libfdt.STDOUT_FILENO] = res;
+            return e;
         }
         s_of f1 = p.fopen(params[0], "r");
         s_of f2 = p.fopen(params[1], "r");
@@ -23,13 +25,14 @@ contract patch is putil {
                 string line1 = f1.fgetln();
                 string line2 = f2.fgetln();
                 if (line1 != line2) {
-                    p.puts("< " + line1);
-                    p.puts("---");
-                    p.puts("> " + line2);
+                    res.fputs("< " + line1);
+                    res.fputs("---");
+                    res.fputs("> " + line2);
                 }
             }
         } else
             p.perror(params[0] + ": cannot open");
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

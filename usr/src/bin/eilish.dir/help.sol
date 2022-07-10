@@ -1,11 +1,11 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "Shell.sol";
-import "../../lib/libshellenv.sol";
+import "libshellenv.sol";
 
 contract help is Shell {
     using libshellenv for shell_env;
-//    function main(svm sv_in, BuiltinHelp[] help_files) external pure returns (svm sv) {
+
     function main(svm sv_in, shell_env e_in, BuiltinHelp[] help_files) external pure returns (shell_env e, svm sv) {
         sv = sv_in;
         e = e_in;
@@ -114,5 +114,4 @@ matching PATTERN, otherwise the list of help topics is printed.",
   PATTERN   Pattern specifying a help topic",
 "Returns success unless PATTERN is not found or an invalid option is given.");
     }
-
 }

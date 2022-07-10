@@ -1,8 +1,7 @@
 pragma ton-solidity >= 0.60.0;
 
-import "../../include/Utility.sol";
-//import "sys/vn.sol";
-import "../sys/uma.sol";
+import "Utility.sol";
+import "uma.sol";
 
 contract umm is Utility {
 

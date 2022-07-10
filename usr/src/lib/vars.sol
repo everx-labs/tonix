@@ -38,49 +38,67 @@ library vars {
     uint16 constant W_ARRAY     = 9;
     uint16 constant W_HASHMAP   = 10;
     uint16 constant W_FUNCTION  = 11;
-    uint16 constant W_ATTR_HASHMAP   = 12;
+    uint16 constant W_ATTR_HASHMAP = 12;
 
-    function fetch_value(string key, uint16 delimiter, string page) internal returns (string) {
+    function fetch_value(string key, uint16 , string[] page) internal returns (string) {
+        string pat = key + "=";
+        for (uint i = 0; i < page.length; i++)
+            if (str.strstr(page[i], pat) > 0)
+                return page[i];
+    }
+
+    function fetch_value_old(string key, uint16 delimiter, string page) internal returns (string) {
         string key_pattern = wrap(key, W_SQUARE);
         (string val_pattern_start, string val_pattern_end) = wrap_symbols(delimiter);
         return page.val(key_pattern + "=" + val_pattern_start, val_pattern_end);
     }
 
-    function val(string key, string page) internal returns (string) {
-        return fetch_value(key, W_DQUOTE, page);
+    function val(string key, string[] page) internal returns (string) {
+        return fetch_value(key, 0, page);
     }
 
-    function int_val(string key, string page) internal returns (uint16) {
+    function val_old(string key, string page) internal returns (string) {
+        return fetch_value_old(key, W_DQUOTE, page);
+    }
+
+    function int_val(string key, string[] page) internal returns (uint16) {
         return str.toi(fetch_value(key, W_DQUOTE, page));
     }
 
-    function function_body(string key, string page) internal returns (string) {
+    function function_body(string key, string[] page) internal returns (string) {
         return fetch_value(key, W_BRACE, page);
     }
 
-    function get_map_value(string map_name, string page) internal returns (string) {
+    function get_map_value(string map_name, string[] page) internal returns (string) {
         string s = fetch_value(map_name, W_PAREN, page);
         return str.unwrp(s);
     }
 
-    function item_value(string item) internal returns (string, string) {
+    function unmap(string page) internal returns (string[] keys, string[] values) {
+        (string[] items, ) = page.split(' ');
+        for (string item: items) {
+            (string k, string v) = item_value_old(item);
+            keys.push(k);
+            values.push(v);
+        }
+    }
+
+    function item_value_new(string item) internal returns (string, string) {
+        return item.csplit("=");
+//        return (str.unwrp(key), str.unwrp(value));
+    }
+
+    function item_value_old(string item) internal returns (string, string) {
         (string key, string value) = item.csplit("=");
         return (str.unwrp(key), str.unwrp(value));
     }
 
     function match_attr_set(string spart_attrs, string cur_attrs) internal returns (bool) {
-//        uint part_attrs_len = part_attrs.byteLength() / 2;
-//        for (uint i = 0; i < part_attrs_len; i++) {
-//            string attr_sign = part_attrs.substr(i * 2, 1);
-//            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
         bytes part_attrs = bytes(spart_attrs);
         uint part_attrs_len = part_attrs.length / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
-//            string attr_sign = part_attrs.substr(i * 2, 1);
-//            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
             byte attr_sign = part_attrs[i * 2];
             byte attr_sym = part_attrs[i * 2 + 1];
-
             bool flag_cur = str.strchr(cur_attrs, attr_sym) > 0;
             bool flag_match = (flag_cur && attr_sign == "-");
             if (!flag_match)
@@ -94,8 +112,6 @@ library vars {
         bytes part_attrs = bytes(spart_attrs);
         uint part_attrs_len = part_attrs.length / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
-//            string attr_sign = part_attrs.substr(i * 2, 1);
-//            string attr_sym = part_attrs.substr(i * 2 + 1, 1);
             byte attr_sign = part_attrs[i * 2];
             byte attr_sym = part_attrs[i * 2 + 1];
             bool flag_cur = str.strchr(cur_attrs, attr_sym) > 0;
@@ -111,6 +127,17 @@ library vars {
     }
 
     function var_record(string attrs, string name, string value) internal returns (string) {
+//        uint16 mask = get_mask_ext(attrs);
+        if (attrs.empty())
+            attrs = "--";
+//        bool is_function = str.strchr(attrs, "f") > 0;
+//        string var_value = value.empty() ? "" : "=";
+//        if (!value.empty())
+//            var_value.append(wrap(value, (mask & ATTR_ASSOC + ATTR_ARRAY) > 0 ? W_PAREN : 0));
+        return str.strchr(attrs, "f") > 0 ? name + " () " + wrap(value, W_FUNCTION) : attrs + " " + name + "=" + value;
+    }
+
+    function var_record_old(string attrs, string name, string value) internal returns (string) {
         uint16 mask = get_mask_ext(attrs);
         if (attrs == "")
             attrs = "--";
@@ -125,14 +152,32 @@ library vars {
 
     function split_var_record(string line) internal returns (string, string, string) {
         (string decl, string value) = line.csplit("=");
+        if (str.strchr(decl, ' ') > 0) {
+            (string attrs, string name) = decl.csplit(" ");
+            return (attrs, name, value);
+        } else
+            return ("", decl, value);
+    }
+
+    function split_var_record_old(string line) internal returns (string, string, string) {
+        (string decl, string value) = line.csplit("=");
         (string attrs, string name) = decl.csplit(" ");
         return (attrs, str.unwrp(name), str.unwrp(value));
     }
 
-    function get_pool_record(string name, string pool) internal returns (string) {
-        string pat = wrap(name, W_SQUARE);
-        (string[] lines, ) = pool.split("\n");
-        for (string line: lines)
+    function get_pool_index(string name, string[] pool) internal returns (uint) {
+        string pat = name + "=";
+        uint i = 0;
+        for (string line: pool) {
+            i++;
+            if (str.strstr(line, pat) > 0)
+                return i;
+        }
+    }
+
+    function get_pool_record(string name, string[] pool) internal returns (string) {
+        string pat = name + "=";
+        for (string line: pool)
             if (str.strstr(line, pat) > 0)
                 return line;
     }
@@ -146,11 +191,46 @@ library vars {
             "declare " + attrs + " " + name + var_value + "\n";
     }
 
+    function conv(string page) internal returns (string[] res) {
+        (string[] lines, ) = page.split("\n");
+        for (string line: lines) {
+            (string attrs, string name, string value) = split_var_record_old(line);
+            res.push(var_record(attrs, name, value));
+        }
+    }
+    /*function conv_arr(string page) internal returns (string[] res) {
+        (string lines[], ) = page.split("\n");
+        for (string line: lines) {
+            (string attrs, string name, string value) = split_var_record_old(line);
+            res.push(var_record(attrs, name, value));
+        }
+    }*/
+    function convert(string line) internal returns (string) {
+        (string attrs, string name, string value) = split_var_record_old(line);
+        bool is_function = str.strchr(attrs, "f") > 0;
+        string var_value = value.empty() ? "" : "=" + value;
+        return is_function ?
+            (name + " ()" + wrap(fmt.indent(value.translate(";", "\n"), 4, "\n"), W_FUNCTION)) :
+            " " + attrs + " " + name + var_value + "\n";
+    }
+
     function as_var_list(string sattrs, string[][2] entries) internal returns (string res) {
         string sa = sattrs.empty() ? "--" : sattrs;
         sa.append(" ");
         for (uint i = 0; i < entries.length; i++)
             res.append(sa + wrap(entries[i][0], W_SQUARE) + (entries[i][1].empty() ? "" : ("=" + wrap(entries[i][1], W_DQUOTE))) + "\n");
+    }
+
+    function as_arrayvar(string name, string[] entries) internal returns (string) {
+        string body = libstring.join_fields(entries, " ");
+        return "-a " + name + "=" + body;
+    }
+
+    function as_plain_list(string[][2] entries) internal returns (string[] res) {
+//        for (uint i = 0; i < entries.length; i++)
+        for (string[2] entry: entries)
+            res.push(entry[0] + "=" + entry[1]);
+//            res.push(entries[i][0] + "=" + entries[i][1]);
     }
 
     function as_hashmap(string name, string[][2] entries) internal returns (string) {
@@ -180,7 +260,17 @@ library vars {
         res = wrap(value, W_HASHMAP);
     }
 
-    function get_array_name(string value, string context) internal returns (string) {
+    function get_array_name(string value, string[] context) internal returns (string) {
+        for (string line: context) {
+            (, string name, string arr_val) = split_var_record(line);
+            (string[] items, ) = libstring.split(arr_val, " ");
+            for (string item: items)
+                if (item == value)
+                    return name;
+        }
+    }
+
+    function get_array_name_old(string value, string context) internal returns (string) {
         (string[] lines, ) = context.split("\n");
         string val_pattern = wrap(value, vars.W_SPACE);
         for (string line: lines)
@@ -189,47 +279,47 @@ library vars {
     }
 
     function set_item_value(string name, string value, string page) internal returns (string) {
-        string cur_value = val(name, page);
+        /*string cur_value = libstring.val(name, page);
         string new_record = encode_item(name, value);
-        return cur_value.empty() ? page + " " + new_record : page.translate(encode_item(name, cur_value), new_record);
+        return cur_value.empty() ? page + " " + new_record : page.translate(encode_item(name, cur_value), new_record);*/
     }
 
-    function set_var(string attrs, string token, string pg) internal returns (string) {
+    function set_var(string attrs, string token, string[] pg) internal returns (string[] res) {
         (string name, string value) = token.csplit("=");
-        string cur_record = get_pool_record(name, pg);
+        uint cur_index = get_pool_index(name, pg);
+        res = pg;
         string new_record = var_record(attrs, name, value);
-        if (cur_record.empty())
-            return pg + new_record + "\n";
-
-        (string cur_attrs, , string cur_value) = split_var_record(cur_record);
+        if (cur_index == 0) {
+            res.push(new_record);
+            return res;
+        }
+        (string cur_attrs, , string cur_value) = split_var_record(pg[cur_index - 1]);
         if (str.strchr(cur_attrs, "r") > 0)
             return pg;
-
-        cur_value = str.unwrp(cur_value);
         string new_value = !value.empty() ? value : !cur_value.empty() ? cur_value : "";
         new_record = var_record(meld_attr_set(attrs, cur_attrs), name, new_value);
-        return pg.translate(cur_record, new_record);
+        res[cur_index - 1] = new_record;
     }
 
-    function set_var_attr(string attrs, string name, string pg) internal returns (string) {
-        string cur_record = get_pool_record(name, pg);
-        if (cur_record.empty())
-            return pg + var_record(attrs, name, "") + "\n";
-
-        (string cur_attrs, , string cur_value) = split_var_record(cur_record);
+    function set_var_attr(string attrs, string name, string[] pg) internal returns (string[] res) {
+        uint cur_index = get_pool_index(name, pg);
+        if (cur_index == 0) {
+            res.push(var_record(attrs, name, ""));
+            return res;
+        }
+       (string cur_attrs, , string cur_value) = split_var_record(pg[cur_index - 1]);
         string new_record = var_record(meld_attr_set(attrs, cur_attrs), name, cur_value);
-        return pg.translate(cur_record, new_record);
+        res[cur_index - 1] = new_record;
     }
 
-    function unset_var(string name, string pg) internal returns (string) {
-        string cur_record = get_pool_record(name, pg);
-        if (cur_record.empty())
-            return pg;
-        (string cur_attrs, , ) = split_var_record(cur_record);
+    function unset_var(string name, string[] pg) internal returns (string[] res) {
+        uint cur_index = get_pool_index(name, pg);
+        if (cur_index == 0)
+            return res;
+        (string cur_attrs, , ) = split_var_record(pg[cur_index - 1]);
         if (str.strchr(cur_attrs, "r") > 0)
-            return pg;
-        else
-            return pg.translate(cur_record + "\n", "");
+            return res;
+        delete res[cur_index - 1];
     }
 
     function get_mask_ext(string sattrs) internal returns (uint16 mask) {

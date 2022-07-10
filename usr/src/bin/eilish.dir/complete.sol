@@ -19,7 +19,7 @@ contract complete is Shell {
         if (xprint || params.empty()) {
             (string[] comp_specs, ) = comp_specs_page.split("\n");
             for (string cs: comp_specs) {
-                (string comp_func, string command_list) = vars.item_value(cs);
+                (string comp_func, string command_list) = vars.item_value_old(cs);
                 command_list.trim_spaces();
                 (string[] items, ) = command_list.split(" ");
                 for (string item: items)

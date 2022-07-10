@@ -4,12 +4,15 @@ import "putil.sol";
 
 contract expand is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+//    function _main(s_proc p_in) internal override pure returns (s_proc p) {
+//        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         string[] params = p.params();
-        bool use_tab_size = p.flag_set("t");
+        (bool use_tab_size, bool convert_initial_tabs, , ) = p.flags_set("ti");
         uint16 tab_size = use_tab_size ? str.toi(p.opt_value("t")) : 8;
-        bool convert_initial_tabs = p.flag_set("i");
+//        bool convert_initial_tabs = p.flag_set("i");
         string tab_spaces = fmt.spaces(tab_size);
         string out;
         for (string param: params) {
@@ -31,9 +34,11 @@ contract expand is putil {
                         out.append(line.translate("\t", tab_spaces));
                 }
             } else
-                p.perror("cannot open");
+//                p.perror("cannot open");
+                e.perror(param);
         }
-        p.puts(out);
+        res.fputs(out);
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

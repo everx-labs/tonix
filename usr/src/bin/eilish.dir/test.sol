@@ -1,23 +1,26 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
-import "../../lib/inode.sol";
-import "../../lib/libstatmode.sol";
-
-contract test is Shell {
-
+import "pbuiltin_base.sol";
+import "inode.sol";
+import "libstatmode.sol";
+import "vars.sol";
+import "fs.sol";
+contract test is pbuiltin_base {
     using libstatmode for uint16;
 
-    function main(svm sv_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv) {
+    function main(svm sv_in, shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv, shell_env e) {
         sv = sv_in;
         s_proc p = sv.cur_proc;
-//        string[] params = p.params();
+        e = e_in;
+        string[] params = p.params();
+
         string sargs = p.p_args.ar_misc.sargs;
         string dbg;
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
+//        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
+        string[] pool = e.environ[sh.VARIABLE];
 
-        (string arg_1, string op, string arg_2) = _parse_test_args(sargs);
-        dbg.append(format("arg 1: {} op: {} arg 2: {}\n", arg_1, op, arg_2));
+        (string arg_1, byte op, string arg_2) = _parse_test_args(sargs);
+        dbg.append(format("arg 1: {} op: {} arg 2: {}\n", arg_1, bytes(op), arg_2));
         bool result;
         if (arg_2.empty()) {
             if (str.strchr("aesbcdfhLpSgukrwxOGN", op) > 0)
@@ -28,11 +31,11 @@ contract test is Shell {
                 result = false;
         }
 //        res = result ? "true\n" : "false\n";
-        p.p_xexit = result ? EXECUTE_SUCCESS : EXECUTE_FAILURE;
+        p.p_xexit = result ? EXIT_SUCCESS : EXIT_FAILURE;
         sv.cur_proc = p;
     }
 
-    function _match_mode(string op, uint16 mode) internal pure returns (bool res) {
+    function _match_mode(byte op, uint16 mode) internal pure returns (bool res) {
         if (op == "b")
 //            return ft.is_block_dev(mode);
             return mode.is_block_dev();
@@ -57,7 +60,7 @@ contract test is Shell {
         return false;
     }
 
-    function _can_access(string op, uint16 mode, uint16 user_id, uint16 group_id, uint16 uid, uint16 gid) internal pure returns (bool) {
+    function _can_access(byte op, uint16 mode, uint16 user_id, uint16 group_id, uint16 uid, uint16 gid) internal pure returns (bool) {
         bool user_owned = user_id == uid;
         bool group_owned = group_id == gid;
         if (op == "O")
@@ -75,7 +78,7 @@ contract test is Shell {
         return false;
     }
 
-    function _eval_file_unary(string op, string path, string pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
+    function _eval_file_unary(byte op, string path, string[] pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
         uint16 wd_index = vars.int_val("WD", pool);
         (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, wd_index, inodes, data);
 
@@ -99,12 +102,12 @@ contract test is Shell {
         return false;
     }
 
-    function _parse_test_args(string sargs) internal pure returns (string arg_1, string op, string arg_2) {
+    function _parse_test_args(string sargs) internal pure returns (string arg_1, byte op, string arg_2) {
         (string[] fields, uint n_fields) = sargs.split(" ");
         arg_1 = n_fields > 0 ? fields[n_fields - 1] : "";
-        string arg_op = n_fields > 1 ? fields[n_fields - 2] : "";
+        bytes arg_op = n_fields > 1 ? fields[n_fields - 2] : "";
         arg_2 = n_fields > 2 ? fields[n_fields - 3] : "";
-        op = !arg_op.empty() && arg_op.substr(0, 1) == "-" ? arg_op.substr(1) : arg_op;
+        op = !arg_op.empty() && arg_op[0] == "-" ? arg_op[1] : arg_op[0];
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

@@ -5,9 +5,8 @@ jq -r '.p_args.ar_misc.argv' proc >cmdline
 cat cmdline >>/home/boris/tonix/var/log/commands
 jq -rj '.p_comm' proc >comm
 cmd=`cat comm`
-[ -s /home/boris/tonix/tmp/bin/eilish.dir/$cmd/main.arg ] && jq '{sv_in:.}' vm | jq --slurpfile v /home/boris/tonix/tmp/bin/eilish.dir/$cmd/main.arg '. + $v[]' >$cmd.args || jq '{sv_in: .}' vm | jq --slurpfile v shell_env '. + {e_in:$v[]}' >$cmd.args
-
-$(cd /home/boris/tonix/tmp/bin/eilish.dir/$cmd && ~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main /home/boris/tonix/proc/curproc/$cmd.args >/home/boris/tonix/proc/curproc/builtin_out)
+[ -s /home/boris/tonix/tmp/bin/eilish.dir/$cmd/main.arg ] && jq '{sv_in:.}' vm | jq --slurpfile v shell_env '. + {e_in:$v[]}' | jq --slurpfile v /home/boris/tonix/tmp/bin/eilish.dir/$cmd/main.arg '. + $v[]' >$cmd.args || jq '{sv_in: .}' vm | jq --slurpfile v shell_env '. + {e_in:$v[]}' >$cmd.args
+ ~/bin/tonos-cli -c /home/boris/tonix/tmp/bin/eilish.dir/$cmd.conf runx $cmd.args >builtin_out
 jq -er '."Error"? // empty' builtin_out && exit $?
 jq -rj '.sv.cur_proc' builtin_out >proc_out
 jq -rj '.e // empty' builtin_out >shell_env_out

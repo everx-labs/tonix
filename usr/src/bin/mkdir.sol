@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "Utility.sol";
 
 contract mkdir is Utility {
 
@@ -26,7 +26,7 @@ contract mkdir is Utility {
                 if (report_actions)
                     p.puts("mkdir: created directory" + str.squote(name));
             } else if (error_if_exists)
-                errors.push(Err(0, er.EEXIST, name));
+                errors.push(Err(0, err.EEXIST, name));
         }
         for ((uint16 dir_i, string[] added_dirents): parent_dirs) {
             uint16 n_dirents = uint16(added_dirents.length);

@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.58.0;
 
 import "io.sol";
-import "../include/errno.sol";
+import "liberr.sol";
 import "libstat.sol";
 
 struct s_biobuf {
@@ -39,7 +39,7 @@ library libbio {
 //                return Bfdopen(p, f.file, mode);
                 return Bfdopen(p, uint16(i), mode);
         }
-        p.p_xexit = errno.ENOENT;
+        p.p_xexit = err.ENOENT;
     }
 
     function Bfdopen(s_proc p, uint16 fd, uint16 mode) internal returns (s_biobuf b) {
@@ -53,10 +53,10 @@ library libbio {
             if (st.st_uid == p.p_ucred.cr_uid || st.st_uid == p.p_ucred.cr_groups[0])
                 b = Binit(p, fd, mode);
             else
-                p.p_xexit = errno.EPERM;
+                p.p_xexit = err.EPERM;
         }
         if (b.h.fid == 0)
-            p.p_xexit = errno.ENOENT;
+            p.p_xexit = err.ENOENT;
     }
 
     function Binit(s_proc p, uint16 fd, uint16 mode) internal returns (s_biobuf) {

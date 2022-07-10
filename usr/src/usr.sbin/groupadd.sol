@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-import "../lib/pw.sol";
-import "../lib/gr.sol";
-import "../lib/adm.sol";
+import "pw.sol";
+import "gr.sol";
+import "adm.sol";
 
 contract groupadd is Utility {
 

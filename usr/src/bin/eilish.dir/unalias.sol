@@ -1,36 +1,22 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_special.sol";
 
 contract unalias is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[0] = e.aliases;
+    function _retrieve_pages(s_proc) internal pure override returns (uint8[]) {
+        return [sh.ALIAS];
     }
 
-    function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
-        e = e_in;
-        e.aliases = page;
-    }
-
-    function _print(s_proc, s_of f, string[] , string ) internal pure override returns (s_of res) {
+    function _print(s_proc, s_of f, string[]) internal pure override returns (s_of res) {
         res = f;
     }
-    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
-        p = p_in;
-        string alias_page = page_in;
-        bool remove_all = p.flag_set("a");
-        if (remove_all)
-            delete page;
-        else {
-            string initial_val = alias_page;
-            for (string token: params) {
-                string record = vars.get_pool_record(token, alias_page);
-                if (!record.empty())
-                    alias_page.translate(record + "\n", "");
-            }
-            if (initial_val != alias_page)
-                page.translate(page_in, alias_page);
+
+    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
+        if (!p.flag_set("a")) {
+            page = page_in;
+            for (string param: p.params())
+                page = vars.unset_var(param, page);
         }
     }
 

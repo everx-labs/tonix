@@ -1,7 +1,8 @@
 set -x
 cd /home/boris/tonix/proc/curproc
-jq -n --arg v "$@" --slurpfile sv vm '{sv_in: $sv[], input: $v}' | jq --slurpfile v /home/boris/tonix/proc/curproc/shell_env '. + {e_in:$v[]}' >eilish.args
-$(cd /home/boris/tonix/tmp/bin/eilish && tonos-cli -j runx -m main /home/boris/tonix/proc/curproc/eilish.args >/home/boris/tonix/proc/curproc/sa.out)
+jq -n --arg v "$@" --slurpfile sv vm '{sv_in: $sv[], input: $v}' | jq --slurpfile v shell_env '. + {e_in:$v[]}' >eilish.args
+#$(cd /home/boris/tonix/tmp/bin/eilish && tonos-cli -j runx -m main /home/boris/tonix/proc/curproc/eilish.args >/home/boris/tonix/proc/curproc/sa.out)
+tonos-cli -c /home/boris/tonix/etc/eilish.conf runx -m main eilish.args >sa.out
 jq -er '."Error"? // empty' sa.out && exit $?
 jq '.sv' sa.out >vm
 jq '.e' sa.out >shenv_out

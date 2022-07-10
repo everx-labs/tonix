@@ -1,10 +1,10 @@
 pragma ton-solidity >= 0.61.2;
 
 import "Shell.sol";
-import "../../lib/xio.sol";
-import "../../lib/ustd.sol";
-import "../../sys/sys/libkeg.sol";
-import "../../lib/libshellenv.sol";
+import "xio.sol";
+import "ustd.sol";
+import "libkeg.sol";
+import "libshellenv.sol";
 
 contract command is Shell {
 

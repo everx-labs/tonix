@@ -1,13 +1,16 @@
 pragma ton-solidity >= 0.61.0;
 
 import "putil.sol";
-import "../lib/adm.sol";
-import "../lib/unistd.sol";
+import "adm.sol";
+import "unistd.sol";
 
 contract ps is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+//    function _main(s_proc p_in) internal override pure returns (s_proc p) {
+//        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on,
             bool default_format, bool user_message_status, , bool users_logged_in) = p.flag_values("bHlqsTwu");
         mapping (uint16 => Login) utmp;
@@ -21,11 +24,12 @@ contract ps is putil {
                 if (system_login_proc && user_id > adm.login_def_value(adm.SYS_UID_MAX))
                     continue;
                 string ui_user_name = user[user_id];
-                p.puts(ui_user_name + "\t");
+                res.fputs(ui_user_name + "\t");
                 count++;
             }
-            p.puts(format("\n# users = {}\n", count));
-            return p;
+            res.fputs(format("\n# users = {}\n", count));
+            e.ofiles[libfdt.STDOUT_FILENO] = res;
+            return e;
         }
 
         string[][] table;
@@ -50,8 +54,9 @@ contract ps is putil {
             table.push([ui_user_name, "+", str.toa(tty_id), fmt.ts(login_time), str.toa(process_id)]);
         }
 
-        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
-        p.puts(format("\nPID: {}\n", p_pid));
+        res.fputs(fmt.format_table_ext(columns_format, table, " ", "\n"));
+        res.fputs(format("\nPID: {}\n", p_pid));
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

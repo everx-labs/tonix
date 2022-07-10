@@ -1,20 +1,16 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 
-contract shift is Shell {
+contract shift is pbuiltin {
 
-    using str for string;
+    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+        e = e_in;
+        string[] pool = e.environ[sh.ARRAYVAR];
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], 3);
-        string[] params = p.params();
         uint16 shift_count = params.empty() ? 1 : str.toi(params[0]);
         if (shift_count == 0)
-            return sv;
+            return e;
 
         string cmd = vars.val("COMMAND", pool);
         string pos_params = vars.val("PARAMS", pool);
@@ -49,7 +45,7 @@ contract shift is Shell {
         p.p_args.ar_misc = s_ar_misc(input, sflags, sargs, uint16(n_new), params, prev_misc.ec, last_param,
             dbg_x, redir_in, redir_out, prev_misc.pos_args, prev_misc.opt_values); // Fix this after streamlining args passing
 
-        sv.cur_proc = p;
+//        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

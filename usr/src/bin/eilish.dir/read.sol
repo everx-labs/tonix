@@ -1,21 +1,18 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 
-contract read is Shell {
+contract read is pbuiltin {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
+    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+        e = e_in;
+        string[] page = e.environ[sh.VARIABLE];
+
         bool assign_to_array = p.flag_set("a");
 //        bool use_delimiter = p.flag_set("d");
         bool echo_input = !p.flag_set("s");
         string delimiter = " ";
         string sattrs = assign_to_array ? "-a" : "--";
-
-        string page = vmem.vmem_fetch_page(sv.vmem[1], 9);
-
         string input;
         s_of f = p.fdopen(0, "r");
         if (!f.ferror())
@@ -37,10 +34,9 @@ contract read is Shell {
                     page = vars.set_var(sattrs, params[i + 1] + "=" + stail, page);
             }
         }
-        sv.vmem[1].vm_pages[9] = page;
+        e.environ[sh.VARIABLE] = page;
         if (echo_input)
             p.puts(input);
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "Utility.sol";
 
 contract rm is Utility {
 
@@ -15,15 +15,13 @@ contract rm is Utility {
         Err[] errors;
         Ar[] ars;
         string out;
-        (uint16 wd, , string flags, ) = p.get_env();
+        (uint16 wd, , , ) = p.get_env();
         Arg[] arg_list;
         for (string param: p.params()) {
             (uint16 index, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
             arg_list.push(Arg(param, t, index, parent, dir_index));
         }
-        bool verbose = arg.flag_set("v", flags);
-        bool remove_empty_dirs = arg.flag_set("d", flags);
-        bool force_removal = arg.flag_set("f", flags);
+        (bool verbose, bool remove_empty_dirs, bool force_removal, ) = parg.flags_set(p, "vdf");
 
         mapping (uint16 => string[]) victims;
 
@@ -36,9 +34,9 @@ contract rm is Utility {
                             ars.push(Ar(aio.UNLINK, iop, s, ""));
                             victims[parent].push(udirent.dir_entry_line(iop, s, t));
                         } else
-                            errors.push(Err(0, er.ENOTEMPTY, s));
+                            errors.push(Err(0, err.ENOTEMPTY, s));
                     } else
-                        errors.push(Err(0, er.EISDIR, s));
+                        errors.push(Err(0, err.EISDIR, s));
                 } else {
                     ars.push(Ar(aio.UNLINK, iop, s, ""));
                     if (inodes[iop].n_links < 2)

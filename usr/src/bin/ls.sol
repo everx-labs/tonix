@@ -1,28 +1,29 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "Utility.sol";
 
 contract ls is Utility {
 
     function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
         p = p_in;
-        (uint16 wd, string[] params, string flags, ) = p.get_env();
+        (uint16 wd, , , ) = p.get_env();
+        string[] params = p.params();
         if (params.empty())
             params.push(p.env_value("PWD"));
         (mapping (uint16 => string) user, mapping (uint16 => string) group) = p.get_users_groups();
 
         for (string param: params) {
             (uint16 index, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
-            s_of f = p.fopen(param, "r");
+//            s_of f = p.fopen(param, "r");
             if (t != ft.FT_UNKNOWN)
-                p.puts(_ls(flags, Arg(param, t, index, parent, dir_index), inodes, data, user, group) + "\n");
+                p.puts(_ls(p, Arg(param, t, index, parent, dir_index), inodes, data, user, group) + "\n");
             else
                 p.perror(param + ": cannot open");
         }
     }
 
-    function _ls_sort_rating(string f, Inode inode, string name, uint16 dir_idx) private pure returns (uint rating) {
-        (bool use_ctime, bool largest_first, bool unsorted, bool no_sort, bool newest_first, bool reverse_order, , ) = arg.flag_values("cSUftr", f);
+    function _ls_sort_rating(s_proc p, Inode inode, string name, uint16 dir_idx) private pure returns (uint rating) {
+        (bool use_ctime, bool largest_first, bool unsorted, bool no_sort, bool newest_first, bool reverse_order, , ) = p.flag_values("cSUftr");
         bool directory_order = unsorted || no_sort;
         uint rating_lo = directory_order ? dir_idx : name.alpha_rating(8);
         uint rating_hi;
@@ -36,13 +37,13 @@ contract ls is Utility {
             rating = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF - rating;
     }
 
-    function _ls_populate_line(string f, Inode ino, uint16 index, string name, uint8 file_type, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string[] l) {
-        (bool use_double_quotes, bool no_double_quotes, bool slash_to_dirs, bool classify, bool use_ctime, , , ) = arg.flag_values("QNpFc", f);
+    function _ls_populate_line(s_proc p, Inode ino, uint16 index, string name, uint8 file_type, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string[] l) {
+        (bool use_double_quotes, bool no_double_quotes, bool slash_to_dirs, bool classify, bool use_ctime, , , ) = p.flag_values("QNpFc");
         bool double_quotes = use_double_quotes && !no_double_quotes;
         bool append_slash_to_dirs = slash_to_dirs || classify;
 
         (bool long_fmt, bool numeric, bool group_only, bool owner_only, bool print_allocated_size, bool print_index_node, bool no_group_names,
-            bool human_readable) = arg.flag_values("lngosiGh", f);
+            bool human_readable) = p.flag_values("lngosiGh");
         bool long_format = long_fmt || numeric || group_only || owner_only;
 
         (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
@@ -83,28 +84,28 @@ contract ls is Utility {
         l.push(name);
     }
 
-    function _ls(string f, Arg ag, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string out) {
+    function _ls(s_proc p, Arg ag, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string out) {
         (string s, uint8 t, uint16 index, , ) = ag.unpack();
         Inode dir_inode = inodes[index];
         string[][] table;
         Arg[] sub_args;
-        if (t == ft.FT_REG_FILE || t == ft.FT_DIR && arg.flag_set("d", f)) {
-            if (!_ls_should_skip(f, s))
-                table.push(_ls_populate_line(f, dir_inode, index, s, t, user, group));
+        if (t == ft.FT_REG_FILE || t == ft.FT_DIR && p.flag_set("d")) {
+            if (!_ls_should_skip(p, s))
+                table.push(_ls_populate_line(p, dir_inode, index, s, t, user, group));
         } else if (t == ft.FT_DIR) {
             string ret;
-            (ret, sub_args) = _list_dir(f, ag, dir_inode, inodes, data, user, group);
+            (ret, sub_args) = _list_dir(p, ag, dir_inode, inodes, data, user, group);
             out.append(ret);
         }
 
         for (Arg sub_arg: sub_args)
-            out.append("\n" + sub_arg.path + ":\n" + _ls(f, sub_arg, inodes, data, user, group));
+            out.append("\n" + sub_arg.path + ":\n" + _ls(p, sub_arg, inodes, data, user, group));
     }
 
-    function _list_dir(string f, Arg ag, Inode inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string out, Arg[] sub_args) {
+    function _list_dir(s_proc p, Arg ag, Inode inode, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data, mapping (uint16 => string) user, mapping (uint16 => string) group) private pure returns (string out, Arg[] sub_args) {
         (string s, uint8 t, uint16 index, , ) = ag.unpack();
         (bool recurse, bool long_fmt, bool numeric, bool group_only, bool owner_only, bool print_allocated_size,
-            bool delim_newline, bool delim_comma) = arg.flag_values("Rlngos1m", f);
+            bool delim_newline, bool delim_comma) = p.flag_values("Rlngos1m");
         bool long_format = long_fmt || numeric || group_only || owner_only;
         string sp = long_format || delim_newline ? "\n" : delim_comma ? ", " : "  ";
         string[][] table;
@@ -113,9 +114,9 @@ contract ls is Utility {
         bool count_totals = long_format || print_allocated_size;
         uint16 total_blocks;
 
-        if (t == ft.FT_REG_FILE || t == ft.FT_DIR && arg.flag_set("d", f)) {
-            if (!_ls_should_skip(f, s))
-                table.push(_ls_populate_line(f, inode, index, s, t, user, group));
+        if (t == ft.FT_REG_FILE || t == ft.FT_DIR && p.flag_set("d")) {
+            if (!_ls_should_skip(p, s))
+                table.push(_ls_populate_line(p, inode, index, s, t, user, group));
         } else if (t == ft.FT_DIR) {
             (DirEntry[] contents, int16 status) = udirent.read_dir_data(data[index]);
             if (status < 0) {
@@ -126,26 +127,26 @@ contract ls is Utility {
 
             for (uint16 j = 0; j < len; j++) {
                 (uint8 sub_ft, string sub_name, uint16 sub_index) = contents[j].unpack();
-                if (_ls_should_skip(f, sub_name) || sub_ft == ft.FT_UNKNOWN)
+                if (_ls_should_skip(p, sub_name) || sub_ft == ft.FT_UNKNOWN)
                     continue;
                 if (recurse && sub_ft == ft.FT_DIR && j > 1)
                     sub_args.push(Arg(s + "/" + sub_name, sub_ft, sub_index, index, j));
                 if (count_totals)
                     total_blocks += inodes[sub_index].n_blocks;
-                ds[_ls_sort_rating(f, inodes[sub_index], sub_name, j)] = j;
+                ds[_ls_sort_rating(p, inodes[sub_index], sub_name, j)] = j;
             }
 
-            optional(uint, uint16) p = ds.min();
-            while (p.hasValue()) {
-                (uint xk, uint16 j) = p.get();
+            optional(uint, uint16) pp = ds.min();
+            while (pp.hasValue()) {
+                (uint xk, uint16 j) = pp.get();
                 if (j >= len) {
                     out.append(format("Error: invalid entry {}\n", j));
                     continue;
                 }
                 (uint8 ftt, string name, uint16 i) = contents[j].unpack();
 
-                table.push(_ls_populate_line(f, inodes[i], i, name, ftt, user, group));
-                p = ds.next(xk);
+                table.push(_ls_populate_line(p, inodes[i], i, name, ftt, user, group));
+                pp = ds.next(xk);
             }
         }
         out.aif(count_totals, format("total {}\n", total_blocks));
@@ -153,8 +154,8 @@ contract ls is Utility {
     }
 
     /* Decides whether ls should skip this entry with the set of flags */
-    function _ls_should_skip(string f, string name) private pure returns (bool) {
-        (bool notice_dot_starters, bool classify, bool skip_dot_dots, bool ignore_blackups, , , , ) = arg.flag_values("afAB", f);
+    function _ls_should_skip(s_proc p, string name) private pure returns (bool) {
+        (bool notice_dot_starters, bool classify, bool skip_dot_dots, bool ignore_blackups, , , , ) = p.flag_values("afAB");
         bool print_dot_starters = notice_dot_starters || classify;
 
         uint len = name.strlen();

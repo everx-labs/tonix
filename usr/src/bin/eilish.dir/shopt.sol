@@ -1,37 +1,29 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_special.sol";
 
 contract shopt is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[13] = e.options;
+    function _retrieve_pages(s_proc) internal pure override returns (uint8[]) {
+        return [sh.SHOPT];
     }
 
-    function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
-        e = e_in;
-        e.options = page;
-    }
-
-//    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
-//        p = p_in;
-    function _print(s_proc p, s_of f, string[] params, string page) internal pure override returns (s_of res) {
+    function _print(s_proc p, s_of f, string[] page) internal pure override returns (s_of res) {
         res = f;
         bool print_reusable = p.flag_set("p");
         bool set_opt = p.flag_set("s");
         bool unset_opt = p.flag_set("u");
         string sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
 
-        if (params.empty()) {
-            (string[] lines, ) = page.split("\n");
-            for (string line: lines) {
+        if (p.params().empty()) {
+            for (string line: page) {
                 (string attrs, string name, ) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
                     res.fputs(print_reusable ? "shopt " + attrs + " " + name :
                     name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
             }
         }
-        for (string param: params) {
+        for (string param: p.params()) {
             string line = vars.get_pool_record(param, page);
             if (!line.empty()) {
                 (string attrs, string name, ) = vars.split_var_record(line);
@@ -43,13 +35,12 @@ contract shopt is pbuiltin_special {
         }
     }
 
-    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
-        p = p_in;
+    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
         bool set_opt = p.flag_set("s");
         bool unset_opt = p.flag_set("u");
         page = page_in;
         string sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
-        for (string param: params)
+        for (string param: p.params())
             page = vars.set_var(sattrs, param, page);
       }
 

@@ -1,36 +1,35 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
-//import "Shell.sol";
-//contract type_ is Shell {
 import "pbuiltin.sol";
-import "../../lib/vars.sol";
+import "vars.sol";
 contract type_ is pbuiltin {
 
-//    function main(svm sv_in) external pure returns (svm sv) {
     function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         bool f_terse = p.flag_set("t");
-        s_of f = e.fopen("pool", "r");
+        /*s_of f = e.fopen("pool", "r");
         string pool;
         if (!f.ferror()) {
             pool = f.fgets(0);
         } else
-            e.perror("Failed to read objects pool");
+            e.perror("Failed to read objects pool");*/
 //        (bool all_locations, bool func_lookup, bool disk_file_name, bool path_search, , , , ) = arg.flag_values("afpP", flags);
 
+        string[] index = e.environ[sh.ARRAYVAR];
         for (string arg: params) {
-            string t = vars.get_array_name(arg, pool);
+            string t = vars.get_array_name(arg, index);
             string value;
             if (t == "keyword")
                 value = f_terse ? "keyword" : (arg + " is a shell keyword");
-            else if (t == "alias")
-                value = f_terse ? "alias" : (arg + " is aliased to `" + vars.val(arg, pool) + "\'");
-            else if (t == "function") {
-                value = f_terse ? "function" : (arg + " is a function\n" + vars.print_reusable(vars.get_pool_record(arg, pool)));
+            else if (t == "alias") {
+                value = f_terse ? "alias" : (arg + " is aliased to `" + vars.val(arg, e.environ[sh.ALIAS]) + "\'");
+            } else if (t == "function") {
+//                value = f_terse ? "function" : (arg + " is a function\n" + vars.print_reusable(vars.get_pool_record(arg, pool)));
+                value = f_terse ? "function" : (arg + " is a function\n" + vars.val(arg, e.environ[sh.FUNCTION]));
             } else if (t == "builtin")
                 value = f_terse ? "builtin" : (arg + " is a shell builtin");
             else if (t == "command") {
-                string path_map = vars.get_pool_record(arg, pool);
+                string path_map = vars.get_pool_record(arg, e.environ[sh.COMMAND]);
                 string path;
                 if (!path_map.empty())
                     (, path, ) = vars.split_var_record(path_map);

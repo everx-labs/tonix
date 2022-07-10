@@ -5,7 +5,7 @@ import "Shell.sol";
 contract builtin is Shell {
 
     function main(svm sv_in, string args) external pure returns (svm sv, string res) {
-        sv = sv_in;
+        /*sv = sv_in;
         s_proc p = sv.cur_proc;
         string cmd = vars.val("COMMAND", args);
         string sargs = vars.val("@", args);
@@ -20,11 +20,11 @@ contract builtin is Shell {
             fn = "main";
             }
         res = "./bin/eilish.dir/" + cmd + " " + sargs;
-        sv.cur_proc = p;
+        sv.cur_proc = p;*/
     }
 
     function open_dictionary(svm sv_in, string args) external pure returns (svm sv, string res) {
-        sv = sv_in;
+        /*sv = sv_in;
         s_proc p = sv.cur_proc;
         string cmd = vars.val("COMMAND", args);
         string sargs = vars.val("@", args);
@@ -32,11 +32,11 @@ contract builtin is Shell {
         if (cmd == "type" || cmd == "echo" || cmd == "pwd" || cmd == "compgen")
             fn = "main";
         res = "./bin/eilish.dir/" + cmd + " " + fn + " " + sargs;
-        sv.cur_proc = p;
+        sv.cur_proc = p;*/
     }
 
     function run_builtin(svm sv_in, string args, string builtins) external pure returns (svm sv, string res) {
-        sv = sv_in;
+        /*sv = sv_in;
         s_proc p = sv.cur_proc;
         string flags = vars.val("FLAGS", args);
         string cmd = vars.val("COMMAND", args);
@@ -77,7 +77,7 @@ contract builtin is Shell {
         else if (cmd == "command")
             fn = f_v || f_V ? "print" : "execute_command";
         else if (cmd == "ulimit") {
-            (bool v1, , , , , , , ) = arg.flag_values("12345678", flags);
+            (bool v1, , , , , , , ) = p.flag_values("12345678");
             if (params.empty()) fn = "print";
             else if (v1) fn = "v1";
             else fn = "execute";
@@ -92,8 +92,8 @@ contract builtin is Shell {
         if (cmd == "declare" || cmd == "export" || cmd == "readonly")
             page = f_f ? "functions" : fn == "print" ? "pool" : "vars";
         else if (cmd == "complete" || cmd == "compgen") {
-            (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = arg.flag_values("abcdefgj", flags);
-            (bool fk, bool fs, bool fu, bool fv, , , , ) = arg.flag_values("ksuv", flags);
+            (bool fa, bool fb, bool fc, bool fd, bool fe, bool ff, bool fg, bool fj) = p.flag_values("abcdefgj");
+            (bool fk, bool fs, bool fu, bool fv, , , , ) = p.flag_values("ksuv");
             page =  fa ? "aliases" :
                     fb ? "builtins" :
                     fc ? "comp_spec" :
@@ -108,7 +108,7 @@ contract builtin is Shell {
                     fv ? "vars" : "";
         }
         res = "./builtin " + cmd + " " + fn + " " + page + " " + sargs;
-        sv.cur_proc = p;
+        sv.cur_proc = p;*/
     }
 
     function _get_arg_value_uint16(string arg) internal pure returns (uint16 ec, uint16 val) {

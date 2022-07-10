@@ -1,45 +1,30 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_special.sol";
 
 contract unset is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
-        if (p.flag_set("f"))
-            pages[9] = e.functions;
-        else
-            pages[8] = e.vars;
+    function _retrieve_pages(s_proc p) internal pure override returns (uint8[]) {
+        return [p.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
     }
 
-    function _update_shell_env(shell_env e_in, uint8 n, string page) internal pure override returns (shell_env e) {
-        e = e_in;
-        if (n == 8)
-            e.vars = page;
-        else if (n == 9)
-            e.functions = page;
-    }
-
-    function _print(s_proc p, s_of f, string[] , string page) internal pure override returns (s_of res) {
+    function _print(s_proc, s_of f, string[]) internal pure override returns (s_of res) {
         res = f;
-        p.puts(page);
     }
 
-    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
-        p = p_in;
+    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
         bool unset_vars = p.flag_set("v");
         bool unset_functions = p.flag_set("f");
         string sattrs = unset_functions ? "-f" : unset_vars ? "+f" : "";
         page = page_in;
-            for (string arg: params) {
-                string line = vars.get_pool_record(arg, page);
-                if (!line.empty()) {
-                    (string attrs, ) = line.csplit(" ");
-                    if (vars.match_attr_set(sattrs, attrs)) {
-                        page.translate(line + "\n", "");
-                    }
-                } else
-                    p.perror(arg + " not found");
+        for (string arg: p.params()) {
+            string line = vars.get_pool_record(arg, page);
+            if (!line.empty()) {
+                (string attrs, ) = line.csplit(" ");
+                if (vars.match_attr_set(sattrs, attrs))
+                    page = vars.unset_var(arg, page);
             }
+        }
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

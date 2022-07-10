@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.62.0;
 
 // Values for COMPSPEC actions.  These are things the shell knows how to build internally
 library libcompspec {

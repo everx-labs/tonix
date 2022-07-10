@@ -1,15 +1,13 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 
-contract source is Shell {
+contract source is pbuiltin {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
-
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
+    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+//        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
+        e = e_in;
+        string[] pool = e.environ[sh.SPECVARS];
         string file_contents;
         s_of f = p.fdopen(0, "r");
         if (!f.ferror())
@@ -40,7 +38,7 @@ contract source is Shell {
         }
         //res = exec_cmd; // TODO: apply to redirections
 
-        sv.cur_proc = p;
+//        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

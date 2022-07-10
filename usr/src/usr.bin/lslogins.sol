@@ -1,16 +1,17 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../lib/adm.sol";
-import "../lib/gr.sol";
-import "../lib/unistd.sol";
+import "adm.sol";
+import "gr.sol";
+import "unistd.sol";
 import "putil.sol";
 
 contract lslogins is putil {
 
     using unistd for s_proc;
 
-    function _main(s_proc p_in) internal pure override returns (s_proc p) {
-        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         string[] params = p.params();
         (bool flag_system, bool flag_user, bool colon, bool newline, bool raw, bool nulll, , ) = p.flag_values("sucnrz");
         bool print_system = flag_system || !flag_user;
@@ -25,7 +26,7 @@ contract lslogins is putil {
         field_separator.aif(nulll, "\x00");
         if (field_separator.strlen() > 1) {
             p.perror("mutually exclusive arguments: -c -n -r -z");
-            return p;
+            return e;
         }
         bool formatted_table = field_separator.empty();
         bool print_all = (print_system || print_user) && params.empty();
@@ -63,7 +64,8 @@ contract lslogins is putil {
                     ["Shell:", pw_shell], ["Home directory:", pw_dir], ["Primary group:", pw_name], ["GID:", str.toa(pw_gid)]];
             }
         }
-        p.puts(fmt.format_table_ext(columns_format, table, field_separator, "\n"));
+        res.fputs(fmt.format_table_ext(columns_format, table, field_separator, "\n"));
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

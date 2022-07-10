@@ -1,17 +1,16 @@
 pragma ton-solidity >= 0.61.0;
 
 import "putil.sol";
-//import "../lib/parg.sol";
-import "../lib/libstat.sol";
-import "../lib/ft.sol";
+import "libstat.sol";
+import "ft.sol";
 
 contract lsof is putil {
 
     using libstat for s_stat;
-//    using parg for s_proc;
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         (bool ppid, bool fsize, bool foffset, bool numuid) = p.flags_set("Rsol");
         (mapping (uint16 => string) user, ) = p.get_users_groups();
         (, s_xfiledesc p_fd, , , , uint16 p_pid, uint16 p_oppid, string p_comm, , , , , , ) = p.unpack();
@@ -29,7 +28,8 @@ contract lsof is putil {
             out.append(format("{}\t{}\t{}\t{}\t{}{}\t{}\t{},{}\t{}\t{}\t{}\n", p_comm, p_pid, ppid ? str.toa(p_oppid) : "", numuid ? str.toa(st_uid) : user[st_uid], file, sm, ft.ft_desc(st_mode),
                 st_dev >> 8, st_dev & 0xFF, sizoff, st_ino, path));
         }
-        p.puts(out);
+        res.fputs(out);
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

@@ -9,8 +9,8 @@ import "ucred.sol";
 import "io.sol";
 import "libsyscall.sol";
 import "sbuf.sol";
-import "../include/param.sol";
-import "../include/conf.sol";
+import "param.sol";
+import "conf.sol";
 
 struct s_crypt_data {
     bool initialized;  // For compatibility with glibc.
@@ -240,10 +240,10 @@ library unistd {
         }
         p.p_xexit = err.EBADF;
     }
-    function confstr(s_proc p, string[122] conf, uint16 name, uint16 len) internal returns (string buf) {
-        if (name > sconf._SC_CPUSET_SIZE)
+    function confstr(s_proc p, string[122] sconf, uint16 name, uint16 len) internal returns (string buf) {
+        if (name > conf._SC_CPUSET_SIZE)
             p.p_xexit = err.EINVAL;
-        buf = conf[name];
+        buf = sconf[name];
         return buf.byteLength() < len ? buf : buf.substr(0, len);
     }
     function getopt(s_proc p, uint16, string[], string ) internal returns (uint16) {}
@@ -498,7 +498,7 @@ library unistd {
         uint8 td_errno;        // Error from last syscall.
         td_states td_state;     // thread state
         uint32 tdu_retval;
-        s_thread t = s_thread(p, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);
+        s_thread t = s_thread(p.p_pid, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);
         if (!td_name.empty())
             t.do_syscall(number, scargs);
         return t;

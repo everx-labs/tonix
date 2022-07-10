@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.57.0;
 
-import "env.sol";
+import "libenv.sol";
 //import "xio.sol";
 import "er.sol";
 import "sb.sol";
@@ -9,11 +9,11 @@ import "sb.sol";
 library arg {
 
     using libstring for string;
-    function flag_set(string name, string flags) internal returns (bool) {
+    /*function flag_set(string name, string flags) internal returns (bool) {
         return flags.empty() ? false : str.strchr(flags, name) > 0;
-    }
+    }*/
 
-    function flag_values(string flags_query, string flags_set) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
+    /*function flag_values(string flags_query, string flags_set) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
         uint len = flags_query.byteLength();
         bool[] tmp;
         for (uint i = 0; i < len; i++)
@@ -26,7 +26,7 @@ library arg {
                 len > 5 ? tmp[5] : false,
                 len > 6 ? tmp[6] : false,
                 len > 7 ? tmp[7] : false);
-    }
+    }*/
 
     function get_args(string sarg) internal returns (string[] args, string flags, string argv) {
         flags = env.get("FLAGS", sarg);

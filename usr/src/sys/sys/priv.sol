@@ -1,12 +1,10 @@
-pragma ton-solidity >= 0.58.0;
-import "../../lib/stypes.sol";
+pragma ton-solidity >= 0.61.2;
+import "stypes.sol";
 library priv {
 
-    // The remaining privileges typically correspond to one or a small
-    // number of specific privilege checks, and have (relatively) precise
-    // meanings.  They are loosely sorted into a set of base system
-    // privileges, such as the ability to reboot, and then loosely by
-    // subsystem, indicated by a subsystem name.
+    // The remaining privileges typically correspond to one or a small number of specific privilege checks,
+    // and have (relatively) precise meanings. They are loosely sorted into a set of base system privileges,
+    // such as the ability to reboot, and then loosely by subsystem, indicated by a subsystem name.
     uint16 constant _PRIV_LOWEST            = 1;
     uint16 constant _PRIV_ROOT              = 1;   // Removed.
     uint16 constant PRIV_ACCT               = 2;   // Manage process accounting.
@@ -178,89 +176,89 @@ library priv {
     uint16 constant PRIV_NET_VXLAN          = 420; // Administer vxlan.
     uint16 constant PRIV_NET_SETLANPCP      = 421; // Set LAN priority.
     uint16 constant PRIV_NET_SETVLANPCP     = PRIV_NET_SETLANPCP; // Alias Set VLAN priority
-    uint16 constant PRIV_NET80211_VAP_GETKEY    = 440; // Query VAP 802.11 keys.
-    uint16 constant PRIV_NET80211_VAP_MANAGE    = 441; // Administer 802.11 VAP
-    uint16 constant PRIV_NET80211_VAP_SETMAC    = 442; // Set VAP MAC address
-    uint16 constant PRIV_NET80211_CREATE_VAP    = 443; // Create a new VAP
+    uint16 constant PRIV_NET80211_VAP_GETKEY = 440; // Query VAP 802.11 keys.
+    uint16 constant PRIV_NET80211_VAP_MANAGE = 441; // Administer 802.11 VAP
+    uint16 constant PRIV_NET80211_VAP_SETMAC = 442; // Set VAP MAC address
+    uint16 constant PRIV_NET80211_CREATE_VAP = 443; // Create a new VAP
     uint16 constant _PRIV_NETATALK_RESERVEDPORT = 450; // Bind low port number.
-    uint16 constant PRIV_NETATM_CFG             = 460;
-    uint16 constant PRIV_NETATM_ADD             = 461;
-    uint16 constant PRIV_NETATM_DEL             = 462;
-    uint16 constant PRIV_NETATM_SET             = 463;
-    uint16 constant PRIV_NETBLUETOOTH_RAW       = 470; // Open raw bluetooth socket.
-    uint16 constant PRIV_NETGRAPH_CONTROL       = 480; // Open netgraph control socket.
-    uint16 constant PRIV_NETGRAPH_TTY           = 481; // Configure tty for netgraph.
-    uint16 constant PRIV_NETINET_RESERVEDPORT   = 490; // Bind low port number.
-    uint16 constant PRIV_NETINET_IPFW           = 491; // Administer IPFW firewall.
-    uint16 constant PRIV_NETINET_DIVERT         = 492; // Open IP divert socket.
-    uint16 constant PRIV_NETINET_PF             = 493; // Administer pf firewall.
-    uint16 constant PRIV_NETINET_DUMMYNET       = 494; // Administer DUMMYNET.
-    uint16 constant PRIV_NETINET_CARP           = 495; // Administer CARP.
-    uint16 constant PRIV_NETINET_MROUTE         = 496; // Administer multicast routing.
-    uint16 constant PRIV_NETINET_RAW            = 497; // Open netinet raw socket.
-    uint16 constant PRIV_NETINET_GETCRED        = 498; // Query netinet pcb credentials.
-    uint16 constant PRIV_NETINET_ADDRCTRL6      = 499; // Administer IPv6 address scopes.
-    uint16 constant PRIV_NETINET_ND6            = 500; // Administer IPv6 neighbor disc.
-    uint16 constant PRIV_NETINET_SCOPE6         = 501; // Administer IPv6 address scopes.
-    uint16 constant PRIV_NETINET_ALIFETIME6     = 502; // Administer IPv6 address lifetimes.
-    uint16 constant PRIV_NETINET_IPSEC          = 503; // Administer IPSEC.
-    uint16 constant PRIV_NETINET_REUSEPORT      = 504; // Allow [rapid] port/address reuse.
-    uint16 constant PRIV_NETINET_SETHDROPTS     = 505; // Set certain IPv4/6 header options.
-    uint16 constant PRIV_NETINET_BINDANY        = 506; // Allow bind to any address.
-    uint16 constant PRIV_NETINET_HASHKEY        = 507; // Get and set hash keys for IPv4/6.
-    uint16 constant _PRIV_NETIPX_RESERVEDPORT   = 520; // Bind low port number.
-    uint16 constant _PRIV_NETIPX_RAW            = 521; // Open netipx raw socket.
-    uint16 constant PRIV_NETNCP                 = 530; // Use another user's connection.
-    uint16 constant PRIV_NETSMB                 = 540; // Use another user's connection.
-    uint16 constant PRIV_VM86_INTCALL           = 550; // Allow invoking vm86 int handlers.
-    uint16 constant _PRIV_RESERVED0             = 560;
-    uint16 constant _PRIV_RESERVED1             = 561;
-    uint16 constant _PRIV_RESERVED2             = 562;
-    uint16 constant _PRIV_RESERVED3             = 563;
-    uint16 constant _PRIV_RESERVED4             = 564;
-    uint16 constant _PRIV_RESERVED5             = 565;
-    uint16 constant _PRIV_RESERVED6             = 566;
-    uint16 constant _PRIV_RESERVED7             = 567;
-    uint16 constant _PRIV_RESERVED8             = 568;
-    uint16 constant _PRIV_RESERVED9             = 569;
-    uint16 constant _PRIV_RESERVED10            = 570;
-    uint16 constant _PRIV_RESERVED11            = 571;
-    uint16 constant _PRIV_RESERVED12            = 572;
-    uint16 constant _PRIV_RESERVED13            = 573;
-    uint16 constant _PRIV_RESERVED14            = 574;
-    uint16 constant _PRIV_RESERVED15            = 575;
-    uint16 constant PRIV_MODULE0                = 600;
-    uint16 constant PRIV_MODULE1                = 601;
-    uint16 constant PRIV_MODULE2                = 602;
-    uint16 constant PRIV_MODULE3                = 603;
-    uint16 constant PRIV_MODULE4                = 604;
-    uint16 constant PRIV_MODULE5                = 605;
-    uint16 constant PRIV_MODULE6                = 606;
-    uint16 constant PRIV_MODULE7                = 607;
-    uint16 constant PRIV_MODULE8                = 608;
-    uint16 constant PRIV_MODULE9                = 609;
-    uint16 constant PRIV_MODULE10               = 610;
-    uint16 constant PRIV_MODULE11               = 611;
-    uint16 constant PRIV_MODULE12               = 612;
-    uint16 constant PRIV_MODULE13               = 613;
-    uint16 constant PRIV_MODULE14               = 614;
-    uint16 constant PRIV_MODULE15               = 615;
-    uint16 constant PRIV_DDB_CAPTURE            = 620; // Allow reading of DDB capture log.
-    uint16 constant PRIV_NNPFS_DEBUG            = 630; // Perforn ARLA_VIOC_NNPFSDEBUG.
-    uint16 constant PRIV_CPUCTL_WRMSR           = 640; // Write model-specific register.
-    uint16 constant PRIV_CPUCTL_UPDATE          = 641; // Update cpu microcode.
-    uint16 constant PRIV_C4B_RESET_CTLR         = 650; // Load firmware, reset controller.
-    uint16 constant PRIV_C4B_TRACE              = 651; // Unrestricted CAPI message tracing.
-    uint16 constant PRIV_AFS_ADMIN              = 660; // Can change AFS client settings.
-    uint16 constant PRIV_AFS_DAEMON             = 661; // Can become the AFS daemon.
-    uint16 constant PRIV_RCTL_GET_RACCT         = 670;
-    uint16 constant PRIV_RCTL_GET_RULES         = 671;
-    uint16 constant PRIV_RCTL_GET_LIMITS        = 672;
-    uint16 constant PRIV_RCTL_ADD_RULE          = 673;
-    uint16 constant PRIV_RCTL_REMOVE_RULE       = 674;
-    uint16 constant PRIV_KMEM_READ              = 680; // Open mem/kmem for reading.
-    uint16 constant PRIV_KMEM_WRITE             = 681; // Open mem/kmem for writing.
-    uint16 constant _PRIV_HIGHEST               = 682;
+    uint16 constant PRIV_NETATM_CFG         = 460;
+    uint16 constant PRIV_NETATM_ADD         = 461;
+    uint16 constant PRIV_NETATM_DEL         = 462;
+    uint16 constant PRIV_NETATM_SET         = 463;
+    uint16 constant PRIV_NETBLUETOOTH_RAW   = 470; // Open raw bluetooth socket.
+    uint16 constant PRIV_NETGRAPH_CONTROL   = 480; // Open netgraph control socket.
+    uint16 constant PRIV_NETGRAPH_TTY       = 481; // Configure tty for netgraph.
+    uint16 constant PRIV_NETINET_RESERVEDPORT = 490; // Bind low port number.
+    uint16 constant PRIV_NETINET_IPFW       = 491; // Administer IPFW firewall.
+    uint16 constant PRIV_NETINET_DIVERT     = 492; // Open IP divert socket.
+    uint16 constant PRIV_NETINET_PF         = 493; // Administer pf firewall.
+    uint16 constant PRIV_NETINET_DUMMYNET   = 494; // Administer DUMMYNET.
+    uint16 constant PRIV_NETINET_CARP       = 495; // Administer CARP.
+    uint16 constant PRIV_NETINET_MROUTE     = 496; // Administer multicast routing.
+    uint16 constant PRIV_NETINET_RAW        = 497; // Open netinet raw socket.
+    uint16 constant PRIV_NETINET_GETCRED    = 498; // Query netinet pcb credentials.
+    uint16 constant PRIV_NETINET_ADDRCTRL6  = 499; // Administer IPv6 address scopes.
+    uint16 constant PRIV_NETINET_ND6        = 500; // Administer IPv6 neighbor disc.
+    uint16 constant PRIV_NETINET_SCOPE6     = 501; // Administer IPv6 address scopes.
+    uint16 constant PRIV_NETINET_ALIFETIME6 = 502; // Administer IPv6 address lifetimes.
+    uint16 constant PRIV_NETINET_IPSEC      = 503; // Administer IPSEC.
+    uint16 constant PRIV_NETINET_REUSEPORT  = 504; // Allow [rapid] port/address reuse.
+    uint16 constant PRIV_NETINET_SETHDROPTS = 505; // Set certain IPv4/6 header options.
+    uint16 constant PRIV_NETINET_BINDANY    = 506; // Allow bind to any address.
+    uint16 constant PRIV_NETINET_HASHKEY    = 507; // Get and set hash keys for IPv4/6.
+    uint16 constant _PRIV_NETIPX_RESERVEDPORT = 520; // Bind low port number.
+    uint16 constant _PRIV_NETIPX_RAW        = 521; // Open netipx raw socket.
+    uint16 constant PRIV_NETNCP             = 530; // Use another user's connection.
+    uint16 constant PRIV_NETSMB             = 540; // Use another user's connection.
+    uint16 constant PRIV_VM86_INTCALL       = 550; // Allow invoking vm86 int handlers.
+    uint16 constant _PRIV_RESERVED0         = 560;
+    uint16 constant _PRIV_RESERVED1         = 561;
+    uint16 constant _PRIV_RESERVED2         = 562;
+    uint16 constant _PRIV_RESERVED3         = 563;
+    uint16 constant _PRIV_RESERVED4         = 564;
+    uint16 constant _PRIV_RESERVED5         = 565;
+    uint16 constant _PRIV_RESERVED6         = 566;
+    uint16 constant _PRIV_RESERVED7         = 567;
+    uint16 constant _PRIV_RESERVED8         = 568;
+    uint16 constant _PRIV_RESERVED9         = 569;
+    uint16 constant _PRIV_RESERVED10        = 570;
+    uint16 constant _PRIV_RESERVED11        = 571;
+    uint16 constant _PRIV_RESERVED12        = 572;
+    uint16 constant _PRIV_RESERVED13        = 573;
+    uint16 constant _PRIV_RESERVED14        = 574;
+    uint16 constant _PRIV_RESERVED15        = 575;
+    uint16 constant PRIV_MODULE0            = 600;
+    uint16 constant PRIV_MODULE1            = 601;
+    uint16 constant PRIV_MODULE2            = 602;
+    uint16 constant PRIV_MODULE3            = 603;
+    uint16 constant PRIV_MODULE4            = 604;
+    uint16 constant PRIV_MODULE5            = 605;
+    uint16 constant PRIV_MODULE6            = 606;
+    uint16 constant PRIV_MODULE7            = 607;
+    uint16 constant PRIV_MODULE8            = 608;
+    uint16 constant PRIV_MODULE9            = 609;
+    uint16 constant PRIV_MODULE10           = 610;
+    uint16 constant PRIV_MODULE11           = 611;
+    uint16 constant PRIV_MODULE12           = 612;
+    uint16 constant PRIV_MODULE13           = 613;
+    uint16 constant PRIV_MODULE14           = 614;
+    uint16 constant PRIV_MODULE15           = 615;
+    uint16 constant PRIV_DDB_CAPTURE        = 620; // Allow reading of DDB capture log.
+    uint16 constant PRIV_NNPFS_DEBUG        = 630; // Perforn ARLA_VIOC_NNPFSDEBUG.
+    uint16 constant PRIV_CPUCTL_WRMSR       = 640; // Write model-specific register.
+    uint16 constant PRIV_CPUCTL_UPDATE      = 641; // Update cpu microcode.
+    uint16 constant PRIV_C4B_RESET_CTLR     = 650; // Load firmware, reset controller.
+    uint16 constant PRIV_C4B_TRACE          = 651; // Unrestricted CAPI message tracing.
+    uint16 constant PRIV_AFS_ADMIN          = 660; // Can change AFS client settings.
+    uint16 constant PRIV_AFS_DAEMON         = 661; // Can become the AFS daemon.
+    uint16 constant PRIV_RCTL_GET_RACCT     = 670;
+    uint16 constant PRIV_RCTL_GET_RULES     = 671;
+    uint16 constant PRIV_RCTL_GET_LIMITS    = 672;
+    uint16 constant PRIV_RCTL_ADD_RULE      = 673;
+    uint16 constant PRIV_RCTL_REMOVE_RULE   = 674;
+    uint16 constant PRIV_KMEM_READ          = 680; // Open mem/kmem for reading.
+    uint16 constant PRIV_KMEM_WRITE         = 681; // Open mem/kmem for writing.
+    uint16 constant _PRIV_HIGHEST           = 682;
 
     // Validate that a named privilege is known by the privilege system.  Invalid
     // privileges presented to the privilege system by a priv_check interface
@@ -272,15 +270,53 @@ library priv {
         return x > _PRIV_LOWEST && x < _PRIV_HIGHEST;
     }
 
-    // Privilege check interfaces, modeled after historic suser() interfaces, but
-    // with the addition of a specific privilege name.  No flags are currently
-    // defined for the API.  Historically, flags specified using the real uid
-    // instead of the effective uid, and whether or not the check should be
-    // allowed in jail.
-    function priv_check(s_thread td, uint16 ppriv) internal returns (uint16) {}
-    function priv_check_cred(s_ucred cred, uint16 ppriv) internal returns (uint16) {}
-    function priv_check_cred_vfs_lookup(s_ucred cred) internal returns (uint16) {}
-    function priv_check_cred_vfs_lookup_nomac(s_ucred cred) internal returns (uint16) {}
-    function priv_check_cred_vfs_generation(s_ucred cred) internal returns (uint16) {}
+    function priv_check(s_thread td, uint16 ppriv) internal returns (uint8) {
+//	    KASSERT(td == curthread, ("priv_check: td != curthread"));
+	    return priv_check_cred(td.td_ucred, ppriv);
+    }
+
+    function priv_check_cred(s_ucred cred, uint16 ppriv) internal returns (uint8 error) {
+        // Privilege check interfaces, modeled after historic suser() interfaces, but
+        // with the addition of a specific privilege name.  No flags are currently
+        // defined for the API.  Historically, flags specified using the real uid
+        // instead of the effective uid, and whether or not the check should be
+        // allowed in jail.
+	    // KASSERT(PRIV_VALID(priv), ("priv_check_cred: invalid privilege %d", priv));
+
+	    if (ppriv == PRIV_VFS_LOOKUP)
+	    	return priv_check_cred_vfs_lookup(cred);
+	    else if (ppriv == PRIV_VFS_GENERATION)
+	    	return priv_check_cred_vfs_generation(cred);
+//	    error = priv_check_cred_pre(cred, ppriv);
+//	    error = prison_priv_check(cred, ppriv);
+        /*if (unprivileged_mlock && (ppriv == PRIV_VM_MLOCK || ppriv == PRIV_VM_MUNLOCK))
+			error = 0;
+	    if (unprivileged_read_msgbuf && ppriv == PRIV_MSGBUF)
+	    	error = 0;
+
+	    if (suser_enabled(cred)) {*/
+	    	if (ppriv == PRIV_MAXFILES || ppriv == PRIV_MAXPROC || ppriv == PRIV_PROC_LIMIT)
+	    		if (cred.cr_ruid == 0)
+	    			error = 0;
+	    	else {
+                if (cred.cr_uid == 0)
+	    			error = 0;
+	    	}
+//	    }
+
+	    if (ppriv == PRIV_KMEM_READ)
+	    	error = 0;
+
+//	    if (ppriv == PRIV_DEBUG_UNPRIV)
+//	    	if (prison_allow(cred, PR_ALLOW_UNPRIV_DEBUG))
+//	    		error = 0;
+
+//	return priv_check_cred_post(cred, ppriv, error, false);
+//	return (priv_check_cred_post(cred, ppriv, error, true));
+    }
+
+    function priv_check_cred_vfs_lookup(s_ucred cred) internal returns (uint8) {}
+    function priv_check_cred_vfs_lookup_nomac(s_ucred cred) internal returns (uint8) {}
+    function priv_check_cred_vfs_generation(s_ucred cred) internal returns (uint8) {}
 
 }

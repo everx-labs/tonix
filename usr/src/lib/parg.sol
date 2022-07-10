@@ -57,7 +57,19 @@ library parg {
     }
 
     function flags_set(s_proc p, string flags_query) internal returns (bool, bool, bool, bool) {
-        return p.p_args.ar_misc.flags_set(flags_query);
+//        return p.p_args.ar_misc.flags_set(flags_query);
+        uint len = flags_query.strlen();
+        string flags = p.p_args.ar_misc.flags;
+        bool[] tmp;
+        uint i;
+        for (byte b: bytes(flags_query)) {
+            tmp.push(str.strchr(flags, b) > 0);
+            i++;
+        }
+        return (len > 0 ? tmp[0] : false,
+                len > 1 ? tmp[1] : false,
+                len > 2 ? tmp[2] : false,
+                len > 3 ? tmp[3] : false);
     }
 
     function flags_empty(s_proc p) internal returns (bool) {

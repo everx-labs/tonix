@@ -1,8 +1,8 @@
 pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-import "../lib/pw.sol";
-import "../lib/gr.sol";
+import "pw.sol";
+import "gr.sol";
 
 contract groupdel is Utility {
 

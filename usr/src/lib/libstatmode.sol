@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "utypes.sol";
 
@@ -135,4 +135,13 @@ library libstatmode {
         out.append((p & 1) > 0 ? "x" : "-");
     }
 
+    function get_def_mode(uint t) internal returns (uint16) {
+        if (t == FT_REG_FILE) return DEF_REG_FILE_MODE;
+        if (t == FT_DIR) return DEF_DIR_MODE;
+        if (t == FT_SYMLINK) return DEF_SYMLINK_MODE;
+        if (t == FT_BLKDEV) return DEF_BLOCK_DEV_MODE;
+        if (t == FT_CHRDEV) return DEF_CHAR_DEV_MODE;
+        if (t == FT_FIFO) return DEF_FIFO_MODE;
+        if (t == FT_SOCK) return DEF_SOCK_MODE;
+    }
 }

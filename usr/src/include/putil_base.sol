@@ -1,11 +1,11 @@
 pragma ton-solidity >= 0.61.2;
 
-import "../lib/stypes.sol";
-import "../lib/libhelp.sol";
-import "../lib/parg.sol";
-import "../lib/io.sol";
-import "../lib/libfdt.sol";
-import "../lib/libprocenv.sol";
+import "stypes.sol";
+import "libhelp.sol";
+import "parg.sol";
+import "io.sol";
+import "libfdt.sol";
+import "libprocenv.sol";
 
 abstract contract putil_base {
 

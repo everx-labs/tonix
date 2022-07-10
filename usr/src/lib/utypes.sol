@@ -198,7 +198,6 @@ struct s_vfsops {
     uint32 vfs_reclaim_lowervp;
     uint32 vfs_unlink_lowervp;
     uint32 vfs_purge;
-    uint32[6] vfs_spare;  // spares for ABI compat
 }
 
 // Userland version of the struct vfsconf.
@@ -317,15 +316,12 @@ struct s_xsockbuf {
     int32 sb_timeo;
     int16 sb_flags;
 }
-/*
- * Structure to export socket from kernel to utilities, via sysctl(3).
- */
+//  Structure to export socket from kernel to utilities, via sysctl(3).
 struct s_xsocket {
 //    ksize         xso_len;        // length of this structure
     uint16 xso_so;         // kernel address of struct socket
     uint16 so_pcb;         // kernel address of struct inpcb
     uint64 so_oobmark;
-//    int64         so_spare64[8];
     int32  xso_protocol;
     int32  xso_family;
     uint32 so_qlen;
@@ -333,7 +329,6 @@ struct s_xsocket {
     uint32 so_qlimit;
     uint16 so_pgid;
     uint16 so_uid;
-//    int32         so_spare32[8];
     int16 so_type;
     int16 so_options;
     int16 so_linger;

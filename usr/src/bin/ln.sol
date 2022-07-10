@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Utility.sol";
+import "Utility.sol";
 
 contract ln is Utility {
 
@@ -43,7 +43,7 @@ contract ln is Utility {
 
         if (dest_exists && t_ft != ft.FT_DIR) {
             if (multiple_sources)
-                errors.push(Err(er.ln_target, er.ENOTDIR, t_path));
+                errors.push(Err(er.ln_target, err.ENOTDIR, t_path));
             else if (!force)
                 errors.push(Err(symlink ? er.failed_symlink : er.failed_hardlink, er.EEXIST, t_path));
         }

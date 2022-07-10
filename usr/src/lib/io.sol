@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.58.0;
 
 import "ustd.sol";
-import "../lib/libstat.sol";
+import "libstat.sol";
 import "sbuf.sol";
 import "xio.sol";
 import "dirent.sol";

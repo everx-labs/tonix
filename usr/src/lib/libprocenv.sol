@@ -29,6 +29,13 @@ library libprocenv {
         return e.environ;
     }
 
+    function exit(p_env e, uint8 ec) internal {
+        s_of f = e.ofiles[libfdt.ERRNO_FILENO];
+        f.buf.error = ec;
+        if (ec > 0) {
+            f.fputs*
+        }
+    }
     function perror(p_env e, string reason) internal {
         s_of f = e.ofiles[libfdt.STDERR_FILENO];
         uint8 ec = f.buf.error;

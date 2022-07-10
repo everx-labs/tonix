@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.2;
 
 import "putil.sol";
-import "../lib/path.sol";
+import "path.sol";
 
 contract basename is putil {
 

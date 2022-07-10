@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.2;
 
-import "../include/Shell.sol";
-import "../lib/libshellenv.sol";
+import "Shell.sol";
+import "libshellenv.sol";
 
 struct Command {
     string cmd;
@@ -23,7 +23,7 @@ contract eilish is Shell {
         (string[] commands, ) = input.split(";");
         for (string line: commands) {
             (string cmd_raw, string sargs) = line.csplit(" ");
-            string cmd_expanded = vars.val(cmd_raw, aliases);
+            string cmd_expanded;// = vars.val(cmd_raw, aliases);
             input = cmd_expanded.empty() ? line : cmd_expanded + " " + sargs;
             string cmd;
             (cmd, sargs) = input.csplit(" ");
@@ -52,14 +52,14 @@ contract eilish is Shell {
         s_proc p = sv.cur_proc;
         e = e_in;
 
+        string[][] ev = e.environ;
         string[] pages;
-        string aliases;
+        string[] aliases = ev[sh.ALIAS];
         string opt_string;
         string index;
         string pool;
         if (sv.vmem.length > 1) {
             pages = sv.vmem[1].vm_pages;
-            aliases = pages[0];
             opt_string = pages[1];
             index = pages[2];
             pool = pages[3];
@@ -84,7 +84,7 @@ contract eilish is Shell {
         string sinput = cmd_expanded.empty() ? input : cmd_expanded + " " + argv;
         string cmd;
         (cmd, argv) = sinput.csplit(" ");
-        string cmd_opt_string = vars.val(cmd, opt_string);
+        string cmd_opt_string = vars.val(cmd, ev[sh.OPTSTRING]);//opt_string);
 
         string sflags;
         string redir_in;
@@ -111,19 +111,23 @@ contract eilish is Shell {
                     string ref = arg.val("$", " ");
                     if (str.strchr(ref, '{') > 0)
                         ref.unwrap();
-                    string ref_val = vars.val(ref, pool);
+                    string ref_val;// = vars.val(ref, pool);
                     pos_params.translate(arg, ref_val);
                     sargs.translate(arg, ref_val);
                 }
             }
         }
-        string cmd_type = vars.get_array_name(cmd, index);
+        string cmd_type = vars.get_array_name(cmd, ev[sh.ARRAYVAR]);
         if (cmd_type == "builtin")
             res = "./bin/eilish.dir/builtin " + cmd + " " + sargs;
         else if (cmd_type == "command")
             res = "./bin/eilish.dir/command " + cmd + " " + sargs;
         else if (cmd_type == "sysmain")
             res = "./bin/eilish.dir/command " + cmd + " " + sargs;
+        else if (cmd_type == "rsu")
+            res = "./sbin/rsu " + cmd + " " + sargs;
+        else if (cmd_type == "ki")
+            res = "./sbin/ki " + cmd + " " + sargs;
         else if (cmd_type == "function") {
             res = "./tosh execute_function " + sinput;
         } else {
@@ -183,7 +187,7 @@ contract eilish is Shell {
             sv.vmem.push(vmem1);
     }
 
-    function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
+    /*function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
         ec = EXECUTE_SUCCESS;
         out = vars.as_var_list("", [
             ["_", vars.val("TOSH", profile)],
@@ -196,7 +200,7 @@ contract eilish is Shell {
             ["SHELLOPTS", "allexport:hashall"],
             ["TMPDIR", vars.val("TMPDIR", profile)],
             ["SHLVL", vars.val("SHLVL", profile)]]);
-    }
+    }*/
 
     // Possible states for the parser that require it to do special things.
     uint16 constant PST_CASEPAT	    = 1;   // in a case pattern list

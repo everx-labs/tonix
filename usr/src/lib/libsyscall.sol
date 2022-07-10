@@ -157,7 +157,7 @@ library libsyscall {
         td_states td_state;     // thread state
         uint32 tdu_retval;
 
-        s_thread t = s_thread(p, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);
+        s_thread t = s_thread(p.p_pid, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);
         if (!td_name.empty())
         return t.td_errno;
     }

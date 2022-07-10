@@ -2,7 +2,6 @@ pragma ton-solidity >= 0.61.2;
 
 import "stypes.sol";
 import "liberr.sol";
-//import "../kern/ucred.sol";
 
 library sucred {
 

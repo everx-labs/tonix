@@ -1,34 +1,25 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_special.sol";
-import "../../lib/env.sol";
 
 contract cd is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[8] = e.vars;
+    function _retrieve_pages(s_proc) internal pure override returns (uint8[]) {
+        return [sh.VARIABLE];
     }
 
-    function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
-        e = e_in;
-        e.vars = page;
-    }
-
-//    function _print(s_proc p_in, string[] , string) internal pure override returns (s_proc p) {
-//        p = p_in;
-    function _print(s_proc , s_of f, string[] , string ) internal pure override returns (s_of res) {
+    function _print(s_proc, s_of f, string[] ) internal pure override returns (s_of res) {
         res = f;
     }
 
-    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
-        p = p_in;
+    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
         page = page_in;
 
         s_of cur_dir = p.p_pd.pwd_cdir;
-        string scur_dir = env.get("PWD", page);
-        string old_cwd = env.get("OLDPWD", page);
-        string home_dir = env.get("HOME", page);
-        string arg = params.empty() ? home_dir : params[0];
+        string scur_dir = vars.val("PWD", page);
+        string old_cwd = vars.val("OLDPWD", page);
+        string home_dir = vars.val("HOME", page);
+        string arg = p.params().empty() ? home_dir : p.params()[0];
 
         if (arg == "~")
             arg = home_dir;
@@ -42,9 +33,9 @@ contract cd is pbuiltin_special {
                     p.perror(arg + ": not a directory");
                 else {
                     string new_dir = scur_dir + "/" + arg;
-                    page = env.put("OLDPWD=" + scur_dir, page);
-                    page = env.put("PWD=" + new_dir, page);
-                    page = env.put("WD=" + format("{}", de.d_fileno), page);
+                    page = vars.set_var("", "OLDPWD=" + scur_dir, page);
+                    page = vars.set_var("", "PWD=" + new_dir, page);
+                    page = vars.set_var("", "WD=" + str.toa(de.d_fileno), page);
                 }
             }
         }

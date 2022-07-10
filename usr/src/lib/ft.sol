@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.57.0;
+pragma ton-solidity >= 0.61.2;
 
 library ft {
     uint8 constant FT_UNKNOWN   = 0;

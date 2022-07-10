@@ -1,6 +1,34 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
-library sconf {
+library conf {
+    uint16 constant D_TAPE  = 0x0001;
+    uint16 constant D_DISK  = 0x0002;
+    uint16 constant D_TTY   = 0x0004;
+    uint16 constant D_MEM   = 0x0008;
+    uint16 constant UID_ROOT    = 0;
+    uint16 constant UID_BIN	    = 3;
+    uint16 constant UID_UUCP    = 66;
+    uint16 constant UID_NOBODY  = 65534;
+    uint16 constant GID_WHEEL   = 0;
+    uint16 constant GID_KMEM    = 2;
+    uint16 constant GID_TTY	    = 4;
+    uint16 constant GID_OPERATOR = 5;
+    uint16 constant GID_BIN	    = 7;
+    uint16 constant GID_GAMES   = 13;
+    uint16 constant GID_VIDEO   = 44;
+    uint16 constant GID_RT_PRIO = 47;
+    uint16 constant GID_ID_PRIO = 48;
+    uint16 constant GID_DIALER  = 68;
+    uint16 constant GID_NOGROUP = 65533;
+    uint16 constant GID_NOBODY  = 65534;
+    uint16 constant D_TYPEMASK  = 0xffff;
+
+    uint32 constant	D_TRACKCLOSE = 0x00080000; // track all closes
+    uint32 constant	D_MMAP_ANON  = 0x00100000; // special treatment in vm_mmap.c
+    uint32 constant	D_GIANTOK    = 0x00200000; // suppress warning about using Giant
+    uint32 constant	D_NEEDGIANT  = 0x00400000; // driver want Giant
+    uint32 constant	D_NEEDMINOR  = 0x00800000; // driver uses clone_create()
+
 
     /*
      * POSIX options and option groups we unconditionally do or don't

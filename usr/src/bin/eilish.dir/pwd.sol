@@ -1,11 +1,9 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin.sol";
-import "../../lib/unistd.sol";
+import "unistd.sol";
 
 contract pwd is pbuiltin {
-
-//    using unistd for s_proc;
 
     function _main(s_proc p, string[] , shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;

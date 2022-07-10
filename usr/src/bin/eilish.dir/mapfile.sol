@@ -1,15 +1,12 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 
-contract mapfile is Shell {
+contract mapfile is pbuiltin {
 
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        string[] params = p.params();
-        sv.cur_proc = p;
-        string pool = vmem.vmem_fetch_page(sv.vmem[1], 3);
+    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+        e = e_in;
+        string[] pool = e.environ[sh.ARRAYVAR];
 
         string sattrs = "-a";
         string delimiter = p.flag_set("d") ? p.opt_value("d") : "\n";
@@ -34,8 +31,7 @@ contract mapfile is Shell {
             input = f.gets_s(0);
 
         string arr_val = vars.as_indexed_array(array_name, input, "\n");
-        sv.vmem[1].vm_pages[3] = vars.set_var(sattrs, arr_val, pool);
-        sv.cur_proc = p;
+        e.environ[sh.ARRAYVAR] = vars.set_var(sattrs, arr_val, pool);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

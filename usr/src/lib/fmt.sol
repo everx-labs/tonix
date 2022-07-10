@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
 import "libstring.sol";
 
@@ -126,17 +126,24 @@ library fmt {
 
     function smonth(uint t) internal returns (uint, string) {
         mapping (uint32 => string) mo;
+
+        mo[1669852800] = "Dec";
+        mo[1667260800] = "Nov";
+        mo[1664582400] = "Oct";
+        mo[1661990400] = "Sep";
+        mo[1659312000] = "Aug";
+        mo[1656633600] = "Jul";
         mo[1654041600] = "Jun";
         mo[1651363200] = "May";
         mo[1648771200] = "Apr";
         mo[1646092800] = "Mar";
         mo[1643673600] = "Feb";
         mo[1640995200] = "Jan";
-        mo[1638316800] = "Dec";
+        /*mo[1638316800] = "Dec";
         mo[1635724800] = "Nov";
         mo[1633046400] = "Oct";
         mo[1630454400] = "Sep";
-        mo[1627776000] = "Aug";
+        mo[1627776000] = "Aug";*/
 
         optional(uint32, string) pair = mo.prev(t);
         if (pair.hasValue())

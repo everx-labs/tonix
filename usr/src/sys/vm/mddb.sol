@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.58.2;
 
 import "Utility.sol";
-import "uma/uma.sol";
-import "uma/uma_int.sol";
-import "uma/uma_core.sol";
+import "uma.sol";
+import "uma_int.sol";
+import "uma_core.sol";
 
 contract mddb is Utility {
     using uma_core for core;

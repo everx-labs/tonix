@@ -1,31 +1,18 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_special.sol";
 
 contract declare is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc p) internal pure override returns (mapping (uint8 => string) pages) {
-        if (p.flag_set("f"))
-            pages[9] = e.functions;
-        else
-            pages[8] = e.vars;
+    function _retrieve_pages(s_proc p) internal pure override returns (uint8[]) {
+        return [p.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
     }
 
-    function _update_shell_env(shell_env e_in, uint8 n, string page) internal pure override returns (shell_env e) {
-        e = e_in;
-        if (n == 8)
-            e.vars = page;
-        else if (n == 9)
-            e.functions = page;
-    }
-
-    function _print(s_proc p, s_of f, string[] params, string page) internal pure override returns (s_of res) {
+    function _print(s_proc p, s_of f, string[] page) internal pure override returns (s_of res) {
         res = f;
         bool function_names_only = p.flag_set("F");
 
         string sattrs;
-//        byte[] a_attrs = [byte('a'), 'A', 'x', 'i', 'r', 't', 'n', 'f'];
-//        for (byte b: a_attrs)
         bytes battrs = bytes("aAxirtnf");
         for (byte b: battrs)
             if (p.flag_set(b))
@@ -34,9 +21,8 @@ contract declare is pbuiltin_special {
             sattrs.append("-f");
         sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
 
-        if (params.empty()) {
-            (string[] lines, ) = page.split("\n");
-            for (string line: lines) {
+        if (p.params().empty()) {
+            for (string line: page) {
                 (string attrs, string name, string value) = vars.split_var_record(line);
                 if (vars.match_attr_set(sattrs, attrs))
                     res.fputs(p.flags_empty() ?
@@ -44,7 +30,7 @@ contract declare is pbuiltin_special {
                         vars.print_reusable(line));
             }
         }
-        for (string param: params) {
+        for (string param: p.params()) {
             string cur_record = vars.get_pool_record(param, page);
             if (!cur_record.empty()) {
                 (string cur_attrs, ) = cur_record.csplit(" ");
@@ -55,22 +41,15 @@ contract declare is pbuiltin_special {
         }
     }
 
-    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
-        p = p_in;
+    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
         page = page_in;
         string sattrs;
-//        for (string attr: a_attrs)
-//            if (p.flag_set(attr))
-//                sattrs.append(attr);
-//        byte[] a_attrs = ['a', "A", "x", "i", "r", "t", "n", "f"];
-//        byte[] a_attrs = [byte('a'), 'A', 'x', 'i', 'r', 't', 'n', 'f'];
-//        for (byte b: a_attrs)
         bytes battrs = bytes("aAxirtnf");
         for (byte b: battrs)
             if (p.flag_set(b))
                 sattrs.append(bytes(b));
         sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
-        for (string param: params)
+        for (string param: p.params())
             page = vars.set_var(sattrs, param, page);
     }
 

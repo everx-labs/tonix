@@ -1,8 +1,8 @@
 pragma ton-solidity >= 0.60.0;
 
 import "Utility.sol";
-import "sys/vn.sol";
-import "sys/priv.sol";
+import "vn.sol";
+import "priv.sol";
 
 /* Generic block device hosting a generic file system */
 contract sdz is Utility {

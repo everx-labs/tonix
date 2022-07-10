@@ -1,10 +1,9 @@
 pragma ton-solidity >= 0.61.2;
 
 import "Base.sol";
-//import "../lib/arg.sol";
-import "../lib/fs.sol";
-import "../lib/io.sol";
-import "../lib/parg.sol";
+import "fs.sol";
+import "io.sol";
+import "parg.sol";
 
 struct BuiltinHelp {
     string name;

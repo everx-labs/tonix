@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.2;
 
-import "../include/putil.sol";
+import "putil.sol";
 contract cat is putil {
     function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
         e = e_in;

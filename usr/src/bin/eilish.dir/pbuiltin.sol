@@ -1,6 +1,7 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_base.sol";
+import "vars.sol";
 
 abstract contract pbuiltin is pbuiltin_base {
 

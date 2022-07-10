@@ -1,77 +1,41 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_special.sol";
 
 contract alias_ is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e, s_proc) internal pure override returns (mapping (uint8 => string) pages) {
-        pages[0] = e.aliases;
+    function _retrieve_pages(s_proc) internal pure override returns (uint8[]) {
+        return [sh.ALIAS];
     }
 
-    function _update_shell_env(shell_env e_in, uint8, string page) internal pure override returns (shell_env e) {
-        e = e_in;
-        e.aliases = page;
-    }
-
-//    function _print(s_proc p_in, string[] params, string page) internal pure override returns (s_proc p) {
-//        p = p_in;
-    function _print(s_proc p, s_of f, string[] params, string page) internal pure override returns (s_of res) {
+    function _print(s_proc p, s_of f, string[] page) internal pure override returns (s_of res) {
         res = f;
-        string token = params.empty() ? "" : params[0];
 
-        if (params.empty()) {
-            (string[] ali, ) = page.split("\n");
-            for (string l: ali) {
+        if (p.params().empty()) {
+            for (string l: page) {
                 (, string name, string value) = vars.split_var_record(l);
                 value.quote();
                 res.fputs("alias " + name + "=" + value);
             }
-        } else {
-            string alias_page = page;//p.read_file("alias");
-            string cur_tval = vars.val(token, alias_page);
-            (, , string args) = p.get_args();
-            if (str.strchr(args, '=') > 0) {
-                (string name, ) = token.csplit("=");
-                string value = args.val("=", "\n");
-                string new_value = vars.var_record("", name, value);
-                string cur_val = vars.val(name, alias_page);
-                if (cur_val.empty())
-                    alias_page.append(new_value + "\n");
-                else
-                    alias_page.translate(cur_val, new_value);
-            } else {
-                if (cur_tval.empty())
-                    res.fputs(token + ": not found");
-                else {
-                    cur_tval.quote();
-                    res.fputs("alias " + token + "=" + cur_tval);
-                }
-            }
-            res.fputs("Result: ");
-            res.fputs(alias_page);
         }
-//        sv.cur_proc = p;
+
+        for (string param: p.params()) {
+            string rec = vars.get_pool_record(param, page);
+            if (!rec.empty()) {
+                (, string name, string value) = vars.split_var_record(rec);
+                value.quote();
+                res.fputs("alias " + name + "=" + value);
+            }
+        }
     }
 
-    function _modify(s_proc p_in, string[] params, string page_in) internal pure override returns (s_proc p, string page) {
-        p = p_in;
-        string alias_page = page_in;
-        page = alias_page;
-        string token = params.empty() ? "" : params[0];
+    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
+        page = page_in;
         string sargs = p.p_args.ar_misc.sargs;
-
         if (sargs.strchr("=") > 0) {
-            (string name, ) = token.csplit("=");
-            string value = sargs.val("=", "\n");
-            string new_value = vars.var_record("", name, value);
-            string cur_val = vars.val(name, alias_page);
-            if (cur_val.empty())
-                alias_page.append(new_value + "\n");
-            else
-                alias_page.translate(cur_val, new_value);
+            (string name, string value) = sargs.csplit("=");
+            page = vars.set_var(name, value, page);
         }
-        if (page_in != alias_page)
-            page.translate(page_in, alias_page);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

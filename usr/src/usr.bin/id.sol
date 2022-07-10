@@ -1,15 +1,16 @@
 pragma ton-solidity >= 0.61.0;
 
 import "putil.sol";
-import "../lib/env.sol";
-import "../lib/unistd.sol";
+import "env.sol";
+import "unistd.sol";
 
 contract id is putil {
 
     using unistd for s_proc;
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         (bool effective_gid_only, bool name_not_number, bool real_id, bool effective_uid_only, bool all_group_ids, , , ) =
             p.flag_values("gnruG");
         bool is_ugG = effective_uid_only || effective_gid_only || all_group_ids;
@@ -31,7 +32,8 @@ contract id is putil {
             out = name_not_number ? user_name : str.toa(eid);
         else
             out = format("uid={}({}) gid={}({})", uid, user_name, gid, group_name);
-        p.puts(out);
+        res.fputs(out);
+        e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

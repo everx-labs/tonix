@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-import "../lib/adm.sol";
+import "adm.sol";
 
 contract who is Utility {
 

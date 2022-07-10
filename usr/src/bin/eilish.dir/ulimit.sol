@@ -1,18 +1,13 @@
-pragma ton-solidity >= 0.61.1;
+pragma ton-solidity >= 0.62.0;
 
-/*import "Shell.sol";
-
-contract ulimit is Shell {
-
-    function main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;*/
 import "pbuiltin.sol";
 
 contract ulimit is pbuiltin {
 
-    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
-        p = p_in;
+//    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
+//        p = p_in;
+    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+        e = e_in;
         string page;// = e.e_dirstack; //vmem.vmem_fetch_page(sv.vmem[1], 12);
 
 //        string[] params = p.params();

@@ -6,9 +6,9 @@ import "io.sol";
 import "sbuf.sol";
 import "libfdt.sol";
 /*struct s_file {
-    uint32 p;       // (*) current position in (some) buffer
-    uint16 flags;   // (*) flags, below; this FILE is free if 0
-    uint16 file;    // (*) fileno, if Unix descriptor, else -1
+    uint32 p;       // current position in (some) buffer
+    uint16 flags;   // flags, below; this FILE is free if 0
+    uint16 file;    // fileno, if Unix descriptor, else -1
     uint16 blksize; // stat.st_blksize (may be != _bf._size) files get aligned to block boundaries on fseek()
     uint32 offset;  // current lseek offset
 }*/
@@ -30,13 +30,17 @@ library xio {
     uint16 constant L_cuserid = 17;  // size for cuserid(3); MAXLOGNAME, legacy
     uint16 constant L_ctermid = 1024;// size for ctermid(3); PATH_MAX
 
-    function att(s_stat sst) internal returns (uint) {
-        (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size, uint16 st_blksize,
+    /*function att(s_stat sst) internal returns (uint) {
+//        (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size, uint16 st_blksize,
+//            uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = sst.unpack();
+//        return (uint(st_dev) << 224) + (uint(st_ino) << 208) + (uint(st_mode) << 192) + (uint(st_nlink) << 176) + (uint(st_uid) << 160) + (uint(st_gid) << 144) +
+//            (uint(st_rdev) << 128) + (uint(st_size) << 96) + (uint(st_blksize) << 80) + (uint(st_blocks) << 64) + (uint(st_mtim) << 32) + st_ctim;
+        (uint st_dev, uint st_ino, uint st_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint32 st_size, uint16 st_blksize,
             uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = sst.unpack();
         return (uint(st_dev) << 224) + (uint(st_ino) << 208) + (uint(st_mode) << 192) + (uint(st_nlink) << 176) + (uint(st_uid) << 160) + (uint(st_gid) << 144) +
             (uint(st_rdev) << 128) + (uint(st_size) << 96) + (uint(st_blksize) << 80) + (uint(st_blocks) << 64) + (uint(st_mtim) << 32) + st_ctim;
     }
-
+*/
     function st(uint val) internal returns (s_stat) {
         (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size, uint16 st_blksize,
             uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = (uint16(val >> 224 & 0xFFFF), uint16(val >> 208 & 0xFFFF), uint16(val >> 192 & 0xFFFF),

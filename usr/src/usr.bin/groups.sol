@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-import "../lib/gr.sol";
+import "gr.sol";
 
 contract groups is Utility {
 

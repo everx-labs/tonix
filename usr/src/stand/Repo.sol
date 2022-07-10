@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.0;
 
-import "../include/Base.sol";
-import "../lib/fmt.sol";
+import "Base.sol";
+import "fmt.sol";
 
 struct Image {
     uint16 version;

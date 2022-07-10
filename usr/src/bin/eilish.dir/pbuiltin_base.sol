@@ -9,8 +9,8 @@ struct BuiltinHelp {
     string arguments;
     string exit_status;
 }
-import "../../lib/parg.sol";
-import "../../lib/libshellenv.sol";
+import "parg.sol";
+import "libshellenv.sol";
 
 abstract contract pbuiltin_base {
     using libstring for string;

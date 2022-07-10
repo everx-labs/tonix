@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-import "../lib/vfs.sol";
+import "vfs.sol";
 
 contract mke2fs is Utility {
 

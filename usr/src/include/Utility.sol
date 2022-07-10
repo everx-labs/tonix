@@ -2,20 +2,20 @@ pragma ton-solidity >= 0.60.0;
 
 import "fs_types.sol";
 import "Base.sol";
-import "../lib/arg.sol";
-import "../lib/fs.sol";
-import "../lib/aio.sol";
-import "../lib/er.sol";
-import "../lib/libstatmode.sol";
-import "../lib/fts.sol";
-import "../lib/bio.sol";
-import "../lib/sbuf.sol";
-import "../lib/unistd.sol";
-import "../lib/ucred.sol";
-import "../lib/io.sol";
-import "../lib/parg.sol";
-import "../lib/libhelp.sol";
-import "../sys/sys/uma.sol";
+import "arg.sol";
+import "fs.sol";
+import "aio.sol";
+import "er.sol";
+import "libstatmode.sol";
+import "fts.sol";
+import "bio.sol";
+import "sbuf.sol";
+import "unistd.sol";
+import "ucred.sol";
+import "io.sol";
+import "parg.sol";
+import "libhelp.sol";
+import "uma.sol";
 
 /*struct CommandHelp {
     string name;

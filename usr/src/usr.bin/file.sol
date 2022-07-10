@@ -18,13 +18,14 @@ contract file is Utility {
                 (, uint16 st_ino, , , , , uint16 st_rdev, uint32 st_size, , , , ) = st.unpack();
                 if (!brief_mode)
                     out.append(str.oaif(param, add_null, "\x00") + str.oaif(": ", !dont_pad, "\t"));
-                if (st.is_reg())
+                if (libstat.is_reg(st))
                     out.append(st_size == 0 ? "empty" : st_size == 1 ? "very short file (no magic)" : "ASCII text");
                 else
-                    out.append(st.type_long());
-                if (st.is_char_dev() || st.is_block_dev())
+                    out.append(libstat.type_long(st));
+//                if (st.is_char_dev() || st.is_block_dev())
+                if (libstat.is_char_dev(st) || libstat.is_block_dev(st))
                         out.append(format(" ({}/{})", libstat.major(st_rdev), libstat.minor(st_rdev)));
-                if (st.is_symlink() && !follow_symlinks) {
+                if (libstat.is_symlink(st) && !follow_symlinks) {
                     (, string target, ) = udirent.get_symlink_target(inodes[st_ino], data[st_ino]).unpack();
                     out.append(" to " + target);
                 }

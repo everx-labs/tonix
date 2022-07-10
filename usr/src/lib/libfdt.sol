@@ -8,9 +8,10 @@ import "liberr.sol";
 library libfdt {
     using xio for s_of;
     using sbuf for s_sbuf;
-    uint8 constant STDIN_FILENO = 0;
+    uint8 constant STDIN_FILENO  = 0;
     uint8 constant STDOUT_FILENO = 1;
     uint8 constant STDERR_FILENO = 2;
+    uint8 constant ERRNO_FILENO  = 3;
 
     function fdfetch(s_of[] t, string path) internal returns (uint) {
         for (uint i = 0; i < t.length; i++)

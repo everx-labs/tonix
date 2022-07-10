@@ -1,8 +1,6 @@
 pragma ton-solidity >= 0.60.0;
 
-import "../../include/Utility.sol";
-//import "sys/vn.sol";
-//import "../sys/vmem.sol";
+import "Utility.sol";
 
 contract vmm is Utility {
 

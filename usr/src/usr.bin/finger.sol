@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.0;
 
 import "Utility.sol";
-import "../lib/pw.sol";
+import "pw.sol";
 
 contract finger is Utility {
 

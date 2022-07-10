@@ -91,6 +91,12 @@ library libstring {
         text = out;
     }
 
+    function subst(string text, string pattern, string symbols) internal {
+        uint p = text.strstr(pattern);
+        if (p > 0)
+            text = text.substr(0, p - 1) + symbols + text.substr(p - 1 + pattern.byteLength());
+    }
+
     function join_fields(string[] fields, string separator) internal returns (string line) {
         uint len = fields.length;
         if (len > 0) {

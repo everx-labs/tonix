@@ -169,5 +169,7 @@ library vmem {
     function vmem_print(uint32 addr, string , string ) internal {}
     function vmem_printall(string , string ) internal {}
     function vmem_startup() internal {}
-
+    function vmem_fetch_page(s_vmem vm, uint16 idx) internal returns (string) {
+        return idx < vm.vm_pages.length ? vm.vm_pages[idx] : "Page fault";
+    }
 }

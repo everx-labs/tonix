@@ -1,13 +1,12 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.61.2;
 
+import "liberr.sol";
 import "priv.sol";
-import "../../lib/stypes.sol";
-import "../../include/param.sol";
-import "../../include/conf.sol";
-import "../../lib/libstat.sol";
-//import "../ki/vnode.sol";
-import "../../lib/sb.sol";
-//import "../kern/bio.sol";
+import "stypes.sol";
+import "param.sol";
+import "conf.sol";
+import "libstat.sol";
+import "sb.sol";
 
 library vn {
 
@@ -258,20 +257,20 @@ struct s_vnode {
     function VOP_SYMLINK(s_vnode dvp, s_vnode vpp, s_componentname cnp, s_vattr vap, string target) internal returns (uint8) {}
     function VOP_RENAME(s_vnode fdvp, s_vnode fvp, s_componentname fcnp, s_vnode tdvp, s_vnode tvp, s_componentname tcnp) internal returns (uint8) {}
     function VOP_PATHCONF(s_vnode , uint8	name) internal returns (uint8 e, uint32 retval) {
-        if (name == sconf._PC_LINK_MAX)//	   The maximum number of links to a file.
+        if (name == conf._PC_LINK_MAX)//	   The maximum number of links to a file.
             retval = 10;
-        else if (name == sconf._PC_NAME_MAX) //	   The maximum number of bytes in a file name.
+        else if (name == conf._PC_NAME_MAX) //	   The maximum number of bytes in a file name.
             retval = 32;
-        else if (name == sconf._PC_PATH_MAX)	  // The maximum number of bytes in a pathname.
+        else if (name == conf._PC_PATH_MAX)	  // The maximum number of bytes in a pathname.
             retval = 200;
-        else if (name == sconf._PC_PIPE_BUF)	  // The maximum number of bytes which will be written atomically to a pipe.
+        else if (name == conf._PC_PIPE_BUF)	  // The maximum number of bytes which will be written atomically to a pipe.
             retval = 10000;
-        else if (name == sconf._PC_CHOWN_RESTRICTED) // Return 1 if appropriate privileges are required for the chown(2) system call, otherwise 0.
+        else if (name == conf._PC_CHOWN_RESTRICTED) // Return 1 if appropriate privileges are required for the chown(2) system call, otherwise 0.
             retval = 0;
-        else if (name == sconf._PC_NO_TRUNC)	  // Return 1 if file names longer than KERN_NAME_MAX are truncated.
+        else if (name == conf._PC_NO_TRUNC)	  // Return 1 if file names longer than KERN_NAME_MAX are truncated.
             retval = 0;
         else
-            e = errno.EINVAL;
+            e = err.EINVAL;
     }
     function VOP_PRINT(s_vnode vp) internal returns (uint8, string) {
 
@@ -452,7 +451,7 @@ struct s_vnode {
 		    pg |= VADMIN;
 	    if ((accmode & (pg | ag)) == accmode)
 		    return 0;
-    	return (accmode & VADMIN) > 0 ? errno.EPERM : errno.EACCES;
+    	return (accmode & VADMIN) > 0 ? err.EPERM : err.EACCES;
     }
 
 //    function vn_rdwr(s_vnode vp, uio_rw rw, bytes base, uint32 len, uint32 offset, uio_seg segflg, uint16 ioflg, s_ucred active_cred, s_ucred file_cred, uint32 aresid, s_thread td) internal returns (uint8 rc, bytes buf) {

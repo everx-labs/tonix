@@ -1,12 +1,13 @@
 #set -x
 
-./eilish set_tosh_vars
+#./eilish set_tosh_vars
 cat $1 run/index run/aliases run/vars run/tosh_vars run/hashes run/functions >run/pool
 
 while true
 do
-    echo -n "$ "
-    read input
+#    echo -n "$ "
+#    read input
+    read -p "$ " input
     echo ">" "$input" >>var/log/session
     case $input in
         q|quit)

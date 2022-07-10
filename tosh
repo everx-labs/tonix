@@ -1,36 +1,39 @@
-#set -x
+set -x
 fn=$1
 shift
 param=$1
 
 case $fn in
-    b_exec|builtin_help|exec|read_fs_to_env|main)
-        util=$param;;
+    main)
+       util=$param;;
     run_builtin)
-        util=builtin;;
-    execute_command|print_errors)
-        util=command;;
-    command_help)
-        util=$param;;
+        util=builtin;
+        odir=bin/eilish.dir;;
+    execute_command|sys_main)
+        util=command;
+        odir=bin/eilish.dir;;
+    print_errors)
+        util=explain;
+        odir=usr/bin;;
     handle_action)
-        util=tmpfs;;
+        util=tmpfs;
+        odir=sys/fs;;
     *)
-        util=eilish;;
+        util=eilish;
+        odir=usr/bin;;
 esac
 
 args() {
    case $fn in
         run_builtin)
-            jq -n --rawfile args run/args --rawfile builtins run/builtins '{$args, $builtins}';;
+#           jq --rawfile args run/args --rawfile builtins run/builtins '{$args, $builtins} + {p_in: .p}' run/proc;;
+          jq --rawfile args run/args --rawfile builtins run/builtins '{sv_in: .} + {$args, $builtins}' run/vm;;
         execute_command)
-            jq --rawfile args run/args --rawfile comp_spec run/comp_spec --rawfile varss run/vars --rawfile users run/users --rawfile groups run/groups --rawfile pool run/pool '{$args, $comp_spec, $varss, $users, $groups, $pool} + .' run/fs;;
+           jq '{sv_in:.}' run/vm | jq --rawfile args run/args --rawfile comp_spec run/comp_spec --rawfile varss run/vars --rawfile users run/users --rawfile groups run/groups '{$args, $comp_spec, $varss, $users, $groups} + .';;
+        sys_main)
+            jq '{sv_in: .}' run/vm;;
         print_errors)
             jq '.' tmp/cmd_errors;;
-        b_exec)
-            jq '{e: .}' run/env >tmp/shell_in;
-            jq -s 'add' tmp/shell_in run/fs;;
-        exec)
-            jq --rawfile args run/export '. + {$args}' run/fs;;
         main)
             jq --rawfile args run/export '. + {$argv}' run/fs;;
         *)
@@ -39,44 +42,36 @@ args() {
 }
 
 filter() {
+    jq -er '."Error"? // empty' $1 && return $?
     case $fn in
-        get_command_info)
-            cp $1 usr/share/$util.info;;
-        builtin_help)
-            cp $1 usr/share/$util.help;;
-        command_help)
-            cp $1 usr/share/$util.man;;
-        exec)
-            jq -rj '.out' $1 >run/stdout;
-            jq -rj '.err' $1 >run/stderr;;
         main)
             jq -rj '.out' $1 >run/stdout;
-            jq -rj '.err' $1 >run/stderr;;
+            jq -rj '.err' $1 >>run/stderr;;
         print_errors)
-            jq -rj '.err' $1 >run/stderr;
-            ./flush_std;;
-#            jq -rj '.err' $1;;
+            jq -rj '.err' $1 >>run/stderr;
+            ./flush_std run/stdout run/stderr;;
         run_builtin)
-#            b_ex=`jq -r '.res' $1`
             b_ex=`jq -rj '.res' $1`
             echo "$b_ex" >>var/log/commands
+            jq -rj '.sv.cur_proc' $1 | jq --rawfile argv run/export '{$argv} + {p: .}' >run/proc
+            jq '.sv' $1 >run/vm
             eval "$b_ex";;
         execute_command)
-            jq -rj '.ec' $1 >run/ec;
-            jq 'if (.ec == "0") then . else empty end' $1 >tmp/cmd_exec;
-            if [ -s tmp/cmd_exec ]; then
-                jq -rj '.exports' $1 >run/export;
-                jq -rj '.cs_res' $1 >run/comp_spec;
-            fi
+            jq -rj '.exports' $1 >run/export
+            jq -rj '.sv.cur_proc' $1 | jq --rawfile argv run/export '{$argv} + {p: .}' >run/proc
+            jq '.sv' $1 >run/vm
             jq -r '.exec_line' $1 >>var/log/commands
             eval `jq -rj '.exec_line' $1`;;
-        b_exec)
-            cp $1 tmp/post_b_exec;;
+        sys_main)
+            jq '.sv' $1 >run/vm
+            jq -rj '.sv.cur_proc.p_fd.fdt_ofiles[3].buf.buf' $1 | xxd -p -r >run/sysexec;
+            eval `cat run/sysexec`;;
         *)
             ;;
     esac
 }
 
 args >tmp/${util}_$fn.args
-~/bin/tonos-cli -j run --boc bin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
+#~/bin/tonos-cli -j run --boc bin/$util.boc --abi build/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
+~/bin/tonos-cli -j run --boc $odir/$util.boc --abi usr/obj/$odir/$util.abi.json $fn tmp/${util}_$fn.args >tmp/${util}_$fn.out
 filter tmp/${util}_$fn.out
