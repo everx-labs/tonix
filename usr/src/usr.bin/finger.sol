@@ -1,18 +1,18 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 import "pw.sol";
 
-contract finger is Utility {
+contract finger is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
-        bool flag_multi_line = p.flag_set("l");
-        bool flag_short_format = p.flag_set("s");
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        bool flag_multi_line = e.flag_set("l");
+        bool flag_short_format = e.flag_set("s");
         bool short_format = flag_short_format && !flag_multi_line;
         if (params.empty())
-            p.puts("No one logged on");
+            e.puts("No one logged on");
         else {
             string user_name = params[0];
             string[][] table;
@@ -21,14 +21,14 @@ contract finger is Utility {
             (string etc_passwd, , , ) = fs.get_passwd_group(inodes, data);
             (string line, s_passwd res) = pw.getnam(user_name, etc_passwd);
             if (line.empty())
-                p.perror(user_name + ": no such user");
+                e.perror(user_name + ": no such user");
             (string pw_name, , , string pw_gecos, string pw_dir, string pw_shell) = res.unpack();
             if (short_format)
                 table.push([pw_name, "*", "*", "No logins"]);
             else
                 table = [["Login: " + pw_name, "Directory: " + pw_dir],
                         ["Name: " + pw_gecos, "Shell: " + pw_shell]];
-            p.puts(fmt.format_table(table, " ", "\n", fmt.CENTER));
+            e.puts(fmt.format_table(table, " ", "\n", fmt.CENTER));
         }
     }
 

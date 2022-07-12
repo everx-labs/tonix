@@ -1,17 +1,17 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract tr is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
-        (, bool squeeze_repeats, , ) = p.flags_set("ds");
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        (, bool squeeze_repeats, , ) = e.flags_set("ds");
         string set_from = params.empty() ? params[0] : "";
-        string set_to = p.opt_value("d");
+        string set_to = e.opt_value("d");
         for (string param: params) {
-            s_of f = p.fopen(param, "r");
+            s_of f = e.fopen(param, "r");
             if (!f.ferror()) {
                 while (!f.feof()) {
                     string line = f.fgetln();
@@ -19,10 +19,10 @@ contract tr is putil {
                         line.tr_squeeze(set_from);
                     else
                         line.translate(set_from, set_to);
-                    p.puts(line);
+                    e.puts(line);
                 }
             } else
-                p.perror(param + ": cannot open");
+                e.perror(param + ": cannot open");
         }
     }
     function _command_help() internal override pure returns (CommandHelp) {

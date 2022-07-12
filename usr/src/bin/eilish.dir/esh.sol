@@ -1,87 +1,67 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
+//import "pbuiltin.sol";
 import "libshellenv.sol";
+import "libprocenv.sol";
+import "xio.sol";
+contract esh {
 
-struct Command {
-    string cmd;
-    string s_args;
-    string redir_in;
-    string redir_out;
-}
+    using xio for s_of;
+    using libstring for string;
+    using str for string;
 
-contract eilish is Shell {
-
-    using libshellenv for shell_env;
-    function compound(string input, string aliases) external pure returns (Command[] res) {
-        return _compound(input, aliases);
-    }
-
-    function _compound(string input, string aliases) internal pure returns (Command[] res) {
-        if (input.empty())
-            return res;
-        (string[] commands, ) = input.split(";");
-        for (string line: commands) {
-            (string cmd_raw, string sargs) = line.csplit(" ");
-            string cmd_expanded;// = vars.val(cmd_raw, aliases);
-            input = cmd_expanded.empty() ? line : cmd_expanded + " " + sargs;
-            string cmd;
-            (cmd, sargs) = input.csplit(" ");
-            string redir_in;
-            string redir_out;
-            if (!sargs.empty()) {
-                uint p = sargs.strrchr(">");
-                if (p > 0) {
-                    redir_out = sargs.strtok(p, " ");
-                    sargs = sargs.substr(0, p - 1);
-                    sargs.trim_spaces();
-                }
-                uint q = sargs.strrchr("<");
-                if (q > 0) {
-                    redir_in = sargs.strtok(q, " ");
-                    sargs = sargs.substr(0, q - 1);
-                    sargs.trim_spaces();
-                }
-            }
-            res.push(Command(cmd, sargs, redir_in, redir_out));
-        }
-    }
-
-   function main(svm sv_in, string input, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function print_errors(shell_env e_in) external pure returns (uint8 rc, shell_env e) {
         e = e_in;
+        string[] page = e.environ[sh.ERRNO];
+        string cmd = vars.val("COMMAND", e.environ[sh.SPECVARS]);
+        string[] pipeline = e.environ[sh.PIPELINE];
+        string exec_line = pipeline[pipeline.length - 1];
+        (string attrs, , string value) = vars.split_var_record(exec_line);
+//        string cmd = value.csplit(' ')
+        uint8 return_code = uint8(vars.int_val("RETURN_CODE", page));
+        uint8 error_no = uint8(vars.int_val("ERRNO", page));
+        uint8 exit_status = uint8(vars.int_val("EXIT_STATUS", page));
+        if (return_code + error_no + exit_status > 0) {
+            s_of res = e.ofiles[libfdt.STDERR_FILENO];
+            string err_msg = "-eilish: ";
+            string reason = vars.val("REASON", page);
+            string em;
+            if (error_no > 0) {
+//                err_msg.append(err.strerror(en));
+                em = vars.val(str.toa(error_no), e.environ[sh.ERRORSTR]);
+            }
+            if (return_code > 0) {
+                //em = vars.val(str.toa(return_code), e.environ[sh.ERRBUILTIN]);
+                em = vars.val("BUILTIN_MOD", page) + ": ";
+                em.append(reason);
+            }
+            err_msg.append(em);
+            if (exit_status > 0)
+                err_msg.append("exit code: " + str.toa(exit_status));
+            rc = return_code;
+            res.fputs(err_msg);
+            e.ofiles[libfdt.STDERR_FILENO] = res;
+        }
+        delete e.environ[sh.PIPELINE][pipeline.length - 1];
+    }
 
+    function export_env(shell_env e_in) external pure returns (p_env p, string p_comm, string p_pid) {
+        p = p_env(e_in.ofiles, e_in.cwd, e_in.umask, e_in.environ);
+        p_comm = vars.val("COMMAND", e_in.environ[sh.SPECVARS]);
+        p_pid = vars.val("PPID", e_in.environ[sh.VARIABLE]);
+    }
+
+    function parse_input(shell_env e_in, string input) external pure returns (shell_env e) {
+        e = e_in;
         string[][] ev = e.environ;
-        /*string[] aliases = ev[sh.ALIAS];
-        string index;
-        string[] pages;
-        if (sv.vmem.length > 1) {
-            pages = sv.vmem[1].vm_pages;
-            index = pages[2];
-        }*/
-
-        s_of f = p.stdout();
-        f.fflush();
-        p.p_fd.fdt_ofiles[io.STDOUT_FILENO] = f;
-        e.ofiles[libfdt.STDOUT_FILENO] = f;
-        f = p.stderr();
-        f.fflush();
-        p.p_fd.fdt_ofiles[io.STDERR_FILENO] = f;
-        e.ofiles[libfdt.STDERR_FILENO] = f;
-        f = p.p_fd.fdt_ofiles[3];
-        f.fflush();
-        p.p_fd.fdt_ofiles[3] = f;
-        e.ofiles[3] = f;
         if (input.empty())
-            return (sv, e);
-        (string cmd_raw, string argv) = input.csplit(" ");
+            return e;
+        (string cmd_raw, string argv) = libstring.csplit(input, ' ');
         string cmd_expanded = vars.val(cmd_raw, ev[sh.ALIAS]);
         string sinput = cmd_expanded.empty() ? input : cmd_expanded + " " + argv;
         string cmd;
-        (cmd, argv) = sinput.csplit(" ");
+        (cmd, argv) = libstring.csplit(sinput, ' ');
         string cmd_opt_string = vars.val(cmd, ev[sh.OPTSTRING]);
-
         string sflags;
         string redir_in;
         string redir_out;
@@ -146,38 +126,15 @@ contract eilish is Shell {
             else
                 serr.append("command not found: " + cmd);
             res = "echo " + serr;
-            ec = EXECUTE_FAILURE;
+            ec = EXIT_FAILURE;
         }
         e.environ[sh.PIPELINE].push(cattrs + " " + exec_engine + "=" + cmd + " " + sargs);
         // -------------
         (params, n_params) = pos_params.split(" ");
         last_param = pos_params.empty() ? cmd : params[n_params - 1];
-
-        p.p_comm = cmd;
         s_dirent[] pas;
         for (string pm: params)
             pas.push(s_dirent(0, 0, pm));
-        p.p_args.ar_misc = s_ar_misc(sinput, sflags, sargs, uint16(n_params), params, ec, last_param,
-            serr, redir_in, redir_out, pas, opt_values);
-
-        /*string[] pa;
-        pa.push(vars.as_attributed_hashmap("COMMAND_LINE", args));
-        p.p_args.ar_args = pa;
-        p.p_args.ar_length = uint16(pa.length);*/
-
-        p.p_args.ar_args = [vars.as_var_list_old("", [
-            ["COMMAND", cmd],
-            ["COMMAND_LINE", res],
-            ["PARAMS", pos_params],
-            ["FLAGS", sflags],
-            ["ARGV", sinput],
-            ["#", str.toa(n_params)],
-            ["@", sargs],
-            ["?", str.toa(ec)],
-            ["_", last_param],
-            ["OPTERR", serr],
-            ["REDIR_IN", redir_in],
-            ["REDIR_OUT", redir_out]]), res];
         e.environ[sh.SPECVARS] = [
             "COMMAND=" + cmd,
             "COMMAND_LINE=" + res,
@@ -193,57 +150,6 @@ contract eilish is Shell {
             "REDIR_OUT=" + redir_out
         ];
         e.environ[sh.OPTARGS] = vars.as_var_list("", opt_values);
-        sv.cur_proc = p;
-    }
-
-    function set_internal_vars(svm sv_in, string aliases, string opt_string, string index, string pool) external pure returns (svm sv) {
-        sv = sv_in;
-//        s_proc p = sv.cur_proc;
-        string[] pages;
-        pages.push(aliases);
-        pages.push(opt_string);
-        pages.push(index);
-        pages.push(pool);
-        s_vmem vmem1 = vmem.vmem_create("V1", 0, 4096, 0, 0, 0);
-        vmem1.vm_pages = pages;
-        if (sv.vmem.length > 1)
-            sv.vmem[1] = vmem1;
-        else
-            sv.vmem.push(vmem1);
-    }
-
-    /*function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
-        ec = EXECUTE_SUCCESS;
-        out = vars.as_var_list("", [
-            ["_", vars.val("TOSH", profile)],
-            ["-", vars.val("-", profile)],
-            ["TOSH", vars.val("TOSH", profile)],
-            ["TOSHOPTS", vars.as_map("expand_aliases")],
-            ["TOSHPID", vars.val("TOSHPID", profile)],
-            ["TOSH_SUBSHELL", vars.val("TOSH_SUBSHELL", profile)],
-            ["TOSH_ALIASES", vars.val("TOSH_ALIASES", profile)],
-            ["SHELLOPTS", "allexport:hashall"],
-            ["TMPDIR", vars.val("TMPDIR", profile)],
-            ["SHLVL", vars.val("SHLVL", profile)]]);
-    }*/
-
-    // Possible states for the parser that require it to do special things.
-    uint16 constant PST_CASEPAT	    = 1;   // in a case pattern list
-    uint16 constant PST_ALEXPNEXT	= 2;   // expand next word for aliases
-    uint16 constant PST_ALLOWOPNBRC	= 4;   // allow open brace for function def
-    uint16 constant PST_NEEDCLOSBRC	= 8;   // need close brace
-    uint16 constant PST_DBLPAREN	= 16;  // double-paren parsing
-    uint16 constant PST_SUBSHELL	= 32;  // ( ... ) subshell
-    uint16 constant PST_CMDSUBST	= 64;  // $( ... ) command substitution
-    uint16 constant PST_CASESTMT	= 128; // parsing a case statement
-    uint16 constant PST_CONDCMD	    = 256; // parsing a [[...]] command
-    uint16 constant PST_CONDEXPR	= 512; // parsing the guts of [[...]]
-    uint16 constant PST_ARITHFOR	= 1024; // parsing an arithmetic for command
-
-    function _parse_redirects(string s) internal pure returns (string sargs, string redir_in, string redir_out) {
-        string sbody;
-        (sbody, redir_out) = s.csplit(">");
-        (sargs, redir_in) = sbody.csplit("<");
     }
 
     function _parse_params(string[] params, string opt_string) internal pure returns (string sflags, string[][2] opt_values, string serr, string pos_params, string sattrs) {
@@ -316,13 +222,14 @@ contract eilish is Shell {
         }
     }
 
-    function _builtin_help() internal pure override returns  (BuiltinHelp bh) {
-        return BuiltinHelp("eilish",
-            "[command ...]",
-            "Command shell",
-            "Command shell",
-            "",
-            "",
-            "");
+    uint8 constant EXIT_SUCCESS = 0;
+    uint8 constant EXIT_FAILURE = 1;
+    uint8 constant EX_BADUSAGE  = 2; // Usage messages by builtins result in a return status of 2
+    function upgrade(TvmCell c) external pure {
+        tvm.accept();
+        tvm.setcode(c);
+        tvm.setCurrentCode(c);
     }
+
 }
+

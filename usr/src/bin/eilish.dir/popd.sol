@@ -4,14 +4,15 @@ import "pbuiltin.sol";
 
 contract popd is pbuiltin {
 
-    function _main(s_proc, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[] dir_stack = e.environ[sh.DIRSTACK];
         uint n_dirs = dir_stack.length;
-        if (params.empty()) {
-            if (n_dirs < 2)
+        if (e.params().empty()) {
+            if (n_dirs < 2) {
                 e.perror("directory stack empty");
-            else {
+                rc = EXIT_FAILURE;
+            } else {
                 dir_stack.pop();
                 e.environ[sh.DIRSTACK] = dir_stack;
             }
@@ -31,5 +32,8 @@ contract popd is pbuiltin {
     `popd -0' removes the last directory, `popd -1' the next to last.\n\
 The `dirs' builtin displays the directory stack.",
 "Returns success unless an invalid argument is supplied or the directory change fails.");
+    }
+    function _name() internal pure override returns (string) {
+        return "popd";
     }
 }

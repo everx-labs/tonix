@@ -1,31 +1,36 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
-import "env.sol";
-import "unistd.sol";
+import "libenv.sol";
+//import "unistd.sol";
 
 contract id is putil {
 
-    using unistd for s_proc;
+//    using unistd for s_proc;
 
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         (bool effective_gid_only, bool name_not_number, bool real_id, bool effective_uid_only, bool all_group_ids, , , ) =
-            p.flag_values("gnruG");
+            e.flag_values("gnruG");
         bool is_ugG = effective_uid_only || effective_gid_only || all_group_ids;
 
-        string user_name = p.env_value("USER");
-        string group_name = p.env_value("USER");
-        uint16 uid = p.getuid();
+        string[] ev = e.env_vars();
+        string user_name = e.env_value("USER");
+        string group_name = e.env_value("USER");
+        /*uint16 uid = p.getuid();
         uint16 eid = p.geteuid();
-        uint16 gid = p.getgid();
+        uint16 gid = p.getgid();*/
+        uint16 uid = libenv.getuid(ev);
+        uint16 eid = libenv.geteuid(ev);
+        uint16 gid = libenv.getgid(ev);
+
         string out;
         if ((name_not_number || real_id) && !is_ugG)
-            p.perror("cannot print only names or real IDs in default format");
+            e.perror("cannot print only names or real IDs in default format");
 
         else if (effective_gid_only && effective_uid_only)
-            p.perror("cannot print \"only\" of more than one choice");
+            e.perror("cannot print \"only\" of more than one choice");
         else if (effective_gid_only)
             out = name_not_number ? group_name : str.toa(gid);
         else if (effective_uid_only)

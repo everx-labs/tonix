@@ -1,8 +1,8 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract getopt is Utility {
+contract getopt is putil_stat {
 
     struct CommandInfo {
         uint8 min_args;
@@ -11,9 +11,9 @@ contract getopt is Utility {
         string name;
     }
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
         uint p = input.strrchr(">");
         uint q = input.strrchr("<");
         (string c, string sargs) = input.csplit(" ");

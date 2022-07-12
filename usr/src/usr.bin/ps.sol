@@ -1,21 +1,22 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 import "adm.sol";
 import "unistd.sol";
+import "libenv.sol";
 
 contract ps is putil {
 
 //    function _main(s_proc p_in) internal override pure returns (s_proc p) {
 //        p = p_in;
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on,
-            bool default_format, bool user_message_status, , bool users_logged_in) = p.flag_values("bHlqsTwu");
+            bool default_format, bool user_message_status, , bool users_logged_in) = e.flag_values("bHlqsTwu");
         mapping (uint16 => Login) utmp;
 
-        (mapping (uint16 => string) user, ) = p.get_users_groups();
+        (mapping (uint16 => string) user, ) = e.get_users_groups();
 
         if (all_logged_on) {
             uint count;
@@ -45,7 +46,7 @@ contract ps is putil {
             Column(true, 30, fmt.LEFT),
             Column(!default_format || users_logged_in, 5, fmt.RIGHT)];
 
-        uint16 p_pid = unistd.getpid(p);
+        uint16 p_pid = vars.int_val("PPID", e.environ[sh.VARIABLE]);//unistd.getpid(p);
         for ((, Login l): utmp) {
             (uint16 user_id, uint16 tty_id, uint16 process_id, uint32 login_time) = l.unpack();
             if (system_login_proc && user_id > adm.login_def_value(adm.SYS_UID_MAX))

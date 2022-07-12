@@ -1,24 +1,24 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract printenv is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
-        string delimiter = p.flag_set("0") ? "\x00" : "\n";
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        string delimiter = e.flag_set("0") ? "\x00" : "\n";
 
-        string[] e = p.environ;
+        string[] ee = e.environ[sh.VARIABLE];
         if (params.empty())
-            for (string s: e)
-                p.puts(s);
+            for (string s: ee)
+                e.puts(s);
         for (string pa: params) {
             string key = pa + "=";
             uint16 kl = key.strlen();
-            for (string s: e) {
+            for (string s: ee) {
                 if (s.strlen() > kl && s.substr(0, kl) == key)
-                    p.puts(s.substr(kl));
+                    e.puts(s.substr(kl));
             }
         }
     }

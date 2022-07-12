@@ -1,13 +1,15 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
+import "pbuiltin_base.sol";
 
-contract exec is Shell {
+contract exec is pbuiltin_base {
 
-    function main(svm sv_in) external pure returns (svm sv) {
+    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
         sv = sv_in;
         s_proc p = sv.cur_proc;
-        string[] params = p.params();
+        e = e_in;
+        s_of res = e.ofiles[libfdt.STDOUT_FILENO];
+        string[] params = e.params();
         (bool substitute_command, bool empty_env, bool prepend_dash, , , , , ) = p.flag_values("acl");
         if (empty_env)
             delete p.environ;
@@ -17,7 +19,6 @@ contract exec is Shell {
         }
         if (prepend_dash)
             p.p_comm = "-" + p.p_comm;
-        sv.cur_proc = p;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

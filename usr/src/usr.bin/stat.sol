@@ -1,8 +1,8 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract stat is Utility {
+contract stat is putil_stat {
 
     function _fmtstr(string s, string fstr, string[] values) internal pure returns (string res) {
         uint len = math.min(fstr.byteLength(), values.length);
@@ -18,24 +18,26 @@ contract stat is Utility {
             res.trs("%" + fstr.substr(i, 1), str.toa(values[i]));
     }
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
-        (bool terse, bool fs_info, bool format_str, ) = p.flags_set("tfc");
-        string sf = format_str ? p.opt_value("c") : terse ?
+//    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
+//        p = p_in;
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        (bool terse, bool fs_info, bool format_str, ) = e.flags_set("tfc");
+        string sf = format_str ? e.opt_value("c") : terse ?
             fs_info ? "%n %i %l %t %s %S %b %f %a %c %d" : "%n %s %b %f %u %g %D %i %h %t %T %Y %Z %W %o %C" :
             fs_info ? "  File: \"%n\"\n    ID: %i Namelen: 20\tType: %T\nBlock size: %s\tFundamental block size: %S\n\
 Blocks: Total: %b\tFree: %f\tAvailable: %a\nInodes: Total: %c\tFree: %d\n" :
 "   File: %n\n   Size: %s\t\tBlocks: %b\tIO Block: %o\t%F\nDevice: %Dh/%dd\tInode: %i\tLinks: %h\tDevice type: %t,%T\n\
 Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n";
-        (mapping (uint16 => string) user, mapping (uint16 => string) group) = p.get_users_groups();
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = e.get_users_groups();
         string out;
         for (string name: params) {
-            s_of f = p.fopen(name, "r");
+            s_of f = e.fopen(name, "r");
             if (!f.ferror()) {
                 (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size,
                     uint16 st_blksize, uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = xio.st(f.attr).unpack();
-                (string major, string minor) = st_mode.is_block_dev() || st_mode.is_char_dev() ? inode.get_device_version(st_rdev) : ("0", "0");
+                (string major, string minor) = libstatmode.is_block_dev(st_mode) || libstatmode.is_char_dev(st_mode) ? inode.get_device_version(st_rdev) : ("0", "0");
 
                 if (fs_info) {
                     (, , string fstype, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, uint16 block_size, , , , , , , ,) =
@@ -45,19 +47,19 @@ Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n
                     s = _fmtstr(s, "ntT", [name, format("{:x}", st_ino), fstype]);
                     out.append(s + "\n");
                 } else {
-                    if (st_mode.is_symlink()) {
+                    if (libstatmode.is_symlink(st_mode)) {
                         (, string target, ) = udirent.get_symlink_target(inodes[st_ino], data[st_ino]).unpack();
                         name.append(" -> " + target);
                     }
-                    sf.trs("Device type: %t,%T", st_mode.is_block_dev() || st_mode.is_char_dev() ? format("Device type: {},{}", major, minor) : "");
+                    sf.trs("Device type: %t,%T", libstatmode.is_block_dev(st_mode) || libstatmode.is_char_dev(st_mode) ? format("Device type: {},{}", major, minor) : "");
                     out.append(_fmtstr(sf, "aAbBCdDfFgGhinostTuUwWyYzZ", [str.toa(st_mode & 0x01FF), inode.permissions(st_mode), str.toa(st_blocks),
-                        str.toa(st_blksize), "", str.toa(st_dev), format("{:x}", st_dev), format("{:x}", st_mode), st_mode.file_type_description(),
+                        str.toa(st_blksize), "", str.toa(st_dev), format("{:x}", st_dev), format("{:x}", st_mode), libstatmode.file_type_description(st_mode),
                         str.toa(st_gid), group[st_gid], str.toa(st_nlink), str.toa(st_ino), name, str.toa(st_blksize), str.toa(st_size), format("{:x}", major),
                         format("{:x}", minor), str.toa(st_uid), user[st_uid], "-", "0", fmt.ts(st_mtim), format("{}", st_mtim), fmt.ts(st_ctim), format("{}", st_ctim)]) + "\n");
                 }
             }
         }
-        p.puts(out);
+        e.puts(out);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

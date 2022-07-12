@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 import "er.sol";
@@ -6,7 +6,7 @@ import "vars.sol";
 
 contract env_ is putil {
 
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
 
@@ -17,7 +17,7 @@ contract env_ is putil {
         string sval;
         string sout;
 
-        for (string name: p.params()) {
+        for (string name: e.params()) {
                 if (op == "export") {
                     if (param == "syserr") {
                         sout.append("exporting syserr\n");
@@ -25,10 +25,10 @@ contract env_ is putil {
                     }
                 }
 
-            s_of f = p.fopen(name, "r");
+            s_of f = e.fopen(name, "r");
             if (f.file > 0) {
                 if (op == "fopen") {
-                    p.fopen(name, "r");
+                    e.fopen(name, "r");
                 }
             } else {
                 if (op.empty()) {

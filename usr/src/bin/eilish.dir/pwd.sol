@@ -1,18 +1,19 @@
 pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin.sol";
-import "unistd.sol";
-
+    
 contract pwd is pbuiltin {
 
-    function _main(s_proc p, string[] , shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
-        if (!p.flag_set("P")) {
-            string wd = unistd.getwd(p);
-            if (wd.empty())
+        if (!e.flag_set("P")) {
+            uint16 wd = e.get_cwd();
+            if (wd == 0) {
                 e.perror("current directory cannot be read");
-            else
-                e.puts(wd);
+                rc = EXIT_FAILURE;
+            } else {
+                e.puts(vars.val("PWD", e.environ[sh.VARIABLE]));
+            }
         }
     }
 
@@ -28,5 +29,7 @@ By default, pwd behaves as if -L were specified.",
 "",
 "Returns 0 unless an invalid option is given or the current directory cannot be read.");
     }
-
+    function _name() internal pure override returns (string) {
+        return "pwd";
+    }
 }

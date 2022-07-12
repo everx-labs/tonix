@@ -4,20 +4,22 @@ import "pbuiltin.sol";
 
 contract read is pbuiltin {
 
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[] page = e.environ[sh.VARIABLE];
 
-        bool assign_to_array = p.flag_set("a");
+        bool assign_to_array = e.flag_set("a");
 //        bool use_delimiter = p.flag_set("d");
-        bool echo_input = !p.flag_set("s");
+        bool echo_input = !e.flag_set("s");
         string delimiter = " ";
         string sattrs = assign_to_array ? "-a" : "--";
         string input;
-        s_of f = p.fdopen(0, "r");
+        s_of f = e.stdin();//p.fdopen(0, "r");
+        string[] params = e.params();
         if (!f.ferror())
             input = f.gets_s(0);
-
+        else
+            rc = EXIT_FAILURE;
         if (assign_to_array) {
             string array_name = "REPLY";
             (string[] fields, ) = input.split(delimiter);
@@ -36,7 +38,7 @@ contract read is pbuiltin {
         }
         e.environ[sh.VARIABLE] = page;
         if (echo_input)
-            p.puts(input);
+            e.puts(input);
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {
@@ -63,5 +65,7 @@ delimiters.\nIf no NAMEs are supplied, the line read is stored in the REPLY vari
 "The return code is zero, unless end-of-file is encountered, read times out (in which case it's greater than 128), a variable assignment\n\
 error occurs, or an invalid file descriptor is supplied as the argument to -u.");
     }
-
+    function _name() internal pure override returns (string) {
+        return "read";
+    }
 }

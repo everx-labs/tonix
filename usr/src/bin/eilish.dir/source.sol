@@ -4,15 +4,16 @@ import "pbuiltin.sol";
 
 contract source is pbuiltin {
 
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
 //        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
         e = e_in;
         string[] pool = e.environ[sh.SPECVARS];
         string file_contents;
-        s_of f = p.fdopen(0, "r");
+        s_of f = e.stdin();//p.fdopen(0, "r");
         if (!f.ferror())
             file_contents = f.gets_s(0);
-
+        else
+            rc = EXIT_FAILURE;
         string tosh_path = vars.val("TOSH", pool);
         string sargs = vars.val("$@", pool);
         string cmd = vars.val("$0", pool);
@@ -37,8 +38,10 @@ contract source is pbuiltin {
             exec_cmd.append(exec_line);
         }
         //res = exec_cmd; // TODO: apply to redirections
+    }
 
-//        sv.cur_proc = p;
+    function _name() internal pure override returns (string) {
+        return "source";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

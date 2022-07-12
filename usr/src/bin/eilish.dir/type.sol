@@ -4,19 +4,13 @@ import "pbuiltin.sol";
 import "vars.sol";
 contract type_ is pbuiltin {
 
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
-        bool f_terse = p.flag_set("t");
-        /*s_of f = e.fopen("pool", "r");
-        string pool;
-        if (!f.ferror()) {
-            pool = f.fgets(0);
-        } else
-            e.perror("Failed to read objects pool");*/
+        bool f_terse = e.flag_set("t");
 //        (bool all_locations, bool func_lookup, bool disk_file_name, bool path_search, , , , ) = arg.flag_values("afpP", flags);
 
         string[] index = e.environ[sh.ARRAYVAR];
-        for (string arg: params) {
+        for (string arg: e.params()) {
             string t = vars.get_array_name(arg, index);
             string value;
             if (t == "keyword")
@@ -39,9 +33,13 @@ contract type_ is pbuiltin {
                     value = f_terse ? "file" : (arg + " is " + "/bin/" + arg);
             } else {
                 e.perror(arg + ": not found");
+                rc = EXIT_FAILURE;
             }
             e.puts(value);
         }
+    }
+    function _name() internal pure override returns (string) {
+        return "type";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

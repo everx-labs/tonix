@@ -4,34 +4,37 @@ import "pbuiltin.sol";
 
 contract mapfile is pbuiltin {
 
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[] pool = e.environ[sh.ARRAYVAR];
 
         string sattrs = "-a";
-        string delimiter = p.flag_set("d") ? p.opt_value("d") : "\n";
-        uint count = p.flag_set("n") ? str.toi(p.opt_value("n")) : 0;
-        uint origin = p.flag_set("O") ? str.toi(p.opt_value("O")) : 0;
+        string delimiter = e.flag_set("d") ? e.opt_value("d") : "\n";
+        uint count = e.flag_set("n") ? str.toi(e.opt_value("n")) : 0;
+        uint origin = e.flag_set("O") ? str.toi(e.opt_value("O")) : 0;
+        string[] params = e.params();
         string array_name = params.empty() ? "MAPFILE" : params[params.length - 1];
 //        string ofs = p.flag_set("t") ? " " : (delimiter + " ");
 //        string ofs_2 = p.flag_set("t") ? "" : delimiter;
         uint16 page_index;
-        if (p.flag_set("u")) {
-            string sfd = p.opt_value("u");
+        if (e.flag_set("u")) {
+            string sfd = e.opt_value("u");
             uint16 fd = str.toi(sfd);
             if (fd > 0)
                 page_index = fd;
-            else
-                p.perror("Invalid fd specified: " + sfd + ", using stdin");
+            else {
+                e.perror("Invalid fd specified: " + sfd + ", using stdin");
+            }
         }
 
         string input;
-        s_of f = p.fdopen(0, "r");
-        if (!f.ferror())
+        s_of f = e.stdin();//p.fdopen(0, "r");
+        if (!f.ferror()) {
             input = f.gets_s(0);
-
-        string arr_val = vars.as_indexed_array(array_name, input, "\n");
-        e.environ[sh.ARRAYVAR] = vars.set_var(sattrs, arr_val, pool);
+            string arr_val = vars.as_indexed_array(array_name, input, "\n");
+            e.environ[sh.ARRAYVAR] = vars.set_var(sattrs, arr_val, pool);
+        } else
+            rc = EXIT_FAILURE;
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
@@ -54,5 +57,8 @@ If -C is supplied without -c, the default quantum is 5000.  When CALLBACK is eva
 of the next array element to be assigned and the line to be assigned to that element as additional arguments.\n\n\
 If not supplied with an explicit origin, mapfile will clear ARRAY before assigning to it.",
 "Returns success unless an invalid option is given or ARRAY is readonly or not an indexed array.");
+    }
+    function _name() internal pure override returns (string) {
+        return "mapfile";
     }
 }

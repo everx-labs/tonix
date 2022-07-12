@@ -4,53 +4,22 @@ import "pbuiltin_special.sol";
 
 contract declare is pbuiltin_special {
 
-    function _retrieve_pages(s_proc p) internal pure override returns (uint8[]) {
-        return [p.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
+    function _retrieve_pages(shell_env e) internal pure override returns (uint8[]) {
+        return [e.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
     }
 
-    function _print(s_proc p, s_of f, string[] page) internal pure override returns (s_of res) {
-        res = f;
-        bool function_names_only = p.flag_set("F");
-
-        string sattrs;
-        bytes battrs = bytes("aAxirtnf");
+    function _attr_set(shell_env e) internal pure override returns (string sattrs) {
+        bytes battrs = "aAxirtnf";
         for (byte b: battrs)
-            if (p.flag_set(b))
+            if (e.flag_set(b))
                 sattrs.append(bytes(b));
-        if (function_names_only)
-            sattrs.append("-f");
-        sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
-
-        if (p.params().empty()) {
-            for (string line: page) {
-                (string attrs, string name, string value) = vars.split_var_record(line);
-                if (vars.match_attr_set(sattrs, attrs))
-                    res.fputs(p.flags_empty() ?
-                        (name + "=" + value) :
-                        vars.print_reusable(line));
-            }
-        }
-        for (string param: p.params()) {
-            string cur_record = vars.get_pool_record(param, page);
-            if (!cur_record.empty()) {
-                (string cur_attrs, ) = cur_record.csplit(" ");
-                if (vars.match_attr_set(sattrs, cur_attrs))
-                    res.fputs(vars.print_reusable(cur_record));
-            } else
-                res.fputs(param + ": not found");
-        }
+    }
+    function _print_record(string record) internal pure override returns (string) {
+        return vars.print_reusable(record);
     }
 
-    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
-        page = page_in;
-        string sattrs;
-        bytes battrs = bytes("aAxirtnf");
-        for (byte b: battrs)
-            if (p.flag_set(b))
-                sattrs.append(bytes(b));
-        sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
-        for (string param: p.params())
-            page = vars.set_var(sattrs, param, page);
+    function _name() internal pure override returns (string) {
+        return "declare";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

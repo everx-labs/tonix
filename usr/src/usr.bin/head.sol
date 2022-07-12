@@ -1,26 +1,27 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract head is Utility {
+contract head is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        (, , , string pi) = p.get_env();
-        (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = p.flag_values("cnqvz");
-        uint16 num_bytes = use_num_bytes ? p.opt_value_int("c") : 0;
-        uint16 num_lines = use_num_bytes ? 0 : use_num_lines ? p.opt_value_int("n") : 10;
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+//        (, , , string pi) = p.get_env();
+        (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = e.flag_values("cnqvz");
+        uint16 num_bytes = use_num_bytes ? e.opt_value_int("c") : 0;
+        uint16 num_lines = use_num_bytes ? 0 : use_num_lines ? e.opt_value_int("n") : 10;
         string line_delimiter = null_delimiter ? "\x00" : "\n";
 
+        string pi;
         DirEntry[] contents = udirent.parse_param_index(pi);
         bool print_headers = always_headers || !never_headers && contents.length > 1;
         for (DirEntry de: contents) {
             (uint8 t, string name, uint16 index) = de.unpack();
             if (t != ft.FT_UNKNOWN) {
                 string text = fs.get_file_contents(index, inodes, data);
-                p.puts(_print(text, print_headers ? name : "", num_lines, num_bytes, line_delimiter));
+                e.puts(_print(text, print_headers ? name : "", num_lines, num_bytes, line_delimiter));
             } else
-                p.perror(name);// er.ENOENT
+                e.perror(name);// er.ENOENT
         }
     }
 

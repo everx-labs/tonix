@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
@@ -6,17 +6,17 @@ contract expand is putil {
 
 //    function _main(s_proc p_in) internal override pure returns (s_proc p) {
 //        p = p_in;
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
-        string[] params = p.params();
-        (bool use_tab_size, bool convert_initial_tabs, , ) = p.flags_set("ti");
-        uint16 tab_size = use_tab_size ? str.toi(p.opt_value("t")) : 8;
+        string[] params = e.params();
+        (bool use_tab_size, bool convert_initial_tabs, , ) = e.flags_set("ti");
+        uint16 tab_size = use_tab_size ? str.toi(e.opt_value("t")) : 8;
 //        bool convert_initial_tabs = p.flag_set("i");
         string tab_spaces = fmt.spaces(tab_size);
         string out;
         for (string param: params) {
-            s_of f = p.fopen(param, "r");
+            s_of f = e.fopen(param, "r");
             if (!f.ferror()) {
                 while (!f.feof()) {
                     string line = f.fgetln();

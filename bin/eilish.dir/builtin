@@ -9,7 +9,14 @@ cmd=`cat comm`
  ~/bin/tonos-cli -c /home/boris/tonix/tmp/bin/eilish.dir/$cmd.conf runx $cmd.args >builtin_out
 jq -er '."Error"? // empty' builtin_out && exit $?
 jq -rj '.sv.cur_proc' builtin_out >proc_out
-jq -rj '.e // empty' builtin_out >shell_env_out
+jq -rj '.e // empty' builtin_out >shell_env_out2
+
+jq '{sv_in: .}' vm | jq --slurpfile v shell_env_out2 '. + {e_in:$v[]}' >builtin.args
+~/bin/tonos-cli -c /home/boris/tonix/etc/builtin.conf runx builtin.args >builtin.out
+jq -er '."Error"? // empty' builtin.out && exit $?
+#jq -rj '.sv.cur_proc' builtin.out >proc_out
+jq -rj '.e // empty' builtin.out >shell_env_out
+
 [ -s shell_env_out ] && cp shell_env_out shell_env
 jq -rj '.ofiles[1].buf.buf' shell_env_out | xxd -p -r >stdout
 jq -rj '.ofiles[2].buf.buf' shell_env_out | xxd -p -r >stderr

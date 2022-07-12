@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 import "libstat.sol";
@@ -8,15 +8,19 @@ contract lsof is putil {
 
     using libstat for s_stat;
 
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
-        (bool ppid, bool fsize, bool foffset, bool numuid) = p.flags_set("Rsol");
-        (mapping (uint16 => string) user, ) = p.get_users_groups();
-        (, s_xfiledesc p_fd, , , , uint16 p_pid, uint16 p_oppid, string p_comm, , , , , , ) = p.unpack();
+        (bool ppid, bool fsize, bool foffset, bool numuid) = e.flags_set("Rsol");
+        (mapping (uint16 => string) user, ) = e.get_users_groups();
+//        (, s_xfiledesc p_fd, , , , uint16 p_pid, uint16 p_oppid, string p_comm, , , , , , ) = p.unpack();
+        string[] ee = e.env_vars();
+        string p_comm = e.get_cmd();
+        uint16 p_pid = vars.int_val("PPID", ee);
+        uint16 p_oppid = vars.int_val("PPID", ee);
         string out;
         out.append("COMMAND\tPID\tPPID\tUSER\tFD\tTYPE\tDEVICE\tSIZE/OFF\tNODE\tNAME\n");
-        s_of[] fds = p_fd.fdt_ofiles;
+        s_of[] fds = e.ofiles;//p_fd.fdt_ofiles;
         for (s_of f: fds) {
             (uint attr, uint16 flags, uint16 file, string path, uint32 offset, ) = f.unpack();
             s_stat st;

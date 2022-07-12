@@ -1,17 +1,17 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract file is Utility {
+contract file is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        (bool brief_mode, bool dont_pad, bool add_null, bool follow_symlinks, bool print_version, , , ) = p.flag_values("bN0Lv");
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        (bool brief_mode, bool dont_pad, bool add_null, bool follow_symlinks, bool print_version, , , ) = e.flag_values("bN0Lv");
         string out;
         if (print_version)
             out = "version 2.0\n";
-        for (string param: p.params()) {
-            s_of f = p.fopen(param, "r");
+        for (string param: e.params()) {
+            s_of f = e.fopen(param, "r");
             if (f.file > 0) {
                 s_stat st;
                 st.stt(f.attr);
@@ -31,9 +31,9 @@ contract file is Utility {
                 }
                 out.append("\n");
             } else
-                p.perror(param + ": cannot open");
+                e.perror(param + ": cannot open");
         }
-        p.puts(out);
+        e.puts(out);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

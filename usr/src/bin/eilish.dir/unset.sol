@@ -1,30 +1,36 @@
 pragma ton-solidity >= 0.62.0;
 
-import "pbuiltin_special.sol";
+import "pbuiltin.sol";
 
-contract unset is pbuiltin_special {
+contract unset is pbuiltin {
 
-    function _retrieve_pages(s_proc p) internal pure override returns (uint8[]) {
-        return [p.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
-    }
-
-    function _print(s_proc, s_of f, string[]) internal pure override returns (s_of res) {
-        res = f;
-    }
-
-    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
-        bool unset_vars = p.flag_set("v");
-        bool unset_functions = p.flag_set("f");
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
+        e = e_in;
+        uint8[] pages;
+        bool unset_vars = e.flag_set("v");
+        if (unset_vars)
+            pages.push(sh.VARIABLE);
+        bool unset_functions = e.flag_set("f");
+        if (unset_functions)
+            pages.push(sh.FUNCTION);
         string sattrs = unset_functions ? "-f" : unset_vars ? "+f" : "";
-        page = page_in;
-        for (string arg: p.params()) {
-            string line = vars.get_pool_record(arg, page);
-            if (!line.empty()) {
-                (string attrs, ) = line.csplit(" ");
-                if (vars.match_attr_set(sattrs, attrs))
-                    page = vars.unset_var(arg, page);
+
+        for (uint8 n: pages) {
+            string[] page = e.environ[n];
+            for (string arg: e.params()) {
+                string line = vars.get_pool_record(arg, page);
+                if (!line.empty()) {
+                    (string attrs, ) = line.csplit(" ");
+                    if (vars.match_attr_set(sattrs, attrs))
+                        page = vars.unset_var(arg, page);
+                }
             }
+            e.environ[n] = page;
         }
+        rc = EXIT_SUCCESS;
+    }
+    function _name() internal pure override returns (string) {
+        return "unset";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

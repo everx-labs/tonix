@@ -1,15 +1,15 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract last is Utility {
+contract last is putil_stat {
 
     uint8 constant AE_LOGIN         = 1;
     uint8 constant AE_LOGOUT        = 2;
     uint8 constant AE_SHUTDOWN      = 3;
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
 
         uint16 var_log_dir = fs.resolve_absolute_path("/var/log", inodes, data);
         (uint16 wtmp_index, uint8 wtmp_file_type) = fs.lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
@@ -49,8 +49,8 @@ contract last is Utility {
                     fmt.ts(timestamp)]);
         }*/
 
-        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
-        p.puts("wtmp begins Mon Mar 22 23:44:55 2021");
+        e.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
+        e.puts("wtmp begins Mon Mar 22 23:44:55 2021");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

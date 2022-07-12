@@ -1,15 +1,15 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 import "adm.sol";
 
-contract who is Utility {
+contract who is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
-            , bool users_logged_in) = p.flag_values("bHlqsTwu");
-        (mapping (uint16 => string) user, ) = p.get_users_groups();
+            , bool users_logged_in) = e.flag_values("bHlqsTwu");
+        (mapping (uint16 => string) user, ) = e.get_users_groups();
         uint16 var_run_dir = fs.resolve_absolute_path("/var/run", inodes, data);
         (uint16 utmp_index, uint8 utmp_file_type) = fs.lookup_dir(inodes[var_run_dir], data[var_run_dir], "utmp");
         string utmp_contents;
@@ -24,10 +24,10 @@ contract who is Utility {
                 if (system_login_proc && user_id > adm.login_def_value(adm.SYS_UID_MAX))
                     continue;
                 string ui_user_name = user[user_id];
-                p.puts(ui_user_name + "\t");
+                e.puts(ui_user_name + "\t");
                 count++;
             }
-            p.puts(format("\n# users={}", count));
+            e.puts(format("\n# users={}", count));
         }
 
         string[][] table;
@@ -50,7 +50,7 @@ contract who is Utility {
             string ui_user_name = user[user_id];
             table.push([ui_user_name, "+", str.toa(tty_id), fmt.ts(login_time), str.toa(process_id)]);
         }
-        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
+        e.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

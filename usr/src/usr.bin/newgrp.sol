@@ -1,16 +1,16 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 import "pw.sol";
 import "gr.sol";
 
-contract newgrp is Utility {
+contract newgrp is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
         Err[] errors;
-        (bool force, bool use_group_id, bool is_system_group, , , , , ) = p.flag_values("fgr");
+        (bool force, bool use_group_id, bool is_system_group, , , , , ) = e.flag_values("fgr");
 
         (, string etc_group, , uint16 group_index) = fs.get_passwd_group(inodes, data);
 

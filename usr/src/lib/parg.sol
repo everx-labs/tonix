@@ -57,7 +57,6 @@ library parg {
     }
 
     function flags_set(s_proc p, string flags_query) internal returns (bool, bool, bool, bool) {
-//        return p.p_args.ar_misc.flags_set(flags_query);
         uint len = flags_query.strlen();
         string flags = p.p_args.ar_misc.flags;
         bool[] tmp;

@@ -1,24 +1,24 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract pathchk is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
 //        bool posix = arg.flag_set("p", flags);
-        bool leading_hyphens = p.flag_set("P");
-        bool no_opts = p.flags_empty();
+        bool leading_hyphens = e.flag_set("P");
+        bool no_opts = e.flags_empty();
 
         for (string param: params) {
             if (param.empty()) {
-                p.perror(no_opts ? ("\'" + param + "\': No such file or directory\n") : "empty file name");
+                e.perror(no_opts ? ("\'" + param + "\': No such file or directory\n") : "empty file name");
                 continue;
             }
             string first = param.substr(0, 1);
             if (first == "-" && leading_hyphens)
-                p.puts("leading \'-\' in a component of file name \'" + param + "\'");
+                e.puts("leading \'-\' in a component of file name \'" + param + "\'");
         }
     }
 

@@ -1,11 +1,11 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract chfn is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

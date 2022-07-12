@@ -4,19 +4,22 @@ import "pbuiltin.sol";
 
 contract shift is pbuiltin {
 
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
-        string[] pool = e.environ[sh.ARRAYVAR];
+        string[] pool = e.environ[sh.SPECVARS];
 
+        string[] params = e.params();
         uint16 shift_count = params.empty() ? 1 : str.toi(params[0]);
         if (shift_count == 0)
-            return e;
+            return (EXIT_SUCCESS, e);
 
         string cmd = vars.val("COMMAND", pool);
+        string cmd_line = vars.val("COMMAND_LINE", pool);
         string pos_params = vars.val("PARAMS", pool);
         string sflags = vars.val("FLAGS", pool);
         string input = vars.val("ARGV", pool);
         string sn_params = vars.val("#", pool);
+        string sec = vars.val("?", pool);
         string sargs = vars.val("@", pool);
         string last_param = vars.val("_", pool);
         string dbg_x = vars.val("OPTERR", pool);
@@ -26,7 +29,7 @@ contract shift is pbuiltin {
 
         uint16 n_params = str.toi(sn_params);
         if (n_params < shift_count)
-            p.perror("can't shift that many");
+            e.perror("can't shift that many");
 
         string new_pos_str = " ";
         (string[] prev, uint n_prev) = sargs.split(" ");
@@ -41,11 +44,20 @@ contract shift is pbuiltin {
         string pos_map = vars.as_indexed_array("POS_ARGS", new_pos_str.empty() ? cmd : cmd + " " + new_pos_str, " ");
         last_param = n_new > 0 ? params[n_new - 1] : cmd;
 
-        s_ar_misc prev_misc = p.p_args.ar_misc;
-        p.p_args.ar_misc = s_ar_misc(input, sflags, sargs, uint16(n_new), params, prev_misc.ec, last_param,
-            dbg_x, redir_in, redir_out, prev_misc.pos_args, prev_misc.opt_values); // Fix this after streamlining args passing
-
-//        sv.cur_proc = p;
+        e.environ[sh.SPECVARS] = [
+            "COMMAND=" + cmd,
+            "COMMAND_LINE=" + cmd_line,
+            "PARAMS=" + pos_params,
+            "FLAGS=" + sflags,
+            "ARGV=" + input,
+            "#=" + str.toa(n_new),
+            "@=" + sargs,
+            "?=" + sec,
+            "_=" + last_param,
+            "OPTERR=" + dbg_x,
+            "REDIR_IN=" + redir_in,
+            "REDIR_OUT=" + redir_out
+        ];
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
@@ -58,5 +70,7 @@ contract shift is pbuiltin {
 "",
 "Returns success unless N is negative or greater than $#.");
     }
-
+    function _name() internal pure override returns (string) {
+        return "shift";
+    }
 }

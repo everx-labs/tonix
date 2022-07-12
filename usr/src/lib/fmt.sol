@@ -139,11 +139,11 @@ library fmt {
         mo[1646092800] = "Mar";
         mo[1643673600] = "Feb";
         mo[1640995200] = "Jan";
-        /*mo[1638316800] = "Dec";
+        mo[1638316800] = "Dec";
         mo[1635724800] = "Nov";
         mo[1633046400] = "Oct";
         mo[1630454400] = "Sep";
-        mo[1627776000] = "Aug";*/
+        mo[1627776000] = "Aug";
 
         optional(uint32, string) pair = mo.prev(t);
         if (pair.hasValue())

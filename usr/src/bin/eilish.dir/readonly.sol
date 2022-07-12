@@ -4,46 +4,21 @@ import "pbuiltin_special.sol";
 
 contract readonly is pbuiltin_special {
 
-    function _retrieve_pages(s_proc p) internal pure override returns (uint8[]) {
-        return [p.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
+    function _retrieve_pages(shell_env e) internal pure override returns (uint8[]) {
+        return [e.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
     }
 
-    function _print(s_proc p, s_of f, string[] page) internal pure override returns (s_of res) {
-        res = f;
-        bool functions_only = p.flag_set("f");
-        string sattrs = "-r";
-        if (functions_only)
-            sattrs.append("-f");
-
-            if (p.params().empty()) {
-                for (string line: page) {
-                    (string attrs, ) = line.csplit(" ");
-                    if (vars.match_attr_set(sattrs, attrs))
-                        res.fputs(vars.print_reusable(line));
-                }
-            }
-            for (string param: p.params()) {
-                (string name, ) = param.csplit("=");
-                string cur_record = vars.get_pool_record(name, page);
-                if (!cur_record.empty()) {
-                    (string cur_attrs, ) = cur_record.csplit(" ");
-                    if (vars.match_attr_set(sattrs, cur_attrs))
-                        res.fputs(vars.print_reusable(cur_record));
-                } else
-                    res.fputs(name + " not found");
-            }
+    function _attr_set(shell_env e) internal pure override returns (string sattrs) {
+        sattrs = "-r";
+        if (e.flag_set("f"))
+            sattrs.append("f");
     }
-
-    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
-        bool functions_only = p.flag_set("f");
-        string sattrs = "-r";
-        page = page_in;
-        if (functions_only)
-            sattrs.append("-f");
-        for (string param: p.params())
-            page = vars.set_var(sattrs, param, page);
+    function _print_record(string record) internal pure override returns (string) {
+        return vars.print_reusable(record);
     }
-
+    function _name() internal pure override returns (string) {
+        return "readonly";
+    }
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(
 "readonly",

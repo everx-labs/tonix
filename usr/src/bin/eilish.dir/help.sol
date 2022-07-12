@@ -11,8 +11,8 @@ contract help is Shell {
         e = e_in;
         s_proc p = sv.cur_proc;
 
-        string[] params = p.params();
-        uint8 command_format = _get_help_format(p);
+        string[] params = e.params();
+        uint8 command_format = _get_help_format(e);
 
         if (params.empty())
             e.puts(_print_help_msg(help_files));
@@ -35,13 +35,13 @@ contract help is Shell {
     uint8 constant COMMAND_FORMAT_WHATIS            = 7;
     uint8 constant COMMAND_FORMAT_APROPOS           = 8;
 
-    function _get_help_format(s_proc p) internal pure returns (uint8 command_format) {
+    function _get_help_format(shell_env e) internal pure returns (uint8 command_format) {
         command_format = COMMAND_FORMAT_DEFAULT;
-        if (p.flag_set("d"))
+        if (e.flag_set("d"))
             command_format = COMMAND_FORMAT_DESCRIPTION;
-        if (p.flag_set("s"))
+        if (e.flag_set("s"))
             command_format = COMMAND_FORMAT_SYNOPSIS;
-        if (p.flag_set("m"))
+        if (e.flag_set("m"))
             command_format = COMMAND_FORMAT_PSEUDO_MAN_PAGE;
     }
 

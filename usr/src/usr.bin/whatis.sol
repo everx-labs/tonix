@@ -1,28 +1,25 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_base.sol";
+contract whatis is putil_base {
 
-contract whatis is Utility {
+    function main(shell_env e_in, CommandHelp[] help_files) external pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
 
-    function main(s_proc p_in, CommandHelp[] help_files) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
-
-//    function display_man_page(string argv, CommandHelp[] help_files) external pure returns (uint8 ec, string out) {
-//        (string[] params, string flags,) = arg.get_args(argv);
         if (params.empty())
-            p.puts("whatis what?");
+            e.puts("whatis what?");
         for (string param: params) {
             (uint8 t_ec, CommandHelp help_file) = _get_man_file(param, help_files);
-            p.puts(t_ec == EXECUTE_SUCCESS ? _get_man_text(help_file) : (param + ": nothing appropriate."));
+            e.puts(t_ec == EXIT_SUCCESS ? _get_man_text(help_file) : (param + ": nothing appropriate."));
         }
     }
 
     function _get_man_file(string arg, CommandHelp[] help_files) internal pure returns (uint8 ec, CommandHelp help_file) {
-        ec = EXECUTE_FAILURE;
+        ec = EXIT_FAILURE;
         for (CommandHelp bh: help_files)
             if (bh.name == arg)
-                return (EXECUTE_SUCCESS, bh);
+                return (EXIT_SUCCESS, bh);
     }
 
     function _get_man_text(CommandHelp help_file) private pure returns (string) {
@@ -30,7 +27,7 @@ contract whatis is Utility {
         return name + " (1)\t\t\t - " + purpose + "\n";
     }
 
-     function _command_help() internal override pure returns (CommandHelp) {
+     function _command_help() internal pure returns (CommandHelp) {
         return CommandHelp(
 "whatis",
 "[-dlv] name ...",

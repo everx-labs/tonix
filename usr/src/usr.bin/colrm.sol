@@ -1,13 +1,13 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract colrm is putil {
 
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         string[] pparams;
-        for (string param: p.params()) {
+        for (string param: e.params()) {
             s_of f = e.fopen(param, "r");
             if (!f.ferror()) {
                 (string sout, string serr) = _print(f, pparams);

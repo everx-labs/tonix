@@ -5,7 +5,7 @@ import "libhelp.sol";
 import "parg.sol";
 import "io.sol";
 import "libfdt.sol";
-import "libprocenv.sol";
+import "libshellenv.sol";
 
 abstract contract putil_base {
 
@@ -15,24 +15,7 @@ abstract contract putil_base {
     using xio for s_of;
     using libstring for string;
     using libfdt for s_of[];
-    using libprocenv for p_env;
-
-    function main(p_env e_in, s_proc p_in) external pure returns (p_env e, s_proc p) {
-        e = e_in;
-        if (parg.opt_value(p_in, "help").empty())
-            e = _main(e_in, p_in);
-        else {
-            p = p_in;
-            e.puts(libhelp.usage(_command_help()));
-        }
-    }
-    function _main(p_env e_in, s_proc p_in) internal pure virtual returns (p_env);
-
-    function command_help() external pure returns (CommandHelp) {
-        return _command_help();
-    }
-
-    function _command_help() internal pure virtual returns (CommandHelp);
+    using libshellenv for shell_env;
 
     uint8 constant EXIT_SUCCESS = 0;
     uint8 constant EXIT_FAILURE = 1;

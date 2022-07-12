@@ -13,32 +13,50 @@ contract enable is pbuiltin_base {
         s_proc p = sv.cur_proc;
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
-        string[] params = p.params();
+        string[] params = e.params();
         uint8[] pages;
         (bool f_load, bool f_disable, bool f_unload, bool f_posix_only, bool f_print, bool f_print_all, , ) = p.flag_values("fndspa");
-        bool do_print = p.flags_empty() || f_print || f_print_all;
+        bool do_print = e.flags_empty() || f_print || f_print_all;
         bool do_modify = f_disable || f_posix_only;
         bool print_all = f_print_all;
         bool do_load = f_load || f_unload;
+        string sattrs;
+        bytes battrs = bytes("fnds");
+        for (byte b: battrs)
+            if (p.flag_set(b))
+                sattrs.append(bytes(b));
+        sattrs = print_all ? "" : ("-" + (sattrs.empty() ? "-" : sattrs));
         if (do_print) {
-            for (uint8 n: pages)
-                res = _print(p, res, params, e.environ[n], print_all);
+            for (uint8 n: pages) {
+                string[] page_in = e.environ[n];
+                if (params.empty()) {
+                    for (string line: page_in) {
+                        (string attrs, string name, ) = vars.split_var_record(line);
+                        if (vars.match_attr_set(sattrs, attrs))
+                            res.fputs("enable " + name);
+                    }
+                }
+                for (string param: params) {
+                    string cur_record = vars.val(param, page_in);
+                    if (!cur_record.empty()) {
+                        (string cur_attrs, ) = cur_record.csplit(" ");
+                        if (vars.match_attr_set(sattrs, cur_attrs))
+                            res.fputs("enable " + param);
+                    } else
+                        res.fputs(param + " not found");
+                }
+            }
+//                res = _print(p, res, params, e.environ[n], print_all);
             e.ofiles[libfdt.STDOUT_FILENO] = res;
         }
 
         if (do_modify) {
-            string sattrs;
-            bytes battrs = bytes("fnds");
-            for (byte b: battrs)
-                if (p.flag_set(b))
-                    sattrs.append(bytes(b));
-            sattrs = "-" + (sattrs.empty() ? "-" : sattrs);
             for (string param: params)
                 e.environ[sh.BUILTIN] = vars.set_var_attr(sattrs, param, e.environ[sh.BUILTIN]);
         }
         if (do_load) {
             e.puts("Loading...");
-            string m = p.opt_value("f");
+            string m = e.opt_value("f");
             if (!m.empty()) {
                 uint idx;/* = m == "alias" ? 1 : m == "opt_string" ? 2 : m == "index" ? 3 : m == "pool" ? 4 : m == "hash" ? 5 :
                 m == "builtin" ? 6 : m == "command" ? 12 : m == "dirname" ? 13 : m == "disabled" ? 13 : m == "enabled" ? 5 : m == "export" ? libcompspec.CI_EXPORT :
@@ -66,34 +84,6 @@ contract enable is pbuiltin_base {
             e.puts("Updated env: " + e.print_shell_env());
         }
         sv.cur_proc = p;
-    }
-
-    function _print(s_proc p, s_of f, string[] params, string[] page_in, bool print_all) internal pure  returns (s_of res) {
-        res = f;
-        string sattrs;
-        bytes battrs = bytes("fnds");
-        for (byte b: battrs)
-            if (p.flag_set(b))
-                sattrs.append(bytes(b));
-
-        sattrs = print_all ? "" : ("-" + (sattrs.empty() ? "-" : sattrs));
-        if (params.empty()) {
-            for (string line: page_in) {
-                (string attrs, string name, ) = vars.split_var_record(line);
-                if (vars.match_attr_set(sattrs, attrs))
-                    res.fputs("enable " + name);
-            }
-        }
-        for (string param: params) {
-            (string name, ) = param.csplit("=");
-            string cur_record = vars.get_pool_record(name, page_in);
-            if (!cur_record.empty()) {
-                (string cur_attrs, ) = cur_record.csplit(" ");
-                if (vars.match_attr_set(sattrs, cur_attrs))
-                    res.fputs("enable " + name);
-            } else
-                res.fputs(name + " not found");
-        }
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

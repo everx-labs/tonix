@@ -37,7 +37,7 @@ PRIME:=$I
 
 #UTILS:=basename cat colrm column cp cut df dirname du dumpe2fs env expand file findmnt finger fsck fuser getent grep groupadd groupdel groupmod groups head hostname id last ln login look losetup ls lsblk lslogins man mkdir mke2fs mkfs mount mountpoint mv namei newgrp paste pathchk printenv ps readlink realpath rev rm rmdir stat tail tfs tmpfs touch tr umount uname unexpand useradd userdel usermod utmpdump wc whatis who whoami lsof explain reboot sdz vnp hive umm vmstat vmm mdb diff mddb md2 patch
 #OPT:=dist adc jury
-HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
+HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset esh
 #DEVICES:=null
 #FILES:=motd group procfs
 #KI:=core zone_misc corev2 kview corev3 kview2 stg0 bringup bringup2 bringup3 kview3 bringup4 zones_viewer patch_zone zones_host stg1 stg2 stg3 file_host call_proxy stg4 stg5 stg41 stg42 patch3 file_index stg44 GSV idx4
@@ -72,7 +72,7 @@ USR.BINU:=basename chfn colrm column cut diff dirname env expand fuser look lslo
 USR.BINU2:=du file findmnt finger getent grep groups head hostid hostname id last login lsblk mountpoint namei newgrp readlink stat touch wc who
 USR.SBINU:=groupadd groupdel groupmod useradd userdel usermod
 USR.SBINU2:=dumpe2fs mke2fs mkfs
-SHB:=alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset special
+SHB:=alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset special esh
 SYSFSU:=tfs tmpfs
 SYSVMU:=uma_startup umm vmm
 SYSKERNU:=vnp
@@ -117,7 +117,7 @@ COMMA:=,
 
 #$(eval $(call t-sub,$(UOBJ)/stand,$(USRC)/stand,$(BOOTU)))
 #$(info $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset))
-$(eval $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset))
+$(eval $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset esh))
 #$(info $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
 $(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
 #$(info $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))

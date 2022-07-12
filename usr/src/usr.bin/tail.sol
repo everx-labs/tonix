@@ -1,37 +1,36 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract tail is putil {
 
-
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = p.flag_values("cnqvz");
-        uint16 num_bytes = use_num_bytes ? p.opt_value_int("c") : 0;
-        uint16 num_lines = use_num_bytes ? 0 : use_num_lines ? p.opt_value_int("n") : 10;
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        (bool use_num_bytes, bool use_num_lines, bool never_headers, bool always_headers, bool null_delimiter, , ,) = e.flag_values("cnqvz");
+        uint16 num_bytes = use_num_bytes ? e.opt_value_int("c") : 0;
+        uint16 num_lines = use_num_bytes ? 0 : use_num_lines ? e.opt_value_int("n") : 10;
         string line_delimiter = null_delimiter ? "\x00" : "\n";
-        string[] params = p.params();
+        string[] params = e.params();
 
         bool print_headers = always_headers || !never_headers && params.length > 1;
         for (string param: params) {
 //            s_of f = p.fopen(param, "r");
-            string text = p.read_file(param);
+            string text = e.read_file(param);
 //            if (!f.ferror()) {
                 if (print_headers)
-                    p.puts("==> " + param + " <==");
+                    e.puts("==> " + param + " <==");
 //                string text = f.buf.sbuf_data();
                 if (num_lines > 0) {
                     (string[] lines, uint n_lines) = text.split("\n");
                     uint len = math.min(n_lines, num_lines);
                     for (uint i = n_lines - len; i < n_lines; i++)
-                        p.puts(lines[i] + line_delimiter);
+                        e.puts(lines[i] + line_delimiter);
                 } else if (num_bytes > 0) {
                     uint len = text.strlen();
                     string out = len < num_bytes ? text : text.substr(len - num_bytes);
                     if (null_delimiter)
                         out.translate("\n", "\x00");
-                    p.puts(out);
+                    e.puts(out);
                 }
   //          } else
 //                p.perror(param + ": cannot open");

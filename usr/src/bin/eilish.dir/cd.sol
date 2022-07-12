@@ -1,25 +1,19 @@
 pragma ton-solidity >= 0.62.0;
 
-import "pbuiltin_special.sol";
+import "pbuiltin_base.sol";
 
-contract cd is pbuiltin_special {
+contract cd is pbuiltin_base {
 
-    function _retrieve_pages(s_proc) internal pure override returns (uint8[]) {
-        return [sh.VARIABLE];
-    }
-
-    function _print(s_proc, s_of f, string[] ) internal pure override returns (s_of res) {
-        res = f;
-    }
-
-    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
-        page = page_in;
-
-        s_of cur_dir = p.p_pd.pwd_cdir;
+    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
+        sv = sv_in;
+        e = e_in;
+        string[] params = e.params();
+        s_of cur_dir = e.cwd;
+        string[] page = e.environ[sh.VARIABLE];
         string scur_dir = vars.val("PWD", page);
         string old_cwd = vars.val("OLDPWD", page);
         string home_dir = vars.val("HOME", page);
-        string arg = p.params().empty() ? home_dir : p.params()[0];
+        string arg = params.empty() ? home_dir : params[0];
 
         if (arg == "~")
             arg = home_dir;
@@ -30,16 +24,17 @@ contract cd is pbuiltin_special {
         for (s_dirent de: dents) {
             if (de.d_name == arg) {
                 if (de.d_type != libstat.FT_DIR)
-                    p.perror(arg + ": not a directory");
+                    e.perror(arg + ": not a directory");
                 else {
                     string new_dir = scur_dir + "/" + arg;
                     page = vars.set_var("", "OLDPWD=" + scur_dir, page);
                     page = vars.set_var("", "PWD=" + new_dir, page);
                     page = vars.set_var("", "WD=" + str.toa(de.d_fileno), page);
+                    e.environ[sh.VARIABLE] = page;
                 }
             }
         }
-        p.perror(arg + ": no such file or directory");
+        e.perror(arg + ": no such file or directory");
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

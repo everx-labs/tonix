@@ -1,23 +1,23 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract unexpand is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
-        bool use_tab_size = p.flag_set("t");
-        uint16 tab_size = use_tab_size ? p.opt_value_int("t") : 8;
-        bool convert_all_blanks = p.flag_set("a");
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        bool use_tab_size = e.flag_set("t");
+        uint16 tab_size = use_tab_size ? e.opt_value_int("t") : 8;
+        bool convert_all_blanks = e.flag_set("a");
         string tab_spaces = fmt.spaces(tab_size);
         for (string param: params) {
-            s_of f = p.fopen(param, "r");
+            s_of f = e.fopen(param, "r");
             if (!f.ferror()) {
                 while (!f.feof()) {
                     string line = f.fgetln();
                     if (convert_all_blanks)
-                        p.puts(libstring.translate(line, tab_spaces, "\t"));
+                        e.puts(libstring.translate(line, tab_spaces, "\t"));
                     else {
                         uint q = 0;
                         while (line.substr(q, 1) == " ")
@@ -29,13 +29,13 @@ contract unexpand is putil {
                                 out.append("\t");
                             for (uint i = 0; i < n_spaces; i++)
                                 out.append(" ");
-                            p.puts(out + line.substr(q));
+                            e.puts(out + line.substr(q));
                         } else
-                            p.puts(line);
+                            e.puts(line);
                     }
                 }
             } else
-                p.perror(param + ": cannot open");
+                e.perror(param + ": cannot open");
         }
     }
 

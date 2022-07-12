@@ -1,26 +1,24 @@
 pragma ton-solidity >= 0.62.0;
 
-import "pbuiltin_special.sol";
+import "pbuiltin.sol";
 
-contract unalias is pbuiltin_special {
+contract unalias is pbuiltin {
 
-    function _retrieve_pages(s_proc) internal pure override returns (uint8[]) {
-        return [sh.ALIAS];
-    }
-
-    function _print(s_proc, s_of f, string[]) internal pure override returns (s_of res) {
-        res = f;
-    }
-
-    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
-        if (!p.flag_set("a")) {
-            page = page_in;
-            for (string param: p.params())
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
+        e = e_in;
+        string[] page;
+        if (!e.flag_set("a")) {
+            page = e.environ[sh.ALIAS];
+            for (string param: e.params())
                 page = vars.unset_var(param, page);
         }
+        rc = EXIT_SUCCESS;
+        e.environ[sh.ALIAS] = page;
     }
-
-function _builtin_help() internal pure override returns (BuiltinHelp) {
+    function _name() internal pure override returns (string) {
+        return "unalias";
+    }
+    function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(
 "unalias",
 "[-a] name [name ...]",

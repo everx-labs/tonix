@@ -1,23 +1,24 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "adm.sol";
 import "gr.sol";
-import "unistd.sol";
+//import "unistd.sol";
+import "libenv.sol";
 import "putil.sol";
 
 contract lslogins is putil {
 
-    using unistd for s_proc;
+//    using unistd for s_proc;
 
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
-        string[] params = p.params();
-        (bool flag_system, bool flag_user, bool colon, bool newline, bool raw, bool nulll, , ) = p.flag_values("sucnrz");
+        string[] params = e.params();
+        (bool flag_system, bool flag_user, bool colon, bool newline, bool raw, bool nulll, , ) = e.flag_values("sucnrz");
         bool print_system = flag_system || !flag_user;
         bool print_user = !flag_system || flag_user;
         string field_separator;
-        uint16 uid = p.getuid();
+        uint16 uid = libenv.getuid(e.env_vars());
 
         if (colon)
             field_separator = ":";
@@ -25,7 +26,7 @@ contract lslogins is putil {
         field_separator.aif(raw, " ");
         field_separator.aif(nulll, "\x00");
         if (field_separator.strlen() > 1) {
-            p.perror("mutually exclusive arguments: -c -n -r -z");
+            e.perror("mutually exclusive arguments: -c -n -r -z");
             return e;
         }
         bool formatted_table = field_separator.empty();
@@ -43,7 +44,7 @@ contract lslogins is putil {
             [Column(!print_all, 15, fmt.LEFT), Column(!print_all, 20, fmt.LEFT)];
 
         if (params.empty() && uid < pw.GUEST_USER) {
-            s_of f = p.fopen("/etc/passwd", "r");
+            s_of f = e.fopen("/etc/passwd", "r");
             while (!f.feof()) {
                 string line = f.getline();
                 (string pw_name, uint16 pw_uid, uint16 pw_gid, string pw_gecos, string pw_dir, string pw_shell) = pw.parse_passwd_record(line).unpack();
@@ -51,7 +52,7 @@ contract lslogins is putil {
             }
         } else {
             string user_name = params[0];
-            s_of f = p.fopen("/etc/passwd", "r");
+            s_of f = e.fopen("/etc/passwd", "r");
             string etc_passwd;
             while (!f.feof()) {
                 string line_in = f.getline();

@@ -1,23 +1,23 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract cut is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
         (bool set_fields, bool use_delimiter, bool only_delimited, bool null_line_end, bool set_bytes, bool set_chars, , ) =
-            p.flag_values("fdszbc");
-        string line_delimiter = null_line_end ? "\x00" : "\n";
-        string delimiter = use_delimiter ? p.opt_value("d") : "\t";
+            e.flag_values("fdszbc");
+        byte line_delimiter = null_line_end ? byte(0x00) : byte('\n');
+        byte delimiter = use_delimiter ? byte(e.opt_value("d")) : byte('\t');
         string opt_err;
         if (use_delimiter && !set_fields)
             opt_err = "an input delimiter may be specified only when operating on fields";
 
         uint16 from;
         uint16 to;
-        string range = p.opt_value(set_fields ? "f" : set_bytes ? "b" : set_chars ? "c" : "");
+        string range = e.opt_value(set_fields ? "f" : set_bytes ? "b" : set_chars ? "c" : "");
         if (!range.empty()) {
             if (range.strchr('-') > 0) {
                 (string sfrom, string sto) = range.csplit('-');
@@ -42,14 +42,14 @@ contract cut is putil {
         string out;
         if (opt_err.empty()) {
             for (string param: params) {
-                s_of f = p.fopen(param, "r");
+                s_of f = e.fopen(param, "r");
                 if (!f.ferror()) {
                     while (!f.feof()) {
                         string line = f.fgetln();
                         if (set_fields) {
                             if (only_delimited && line.strchr(delimiter) == 0)
                                 continue;
-                            (string[] fields, uint n_fields) = line.split(delimiter);
+                            (string[] fields, uint n_fields) = line.split(bytes(delimiter));
                             uint cap = math.min(to, n_fields);
                             for (uint j = from - 1; j < cap; j++)
                                 out.append(fields[j] + (j + 1 < cap ? delimiter : line_delimiter));
@@ -57,11 +57,11 @@ contract cut is putil {
                             out.append((to < line.strlen() ? line.substr(from - 1, to - from + 1) : line.substr(from - 1)) + line_delimiter);
                     }
                 } else
-                    p.perror("cannot open");
+                    e.perror("cannot open");
             }
         } else
-            p.perror(opt_err + "\nTry 'cut --help' for more information");
-        p.puts(out);
+            e.perror(opt_err + "\nTry 'cut --help' for more information");
+        e.puts(out);
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

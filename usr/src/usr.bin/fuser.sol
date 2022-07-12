@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 import "adm.sol";
@@ -6,13 +6,13 @@ import "sb.sol";
 
 contract fuser is putil {
 
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
 
         (bool last_boot_time, bool print_headings, bool system_login_proc, bool all_logged_on, bool default_format, bool user_message_status,
-            , bool users_logged_in) = p.flag_values("bHlqsTwu");
-        (mapping (uint16 => string) user, ) = p.get_users_groups();
+            , bool users_logged_in) = e.flag_values("bHlqsTwu");
+        (mapping (uint16 => string) user, ) = e.get_users_groups();
         mapping (uint16 => Login) utmp;
 
         if (all_logged_on) {

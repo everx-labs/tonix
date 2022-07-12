@@ -6,7 +6,7 @@ contract ulimit is pbuiltin {
 
 //    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
 //        p = p_in;
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string page;// = e.e_dirstack; //vmem.vmem_fetch_page(sv.vmem[1], 12);
 
@@ -17,13 +17,14 @@ contract ulimit is pbuiltin {
 //            bool max_user_processes, bool virtual_memory) = p.flag_values("npqrstuv");
 //        (bool file_locks, bool max_pseudoterminals, bool max_user_threads, bool soft_resource_limit, bool hard_resource_limit, bool print_all, , ) =
 //            p.flag_values("xPTSHa");
-        (bool soft_resource_limit, bool hard_resource_limit, bool print_all, , , , , ) = p.flag_values("SHa");
+        (bool soft_resource_limit, bool hard_resource_limit, bool print_all, , , , , ) = e.flag_values("SHa");
         bool use_hard_limit = hard_resource_limit && !soft_resource_limit;
+        rc = EXIT_SUCCESS;
         string pool;// = vmem.vmem_fetch_page(sv.vmem[1], 12); // 13?
         if (print_all) {
             (string[] items, ) = pool.split_line("\n", "\n");
             for (string item: items) {
-                p.puts(item);
+                e.puts(item);
 //                (string attrs, string name, string value) = _parse_var(item);
 //                out.append(name + " " + value + "\n");
             }
@@ -107,5 +108,8 @@ Values are in 1024-byte increments, except for -t, which is in seconds,\n\
 -p, which is in increments of 512 bytes, and -u, which is an unscaled\n\
 number of processes.",
 "Returns success unless an invalid option is supplied or an error occurs.");
+    }
+    function _name() internal pure override returns (string) {
+        return "ulimit";
     }
 }

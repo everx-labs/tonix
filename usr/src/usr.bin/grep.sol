@@ -1,18 +1,20 @@
 pragma ton-solidity >= 0.61.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract grep is Utility {
+contract grep is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        (uint16 wd, string[] v_args, string flags, ) = p.get_env();
+function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+//        (uint16 wd, string[] v_args, string flags, ) = p.get_env();
+        string[] v_args = e.params();
+        uint16 wd = e.get_cwd();
         if (v_args.empty()) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
-            p.puts(libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n"));
-            return p;
+            e.puts(libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n"));
+            return e;
         }
         string[] params;
         string[] f_args;
@@ -30,18 +32,18 @@ contract grep is Utility {
         for (string param: f_args) {
             (uint16 index, uint8 t, , ) = fs.resolve_relative_path(param, sb.ROOT_DIR, inodes, data);
             if (t != ft.FT_UNKNOWN)
-                p.puts(_grep(flags, fs.get_file_contents(index, inodes, data), params));
+                e.puts(_grep(e, fs.get_file_contents(index, inodes, data), params));
             else {
-                p.perror("Failed to resolve relative path for" + param);
+                e.perror("Failed to resolve relative path for" + param);
 //                ec = EXECUTE_FAILURE;
             }
         }
     }
 
-    function _grep(string flags, string text, string[] params) private pure returns (string out) {
+    function _grep(shell_env e, string text, string[] params) private pure returns (string out) {
         (string[] lines, uint n_lines) = text.split("\n");
-        bool invert_match = arg.flag_set("v", flags);
-        bool match_lines = arg.flag_set("x", flags);
+        bool invert_match = e.flag_set("v");
+        bool match_lines = e.flag_set("x");
         uint n_params = params.length;
 
         string pattern;

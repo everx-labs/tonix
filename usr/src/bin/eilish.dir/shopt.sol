@@ -4,45 +4,22 @@ import "pbuiltin_special.sol";
 
 contract shopt is pbuiltin_special {
 
-    function _retrieve_pages(s_proc) internal pure override returns (uint8[]) {
+    function _retrieve_pages(shell_env) internal pure override returns (uint8[]) {
         return [sh.SHOPT];
     }
 
-    function _print(s_proc p, s_of f, string[] page) internal pure override returns (s_of res) {
-        res = f;
-        bool print_reusable = p.flag_set("p");
-        bool set_opt = p.flag_set("s");
-        bool unset_opt = p.flag_set("u");
-        string sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
-
-        if (p.params().empty()) {
-            for (string line: page) {
-                (string attrs, string name, ) = vars.split_var_record(line);
-                if (vars.match_attr_set(sattrs, attrs))
-                    res.fputs(print_reusable ? "shopt " + attrs + " " + name :
-                    name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
-            }
-        }
-        for (string param: p.params()) {
-            string line = vars.get_pool_record(param, page);
-            if (!line.empty()) {
-                (string attrs, string name, ) = vars.split_var_record(line);
-                if (vars.match_attr_set(sattrs, attrs))
-                    res.fputs(print_reusable ? "shopt " + attrs + " " + name :
-                    name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off"));
-            } else
-                res.fputs(param + " not found");
-        }
+    function _attr_set(shell_env e) internal pure override returns (string sattrs) {
+        bool set_opt = e.flag_set("s");
+        bool unset_opt = e.flag_set("u");
+        sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
     }
-
-    function _modify(s_proc p, string[] page_in) internal pure override returns (string[] page) {
-        bool set_opt = p.flag_set("s");
-        bool unset_opt = p.flag_set("u");
-        page = page_in;
-        string sattrs = set_opt ? "-s" : unset_opt ? "-u" : "";
-        for (string param: p.params())
-            page = vars.set_var(sattrs, param, page);
-      }
+    function _print_record(string record) internal pure override returns (string) {
+        (string attrs, string name, ) = vars.split_var_record(record);
+        return name + "\t" + (attrs.strchr("s") > 0 ? "on" : "off");
+    }
+    function _name() internal pure override returns (string) {
+        return "shopt";
+    }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(

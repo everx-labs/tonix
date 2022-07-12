@@ -5,19 +5,21 @@ import "sh.sol";
 
 contract set is pbuiltin_special {
 
-    function _retrieve_pages(s_proc) internal pure override returns (uint8[] pages) {
+    function _retrieve_pages(shell_env) internal pure override returns (uint8[] pages) {
         for (uint8 i = 0; i <= sh.LAST; i++)
             pages.push(i);
     }
 
-    function _print(s_proc, s_of f, string[] page) internal pure override returns (s_of res) {
-        res = f;
-        for (string line: page)
-            res.fputs(line);
+    function _attr_set(shell_env) internal pure override returns (string sattrs) {
+        return "--";
     }
-    function _modify(s_proc, string[] page_in) internal pure override returns (string[] page) {
-        page = page_in;
+    function _print_record(string record) internal pure override returns (string) {
+        return record;
     }
+    function _name() internal pure override returns (string) {
+        return "set";
+    }
+
     function _builtin_help() internal pure override returns (BuiltinHelp) {
         return BuiltinHelp(
 "set",

@@ -1,21 +1,21 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract column is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        (bool use_delimiter, bool use_width, bool dont_ignore_empty_lines, bool create_table) = p.flags_set("scet");
-        uint16 width = use_width ? p.opt_value_int("c") : 140;
-        string delimiter = use_delimiter ? p.opt_value("s") : " ";
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        (bool use_delimiter, bool use_width, bool dont_ignore_empty_lines, bool create_table) = e.flags_set("scet");
+        uint16 width = use_width ? e.opt_value_int("c") : 140;
+        string delimiter = use_delimiter ? e.opt_value("s") : " ";
 
-        for (string param: p.params()) {
-            s_of f = p.fopen(param, "r");
+        for (string param: e.params()) {
+            s_of f = e.fopen(param, "r");
             if (!f.ferror())
-                p.puts(_print(f, dont_ignore_empty_lines, create_table, width, delimiter));
+                e.puts(_print(f, dont_ignore_empty_lines, create_table, width, delimiter));
             else
-                p.perror("cannot open");
+                e.perror("cannot open");
         }
     }
 

@@ -1,14 +1,14 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract lsblk is Utility {
+contract lsblk is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
         (/*bool print_all_devices*/, bool human_readable, bool print_header, bool print_fsinfo, bool print_permissions, bool full_path, , ) =
-            p.flag_values("abnfmp");
+            e.flag_values("abnfmp");
         bool print_device_info = !print_fsinfo && !print_permissions;
         string[][] table;
         Column[] columns_format = [
@@ -35,7 +35,7 @@ contract lsblk is Utility {
         if (params.empty()) {
             (DirEntry[] contents, int16 status) = udirent.read_dir(inodes[dev_dir], data[dev_dir]);
             if (status < 0) {
-                p.perror(format("Error: {}", status));
+                e.perror(format("Error: {}", status));
             }
             uint len = uint(status);
             for (uint16 j = 0; j < len; j++) {
@@ -46,7 +46,7 @@ contract lsblk is Utility {
         }
         (, , , , uint16 block_count, , uint16 free_blocks, uint16 block_size, , , , , , , , ) = sb.get_sb(inodes, data).unpack();
 
-        (mapping (uint16 => string) user, mapping (uint16 => string) group) = p.get_users_groups();
+        (mapping (uint16 => string) user, mapping (uint16 => string) group) = e.get_users_groups();
 
         for (string s: params) {
             (uint16 dev_file_index, uint8 dev_file_ft) = fs.fetch_dir_entry(s, dev_dir, inodes, data);
@@ -75,9 +75,9 @@ contract lsblk is Utility {
                     sgroup,
                     inode.permissions(mode)]);
             } else
-                p.perror(s + ": not a block device");
+                e.perror(s + ": not a block device");
         }
-        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
+        e.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _list_devices(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (DirEntry[] device_list) {

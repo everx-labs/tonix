@@ -1,27 +1,27 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 contract cat is putil {
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.stdout();
-        for (string param: p.params()) {
+        for (string param: e.params()) {
             s_of f = e.fopen(param, "r");
             if (!f.ferror())
-                res = _process_file(f, res, p);
+                res = _process_file(f, res, e);
             else
                 e.perror(param);
         }
         e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 
-    function _process_file(s_of f, s_of f_in, s_proc p) internal pure returns (s_of res) {
+    function _process_file(s_of f, s_of f_in, shell_env e) internal pure returns (s_of res) {
         res = f_in;
         (bool number_lines, bool number_nonempty_lines, bool show_ends, bool show_nonprint_ends, bool suppress_repeated_empty_lines,
-            bool show_tabs, bool show_nonprint_tabs, bool show_all) = p.flag_values("nbEesTtA");
+            bool show_tabs, bool show_nonprint_tabs, bool show_all) = e.flag_values("nbEesTtA");
         bool dollar_at_line_end = show_ends || show_nonprint_ends || show_all;
         bool convert_tabs = show_tabs || show_nonprint_tabs || show_all;
-        bool show_nonprints = p.flag_set("v") || show_nonprint_ends || show_nonprint_tabs || show_all;
+        bool show_nonprints = e.flag_set("v") || show_nonprint_ends || show_nonprint_tabs || show_all;
         bool repeated_empty_line = false;
         uint i = 0;
         string line_in;

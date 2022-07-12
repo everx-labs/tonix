@@ -4,18 +4,22 @@ import "pbuiltin.sol";
 
 contract dirs is pbuiltin {
 
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[] page = e.environ[sh.DIRSTACK];
-
+        rc = EXIT_SUCCESS;
         (bool clear_dir_stack, bool expand_tilde, bool entry_per_line, bool pos_entry_per_line, , , , ) =
-            p.flag_values("clpv");
-        bool print = expand_tilde || entry_per_line || pos_entry_per_line || params.empty();
+            e.flag_values("clpv");
+        bool print = expand_tilde || entry_per_line || pos_entry_per_line || e.params().empty();
         if (print) {
             for (string line: page)
                 e.puts(line);
         } else if (clear_dir_stack)
             delete e.environ[sh.DIRSTACK];
+    }
+
+    function _name() internal pure override returns (string) {
+        return "dirs";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

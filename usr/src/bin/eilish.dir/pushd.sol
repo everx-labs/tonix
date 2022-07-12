@@ -4,21 +4,26 @@ import "pbuiltin.sol";
 
 contract pushd is pbuiltin {
 
-    function _main(s_proc, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[] dir_stack = e.environ[sh.DIRSTACK];
         uint n_dirs = dir_stack.length;
 
-        if (params.empty()) {
-            if (n_dirs < 2)
+        if (e.params().empty()) {
+            if (n_dirs < 2) {
                 e.perror("no other directory");
-            else {
+                rc = EXIT_FAILURE;
+            } else {
                 string tmp = dir_stack[n_dirs - 1];
                 dir_stack[n_dirs - 1] = dir_stack[n_dirs - 2];
                 dir_stack[n_dirs - 2] = tmp;
                 e.environ[sh.DIRSTACK] = dir_stack;
             }
         }
+    }
+
+    function _name() internal pure override returns (string) {
+        return "pushd";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp bh) {

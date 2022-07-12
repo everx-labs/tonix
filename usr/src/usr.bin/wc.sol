@@ -1,13 +1,13 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
+import "fs.sol";
+contract wc is putil_stat {
 
-contract wc is Utility {
-
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        (uint16 wd, string[] params, , ) = p.get_env();
-
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        uint16 wd = e.get_cwd();
         bool print_lines = true;
         bool print_words = true;
         bool print_chars = true;
@@ -23,12 +23,12 @@ contract wc is Utility {
         uint n_texts = params.length;
         bool count_totals = n_texts > 1;
 
-        if (!p.flags_empty()) {
-            print_bytes = p.flag_set("c");
-            print_chars = p.flag_set("m");
-            print_lines = p.flag_set("l");
-            print_max_width = p.flag_set("L");
-            print_words = p.flag_set("w");
+        if (!e.flags_empty()) {
+            print_bytes = e.flag_set("c");
+            print_chars = e.flag_set("m");
+            print_lines = e.flag_set("l");
+            print_max_width = e.flag_set("L");
+            print_words = e.flag_set("w");
         }
 
         string[][] table;
@@ -43,7 +43,7 @@ contract wc is Utility {
         for (string arg: params) {
             (uint16 index, uint8 t, , ) = fs.resolve_relative_path(arg, wd, inodes, data);
             if (t == ft.FT_UNKNOWN) {
-                p.perror(arg + " not found");
+                e.perror(arg + " not found");
             } else {
                 string texts = fs.get_file_contents(index, inodes, data);
                 (string[] text, uint n_fields) = texts.split("\n");
@@ -77,7 +77,7 @@ contract wc is Utility {
                 str.toa(total_bytes),
                 str.toa(overall_max_width),
                 "total"]);
-        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
+        e.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

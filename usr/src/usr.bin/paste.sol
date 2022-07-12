@@ -1,20 +1,20 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract paste is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string line_delimiter = p.flag_set("z") ? "\x00" : "\n";
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string line_delimiter = e.flag_set("z") ? "\x00" : "\n";
 
-        for (string param: p.params()) {
-            s_of f = p.fopen(param, "r");
+        for (string param: e.params()) {
+            s_of f = e.fopen(param, "r");
             while (!f.feof()) {
                 string line = f.fgetln();
                 (string[] texts_s, uint n_fields) = line.split("\n");
                 for (uint j = 0; j < n_fields; j++)
-                    p.puts(texts_s[j] + line_delimiter);
+                    e.puts(texts_s[j] + line_delimiter);
             }
         }
     }

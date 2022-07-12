@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 import "fts.sol";
 
-contract du is Utility {
+contract du is putil_stat {
 
     function _indent(uint i) internal pure returns (string res) {
         repeat(i) {
@@ -11,21 +11,21 @@ contract du is Utility {
         }
     }
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
-        (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, bool include_subdirs, , ) = p.flag_values("0ahcsS");
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        (bool null_line_end, bool count_files, bool human_readable, bool produce_total, bool summarize, bool include_subdirs, , ) = e.flag_values("0ahcsS");
         string line_end = null_line_end ? "\x00" : "\n";
         if (count_files && summarize) {
-            p.perror("cannot both summarize and show all entries");
-            return p;
+            e.perror("cannot both summarize and show all entries");
+            return e;
         }
 
         string so;
 
-        (, , string argv) = p.get_args();
+        (, , string argv) = e.get_args();
         for (string param: params) {
-            s_of f = p.fopen(param, "r");
+            s_of f = e.fopen(param, "r");
             s_fts file_system = fts.fts_open(argv, fts.FTS_COMFOLLOW | fts.FTS_NOCHDIR, 1);
             s_ftsent[] nodes;
             if (!f.ferror()) {
@@ -45,9 +45,9 @@ contract du is Utility {
                     ([[fmt.scale(file_size, human_readable ? fmt.KILO : 1), param]], file_size);
                 if (produce_total)
                     table.push([format("{}", total), "total"]);
-                p.puts(fmt.format_table(table, "\t", line_end, fmt.LEFT));
+                e.puts(fmt.format_table(table, "\t", line_end, fmt.LEFT));
             } else
-                p.perror("cannot open");
+                e.perror("cannot open");
             fts.fts_close(file_system);
         }
     }

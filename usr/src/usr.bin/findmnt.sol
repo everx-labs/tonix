@@ -1,13 +1,13 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
 
-contract findmnt is Utility {
+contract findmnt is putil_stat {
 
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
         (bool flag_fstab_only, bool flag_mtab_only, , bool like_df, bool first_fs_only, bool no_headings,
-            bool no_truncate, bool all_columns) = p.flag_values("smkDfnuo");
+            bool no_truncate, bool all_columns) = e.flag_values("smkDfnuo");
         bool df_style = like_df || all_columns;
         bool non_df_style = !like_df || all_columns;
 
@@ -61,7 +61,7 @@ contract findmnt is Utility {
                     break;
             }
         }
-        p.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
+        e.puts(fmt.format_table_ext(columns_format, table, " ", "\n"));
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

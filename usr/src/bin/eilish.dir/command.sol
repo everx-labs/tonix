@@ -1,12 +1,15 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
-import "Shell.sol";
+import "pbuiltin.sol";
 import "xio.sol";
 import "ustd.sol";
 import "libkeg.sol";
 import "libshellenv.sol";
+import "inode.sol";
+import "fs.sol";
 
-contract command is Shell {
+
+contract command is pbuiltin {
 
     using sbuf for s_sbuf;
     using libkeg for uma_keg;
@@ -19,60 +22,19 @@ contract command is Shell {
     uint16 constant CDESC_FORCE_PATH= 32; // type -ap or type -P
     uint16 constant CDESC_NOFUNCS   = 64; // type -f
 
-//    function main(svm sv_in) external pure returns (svm sv, s_proc p) {
-   function main(svm sv_in, shell_env e_in) external pure returns (svm sv, s_proc p, shell_env e) {
-        sv = sv_in;
-        p = sv.cur_proc;
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
-        s_vmem vmm = sv.vmem[1];
-        string cmd = p.p_comm;
-        string varss = vmem.vmem_fetch_page(vmm, 8);
-        string hash_pool = vmem.vmem_fetch_page(vmm, 4);
-
-        string pattern = "[" + cmd + "]";
-        string path;
-        (string[] lines, ) = hash_pool.split("\n");
-        for (string line: lines) {
-            if (line.strstr(pattern) > 0) {
-                path = line.val("[", "]");
-                break;
-            }
-        }
-//        path = path.empty() ? "usr/bin" : path;
+        string[][] ev = e.environ;
+        string cmd = vars.val("COMMAND", ev[sh.SPECVARS]);
+        string argv = vars.val("@", ev[sh.SPECVARS]);
+        string[] hash_pool = ev[sh.PATHHASH];
+        string path = vars.get_pool_record(cmd, hash_pool);
         if (path.empty()) {
-            sv.cur_proc.p_args.ar_misc.ec = EXECUTE_FAILURE;
+            rc = EXIT_FAILURE;
+        } else {
+            string exec_line = "./" + path + "/" + cmd + " " + argv;
+            e.environ[sh.PIPELINE].push(exec_line);
         }
-        /*uma_zone sz = sv.sz[5];
-        s_uma_slab s = sz.uz_keg.uk_domain[0].ud_part_slab[0];
-        s_uma_slab s = sz.uz_keg.keg_fetch_slab();
-        uma_keg k = sz.uz_keg;
-        uma_slab s; //= k.fetch_slab();
-        s_uma_slab s = c.keg_fetch_slab(5, 0);*/
-        bytes b;// = s.us_data;
-        bytes[] vd = sv.vmem[0].vm_pages;
-        (mapping (uint16 => Inode) inodes2, mapping (uint16 => bytes) data2) = fs.read_fs(b, vd);
-        (s_of[] fdt, s_dirent[] pas, string param_index) = _file_stati(p, inodes2, data2);
-        p.p_args.ar_misc.pos_args = pas;
-        for (s_of f: fdt)
-            p.p_fd.fdt_ofiles.push(f);
-        p.p_fd.fdt_nfiles = uint16(p.p_fd.fdt_ofiles.length);
-
-        string[] env;
-        (lines, ) = varss.split("\n");
-        for (string line: lines) {
-            (string attrs, string name, string value) = vars.split_var_record(line);
-            if (vars.match_attr_set("-x", attrs))
-                env.push(name + "=" + value);
-        }
-
-        string exec_line = "./" + path + "/" + cmd + " " + p.p_args.ar_misc.sargs;
-        p.p_oppid = sv.cur_proc.p_pid;
-        p.p_pid = p.p_oppid + 1;
-        p.environ = env;
-        p.p_args.ar_args.push(vars.as_attributed_hashmap("PARAM_INDEX", param_index));
-        p.p_args.ar_args.push(exec_line);
-        p.p_args.ar_length = uint16(p.p_args.ar_args.length);
-//        sv.cur_proc = p;
     }
 
     /*function print(string args, string pool) external pure returns (uint8 ec, string out) {
@@ -178,6 +140,10 @@ contract command is Shell {
         f.fclose();
         sv.cur_proc = p;
         sv.sz = uz;
+    }
+
+    function _name() internal pure override returns (string) {
+        return "command";
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

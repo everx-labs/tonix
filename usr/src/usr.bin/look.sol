@@ -1,37 +1,41 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract look is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
         if (params.empty()) {
             (string name, string synopsis, , , , , , , , ) = _command_help().unpack();
-            p.puts("Usage: " + name + " " + synopsis);
-            return p;
+            e.puts("Usage: " + name + " " + synopsis);
+            return e;
         }
-        bool use_term_char = p.flag_set("t");
-        string term_char = use_term_char ? p.opt_value("t") : "\n";
+        bool use_term_char = e.flag_set("t");
+        byte term_char = '\n';
+        if (use_term_char) {
+            bytes bb = e.opt_value("t");
+            term_char = bb[0];
+        }
         string pattern = !params.empty() ? params[0] : "";
         uint q = pattern.strchr(term_char);
         if (q > 0)
             pattern = pattern.substr(0, q - 1);
         uint pattern_len = pattern.strlen();
 
-        for (string param: p.params()) {
-            s_of f = p.fopen(param, "r");
+        for (string param: e.params()) {
+            s_of f = e.fopen(param, "r");
             if (!f.ferror()) {
                 while (!f.feof()) {
                     string line = f.fgetln();
                     uint line_len = line.strlen();
                     if (line_len >= pattern_len)
                         if (line.substr(0, pattern_len) == pattern)
-                            p.puts(line);
+                            e.puts(line);
                 }
             } else
-                p.perror(param + ": cannot open");
+                e.perror(param + ": cannot open");
         }
     }
 

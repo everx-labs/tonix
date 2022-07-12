@@ -1,31 +1,31 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_base.sol";
 
-contract man is Utility {
+contract man is putil_base {
 
-    function main(s_proc p_in, CommandHelp[] help_files) external pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function main(shell_env e_in, CommandHelp[] help_files) external pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
         uint8 command_format = 1;
-        if (!p.opt_value("help").empty())
+        if (!e.opt_value("help").empty())
             command_format = 2;
-        if (!p.opt_value("version").empty())
+        if (!e.opt_value("version").empty())
             command_format = 3;
 
         if (params.empty())
-            p.puts("What manual page do you want?\nFor example, try 'man man'.");
+            e.puts("What manual page do you want?\nFor example, try 'man man'.");
         for (string param: params) {
             (uint8 t_ec, CommandHelp help_file) = _get_man_file(param, help_files);
-            p.puts(t_ec == EXECUTE_SUCCESS ? _get_man_text(command_format, help_file) : ("No manual entry for " + param + "."));
+            e.puts(t_ec == EXIT_SUCCESS ? _get_man_text(command_format, help_file) : ("No manual entry for " + param + "."));
         }
     }
 
     function _get_man_file(string arg, CommandHelp[] help_files) internal pure returns (uint8 ec, CommandHelp help_file) {
-        ec = EXECUTE_FAILURE;
+        ec = EXIT_FAILURE;
         for (CommandHelp bh: help_files)
             if (bh.name == arg)
-                return (EXECUTE_SUCCESS, bh);
+                return (EXIT_SUCCESS, bh);
     }
 
     function _get_man_text(uint8 command_format, CommandHelp help_file) private pure returns (string) {
@@ -55,7 +55,7 @@ contract man is Utility {
                 0, "\n");
     }
 
-    function _command_help() internal override pure returns (CommandHelp) {
+    function _command_help() internal pure returns (CommandHelp) {
         return CommandHelp(
 "man",
 "[COMMAND]",

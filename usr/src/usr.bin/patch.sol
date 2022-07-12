@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 import "libpatch.sol";
@@ -6,10 +6,10 @@ import "libstr.sol";
 
 contract patch is putil {
 
-    function _main(p_env e_in, s_proc p) internal pure override returns (p_env e) {
+    function _main(shell_env e_in) internal pure override returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
-        string[] params = p.params();
+        string[] params = e.params();
         if (params.length < 2) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
@@ -18,8 +18,8 @@ contract patch is putil {
             e.ofiles[libfdt.STDOUT_FILENO] = res;
             return e;
         }
-        s_of f1 = p.fopen(params[0], "r");
-        s_of f2 = p.fopen(params[1], "r");
+        s_of f1 = e.fopen(params[0], "r");
+        s_of f2 = e.fopen(params[1], "r");
         if (!f1.ferror()) {
             while (!f1.feof() && !f2.feof()) {
                 string line1 = f1.fgetln();
@@ -31,7 +31,7 @@ contract patch is putil {
                 }
             }
         } else
-            p.perror(params[0] + ": cannot open");
+            e.perror(params[0] + ": cannot open");
         e.ofiles[libfdt.STDOUT_FILENO] = res;
     }
 

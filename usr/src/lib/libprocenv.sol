@@ -8,7 +8,7 @@ struct p_env {
     s_of[] ofiles; // Open files inherited on invocation of the shell, open files controlled by the exec special built-in plus any modifications, and additions specified by any redirections to the utility
     s_of cwd;      // Current working directory
     uint16 umask;  // File creation mask
-    string[] environ; // Variables with the export attribute, along with those explicitly exported for the duration of the command, shall be passed to the utility environment variables
+    string[][] environ; // Variables with the export attribute, along with those explicitly exported for the duration of the command, shall be passed to the utility environment variables
 }
 
 library libprocenv {
@@ -25,16 +25,16 @@ library libprocenv {
     function umask(p_env e) internal returns (uint16) {
         return e.umask;
     }
-    function env(p_env e) internal returns (string[]) {
+    function env(p_env e) internal returns (string[][]) {
         return e.environ;
     }
 
     function exit(p_env e, uint8 ec) internal {
-        s_of f = e.ofiles[libfdt.ERRNO_FILENO];
+        /*s_of f = e.ofiles[libfdt.ERRNO_FILENO];
         f.buf.error = ec;
         if (ec > 0) {
             f.fputs*
-        }
+        }*/
     }
     function perror(p_env e, string reason) internal {
         s_of f = e.ofiles[libfdt.STDERR_FILENO];

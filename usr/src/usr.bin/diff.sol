@@ -1,33 +1,33 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 
 contract diff is putil {
 
-    function _main(s_proc p_in) internal override pure returns (s_proc p) {
-        p = p_in;
-        string[] params = p.params();
+    function _main(shell_env e_in) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
         if (params.length < 2) {
             (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
             options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
             string usage = "Usage: " + name + " " + synopsis + "\n";
-            p.puts(libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n"));
-            return p;
+            e.puts(libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n"));
+            return e;
         }
-        s_of f1 = p.fopen(params[0], "r");
-        s_of f2 = p.fopen(params[1], "r");
+        s_of f1 = e.fopen(params[0], "r");
+        s_of f2 = e.fopen(params[1], "r");
         if (!f1.ferror()) {
             while (!f1.feof() && !f2.feof()) {
                 string line1 = f1.fgetln();
                 string line2 = f2.fgetln();
                 if (line1 != line2) {
-                    p.puts("< " + line1);
-                    p.puts("---");
-                    p.puts("> " + line2);
+                    e.puts("< " + line1);
+                    e.puts("---");
+                    e.puts("> " + line2);
                 }
             }
         } else
-            p.perror("cannot open");
+            e.perror("cannot open");
     }
 
     function _command_help() internal override pure returns (CommandHelp) {

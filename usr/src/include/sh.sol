@@ -29,7 +29,14 @@ library sh {
     uint8 constant PATHHASH  = 26;
     uint8 constant DIRSTACK  = 27;
     uint8 constant SPECVARS  = 28;
-    uint8 constant LAST      = 28;
+    uint8 constant OPTARGS   = 29;
+    uint8 constant NEXTCMD   = 30;
+    uint8 constant ERRORSTR  = 31;
+    uint8 constant ERRNO     = 32;
+    uint8 constant ERRBUILTIN = 33;
+    uint8 constant PIPELINE  = 35;
+    uint8 constant RESERVED3 = 36;
+    uint8 constant LAST      = RESERVED3;
 
     uint8 constant NONE      = 255;
 }

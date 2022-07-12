@@ -1,29 +1,36 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "Utility.sol";
+import "putil_stat.sol";
+struct Arg {
+    string path;
+    uint8 ft;
+    uint16 idx;
+    uint16 parent;
+    uint16 dir_index;
+}
+contract readlink is putil_stat {
 
-contract readlink is Utility {
-
-    function main(s_proc p_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (s_proc p) {
-        p = p_in;
-        (uint16 wd, string[] params, , ) = p.get_env();
+    function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal override pure returns (shell_env e) {
+        e = e_in;
+        string[] params = e.params();
+        uint16 wd = e.get_cwd();
         Err[] errors;
         string out;
         if (wd >= sb.ROOT_DIR)
-            (out, errors) = _readlink(p, params, wd, inodes, data);
+            (out, errors) = _readlink(e, params, wd, inodes, data);
         else {
-            p.perror("Failed to resolve relative path for" + params[0]);
+            e.perror("Failed to resolve relative path for" + params[0]);
         }
         if (!errors.empty()) {
-            for (Err e: errors)
-                p.perror("Failed to read link: " + e.arg);
+            for (Err ero: errors)
+                e.perror("Failed to read link: " + ero.arg);
         } else
-            p.puts(out);
+            e.puts(out);
     }
 
-    function _readlink(s_proc p, string[] params, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
+    function _readlink(shell_env e, string[] params, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
         (bool canon_existing_dir, bool canon_existing, bool canon_missing, bool no_newline, bool print_errors, bool null_delimiter, , )
-            = p.flag_values("femsqz");
+            = e.flag_values("femsqz");
         string line_delimiter = null_delimiter ? "\x00" : "\n";
 
         bool canon = canon_existing_dir || canon_existing || canon_missing;

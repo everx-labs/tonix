@@ -1,13 +1,14 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin.sol";
 
 contract echo is pbuiltin {
 
-    function _main(s_proc p, string[] params, shell_env e_in) internal pure override returns (shell_env e) {
+    function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
-        e.puts(libstring.join_fields(params, " "));
-        if (!p.flag_set('n'))
+        rc = EXIT_SUCCESS;
+        e.puts(libstring.join_fields(e.params(), " "));
+        if (!e.flag_set('n'))
             e.putchar('\n');
     }
 
@@ -22,5 +23,8 @@ contract echo is pbuiltin {
 -E        explicitly suppress interpretation of backslash escapes",
 "",
 "Returns success unless a write error occurs.");
-   }
+    }
+    function _name() internal pure override returns (string) {
+        return "echo";
+    }
 }
