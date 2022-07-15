@@ -1,6 +1,5 @@
 pragma ton-solidity >= 0.61.2;
 
-import "stypes.sol";
 import "liberr.sol";
 import "libstring.sol";
 import "sb.sol";
@@ -47,16 +46,6 @@ library unistd {
     uint16 constant SALC  = 0x4000; // allocate string space dynamically
     uint16 constant SIGN  = 0x8000; // ignore this file in _fwalk
 
-    /*function _fdopen(s_proc p, uint16 fd) internal returns (s_of f) {
-        s_of[] fdt = p.p_fd.fdt_ofiles;
-        uint n_files = p.p_fd.fdt_nfiles;
-        for (uint i = 0; i < n_files; i++) {
-            s_of f = fdt[i];
-            if (f.file == fd)
-                return f;
-        }
-        f.flags |= SERR;
-    }*/
     function lookup_dir(s_proc p, uint16 fd, string path) internal returns (uint16) {
 
     }
@@ -136,17 +125,11 @@ library unistd {
         return p.p_ucred.getegid();
     }
     function geteuid(s_proc p) internal returns (uint16) {
-//        return p.p_ucred.cr_uid;
         return p.p_ucred.geteuid();
     }
     function getgid(s_proc p) internal returns (uint16) {
-//        return p.p_ucred.cr_rgid;
-        //return p.p_ucred.getgid();
-
-    }
+   }
     function getgroups(s_proc p, uint16) internal returns (uint16[]) {
-//        p.p_ucred.cr_groups;
-//        return p.p_ucred.getgroups();
     }
     function getlogin(s_xsession ses) internal returns (string) {
         return ses.s_login;
@@ -161,10 +144,8 @@ library unistd {
         return p.p_oppid;
     }
     function getuid(s_proc p) internal returns (uint16) {
-//        return p.p_ucred.cr_uid;
-//        return p.p_ucred.getuid();
         s_thread t = __syscall0(p, libsyscall.SYS_getuid);
-        return uint16(t.tdu_retval);
+        return uint16(t.td_retval);
     }
     function isatty(s_proc p, uint16) internal returns (uint16) {}
     function link(s_proc p, string , string ) internal returns (uint16) {}
@@ -195,8 +176,6 @@ library unistd {
     function rmdir(s_proc p, string ) internal returns (uint16) {}
     function setgid(s_proc p, uint16 gid) internal returns (uint16) {
         p.p_ucred.setgid(gid);
-//        p.p_ucred.cr_svgid = p.p_ucred.cr_rgid;
-//        p.p_ucred.cr_rgid = gid;
     }
     function setpgid(s_proc p, uint16, uint16) internal returns (uint16) {}
     function setsid(s_proc p) internal returns (s_xsession) {
@@ -256,9 +235,6 @@ library unistd {
     function fchown(s_proc p, uint16, uint16, uint16) internal returns (uint16) {}
     function readlink(s_proc p, string , string , uint16) internal returns (uint32) {}
     function gethostname(s_proc p, uint16 namelen) internal returns (uint16, string) {
-        /*bytes empty;
-        sysctl([CTL_KERN, KERN_HOSTNAME], 2, empty, )
-        uint8[] name, uint8 namelen, bytes oldp, uint16 oldlenp, bytes newp, uint16 newlen) internal returns (uint8 ec, uint8 kind, uint32 key, string res) {*/
     }
     function setegid(s_proc p, uint16 gid) internal returns (uint16) {
         p.p_ucred.cr_groups[0] = gid;

@@ -4,8 +4,8 @@ import "pbuiltin_special.sol";
 
 contract shopt is pbuiltin_special {
 
-    function _retrieve_pages(shell_env) internal pure override returns (uint8[]) {
-        return [sh.SHOPT];
+    function _retrieve_pages(shell_env) internal pure override returns (uint8) {
+        return sh.SHOPT;
     }
 
     function _attr_set(shell_env e) internal pure override returns (string sattrs) {

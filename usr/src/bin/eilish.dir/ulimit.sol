@@ -4,8 +4,6 @@ import "pbuiltin.sol";
 
 contract ulimit is pbuiltin {
 
-//    function _main(s_proc p_in, string[] params, shell_env e) internal pure override returns (s_proc p) {
-//        p = p_in;
     function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string page;// = e.e_dirstack; //vmem.vmem_fetch_page(sv.vmem[1], 12);

@@ -1,6 +1,5 @@
 pragma ton-solidity >= 0.61.2;
 
-import "stypes.sol";
 import "libhelp.sol";
 import "parg.sol";
 import "io.sol";

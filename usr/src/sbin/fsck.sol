@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
 import "Utility.sol";
 
@@ -22,7 +22,7 @@ contract fsck is Utility {
             uint len = uint(status);
             for (uint16 j = 0; j < len; j++) {
                 (uint8 t, string name, uint16 index) = contents[j].unpack();
-                if (t == ft.FT_UNKNOWN)
+                if (t == libstat.FT_UNKNOWN)
                     continue;
                 out.append(udirent.dir_entry_line(index, name, t));
             }
@@ -112,7 +112,7 @@ contract fsck is Utility {
                     (uint8 sub_ft, string sub_name, uint16 sub_index) = de.unpack();
                     if (sub_name.empty())
                         es[i].push(fsck_err(i, EMPTY_DIRENT_NAME, 0, sub_index));
-                    if (sub_ft == ft.FT_UNKNOWN)
+                    if (sub_ft == libstat.FT_UNKNOWN)
                         es[i].push(fsck_err(i, UNKNOWN_DIRENT_TYPE, 0, sub_ft));
                     if (verbose || list_files)
                         out.append(udirent.dir_entry_line(sub_index, sub_name, sub_ft));
@@ -146,7 +146,7 @@ contract fsck is Utility {
                         (uint8 sub_ft, string sub_name, uint16 sub_index) = de.unpack();
                         if (sub_name.empty())
                             es[i].push(fsck_err(i, EMPTY_DIRENT_NAME, 0, sub_index));
-                        if (sub_ft == ft.FT_UNKNOWN)
+                        if (sub_ft == libstat.FT_UNKNOWN)
                             es[i].push(fsck_err(i, UNKNOWN_DIRENT_TYPE, 0, sub_ft));
                         if (verbose || list_files)
                             out.append(udirent.dir_entry_line(sub_index, sub_name, sub_ft));
@@ -157,7 +157,7 @@ contract fsck is Utility {
                 uint len = uint(status);
                 for (uint16 j = 0; j < len; j++) {
                     (uint8 t, string name, uint16 index) = contents[j].unpack();
-                    if (t == ft.FT_UNKNOWN) {
+                    if (t == libstat.FT_UNKNOWN) {
                         es[start].push(fsck_err(start, UNKNOWN_DIRENT_TYPE, 0, t));
                         continue;
                     }
@@ -193,7 +193,7 @@ contract fsck is Utility {
                 total_blocks_actual += n_data_blocks;
                 total_inodes++;
 
-                if (ft.is_dir(mode)) {
+                if (libstat.is_dir(mode)) {
                     out.append(format("Inode dir: {}\n", i));
                     out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
                     out.append(bts);
@@ -208,7 +208,7 @@ contract fsck is Utility {
                             (uint8 sub_ft, string sub_name, uint16 sub_index) = de.unpack();
                             if (sub_name.empty())
                                 es[i].push(fsck_err(i, EMPTY_DIRENT_NAME, 0, sub_index));
-                            else if (sub_ft == ft.FT_UNKNOWN)
+                            else if (sub_ft == libstat.FT_UNKNOWN)
                                 es[i].push(fsck_err(i, UNKNOWN_DIRENT_TYPE, 0, sub_ft));
                             if (verbose || list_files)
                                 out.append(udirent.dir_entry_line(sub_index, sub_name, sub_ft));
@@ -269,7 +269,7 @@ contract fsck is Utility {
         resdata = data;
 
         (uint16 smode, , , uint16 sn_links, , , , , , ) = ino.unpack();
-        if (!ft.is_dir(smode))
+        if (!libstat.is_dir(smode))
             err.append("Not a directory\n");
         (DirEntry[] contents, int16 status, ) = udirent.read_dir_verbose(data);
 //        err.append(dbg);
@@ -292,7 +292,7 @@ contract fsck is Utility {
                     if (h_len < 2)
                         err.append("File type and name too short: " + shead + "\n");
                     else {
-                        DirEntry de = DirEntry(ft.file_type(shead.substr(0, 1)), shead.substr(1), str.toi(stail));
+                        DirEntry de = DirEntry(libstat.file_type(shead.substr(0, 1)), shead.substr(1), str.toi(stail));
                         contents.push(de);
                         dry.append(udirent.print(de));
                     }

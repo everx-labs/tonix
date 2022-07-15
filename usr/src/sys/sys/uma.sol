@@ -1,4 +1,11 @@
 pragma ton-solidity >= 0.58.2;
+import "proc_h.sol";
+import "vmem.sol";
+struct svm {
+    s_proc cur_proc;
+    uma_zone[] sz;
+    s_vmem[] vmem;
+}
 import "uma_int.sol";
 interface iumaz {
     function uma_ctor(bytes mem, uint16 size, bytes arg, uint16 flags) external returns (uint16);

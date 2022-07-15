@@ -1,7 +1,7 @@
-pragma ton-solidity >= 0.57.0;
+pragma ton-solidity >= 0.62.0;
 
-import "ft.sol";
 import "sb.sol";
+import "libstat.sol";
 
 library inode {
 
@@ -26,7 +26,7 @@ library inode {
     }
 
     function permissions(uint16 p) internal returns (string) {
-        return ft.inode_mode_sign(p) + permissions_octet(p >> 6 & 0x0007) + permissions_octet(p >> 3 & 0x0007) + permissions_octet(p & 0x0007);
+        return libstat.sign(p) + permissions_octet(p >> 6 & 0x0007) + permissions_octet(p >> 3 & 0x0007) + permissions_octet(p & 0x0007);
     }
 
     function permissions_octal(uint16 p) internal returns (string) {
@@ -34,7 +34,7 @@ library inode {
     }
 
     function mode(string s) internal returns (uint16 imode) {
-        imode = ft.get_def_mode(ft.file_type(s.substr(0, 1)));
+        imode = libstat.get_def_mode(libstat.file_type(s.substr(0, 1)));
         imode += string_to_octet(s.substr(1, 3)) << 6;
         imode += string_to_octet(s.substr(4, 3)) << 3;
         imode += string_to_octet(s.substr(7, 3));
@@ -56,8 +56,8 @@ library inode {
     }
 
     function get_any_node(uint8 t, uint16 owner, uint16 group, uint16 device_id, uint16 n_blocks, string file_name, string text) internal returns (Inode, bytes) {
-        if (t > ft.FT_UNKNOWN && t <= ft.FT_LAST)
-            return (Inode(ft.get_def_mode(t), owner, group, t == ft.FT_DIR ? 2 : 1, device_id, n_blocks, uint32(text.byteLength()),  now, now, file_name), text);
+        if (t > libstat.FT_UNKNOWN && t <= libstat.FT_LAST)
+            return (Inode(libstat.get_def_mode(t), owner, group, t == libstat.FT_DIR ? 2 : 1, device_id, n_blocks, uint32(text.byteLength()),  now, now, file_name), text);
     }
 
     /* Getting an index node of a particular type */
@@ -66,7 +66,7 @@ library inode {
     }
 
     function get_dir_node(uint16 this_dir, uint16 parent_dir, uint16 owner, uint16 group, uint16 device_id, string dir_name) internal returns (Inode, bytes) {
-        return get_any_node(ft.FT_DIR, owner, group, device_id, 1, dir_name, get_dots(this_dir, parent_dir));
+        return get_any_node(libstat.FT_DIR, owner, group, device_id, 1, dir_name, get_dots(this_dir, parent_dir));
     }
 
     function bare() internal returns (Inode) {
@@ -125,7 +125,7 @@ library inode {
             }
             if (!inode_s.empty())
                 out.append(inode_s);
-            if ((level & DUMP_TEXT_DIRS) > 0 && ft.is_dir(imode) || (level & DUMP_TEXT_ALL) > 0) {
+            if ((level & DUMP_TEXT_DIRS) > 0 && libstat.is_dir(imode) || (level & DUMP_TEXT_ALL) > 0) {
                 out.append(text);
                 out.append("\x05");
                 if (data.exists(i))
@@ -148,7 +148,7 @@ library inode {
         for ((uint16 i, Inode ino): inodes) {
             (uint16 imode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, imode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
-            if (level > 0 && (ft.is_dir(imode) || ft.is_symlink(imode) || level > 1))
+            if (level > 0 && (libstat.is_dir(imode) || libstat.is_symlink(imode) || level > 1))
                 out.append(data[i]);
         }
     }

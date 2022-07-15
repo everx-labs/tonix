@@ -6,13 +6,11 @@ import "libcompspec.sol";
 
 contract hash is pbuiltin_base {
 
-    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function main(shell_env e_in) external pure returns (shell_env e) {
         e = e_in;
         string[] comp_spec_page = e.environ[sh.PATHHASH];
         if (comp_spec_page.empty())
-            return (sv, e);
+            return e;
         string[] params = e.params();
         bool no_flags = e.flags_empty();
         bool no_args = params.empty();

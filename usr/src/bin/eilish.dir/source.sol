@@ -5,7 +5,6 @@ import "pbuiltin.sol";
 contract source is pbuiltin {
 
     function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
-//        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
         e = e_in;
         string[] pool = e.environ[sh.SPECVARS];
         string file_contents;

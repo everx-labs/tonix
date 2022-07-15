@@ -54,12 +54,13 @@ library fs {
     /* Look for a file name in the directory entry. Return file index and file type */
     function fetch_dir_entry(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint16, uint8) {
         if (name == "/")
-            return (sb.ROOT_DIR, ft.FT_DIR);
+            return (sb.ROOT_DIR, libstat.FT_DIR);
         if (!inodes.exists(dir))
-            return (er.ENOENT, ft.FT_UNKNOWN);
+            return (err.ENOENT, libstat.FT_UNKNOWN);
         Inode ino = inodes[dir];
-        if (ft.mode_to_file_type(ino.mode) != ft.FT_DIR)
-            return (er.ENOTDIR, ft.FT_UNKNOWN);
+        //if (libstat.mode_to_file_type(ino.mode) != libstat.FT_DIR)
+        if (!libstat.is_dir(ino.mode))
+            return (err.ENOTDIR, libstat.FT_UNKNOWN);
         return lookup_dir(ino, data[dir], name);
     }
 
@@ -72,8 +73,8 @@ library fs {
         for (uint i = 0; i < n_parts; i++) {
             (uint16 index, uint8 t, uint16 dir_idx) = lookup_dir_ext(inodes[cur_dir], data[cur_dir], parts[i]);
             if (dir_idx == 0)
-                return er.ENOENT;
-            if (t != ft.FT_DIR)
+                return err.ENOENT;
+            if (t != libstat.FT_DIR)
                 return index;
             cur_dir = index;
         }
@@ -108,7 +109,7 @@ library fs {
         if (dir == sb.ROOT_DIR)
             return "/";
         (uint16 parent, uint8 t) = fetch_dir_entry("..", dir, inodes, data);
-        if (t != ft.FT_DIR)
+        if (t != libstat.FT_DIR)
             return "/";
 
         return (parent == sb.ROOT_DIR ? "" : get_absolute_path(parent, inodes, data)) + "/" + inodes[dir].file_name;
@@ -118,7 +119,7 @@ library fs {
         (string dir_name, string file_name) = path.dir(spath);
         uint16 dir_index = resolve_absolute_path(dir_name, inodes, data);
         (uint16 file_index, uint8 t) = lookup_dir(inodes[dir_index], data[dir_index], file_name);
-        if (t == ft.FT_UNKNOWN)
+        if (t == libstat.FT_UNKNOWN)
             return "Failed to read file " + file_name + " at path " + dir_name + "\n";
         return get_file_contents(file_index, inodes, data);
     }
@@ -135,7 +136,7 @@ library fs {
         uint16 etc_dir = resolve_absolute_path("/etc", inodes, data);
         (uint16 passwd_index, uint8 passwd_file_type, uint16 passwd_dir_idx) = lookup_dir_ext(inodes[etc_dir], data[etc_dir], "passwd");
         (uint16 group_index, uint8 group_file_type, uint16 group_dir_idx) = lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
-        if (passwd_dir_idx > 0 && passwd_file_type == ft.FT_REG_FILE && group_dir_idx > 0 && group_file_type == ft.FT_REG_FILE)
+        if (passwd_dir_idx > 0 && passwd_file_type == libstat.FT_REG_FILE && group_dir_idx > 0 && group_file_type == libstat.FT_REG_FILE)
             return (get_file_contents(passwd_index, inodes, data), get_file_contents(group_index, inodes, data), passwd_index, group_index);
     }
 
@@ -143,7 +144,7 @@ library fs {
     function resolve_relative_path(string name, uint16 dir, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns
             (uint16 index, uint8 file_type, uint16 parent, uint16 dir_index) {
         if (name == "/")
-            return (sb.ROOT_DIR, ft.FT_DIR, sb.ROOT_DIR, 1);
+            return (sb.ROOT_DIR, libstat.FT_DIR, sb.ROOT_DIR, 1);
         parent = name.substr(0, 1) == "/" ? sb.ROOT_DIR : dir;
 
         (string dir_path, string base_name) = path.dir(name);
@@ -154,7 +155,7 @@ library fs {
             (uint16 ino, uint8 t, , uint16 dir_idx) = resolve_relative_path(parts[i - 1], parent, inodes, data);
             if (dir_idx == 0)
                 return (ino, t, parent, dir_idx);
-            else if (t == ft.FT_DIR)
+            else if (t == libstat.FT_DIR)
                 parent = ino;
             else
                 break;
@@ -167,18 +168,18 @@ library fs {
     }
 
     function lookup_dir_ext(Inode ino, bytes data, string file_name) internal returns (uint16 index, uint8 file_type, uint16 dir_idx) {
-        if (ft.mode_to_file_type(ino.mode) != ft.FT_DIR)
-            return (er.ENOTDIR, ft.FT_UNKNOWN, 0);
+        if (!libstat.is_dir(ino.mode))
+            return (err.ENOTDIR, libstat.FT_UNKNOWN, 0);
         (DirEntry[] contents, int16 status) = udirent.read_dir(ino, data);
         if (status < 0)
-            return (uint16(-status), ft.FT_UNKNOWN, 0);
+            return (uint16(-status), libstat.FT_UNKNOWN, 0);
         else {
             for (uint i = 0; i < uint(status); i++) {
                 (uint8 t, string name, uint16 idx) = contents[i].unpack();
                 if (name == file_name)
                     return (idx, t, uint16(i + 1));
             }
-            return (er.ENOENT, ft.FT_UNKNOWN, 0);
+            return (err.ENOENT, libstat.FT_UNKNOWN, 0);
         }
     }
 }

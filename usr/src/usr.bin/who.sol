@@ -13,7 +13,7 @@ contract who is putil_stat {
         uint16 var_run_dir = fs.resolve_absolute_path("/var/run", inodes, data);
         (uint16 utmp_index, uint8 utmp_file_type) = fs.lookup_dir(inodes[var_run_dir], data[var_run_dir], "utmp");
         string utmp_contents;
-        if (utmp_file_type == ft.FT_REG_FILE)
+        if (utmp_file_type == libstat.FT_REG_FILE)
             utmp_contents = fs.get_file_contents(utmp_index, inodes, data);
         mapping (uint16 => Login) utmp;
 

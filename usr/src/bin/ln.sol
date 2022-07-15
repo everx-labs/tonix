@@ -41,17 +41,17 @@ contract ln is Utility {
         (string t_path, uint8 t_ft, uint16 t_ino, , ) = arg_list[target_n].unpack();
         bool dest_exists = t_ino >= sb.ROOT_DIR;
 
-        if (dest_exists && t_ft != ft.FT_DIR) {
+        if (dest_exists && t_ft != libstat.FT_DIR) {
             if (multiple_sources)
                 errors.push(Err(er.ln_target, err.ENOTDIR, t_path));
             else if (!force)
-                errors.push(Err(symlink ? er.failed_symlink : er.failed_hardlink, er.EEXIST, t_path));
+                errors.push(Err(symlink ? er.failed_symlink : er.failed_hardlink, err.EEXIST, t_path));
         }
 
-        if (dest_exists && t_ft == ft.FT_DIR)
+        if (dest_exists && t_ft == libstat.FT_DIR)
             to_dir = true;
 
-        bool collision = dest_exists && t_ft == ft.FT_REG_FILE;
+        bool collision = dest_exists && t_ft == libstat.FT_REG_FILE;
         bool overwrite_dest = collision && (!preserve || force);
 
 //        if (!errors.empty() || collision && preserve)
@@ -64,7 +64,7 @@ contract ln is Utility {
             out.aif(verbose, "(backup:" + t_backup_path.squote() + ")");
 
             ars.push(Ar(aio.WR_COPY, 0, t_backup_path, ""));
-            dirents.append(udirent.dir_entry_line(t_ino, t_backup_path, ft.FT_REG_FILE));
+            dirents.append(udirent.dir_entry_line(t_ino, t_backup_path, libstat.FT_REG_FILE));
             dirent_action_type = aio.ADD_DIR_ENTRY;
             ic++;
         }
@@ -77,9 +77,9 @@ contract ln is Utility {
             if (sino < sb.ROOT_DIR) { errors.push(Err(0, sino, spath)); break; }
             if (verbose) { out.append(spath.squote() + "->" + t_path.squote()); }
 
-            if (sft == ft.FT_DIR && aop == aio.HARDLINK)
+            if (sft == libstat.FT_DIR && aop == aio.HARDLINK)
                 errors.push(Err(er.no_hardlink_on_dir, 0, spath));
-            else if (to_file_flag && to_dir && sft == ft.FT_REG_FILE)
+            else if (to_file_flag && to_dir && sft == libstat.FT_REG_FILE)
                 errors.push(Err(er.cant_overwrite_dir, 0, t_path.squote()));
             else if (collision && newer_only) {
                 if (inodes[t_ino].modified_at > inodes[sino].modified_at)

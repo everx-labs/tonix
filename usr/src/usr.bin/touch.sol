@@ -24,7 +24,7 @@ contract touch is Utility {
             if (dir_index == 0 && create_files) {
                 string contents;
                 ars.push(Ar(aio.MKFILE, index, file_name, contents));
-                parent_dirs[parent].push(udirent.dir_entry_line(ic, file_name, ft.FT_REG_FILE));
+                parent_dirs[parent].push(udirent.dir_entry_line(ic, file_name, libstat.FT_REG_FILE));
                 ic++;
             } else if (update_if_exists)
                 ars.push(Ar(aio.UPDATE_TIME, index, spath, ""));

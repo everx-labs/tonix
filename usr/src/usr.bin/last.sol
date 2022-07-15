@@ -14,7 +14,7 @@ contract last is putil_stat {
         uint16 var_log_dir = fs.resolve_absolute_path("/var/log", inodes, data);
         (uint16 wtmp_index, uint8 wtmp_file_type) = fs.lookup_dir(inodes[var_log_dir], data[var_log_dir], "wtmp");
         string wtmp_contents;
-        if (wtmp_file_type == ft.FT_REG_FILE)
+        if (wtmp_file_type == libstat.FT_REG_FILE)
             wtmp_contents = fs.get_file_contents(wtmp_index, inodes, data);
 
         string[][] table;

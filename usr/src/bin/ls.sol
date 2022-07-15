@@ -21,7 +21,7 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
         for (string param: params) {
             (uint16 index, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
 //            s_of f = p.fopen(param, "r");
-            if (t != ft.FT_UNKNOWN)
+            if (t != libstat.FT_UNKNOWN)
                 e.puts(_ls(e, Arg(param, t, index, parent, dir_index), inodes, data, user, group) + "\n");
             else
                 e.perror(param + ": cannot open");
@@ -75,7 +75,7 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
                     l.push(sgroup);
             }
 
-            if (file_type == ft.FT_CHRDEV || file_type == ft.FT_BLKDEV) {
+            if (file_type == libstat.FT_CHRDEV || file_type == libstat.FT_BLKDEV) {
                 (string major, string minor) = inode.get_device_version(device_id);
                 l.push(format("{:4},{:4}", major, minor));
             } else
@@ -85,7 +85,7 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
         }
         if (double_quotes)
             name = "\"" + name + "\"";
-        if (append_slash_to_dirs && file_type == ft.FT_DIR)
+        if (append_slash_to_dirs && file_type == libstat.FT_DIR)
             name.append("/");
         l.push(name);
     }
@@ -95,10 +95,10 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
         Inode dir_inode = inodes[index];
         string[][] table;
         Arg[] sub_args;
-        if (t == ft.FT_REG_FILE || t == ft.FT_DIR && e.flag_set("d")) {
+        if (t == libstat.FT_REG_FILE || t == libstat.FT_DIR && e.flag_set("d")) {
             if (!_ls_should_skip(e, s))
                 table.push(_ls_populate_line(e, dir_inode, index, s, t, user, group));
-        } else if (t == ft.FT_DIR) {
+        } else if (t == libstat.FT_DIR) {
             string ret;
             (ret, sub_args) = _list_dir(e, ag, dir_inode, inodes, data, user, group);
             out.append(ret);
@@ -120,10 +120,10 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
         bool count_totals = long_format || print_allocated_size;
         uint16 total_blocks;
 
-        if (t == ft.FT_REG_FILE || t == ft.FT_DIR && e.flag_set("d")) {
+        if (t == libstat.FT_REG_FILE || t == libstat.FT_DIR && e.flag_set("d")) {
             if (!_ls_should_skip(e, s))
                 table.push(_ls_populate_line(e, inode, index, s, t, user, group));
-        } else if (t == ft.FT_DIR) {
+        } else if (t == libstat.FT_DIR) {
             (DirEntry[] contents, int16 status) = udirent.read_dir_data(data[index]);
             if (status < 0) {
                 out.append(format("Error: {} \n", status));
@@ -133,9 +133,9 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
 
             for (uint16 j = 0; j < len; j++) {
                 (uint8 sub_ft, string sub_name, uint16 sub_index) = contents[j].unpack();
-                if (_ls_should_skip(e, sub_name) || sub_ft == ft.FT_UNKNOWN)
+                if (_ls_should_skip(e, sub_name) || sub_ft == libstat.FT_UNKNOWN)
                     continue;
-                if (recurse && sub_ft == ft.FT_DIR && j > 1)
+                if (recurse && sub_ft == libstat.FT_DIR && j > 1)
                     sub_args.push(Arg(s + "/" + sub_name, sub_ft, sub_index, index, j));
                 if (count_totals)
                     total_blocks += inodes[sub_index].n_blocks;

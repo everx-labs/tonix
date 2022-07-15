@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 library conf {
     uint16 constant D_TAPE  = 0x0001;

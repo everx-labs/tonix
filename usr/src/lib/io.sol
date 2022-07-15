@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.58.0;
 
-import "ustd.sol";
+import "proc_h.sol";
 import "libstat.sol";
 import "sbuf.sol";
 import "xio.sol";

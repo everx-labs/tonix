@@ -4,21 +4,19 @@ import "pbuiltin_base.sol";
 
 contract exec is pbuiltin_base {
 
-    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function main(shell_env e_in) external pure returns (shell_env e) {
         e = e_in;
         s_of res = e.ofiles[libfdt.STDOUT_FILENO];
         string[] params = e.params();
-        (bool substitute_command, bool empty_env, bool prepend_dash, , , , , ) = p.flag_values("acl");
-        if (empty_env)
-            delete p.environ;
+        (bool substitute_command, bool empty_env, bool prepend_dash, , , , , ) = e.flag_values("acl");
+        /*if (empty_env)
+            delete e.environ;
         if (substitute_command) {
-            string sub = p.opt_value("a");
-            p.p_comm = sub;
+            string sub = e.opt_value("a");
+            e.p_comm = sub;
         }
         if (prepend_dash)
-            p.p_comm = "-" + p.p_comm;
+            p.p_comm = "-" + p.p_comm;*/
     }
 
     function _builtin_help() internal pure override returns (BuiltinHelp) {

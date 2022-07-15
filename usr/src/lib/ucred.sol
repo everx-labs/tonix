@@ -1,8 +1,8 @@
 pragma ton-solidity >= 0.61.2;
 
-import "stypes.sol";
 import "liberr.sol";
-
+import "ucred_h.sol";
+import "param.sol";
 library sucred {
 
     uint16 constant SYS_setuid              = 23;

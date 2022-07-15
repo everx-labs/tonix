@@ -14,50 +14,36 @@ contract readlink is putil_stat {
         e = e_in;
         string[] params = e.params();
         uint16 wd = e.get_cwd();
-        Err[] errors;
         string out;
-        if (wd >= sb.ROOT_DIR)
-            (out, errors) = _readlink(e, params, wd, inodes, data);
-        else {
-            e.perror("Failed to resolve relative path for" + params[0]);
-        }
-        if (!errors.empty()) {
-            for (Err ero: errors)
-                e.perror("Failed to read link: " + ero.arg);
-        } else
-            e.puts(out);
-    }
-
-    function _readlink(shell_env e, string[] params, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string out, Err[] errors) {
-        (bool canon_existing_dir, bool canon_existing, bool canon_missing, bool no_newline, bool print_errors, bool null_delimiter, , )
-            = e.flag_values("femsqz");
+        (bool canon_existing_dir, bool canon_existing, bool canon_missing, bool no_newline, bool print_errors, bool null_delimiter, , ) = e.flag_values("femsqz");
         string line_delimiter = null_delimiter ? "\x00" : "\n";
-
         bool canon = canon_existing_dir || canon_existing || canon_missing;
         uint16 mode = canon_existing ? 3 : canon_existing_dir ? 2 : canon_missing ? 1 : 0;
-
+        if (wd < sb.ROOT_DIR) {
+            e.perror("Failed to resolve relative path for" + params[0]);
+            return e;
+        }
         for (string param: params) {
             (, uint8 t, uint16 parent, ) = fs.resolve_relative_path(param, wd, inodes, data);
             string spath;
             bool exists;
             if (canon)
                 (spath, exists) = _canonicalize(mode, param, parent, inodes, data);
-            else if (t == ft.FT_SYMLINK) {
+            else if (t == libstat.FT_SYMLINK) {
                 Arg arg = _dereference(mode + path.EXPAND_SYMLINKS, param, wd, inodes, data);
                 (spath, t, , , ) = arg.unpack();
-                exists = t > ft.FT_UNKNOWN;
+                exists = t > libstat.FT_UNKNOWN;
             } else
                 continue;
-
             if (!exists) {
                 if (print_errors)
-                    errors.push(Err(0, er.ENOENT, param));
+                    e.perror(param);
                 continue;
             }
             out.append(spath);
-//            out = str.aif(out, !no_newline, line_delimiter);
             out.aif(!no_newline, line_delimiter);
         }
+        e.puts(out);
     }
 
     function _canonicalize(uint16 mode, string param, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (string res, bool valid) {
@@ -69,7 +55,7 @@ contract readlink is putil_stat {
         if (canon_mode >= path.CANON_DIRS) {
             uint16 dir_index = is_abs_path ? fs.resolve_absolute_path(arg_dir, inodes, data) : wd;
             (, uint8 t) = fs.lookup_dir(inodes[dir_index], data[dir_index], arg_base);
-            if (t == ft.FT_UNKNOWN)
+            if (t == libstat.FT_UNKNOWN)
                 valid = false;
         }
 
@@ -83,7 +69,7 @@ contract readlink is putil_stat {
         Inode inode;
         if (ino > 0 && inodes.exists(ino))
             inode = inodes[ino];
-        if (expand_symlinks && t == ft.FT_SYMLINK) {
+        if (expand_symlinks && t == libstat.FT_SYMLINK) {
             (t, param, ino) = udirent.get_symlink_target(inode, data[ino]).unpack();
         }
         return Arg(param, t, ino, parent, dir_index);

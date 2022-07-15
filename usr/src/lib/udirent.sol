@@ -1,9 +1,9 @@
 pragma ton-solidity >= 0.57.0;
 
 import "inode.sol";
-import "er.sol";
+import "liberr.sol";
 import "vars.sol";
-import "libstatmode.sol";
+import "libstat.sol";
 
 /*struct s_dirent {
 	uint16 d_fileno;
@@ -24,11 +24,10 @@ struct s_direct {
 library udirent {
 
     using libstring for string;
-    using libstatmode for uint16;
 
     function getdents(uint16 fd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint8 ec, string buf) {
         if (!inodes.exists(fd) || !data.exists(fd))
-            ec = er.EBADF;
+            ec = err.EBADF;
         buf = data[fd];
     }
 
@@ -36,13 +35,13 @@ library udirent {
         uint p = str.strchr(s, "\t");
         if (p > 1) {
             optional(int) index_u = stoi(s.substr(p));
-            return DirEntry(ft.file_type(s.substr(0, 1)), s.substr(1, p - 2), index_u.hasValue() ? uint16(index_u.get()) : er.ENOENT);
+            return DirEntry(libstat.file_type(s.substr(0, 1)), s.substr(1, p - 2), index_u.hasValue() ? uint16(index_u.get()) : err.ENOENT);
         }
     }
 
     function parse_param(string s) internal returns (DirEntry) {
         (string attrs, string name, string value) = vars.split_var_record(s);
-        return DirEntry(ft.file_type(attrs), name, name.empty() ? er.ENOENT : str.toi(value));
+        return DirEntry(libstat.file_type(attrs), name, name.empty() ? err.ENOENT : str.toi(value));
     }
 
     function parse_param_index(string params) internal returns (DirEntry[] contents) {
@@ -76,7 +75,7 @@ library udirent {
                     if (h_len < 2)
                         out.append("File type and name too short: " + shead + "\n");
                     else {
-                        DirEntry de = DirEntry(ft.file_type(shead.substr(0, 1)), shead.substr(1), str.toi(stail));
+                        DirEntry de = DirEntry(libstat.file_type(shead.substr(0, 1)), shead.substr(1), str.toi(stail));
                         contents.push(de);
                         out.append(print(de));
                     }
@@ -92,22 +91,21 @@ library udirent {
     }
 
     function read_dir(Inode ino, bytes data) internal returns (DirEntry[] contents, int16 status) {
-//        if (!ft.is_dir(ino.mode))
-        if (!ino.mode.is_dir())
-            status = -er.ENOTDIR;
+        if (!libstat.is_dir(ino.mode))
+            status = -err.ENOTDIR;
         else
             return read_dir_data(data);
     }
 
     function get_symlink_target(Inode ino, bytes node_data) internal returns (DirEntry target) {
-        if (!ft.is_symlink(ino.mode))
-            target.index = er.ENOSYS;
+        if (!libstat.is_symlink(ino.mode))
+            target.index = err.ENOSYS;
         else
             return parse_entry(node_data);
     }
 
     function dir_entry_line(uint16 index, string file_name, uint8 file_type) internal returns (string) {
-        return format("{}{}\t{}\n", ft.file_type_sign(file_type), file_name, index);
+        return format("{}{}\t{}\n", libstat.file_type_sign(file_type), file_name, index);
     }
 
 }

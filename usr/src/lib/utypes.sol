@@ -2,7 +2,7 @@ pragma ton-solidity >= 0.61.2;
 
 enum vtype      { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD, VMARKER }
 enum vgetstate  { VGET_NONE, VGET_HOLDCNT, VGET_USECOUNT }
-enum td_states { TDS_INACTIVE, TDS_INHIBITED, TDS_CAN_RUN, TDS_RUNQ, TDS_RUNNING }
+
 enum idtype {
     P_PID,     // process
     P_PPID,    // parent process
@@ -37,26 +37,6 @@ struct s_stat {
     uint32 st_ctim;     // Time of last status change
 }
 
-struct s_of {
-    uint attr;
-    uint16 flags;
-    uint16 file;
-    string path;
-    uint32 offset;
-    s_sbuf buf;
-}
-
-struct s_sockaddr {
-    uint8 sa_family;
-    string sa_data;
-}
-
-struct s_sockaddr_in {
-  uint8 sin_family;
-  uint16 sin_port;
-  uint sin_addr;
-}
-
 struct s_kevent {
     uint32 ident;  // identifier for this event
     uint16 filter; // filter for event
@@ -65,30 +45,6 @@ struct s_kevent {
     uint64 data;   // filter data value
     bytes udata;   // opaque user data identifier
     uint64[4] ext; // extensions
-}
-
-struct s_rusage {
-    uint32 ru_utime;    // user time used
-    uint32 ru_stime;    // system time used
-    uint32 ru_maxrss;   // max resident set size
-    uint32 ru_ixrss;    // integral shared memory size
-    uint32 ru_idrss;    // integral unshared data "
-    uint32 ru_isrss;    // integral unshared stack "
-    uint32 ru_minflt;   // page reclaims
-    uint32 ru_majflt;   // page faults
-    uint32 ru_nswap;    // swaps
-    uint32 ru_inblock;  // block input operations
-    uint32 ru_oublock;  // block output operations
-    uint32 ru_msgsnd;   // messages sent
-    uint32 ru_msgrcv;   // messages received
-    uint32 ru_nsignals; // signals received
-    uint32 ru_nvcsw;    // voluntary context switches
-    uint32 ru_nivcsw;   // involuntary "
-}
-
-struct s___wrusage {
-    s_rusage wru_self;
-    s_rusage wru_children;
 }
 
 struct s_xvnode {
@@ -114,13 +70,6 @@ struct s_xtty {
     uint16 xt_sid;     // Session.
     uint16 xt_flags;   // Terminal option flags.
     uint32 xt_dev;     // Userland device. XXXKIB truncated
-}
-
-struct s_xucred {
-    uint16 cr_uid;       // effective user id
-    uint8 cr_ngroups;    // number of groups
-    uint16[] cr_groups;  // groups
-    uint16 cr_pid;
 }
 
 struct s_sigaction {
@@ -244,48 +193,6 @@ struct s_sched_param {
     uint16 sched_priority;
 }
 
-/*struct s_file {
-    uint16 f_flag;  // see fcntl.h
-    string path;
-    bytes f_data;   // file descriptor specific data
-    uint32 f_offset;
-}*/
-
-// Userland version of struct file, for sysctl
-struct s_xfile {
-//    uint16 xf_size;     // size of struct xfile
-    uint16 xf_pid;      // owning process
-    uint16 xf_uid;      // effective uid of owning process
-    uint16 xf_fd;       // descriptor number
-    uint8  xf_type;     // descriptor type
-    uint16 xf_count;    // reference count
-    uint16 xf_msgcount; // references from message queue
-    uint32 xf_offset;   // file offset
-    bytes xf_data;      // file descriptor specific data
-    uint16 xf_vnode;    // vnode pointer
-    uint16 xf_flag;     // flags (see fcntl.h)
-}
-
-struct s_rlimit {
-    uint32 rlim_cur; // current (soft) limit
-    uint32 rlim_max; // maximum value for rlim_cur
-}
-
-struct s_plimit {
-    s_rlimit[15] pl_rlimit; // RLIM_NLIMITS
-    uint16 pl_refcnt;       // number of references
-}
-
-struct s_sbuf {
-    bytes buf;       // storage buffer
-    uint8 error;    // current error code
-    uint32 size;     // size of storage buffer
-    uint16 len;      // current length of string
-    uint32 flags;    // flags
-    uint16 sect_len; // current length of section
-    uint32 rec_off;  // current record start offset
-}
-
 // Window/terminal size structure.  This information is stored by the kernel
 // in order to provide a consistent interface, but is not used by the kernel.
 struct s_winsize {
@@ -295,46 +202,3 @@ struct s_winsize {
     uint16 ws_ypixel; // vertical size, pixels
 }
 
-struct s_loginclass {
-    string lc_name;
-    uint16 lc_refcount;
-    s_racct lc_racct;
-}
-
-struct s_racct {
-    uint64[25] r_resources; // RACCT_MAX + 1
-}
-
-struct s_xsockbuf {
-    uint32 sb_cc;
-    uint32 sb_hiwat;
-    uint32 sb_mbcnt;
-    uint32 sb_mcnt;
-    uint32 sb_ccnt;
-    uint32 sb_mbmax;
-    int32 sb_lowat;
-    int32 sb_timeo;
-    int16 sb_flags;
-}
-//  Structure to export socket from kernel to utilities, via sysctl(3).
-struct s_xsocket {
-//    ksize         xso_len;        // length of this structure
-    uint16 xso_so;         // kernel address of struct socket
-    uint16 so_pcb;         // kernel address of struct inpcb
-    uint64 so_oobmark;
-    int32  xso_protocol;
-    int32  xso_family;
-    uint32 so_qlen;
-    uint32 so_incqlen;
-    uint32 so_qlimit;
-    uint16 so_pgid;
-    uint16 so_uid;
-    int16 so_type;
-    int16 so_options;
-    int16 so_linger;
-    int16 so_state;
-    int16 so_timeo;
-    uint16 so_error;
-    s_xsockbuf so_rcv;
-    s_xsockbuf so_snd;
-}

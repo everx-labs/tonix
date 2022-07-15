@@ -4,8 +4,7 @@ import "pbuiltin_base.sol";
 
 contract cd is pbuiltin_base {
 
-    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
+    function main(shell_env e_in) external pure returns (shell_env e) {
         e = e_in;
         string[] params = e.params();
         s_of cur_dir = e.cwd;

@@ -1,6 +1,5 @@
 pragma ton-solidity >= 0.57.0;
 
-//import "io.sol";
 // I/O control block
 struct s_aiocb {
     uint16 aio_fildes;   // File descriptor
@@ -16,26 +15,6 @@ struct iovec	{
     uint32 iov_base;  // Base address
 	uint32 iov_len;    // Length
 }
-
-/*struct kaiocb {
-    int     jobflags;               // (a) job flags
-    int     inblock;                // (*) input blocks
-    int     outblock;               // (*) output blocks
-    int     msgsnd;                 // (*) messages sent
-    int     msgrcv;                 // (*) messages received
-    s_proc userproc;         // (*) user process
-    s_ucred cred;            // (*) active credential when created
-    s_file fd_file;          // (*) pointer to file structure
-    s_aioliojob lio;         // (*) optional lio job
-    s_aiocb ujob;            // (*) pointer in userspace of aiocb
-    s_knlist klist;           // (a) list of knotes
-    s_aiocb uaiocb;           // (*) copy of user I/O control block
-    s_uio uio;                // (*) storage for non-vectored uio
-    s_iovec iov[1];           // (*) storage for non-vectored uio
-    s_uio uiop;              // (*) Possibly malloced uio
-    ksiginfo_t ksi;                 // (a) realtime signal info
-    uint64_t seqno;                 // (*) job number
-}*/
 
 struct Ar {
     uint8 ar_type;

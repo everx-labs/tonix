@@ -38,7 +38,7 @@ contract namei is putil_stat {
             while (true) {
                 if (inodes.exists(cur_dir)) {
                     (mode, owner_id, group_id, , , , , , , ) = inodes[cur_dir].unpack();
-                    if (mode.is_dir() && data.exists(cur_dir))
+                    if (libstat.is_dir(mode) && data.exists(cur_dir))
                         dents = dirent.parse_dirents(data[cur_dir]);
                     else
                         e.perror("inode " + str.toa(cur_dir) + " is not a valid directory");
@@ -53,8 +53,6 @@ contract namei is putil_stat {
                 string sowner = user[owner_id];
                 string sgroup = group[group_id];
                 if (!name.empty())
-//                    p.puts(" " + dirent.sign(t2) + " " + name2);
-//                    p.puts(" " + (modes ? inode.permissions(mode) : ft.file_type_sign(t2)) + " " + (owners ? sowner + " "  + sgroup + " " : "") + name2);
                     e.puts(" " + (modes ? mode.perm_string() : dirent.sign(t)) + " " + (owners ? sowner + " "  + sgroup + " " : "") + name);
                 if (q == 0 || p2.empty())
                     break;

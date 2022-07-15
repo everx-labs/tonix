@@ -42,7 +42,7 @@ contract wc is putil_stat {
 
         for (string arg: params) {
             (uint16 index, uint8 t, , ) = fs.resolve_relative_path(arg, wd, inodes, data);
-            if (t == ft.FT_UNKNOWN) {
+            if (t == libstat.FT_UNKNOWN) {
                 e.perror(arg + " not found");
             } else {
                 string texts = fs.get_file_contents(index, inodes, data);

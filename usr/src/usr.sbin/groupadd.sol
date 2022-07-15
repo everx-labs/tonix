@@ -55,10 +55,10 @@ contract groupadd is Utility {
             (uint16 group_index, uint8 group_file_type, ) = fs.lookup_dir_ext(inodes[etc_dir], data[etc_dir], "group");
             string[] empty;
             string text = gr.putent(s_group(target_group_name, target_group_id, empty), etc_group);
-            if (group_file_type == ft.FT_UNKNOWN) {
+            if (group_file_type == libstat.FT_UNKNOWN) {
                 uint16 ic = sb.get_inode_count(inodes);
                 ars.push(Ar(aio.MKFILE, ic, "group", text));
-                ars.push(Ar(aio.ADD_DIR_ENTRY, etc_dir, "", udirent.dir_entry_line(ic, "group", ft.FT_REG_FILE)));
+                ars.push(Ar(aio.ADD_DIR_ENTRY, etc_dir, "", udirent.dir_entry_line(ic, "group", libstat.FT_REG_FILE)));
             } else
                 ars.push(Ar(aio.UPDATE_TEXT_DATA, group_index, "group", text));
         }

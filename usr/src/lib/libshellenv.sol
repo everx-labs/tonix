@@ -1,11 +1,9 @@
 pragma ton-solidity >= 0.62.0;
 
-import "stypes.sol";
 import "io.sol";
 import "libfdt.sol";
 import "sh.sol";
 import "vars.sol";
-//import "libarg.sol";
 
 struct shell_env {
     s_of[] ofiles;    // Open files inherited upon invocation of the shell, plus open files controlled by exec
@@ -117,6 +115,14 @@ library libshellenv {
 //        e.environ[sh.ERRNO] = vars.set_var("", "EXITSTATUS=" + str.toa(status), e.environ[sh.ERRNO]);
     }
 
+    function syscall(shell_env e, uint16 number, uint16[] args) internal {
+        uint16 n_args = uint16(args.length);
+        string[] sargs;
+        for (uint i = 0; i < n_args; i++)
+            sargs.push(str.toa(args[i]));
+        e.environ[sh.SIGNAL].push("-" + str.toa(n_args) + " " + str.toa(number) + "=" + libstring.join_fields(sargs, ' '));
+    }
+
     function perror(shell_env e, string reason) internal {
         e.environ[sh.ERRNO].set_val("REASON", reason);
 //        s_of f = e.ofiles[libfdt.STDERR_FILENO];
@@ -175,6 +181,10 @@ library libshellenv {
             f.flags |= flags;
         } else
             f.flags |= io.SERR;
+    }
+
+    function flush_std(shell_env e) internal {
+        e.ofiles.fdflush();
     }
 
     function map_file(shell_env e, string name) internal returns (string[]) {

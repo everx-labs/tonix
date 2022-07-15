@@ -1,17 +1,10 @@
 pragma ton-solidity >= 0.61.2;
 
 import "str.sol";
-import "stypes.sol";
 import "io.sol";
 import "sbuf.sol";
 import "libfdt.sol";
-/*struct s_file {
-    uint32 p;       // current position in (some) buffer
-    uint16 flags;   // flags, below; this FILE is free if 0
-    uint16 file;    // fileno, if Unix descriptor, else -1
-    uint16 blksize; // stat.st_blksize (may be != _bf._size) files get aligned to block boundaries on fseek()
-    uint32 offset;  // current lseek offset
-}*/
+import "libstat.sol";
 
 library xio {
 
@@ -30,30 +23,11 @@ library xio {
     uint16 constant L_cuserid = 17;  // size for cuserid(3); MAXLOGNAME, legacy
     uint16 constant L_ctermid = 1024;// size for ctermid(3); PATH_MAX
 
-    /*function att(s_stat sst) internal returns (uint) {
-//        (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size, uint16 st_blksize,
-//            uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = sst.unpack();
-//        return (uint(st_dev) << 224) + (uint(st_ino) << 208) + (uint(st_mode) << 192) + (uint(st_nlink) << 176) + (uint(st_uid) << 160) + (uint(st_gid) << 144) +
-//            (uint(st_rdev) << 128) + (uint(st_size) << 96) + (uint(st_blksize) << 80) + (uint(st_blocks) << 64) + (uint(st_mtim) << 32) + st_ctim;
-        (uint st_dev, uint st_ino, uint st_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint32 st_size, uint16 st_blksize,
-            uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = sst.unpack();
-        return (uint(st_dev) << 224) + (uint(st_ino) << 208) + (uint(st_mode) << 192) + (uint(st_nlink) << 176) + (uint(st_uid) << 160) + (uint(st_gid) << 144) +
-            (uint(st_rdev) << 128) + (uint(st_size) << 96) + (uint(st_blksize) << 80) + (uint(st_blocks) << 64) + (uint(st_mtim) << 32) + st_ctim;
-    }
-*/
-    function st(uint val) internal returns (s_stat) {
-        (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size, uint16 st_blksize,
-            uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = (uint16(val >> 224 & 0xFFFF), uint16(val >> 208 & 0xFFFF), uint16(val >> 192 & 0xFFFF),
-                uint16(val >> 176 & 0xFFFF), uint16(val >> 160 & 0xFFFF), uint16(val >> 144 & 0xFFFF), uint16(val >> 128 & 0xFFFF), uint32(val >> 96 & 0xFFFFFFFF),
-                uint16(val >> 80 & 0xFFFF), uint16(val >> 64 & 0xFFFF), uint32(val >> 32 & 0xFFFFFFFF), uint32(val & 0xFFFFFFFF));
-        return s_stat(st_dev, st_ino, st_mode, st_nlink, st_uid, st_gid, st_rdev, st_size, st_blksize, st_blocks, st_mtim, st_ctim);
-    }
-
     function aread(s_of f, uint32 nbytes) internal returns (bytes) {
         if (nbytes == 0)
             return f.buf.buf; // temporary
         uint32 offset = f.offset;
-        uint32 file_len = st(f.attr).st_size;
+        uint32 file_len = libstat.st_size(f.attr);
         uint32 cap = nbytes > 0 ? math.min(nbytes, file_len - offset) : file_len - offset;
         f.offset += cap;
         if (f.offset >= file_len)
@@ -174,21 +148,16 @@ library xio {
         return aread(f, size);
     }
 
-//    function remove(string) internal returns (s_aiocb cb) {}
-//    function rename(string from, string to) internal returns (s_aiocb cb) {}
-
     function rewind(s_of f) internal {
         f.offset = 0;
         clearerr(f);
     }
 
-//    function setbuf(s_file stream, string) internal {}
     function tmpfile() internal returns (s_of stream) {}
 
     function tmpnam() internal returns (string) {
 
     }
-//    function ctermid(string) internal returns (uint16) {}
 
     function fileno(s_of f) internal returns (uint16) {
         return f.file;
@@ -210,7 +179,7 @@ library xio {
     }
 
     function split(s_of f) internal returns (string[] fields, uint n_fields) {
-        uint len = st(f.attr).st_size;
+        uint len = libstat.st_size(f.attr);
         string text = f.buf.buf;
         if (len > 0) {
             uint prev;
@@ -229,19 +198,13 @@ library xio {
         }
     }
 
-//    function tempnam(string, string) internal returns (uint16) {}
-    //function fmemopen(void * __restrict, size_t, string) internal returns (FILE) {}
-//    function getdelim(string, uint32, byte, s_file stream) internal returns (s_aiocb) {}
-//    function open_memstream(string, uint32) internal returns (s_file stream) {}
-//    function renameat(int, string, int, string) internal returns (int) {}
-
     function getline(s_of f) internal returns (string) {
         uint pos = f.offset;
         string buf = f.buf.buf;
         string tail = buf.substr(pos);
         uint p = tail.strchr("\n");
 
-        uint32 file_len = st(f.attr).st_size;
+        uint32 file_len = libstat.st_size(f.attr);
 
         if (p > 0) {
             f.offset += uint32(p);
@@ -263,7 +226,7 @@ library xio {
         string buf = f.buf.buf;
         string tail = buf.substr(pos);
         uint p = tail.strchr("\n");
-        uint32 file_len = st(f.attr).st_size;
+        uint32 file_len = libstat.st_size(f.attr);
 
         if (p > 0) {
             f.offset += uint32(p);

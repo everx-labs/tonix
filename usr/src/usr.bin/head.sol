@@ -17,7 +17,7 @@ contract head is putil_stat {
         bool print_headers = always_headers || !never_headers && contents.length > 1;
         for (DirEntry de: contents) {
             (uint8 t, string name, uint16 index) = de.unpack();
-            if (t != ft.FT_UNKNOWN) {
+            if (t != libstat.FT_UNKNOWN) {
                 string text = fs.get_file_contents(index, inodes, data);
                 e.puts(_print(text, print_headers ? name : "", num_lines, num_bytes, line_delimiter));
             } else

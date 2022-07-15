@@ -5,6 +5,7 @@ import "fmt.sol";
 library vars {
 
     using libstring for string;
+    using vars for string[];
 
     // The various attributes that a given variable can have
     uint16 constant ATTR_EXPORTED   = 1; // export to environment
@@ -51,6 +52,10 @@ library vars {
 
     function int_val(string key, string[] page) internal returns (uint16) {
         return str.toi(val(key, page));
+    }
+
+    function array_val(string key, string[] page) internal returns (string[] res) {
+        (res, ) = libstring.split(val(key, page), ' ');
     }
 
     function item_value(string item) internal returns (string, string) {
@@ -184,14 +189,44 @@ library vars {
         }
     }
 
-    function set_item_value(string name, string value, string page) internal returns (string) {
-        /*string cur_value = libstring.val(name, page);
-        string new_record = encode_item(name, value);
-        return cur_value.empty() ? page + " " + new_record : page.translate(encode_item(name, cur_value), new_record);*/
+    function arrayvar_add(string page, string var_name) internal {
+        ( , , string arr_str) = split_var_record(page);
+        if (str.strstr(arr_str, var_name) > 0)
+            return;
+        page.append(" " + var_name);
+    }
+
+    function arrayvar_remove(string page, string var_name) internal {
+        ( , , string arr_str) = split_var_record(page);
+        if (str.strstr(arr_str, var_name) == 0)
+            return;
+        page.translate(var_name, "");
+    }
+
+    function array_add(string[] page, string array_name, string var_name) internal {
+        uint arr_idx = get_pool_index(array_name, page);
+        if (arr_idx == 0)
+            return;
+        ( , , string arr_str) = split_var_record(page[arr_idx - 1]);
+        uint var_index = str.strstr(arr_str, var_name);
+        if (var_index > 0)
+            return;
+        page[arr_idx - 1].append(" " + var_name);
+    }
+
+    function array_remove(string[] page, string array_name, string var_name) internal {
+        uint arr_idx = get_pool_index(array_name, page);
+        if (arr_idx == 0)
+            return;
+        ( , , string arr_str) = split_var_record(page[arr_idx - 1]);
+        uint var_index = str.strstr(arr_str, var_name);
+        if (var_index == 0)
+            return;
+        page[arr_idx - 1].translate(var_name, "");
     }
 
     function set_int_val(string[] page, string name, uint value) internal {
-        page = set_var("-i", name + "=" + str.toa(value), page);
+        page.set_var("-i", name + "=" + str.toa(value));
     }
 
     function set_val(string[] page, string name, string value) internal {
@@ -207,7 +242,23 @@ library vars {
         page[cur_index - 1] = var_record(cur_attrs, name, new_value);
     }
 
-    function set_var(string attrs, string token, string[] pg) internal returns (string[] res) {
+    function set_var(string[] pg, string attrs, string token) internal {
+        (string name, string value) = token.csplit("=");
+        uint cur_index = get_pool_index(name, pg);
+        string new_record = var_record(attrs, name, value);
+        if (cur_index == 0) {
+            pg.push(new_record);
+            return;
+        }
+        (string cur_attrs, , string cur_value) = split_var_record(pg[cur_index - 1]);
+        if (str.strchr(cur_attrs, "r") > 0)
+            return;
+        string new_value = !value.empty() ? value : !cur_value.empty() ? cur_value : "";
+        new_record = var_record(meld_attr_set(attrs, cur_attrs), name, new_value);
+        pg[cur_index - 1] = new_record;
+    }
+
+    function set_var_old(string attrs, string token, string[] pg) internal returns (string[] res) {
         (string name, string value) = token.csplit("=");
         uint cur_index = get_pool_index(name, pg);
         res = pg;
@@ -235,7 +286,17 @@ library vars {
         res[cur_index - 1] = new_record;
     }
 
-    function unset_var(string name, string[] pg) internal returns (string[] res) {
+    function unset_var(string[] pg, string name) internal {
+        uint cur_index = get_pool_index(name, pg);
+        if (cur_index == 0)
+            return;
+        (string cur_attrs, , ) = split_var_record(pg[cur_index - 1]);
+        if (str.strchr(cur_attrs, "r") > 0)
+            return;
+        delete pg[cur_index - 1];
+    }
+
+    function unset_var_old(string name, string[] pg) internal returns (string[] res) {
         uint cur_index = get_pool_index(name, pg);
         if (cur_index == 0)
             return res;

@@ -6,10 +6,8 @@ import "libshellenv.sol";
 contract help is Shell {
     using libshellenv for shell_env;
 
-    function main(svm sv_in, shell_env e_in, BuiltinHelp[] help_files) external pure returns (shell_env e, svm sv) {
-        sv = sv_in;
+    function main(shell_env e_in, BuiltinHelp[] help_files) external pure returns (shell_env e) {
         e = e_in;
-        s_proc p = sv.cur_proc;
 
         string[] params = e.params();
         uint8 command_format = _get_help_format(e);
@@ -21,9 +19,8 @@ contract help is Shell {
             (uint8 t_ec, BuiltinHelp help_file) = _get_help_file(arg, help_files);
             e.puts(t_ec == EXECUTE_SUCCESS ?
                 _help_cmd(command_format, help_file) :
-                "-eilish: help: no help topics match `" + arg + "'.  Try `help help' or `man -k " + arg + "' or `info " + arg + "'.");
+                "-eilish: help: no help topics match `" + arg + "'.  Try `help help' or `info " + arg + "'.");
         }
-        sv.cur_proc = p;
     }
 
     uint8 constant COMMAND_FORMAT_DESCRIPTION       = 1;

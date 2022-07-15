@@ -23,7 +23,7 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
         for (uint i = 0; i < n_args; i++) {
             string param = v_args[i];
             (, uint8 t, , ) = fs.resolve_relative_path(param, wd, inodes, data);
-            if (t == ft.FT_UNKNOWN)
+            if (t == libstat.FT_UNKNOWN)
                 params.push(param);
             else
                 f_args.push(param);
@@ -31,7 +31,7 @@ function _main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16
 
         for (string param: f_args) {
             (uint16 index, uint8 t, , ) = fs.resolve_relative_path(param, sb.ROOT_DIR, inodes, data);
-            if (t != ft.FT_UNKNOWN)
+            if (t != libstat.FT_UNKNOWN)
                 e.puts(_grep(e, fs.get_file_contents(index, inodes, data), params));
             else {
                 e.perror("Failed to resolve relative path for" + param);

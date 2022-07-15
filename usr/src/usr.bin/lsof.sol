@@ -2,7 +2,6 @@ pragma ton-solidity >= 0.62.0;
 
 import "putil.sol";
 import "libstat.sol";
-import "ft.sol";
 
 contract lsof is putil {
 
@@ -29,7 +28,7 @@ contract lsof is putil {
                 , , , ) = st.unpack();
             string sm = (flags & io.SRD) > 0 ? "r" : (flags & io.SWR) > 0 ? "w" : (flags & io.SRW) > 0 ? "rw" : "?";
             uint32 sizoff = fsize ? st_size : foffset ? offset : st_size;
-            out.append(format("{}\t{}\t{}\t{}\t{}{}\t{}\t{},{}\t{}\t{}\t{}\n", p_comm, p_pid, ppid ? str.toa(p_oppid) : "", numuid ? str.toa(st_uid) : user[st_uid], file, sm, ft.ft_desc(st_mode),
+            out.append(format("{}\t{}\t{}\t{}\t{}{}\t{}\t{},{}\t{}\t{}\t{}\n", p_comm, p_pid, ppid ? str.toa(p_oppid) : "", numuid ? str.toa(st_uid) : user[st_uid], file, sm, libstat.ft_desc(st_mode),
                 st_dev >> 8, st_dev & 0xFF, sizoff, st_ino, path));
         }
         res.fputs(out);

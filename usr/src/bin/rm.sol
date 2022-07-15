@@ -28,7 +28,7 @@ contract rm is Utility {
         for (Arg a: arg_list) {
             (string s, uint8 t, uint16 iop, uint16 parent, ) = a.unpack();
             if (iop >= sb.ROOT_DIR) {
-                if (t == ft.FT_DIR) {
+                if (t == libstat.FT_DIR) {
                     if (remove_empty_dirs) {
                         if (inodes[iop].n_links < 3) {
                             ars.push(Ar(aio.UNLINK, iop, s, ""));

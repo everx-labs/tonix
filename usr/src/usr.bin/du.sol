@@ -41,7 +41,7 @@ contract du is putil_stat {
                 Inode inode = inodes[index];
                 bytes dir_data = data[index];
                 uint32 file_size = st_size;
-                (string[][] table, uint32 total) = st_mode.is_dir() ? _count_dir(count_files, include_subdirs, human_readable, param, inode, dir_data, inodes, data) :
+                (string[][] table, uint32 total) = libstat.is_dir(st_mode) ? _count_dir(count_files, include_subdirs, human_readable, param, inode, dir_data, inodes, data) :
                     ([[fmt.scale(file_size, human_readable ? fmt.KILO : 1), param]], file_size);
                 if (produce_total)
                     table.push([format("{}", total), "total"]);
@@ -59,13 +59,13 @@ contract du is putil_stat {
             uint len = uint(status);
             for (uint j = 2; j < len; j++) {
                 (uint8 t, string name, uint16 index) = contents[j].unpack();
-                if (t == ft.FT_UNKNOWN)
+                if (t == libstat.FT_UNKNOWN)
                     continue;
                 Inode sub_inode = inodes[index];
                 bytes sub_dir_data = data[index];
 
                 name = dir_name + "/" + name;
-                if (t == ft.FT_DIR) {
+                if (t == libstat.FT_DIR) {
                     (string[][] sub_lines, uint32 sub_total) = _count_dir(count_files, include_subdirs, human_readable, name, sub_inode, sub_dir_data, inodes, data);
                     for (string[] line: sub_lines)
                         lines.push(line);

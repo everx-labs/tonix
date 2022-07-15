@@ -30,10 +30,10 @@ contract rmdir is Utility {
             uint16 parent = wd;
             sout.aif(verbose, "rmdir: removing directory, " + s.squote() + "\n");
             if (iop >= sb.ROOT_DIR) {
-                if (ft.is_dir(st.st_mode)) {
+                if (libstat.is_dir(st.st_mode)) {
                     if (st.st_nlink < 3) {
                         ars.push(Ar(aio.UNLINK, iop, s, ""));
-                        victims[parent].push(udirent.dir_entry_line(iop, s, ft.FT_DIR));
+                        victims[parent].push(udirent.dir_entry_line(iop, s, libstat.FT_DIR));
                     } else
                         ec = err.ENOTEMPTY;
                 } else

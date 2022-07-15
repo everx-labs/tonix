@@ -4,8 +4,8 @@ import "pbuiltin_special.sol";
 
 contract export is pbuiltin_special {
 
-    function _retrieve_pages(shell_env e) internal pure override returns (uint8[]) {
-        return [e.flag_set("f") ? sh.FUNCTION : sh.VARIABLE];
+    function _retrieve_pages(shell_env e) internal pure override returns (uint8) {
+        return e.flag_set("f") ? sh.FUNCTION : sh.VARIABLE;
     }
     function _attr_set(shell_env e) internal pure override returns (string sattrs) {
         sattrs = e.flag_set("n") ? "+x" : "-x";

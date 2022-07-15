@@ -15,7 +15,7 @@ contract mountpoint is putil_stat {
         uint16 wd = e.get_cwd();
         (uint16 index, uint8 t, , ) = fs.resolve_relative_path(spath, wd, inodes, data);
         if (arg_device) {
-            if (t != ft.FT_BLKDEV)
+            if (t != libstat.FT_BLKDEV)
                 e.perror("not_a_block_device " + spath);
             else {
                 (string major_id, string minor_id) = inode.get_device_version(inodes[index].device_id);
@@ -54,7 +54,7 @@ contract mountpoint is putil_stat {
         (DirEntry[] contents, int16 status) = udirent.read_dir(inodes[dev_dir], data[dev_dir]);
         if (status >= 0) {
             for (DirEntry de: contents)
-                if (de.file_type == ft.FT_BLKDEV || de.file_type == ft.FT_CHRDEV)
+                if (de.file_type == libstat.FT_BLKDEV || de.file_type == libstat.FT_CHRDEV)
                     device_list.push(de);
         }
     }

@@ -2,19 +2,15 @@ pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_base.sol";
 import "inode.sol";
-import "libstatmode.sol";
 import "vars.sol";
 import "fs.sol";
 contract test is pbuiltin_base {
-    using libstatmode for uint16;
 
-    function main(svm sv_in, shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function main(shell_env e_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 rc, shell_env e) {
         e = e_in;
-        string[] params = p.params();
+//        string[] params = e.params();
 
-        string sargs = p.p_args.ar_misc.sargs;
+        (, , string sargs) = e.get_args();//p.p_args.ar_misc.sargs;
         string dbg;
 //        string pool = vmem.vmem_fetch_page(sv.vmem[1], 8);
         string[] pool = e.environ[sh.VARIABLE];
@@ -31,32 +27,21 @@ contract test is pbuiltin_base {
                 result = false;
         }
 //        res = result ? "true\n" : "false\n";
-        p.p_xexit = result ? EXIT_SUCCESS : EXIT_FAILURE;
-        sv.cur_proc = p;
+        rc = result ? EXIT_SUCCESS : EXIT_FAILURE;
+//        sv.cur_proc = p;
     }
 
     function _match_mode(byte op, uint16 mode) internal pure returns (bool res) {
-        if (op == "b")
-//            return ft.is_block_dev(mode);
-            return mode.is_block_dev();
-        if (op == "c")
-            return mode.is_char_dev();
-        if (op == "d")
-            return mode.is_dir();
-        if (op == "f")
-            return mode.is_reg();
-        if (op == "h" || op == "L")
-            return mode.is_symlink();
-        if (op == "p")
-            return mode.is_pipe();
-        if (op == "S")
-            return mode.is_socket();
-        if (op == "g")
-            return mode.is_gid();
-        if (op == "u")
-            return mode.is_uid();
-        if (op == "k")
-            return mode.is_vtx();
+        if (op == "b") return libstat.is_block_dev(mode);
+        if (op == "c") return libstat.is_char_dev(mode);
+        if (op == "d") return libstat.is_dir(mode);
+        if (op == "f") return libstat.is_reg(mode);
+        if (op == "h" || op == "L") return libstat.is_symlink(mode);
+        if (op == "p") return libstat.is_pipe(mode);
+        if (op == "S") return libstat.is_socket(mode);
+        if (op == "g") return libstat.is_gid(mode);
+        if (op == "u") return libstat.is_uid(mode);
+        if (op == "k") return libstat.is_vtx(mode);
         return false;
     }
 
@@ -69,11 +54,11 @@ contract test is pbuiltin_base {
             return group_owned;
 
         if (op == "r")
-            return (user_owned && (mode & ft.S_IRUSR) > 0) || (group_owned && (mode & ft.S_IRGRP) > 0) || (mode & ft.S_IROTH) > 0;
+            return (user_owned && (mode & libstat.S_IRUSR) > 0) || (group_owned && (mode & libstat.S_IRGRP) > 0) || (mode & libstat.S_IROTH) > 0;
         if (op == "w")
-            return (user_owned && (mode & ft.S_IWUSR) > 0) || (group_owned && (mode & ft.S_IWGRP) > 0) || (mode & ft.S_IWOTH) > 0;
+            return (user_owned && (mode & libstat.S_IWUSR) > 0) || (group_owned && (mode & libstat.S_IWGRP) > 0) || (mode & libstat.S_IWOTH) > 0;
         if (op == "x")
-            return (user_owned && (mode & ft.S_IXUSR) > 0) || (group_owned && (mode & ft.S_IXGRP) > 0) || (mode & ft.S_IXOTH) > 0;
+            return (user_owned && (mode & libstat.S_IXUSR) > 0) || (group_owned && (mode & libstat.S_IXGRP) > 0) || (mode & libstat.S_IXOTH) > 0;
 
         return false;
     }
@@ -82,7 +67,7 @@ contract test is pbuiltin_base {
         uint16 wd_index = vars.int_val("WD", pool);
         (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, wd_index, inodes, data);
 
-        if (file_type == ft.FT_UNKNOWN)
+        if (file_type == libstat.FT_UNKNOWN)
             return false;
         if (op == "a" || op == "e")
             return true;

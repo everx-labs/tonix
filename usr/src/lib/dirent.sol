@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.2;
 
+import "filedesc_h.sol";
 import "xio.sol";
-import "stypes.sol";
 import "libstat.sol";
 import "liberr.sol";
 import "libstring.sol";
@@ -47,31 +47,8 @@ library dirent {
         uint p = s.strchr("\t");
         if (p > 1) {
             optional(int) index_u = stoi(s.substr(p));
-            return s_dirent(index_u.hasValue() ? uint16(index_u.get()) : err.ENOENT, file_type(s.substr(0, 1)), s.substr(1, p - 2));
+            return s_dirent(index_u.hasValue() ? uint16(index_u.get()) : err.ENOENT, libstat.file_type(s.substr(0, 1)), s.substr(1, p - 2));
         }
-    }
-
-    function file_type(string s) internal returns (uint8) {
-        if (s == "b") return libstat.FT_BLKDEV;
-        if (s == "c") return libstat.FT_CHRDEV;
-        if (s == "-") return libstat.FT_REG_FILE;
-        if (s == "d") return libstat.FT_DIR;
-        if (s == "l") return libstat.FT_SYMLINK;
-        if (s == "s") return libstat.FT_SOCK;
-        if (s == "p") return libstat.FT_FIFO;
-        return libstat.FT_UNKNOWN;
-    }
-
-//    function sign(uint8 t) internal returns (byte) {
-    function sign(uint8 t) internal returns (string) {
-        if (t == libstat.FT_BLKDEV) return 'b';
-        if (t == libstat.FT_CHRDEV) return 'c';
-        if (t == libstat.FT_REG_FILE) return '-';
-        if (t == libstat.FT_DIR) return 'd';
-        if (t == libstat.FT_SYMLINK) return 'l';
-        if (t == libstat.FT_SOCK) return 's';
-        if (t == libstat.FT_FIFO) return 'p';
-        if (t == libstat.FT_UNKNOWN) return '?';
     }
 
     function readdir(s_dirdesc dirp) internal returns (s_dirent) {

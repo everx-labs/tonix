@@ -1,21 +1,15 @@
-pragma ton-solidity >= 0.60.0;
+pragma ton-solidity >= 0.62.0;
 
 import "Utility.sol";
 import "vfs.sol";
 
 contract dumpe2fs is Utility {
 
-    /*function main(string argv, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 ec, string out, string err, uint[] nodes, bytes[] blocks) {
-        err = "";
-        ( , , string flags, ) = arg.get_env(argv);
-        ec = EXECUTE_SUCCESS;
-        (bool sb_only, bool image_fs, , , , , , ) = arg.flag_values("hi", flags);*/
     function main(svm sv_in, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (svm sv) {
         sv = sv_in;
         s_proc p = sv.cur_proc;
         s_vmem[] vmms = sv.vmem;
         uma_zone[] zones = sv.sz;
-//        string[] params = p.params();
         (bool sb_only, bool image_fs, , ) = p.flags_set("hi");
 
         SuperBlock sblk = sb.get_sb(inodes, data);
@@ -57,7 +51,7 @@ contract dumpe2fs is Utility {
         for ((uint16 i, Inode ino): inodes) {
             (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, mode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
-            if (level > 0 && (ft.is_dir(mode) || ft.is_symlink(mode) || level > 1)) {
+            if (level > 0 && (libstat.is_dir(mode) || libstat.is_symlink(mode) || level > 1)) {
                 out.append(data[i]);
                 out.append("\n");
             }

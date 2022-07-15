@@ -15,17 +15,17 @@ contract file is putil_stat {
             if (f.file > 0) {
                 s_stat st;
                 st.stt(f.attr);
-                (, uint16 st_ino, , , , , uint16 st_rdev, uint32 st_size, , , , ) = st.unpack();
+                (, uint16 st_ino, uint16 st_mode, , , , uint16 st_rdev, uint32 st_size, , , , ) = st.unpack();
                 if (!brief_mode)
                     out.append(str.oaif(param, add_null, "\x00") + str.oaif(": ", !dont_pad, "\t"));
-                if (libstat.is_reg(st))
+                if (libstat.is_reg(st_mode))
                     out.append(st_size == 0 ? "empty" : st_size == 1 ? "very short file (no magic)" : "ASCII text");
                 else
                     out.append(libstat.type_long(st));
 //                if (st.is_char_dev() || st.is_block_dev())
-                if (libstat.is_char_dev(st) || libstat.is_block_dev(st))
+                if (libstat.is_char_dev(st_mode) || libstat.is_block_dev(st_mode))
                         out.append(format(" ({}/{})", libstat.major(st_rdev), libstat.minor(st_rdev)));
-                if (libstat.is_symlink(st) && !follow_symlinks) {
+                if (libstat.is_symlink(st_mode) && !follow_symlinks) {
                     (, string target, ) = udirent.get_symlink_target(inodes[st_ino], data[st_ino]).unpack();
                     out.append(" to " + target);
                 }

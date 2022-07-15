@@ -19,9 +19,9 @@ contract mkdir is Utility {
         for (s_dirent de: contents) {
             (uint16 index, uint8 t, string name) = de.unpack();
             uint16 parent = wd;
-            if (t == ft.FT_UNKNOWN) {
+            if (t == libstat.FT_UNKNOWN) {
                 ars.push(Ar(aio.MKDIR, index, name, inode.get_dots(ic, parent)));
-                parent_dirs[parent].push(udirent.dir_entry_line(ic, name, ft.FT_DIR));
+                parent_dirs[parent].push(udirent.dir_entry_line(ic, name, libstat.FT_DIR));
                 ic++;
                 if (report_actions)
                     p.puts("mkdir: created directory" + str.squote(name));

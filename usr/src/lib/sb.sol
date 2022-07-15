@@ -47,15 +47,6 @@ struct Login {
     uint32 login_time;
 }
 
-struct DeviceInfo {
-    uint8 major_id;
-    uint8 minor_id;
-    string name;
-    uint16 blk_size;
-    uint16 n_blocks;
-    address device_address;
-}
-
 library sb {
 
     using libstring for string;

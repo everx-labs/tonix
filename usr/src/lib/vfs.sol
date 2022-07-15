@@ -1,10 +1,18 @@
-pragma ton-solidity >= 0.57.0;
+pragma ton-solidity >= 0.62.0;
 
 import "udirent.sol";
-import "ft.sol";
 import "pw.sol";
 import "gr.sol";
 import "sb.sol";
+
+struct DeviceInfo {
+    uint8 major_id;
+    uint8 minor_id;
+    string name;
+    uint16 blk_size;
+    uint16 n_blocks;
+    address device_address;
+}
 
 library vfs {
 
@@ -127,7 +135,7 @@ library vfs {
         uint16 block_size = 100;//host_device_info.blk_size;
         uint16 block_count;
         string contents;
-        (inodes[n], data[n]) = inode.get_any_node(ft.FT_DIR, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 0, "/dev", inode.get_dots(DEVFS_DEV_DIR, DEVFS_DEV_DIR));
+        (inodes[n], data[n]) = inode.get_any_node(libstat.FT_DIR, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 0, "/dev", inode.get_dots(DEVFS_DEV_DIR, DEVFS_DEV_DIR));
         uint16 node_index = n;
         n++;
 
@@ -136,8 +144,8 @@ library vfs {
             if (n_fields > 3) {
                 string file_name = dev_fields[2];
                 n++;
-                (inodes[n], data[n]) = inode.get_any_node(ft.FT_BLKDEV, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, device_info);
-                bytes dirent = udirent.dir_entry_line(n, file_name, ft.FT_BLKDEV);
+                (inodes[n], data[n]) = inode.get_any_node(libstat.FT_BLKDEV, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, device_info);
+                bytes dirent = udirent.dir_entry_line(n, file_name, libstat.FT_BLKDEV);
                 inodes[node_index].file_size += uint32(dirent.length);
                 inodes[node_index].n_links++;
                 data[node_index].append(dirent);
@@ -160,14 +168,14 @@ library vfs {
     /* text config -> builder */
     function process_config_line(string line) internal returns (TvmBuilder b) {
         (, uint8 node_type, , bytes content) = parse_config_line(line);
-        if (node_type == ft.FT_BLKDEV) {
+        if (node_type == libstat.FT_BLKDEV) {
             (uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks) = parse_blkdev(content);
             uint16 device_id = (uint16(major_id) << 8) + minor_id;
             b.store(device_id, block_size, n_blocks);
-        } else if (node_type == ft.FT_SOCK) {
+        } else if (node_type == libstat.FT_SOCK) {
             (uint16 first_inode, uint16 block_size, uint16 n_blocks, uint16 inode_size, uint16 n_inodes) = parse_sbinfo(content);
             b.store(first_inode, block_size, n_blocks, inode_size, n_inodes);
-        } else if (node_type == ft.FT_DIR) {
+        } else if (node_type == libstat.FT_DIR) {
             (string[] dirents, uint n_dirents) = parse_dir_entries(content);
             for (uint i = 0; i < n_dirents; i++)
                 b.store(dirents[i]);
@@ -181,7 +189,7 @@ library vfs {
         uint16 block_count;
 
         n = sb.ROOT_DIR;
-        (inodes[n], data[n]) = inode.get_any_node(ft.FT_DIR, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, "/", inode.get_dots(n, n));
+        (inodes[n], data[n]) = inode.get_any_node(libstat.FT_DIR, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, "/", inode.get_dots(n, n));
         block_count++;
 
 //        SuperBlock sb = _get_default_sb("bfs", fs.DEF_BLOCK_SIZE, n, inodes, data);
@@ -285,23 +293,23 @@ library vfs {
             uint8 node_index = get_parent_offset(node_file_name, file_list);
             uint8 parent_node_index = get_parent_offset(file_list[node_index], file_list);
 
-            if (content_type == ft.FT_REG_FILE || content_type == ft.FT_DIR) {
+            if (content_type == libstat.FT_REG_FILE || content_type == libstat.FT_DIR) {
                 string dir_contents;
                 dir_contents = content; //fields[3];
                 (string[] files, uint n_files) = dir_contents.split_line(" ", "\n");
                 for (uint i = 0; i < n_files; i++) {
                     string file_name = files[i];
                     n++;
-                    (inodes[n], data[n]) = inode.get_any_node(content_type, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == ft.FT_DIR ? inode.get_dots(n, node_index) : "");
+                    (inodes[n], data[n]) = inode.get_any_node(content_type, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == libstat.FT_DIR ? inode.get_dots(n, node_index) : "");
                     bytes dirent = udirent.dir_entry_line(n, file_name, content_type);
                     inodes[parent_node_index].file_size += uint32(dirent.length);
                     inodes[parent_node_index].n_links++;
                     data[parent_node_index].append(dirent);
                 }
-            } else if (content_type == ft.FT_CHRDEV) {
+            } else if (content_type == libstat.FT_CHRDEV) {
 
             }
-            if (node_type == ft.FT_DIR) {
+            if (node_type == libstat.FT_DIR) {
                 string dir_contents;
                 dir_contents = content;
                 (string[] files, ) = dir_contents.split_line(" ", "\n");
@@ -310,7 +318,7 @@ library vfs {
                         n++;
                         file_list.push(file_name);
                         if (file_name != "/") {
-                            (inodes[n], data[n]) = inode.get_any_node(content_type, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == ft.FT_DIR ? inode.get_dots(n, node_index) : "");
+                            (inodes[n], data[n]) = inode.get_any_node(content_type, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == libstat.FT_DIR ? inode.get_dots(n, node_index) : "");
                             bytes dirent = udirent.dir_entry_line(n, file_name, content_type);
                             inodes[parent_node_index].file_size += uint32(dirent.length);
                             inodes[parent_node_index].n_links++;
@@ -319,7 +327,7 @@ library vfs {
 //                            (inodes[n], data[n]) = _get_any_node(FT_DIR, SUPER_USER, SUPER_USER_GROUP, host_device_id, 1, file_name, _get_dots(n, n));
 //                        block_count++;
                     }
-            } else if (node_type == ft.FT_BLKDEV) {
+            } else if (node_type == libstat.FT_BLKDEV) {
                 host_device_info = parse_device_info(line);
                 host_device_id = (uint16(host_device_info.major_id) << 8) + host_device_info.minor_id;
                 block_size = host_device_info.blk_size;
@@ -331,8 +339,8 @@ library vfs {
         (string[] fields, uint n_fields) = line.split_line(":", "\n");
         if (n_fields > 3) {
             name = fields[0];
-            node_type = ft.file_type(fields[1]);
-            content_type = ft.file_type(fields[2]);
+            node_type = libstat.file_type(fields[1]);
+            content_type = libstat.file_type(fields[2]);
             content = fields[3];
         }
     }
@@ -382,10 +390,10 @@ library vfs {
             uint8 node_index = get_parent_offset(node_file_name, file_list);
             uint8 parent_node_index = get_parent_offset(file_list[node_index], file_list);
             bytes contents;
-            if (node_type == ft.FT_DIR) {
-                if (content_type == ft.FT_REG_FILE || content_type == ft.FT_DIR || content_type == ft.FT_SYMLINK) {
+            if (node_type == libstat.FT_DIR) {
+                if (content_type == libstat.FT_REG_FILE || content_type == libstat.FT_DIR || content_type == libstat.FT_SYMLINK) {
                     string dir_contents;
-                    if (content_type == ft.FT_SYMLINK) {
+                    if (content_type == libstat.FT_SYMLINK) {
                         string source = content; //fields[3];
                         uint8 source_index = get_parent_offset(source, file_list);
                         dir_contents = data[source_index];
@@ -396,23 +404,23 @@ library vfs {
                         n++;
                         file_list.push(file_name);
                         if (file_name != "/") {
-                            (inodes[n], data[n]) = inode.get_any_node(content_type, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == ft.FT_DIR ? inode.get_dots(n, node_index) : "");
+                            (inodes[n], data[n]) = inode.get_any_node(content_type, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, content_type == libstat.FT_DIR ? inode.get_dots(n, node_index) : "");
                             bytes dirent = udirent.dir_entry_line(n, file_name, content_type);
                             inodes[parent_node_index].file_size += uint32(dirent.length);
                             inodes[parent_node_index].n_links++;
                             data[parent_node_index].append(dirent);
                         } else
-                            (inodes[n], data[n]) = inode.get_any_node(ft.FT_DIR, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, inode.get_dots(n, n));
+                            (inodes[n], data[n]) = inode.get_any_node(libstat.FT_DIR, pw.SUPER_USER, gr.SUPER_USER_GROUP, host_device_id, 1, file_name, inode.get_dots(n, n));
                         block_count++;
                     }
                 }
-            } else if (node_type == ft.FT_REG_FILE) {
-                if (content_type == ft.FT_REG_FILE) {
+            } else if (node_type == libstat.FT_REG_FILE) {
+                if (content_type == libstat.FT_REG_FILE) {
                     contents.append(content);
-                } else if (content_type == ft.FT_SOCK) {
+                } else if (content_type == libstat.FT_SOCK) {
                     if (node_file_name == "sb_device_info")
                         contents = config_lines[0];
-                } else if (content_type == ft.FT_SYMLINK) {
+                } else if (content_type == libstat.FT_SYMLINK) {
                     string source = content; //fields[3];
                     uint8 source_index = get_parent_offset(source, file_list);
                     contents = data[source_index];
@@ -476,7 +484,7 @@ library vfs {
         out.append(builder_string(3, b_other));
         for ((uint16 i, Inode ino): inodes) {
             (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
-            if (ft.is_dir(mode)) {
+            if (libstat.is_dir(mode)) {
                 bytes dir_data = data[i];
                 out.append(format("dir data: {}\n", dir_data.length));
                 n_dirs++;
@@ -485,7 +493,7 @@ library vfs {
                 out.append(builder_string(1, b_dirs));
                 out.append(builder_string(4, b_dir_data));
             }
-            else if (ft.is_reg(mode)) {
+            else if (libstat.is_reg(mode)) {
                 b_reg_files.store(uint8(i), uint16(file_size));
                 out.append(builder_string(2, b_reg_files));
                 n_reg_files++;
@@ -521,7 +529,7 @@ library vfs {
 
     function parse_device_info_2(string dev_info_s) internal returns (string dev_name, uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks, uint16 device_id) {
         (string name, uint8 node_type, , bytes content) = parse_config_line(dev_info_s);
-        if (node_type == ft.FT_BLKDEV) {
+        if (node_type == libstat.FT_BLKDEV) {
             dev_name = name;
             (major_id, minor_id, block_size, n_blocks) = parse_blkdev(content);
             device_id = (uint16(major_id) << 8) + minor_id;

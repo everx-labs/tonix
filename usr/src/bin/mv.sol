@@ -9,7 +9,7 @@ contract mv is Utility {
         Err[] errors;
         Ar[] ars;
         string out;
-        (uint16 wd, , string flags, string pi) = p.get_env();
+        (uint16 wd, , , ) = p.get_env();
         uint16 ic = sb.get_inode_count(inodes);
         s_dirent[] contents = p.p_args.ar_misc.pos_args;
 
@@ -36,10 +36,10 @@ contract mv is Utility {
         bool dest_exists = t_ino >= sb.ROOT_DIR;
         s_stat tst = fs.istat(inodes[t_ino]);
 
-        if (dest_exists && ft.is_dir(tst.st_mode))
+        if (dest_exists && libstat.is_dir(tst.st_mode))
             to_dir = true;
 
-        bool collision = dest_exists && ft.is_reg(tst.st_mode);
+        bool collision = dest_exists && libstat.is_reg(tst.st_mode);
         bool overwrite_dest = collision && (!preserve || force);
 
 //        if (!errors.empty() || collision && preserve)
@@ -52,7 +52,7 @@ contract mv is Utility {
             out.aif(verbose, "(backup:" + t_backup_path.squote() + ")");
 
             ars.push(Ar(aio.WR_COPY, 0, t_backup_path, ""));
-            dirents.append(udirent.dir_entry_line(t_ino, t_backup_path, ft.FT_REG_FILE));
+            dirents.append(udirent.dir_entry_line(t_ino, t_backup_path, libstat.FT_REG_FILE));
             dirent_action_type = aio.ADD_DIR_ENTRY;
             ic++;
         }
@@ -68,9 +68,9 @@ contract mv is Utility {
 
             if (verbose) {out.append("renamed " + spath.squote() + "=> " + t_path.squote()); }
 
-            if (ft.is_dir(smode) && aop == aio.WR_COPY && !recurse)
+            if (libstat.is_dir(smode) && aop == aio.WR_COPY && !recurse)
                 errors.push(Err(er.omitting_directory, 0, spath));
-            else if (to_file_flag && to_dir && ft.is_reg(smode))
+            else if (to_file_flag && to_dir && libstat.is_reg(smode))
                 errors.push(Err(er.cant_overwrite_dir, 0, t_path.squote()));
             else if (collision && newer_only) {
                 if (tst.st_mtim > st.st_mtim)

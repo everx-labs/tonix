@@ -1,12 +1,9 @@
 pragma ton-solidity >= 0.60.0;
 
-import "fs_types.sol";
 import "Base.sol";
-import "arg.sol";
 import "fs.sol";
 import "aio.sol";
 import "er.sol";
-import "libstatmode.sol";
 import "fts.sol";
 import "bio.sol";
 import "sbuf.sol";
@@ -16,19 +13,6 @@ import "io.sol";
 import "parg.sol";
 import "libhelp.sol";
 import "uma.sol";
-
-/*struct CommandHelp {
-    string name;
-    string synopsis;
-    string purpose;
-    string description;
-    string options;
-    string notes;
-    string author;
-    string bugs;
-    string see_also;
-    string version;
-}*/
 
 struct Arg {
     string path;
@@ -43,17 +27,12 @@ abstract contract Utility is Base {
     using libstring for string;
     using str for string;
     using xio for s_of;
-//    using std for s_of[];
-    using libstatmode for uint16;
     using libstat for s_stat;
     using libbio for s_biobuf;
     using sbuf for s_sbuf;
     using parg for s_proc;
     using io for s_proc;
     using sucred for s_ucred;
-//    using libzone for uma_zone;
-//    using libuma for uma_zone[];
-//    using libkeg for uma_keg;
     using vmem for s_vmem;
 
     function command_help() external pure returns (CommandHelp) {

@@ -1,15 +1,12 @@
 pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin_base.sol";
-import "ft.sol";
 import "libstat.sol";
 import "libcompspec.sol";
 import "vars.sol";
 contract compgen is pbuiltin_base {
 
-    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+    function main(shell_env e_in) external pure returns (shell_env e) {
         e = e_in;
         string[] params = e.params();
         uint8[] pages;

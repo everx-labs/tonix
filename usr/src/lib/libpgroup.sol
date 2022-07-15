@@ -1,6 +1,6 @@
-pragma ton-solidity >= 0.61.0;
+pragma ton-solidity >= 0.62.0;
 
-import "stypes.sol";
+import "proc_h.sol";
 
 struct s_xsession {
     uint16 s_count;      // Ref cnt; pgrps in session - atomic.

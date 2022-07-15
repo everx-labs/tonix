@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
-import "utypes.sol";
 import "sbuf.sol";
 import "xio.sol";
 import "liberr.sol";
+import "filedesc_h.sol";
 
 library libfdt {
     using xio for s_of;
@@ -12,6 +12,7 @@ library libfdt {
     uint8 constant STDOUT_FILENO = 1;
     uint8 constant STDERR_FILENO = 2;
     uint8 constant ERRNO_FILENO  = 3;
+
 
     function fdfetch(s_of[] t, string path) internal returns (uint) {
         for (uint i = 0; i < t.length; i++)
@@ -28,6 +29,12 @@ library libfdt {
             err_msg.append(reason + " ");
         f.fputs(err_msg);
         t[STDERR_FILENO] = f;
+    }
+
+    function fdflush(s_of[] t) internal {
+        t[STDOUT_FILENO].fflush();
+        t[STDERR_FILENO].fflush();
+        t[3].fflush();
     }
 
     function fderrno(s_of[] t) internal returns (uint8) {

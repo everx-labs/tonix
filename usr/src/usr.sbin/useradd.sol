@@ -104,9 +104,9 @@ contract useradd is Utility {
             }
 
             text = pw.putent(s_passwd(user_name, user_id, group_id, user_name, "/home/" + user_name, "./eilish"), etc_passwd);
-            if (passwd_file_type == ft.FT_UNKNOWN || passwd_dir_idx == 0) {
+            if (passwd_file_type == libstat.FT_UNKNOWN || passwd_dir_idx == 0) {
                 ars.push(Ar(aio.MKFILE, ic, "passwd", text));
-                ars.push(Ar(aio.ADD_DIR_ENTRY, etc_dir, "", udirent.dir_entry_line(ic, "passwd", ft.FT_REG_FILE)));
+                ars.push(Ar(aio.ADD_DIR_ENTRY, etc_dir, "", udirent.dir_entry_line(ic, "passwd", libstat.FT_REG_FILE)));
                 ic++;
                 n_files++;
             } else
@@ -115,9 +115,9 @@ contract useradd is Utility {
             if (create_user_group) {
                 string[] empty;
                 string group_text = gr.putent(s_group(user_name, group_id, empty), etc_group);
-                if (group_file_type == ft.FT_UNKNOWN || group_dir_idx == 0) {
+                if (group_file_type == libstat.FT_UNKNOWN || group_dir_idx == 0) {
                     ars.push(Ar(aio.MKFILE, ic, "group", group_text));
-                    ars.push(Ar(aio.ADD_DIR_ENTRY, etc_dir, "", udirent.dir_entry_line(ic, "group", ft.FT_REG_FILE)));
+                    ars.push(Ar(aio.ADD_DIR_ENTRY, etc_dir, "", udirent.dir_entry_line(ic, "group", libstat.FT_REG_FILE)));
                     ic++;
                     n_files++;
                 } else

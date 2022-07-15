@@ -23,24 +23,24 @@ contract realpath is putil_stat {
 
                 if ((canon_existing_dir || canon_existing) && !dont_expand_symlinks) {
                     (uint16 index, uint8 t) = fs.lookup_dir(inodes[cur_dir], data[cur_dir], arg_base);
-                    if (st_mode.is_symlink()) {
+                    if (libstat.is_symlink(st_mode)) {
 //                        (spath, t, , ,) = _dereference(path.EXPAND_SYMLINKS, param, wd, inodes, data).unpack();
-                            bool expand_symlinks = true;
-                            (uint16 ino, uint8 t, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
-                            Inode inode;
-                            if (ino > 0 && inodes.exists(ino))
-                                inode = inodes[ino];
-                                if (expand_symlinks && t == ft.FT_SYMLINK) {
-                                    (t, param, ino) = udirent.get_symlink_target(inode, data[ino]).unpack();
-                                }
-                            }
-                    if (!canon_missing && index < sb.ROOT_DIR) {
-                        if (!no_errors)
-                            e.perror("missing " + param + ", index " + str.toa(index));
-                        continue;
+                        bool expand_symlinks = true;
+                        (uint16 ino, uint8 t2, uint16 parent, uint16 dir_index) = fs.resolve_relative_path(param, wd, inodes, data);
+                        Inode inode;
+                        if (ino > 0 && inodes.exists(ino)) {
+                            inode = inodes[ino];
+                            if (expand_symlinks && t2 == libstat.FT_SYMLINK)
+                                (t, param, ino) = udirent.get_symlink_target(inode, data[ino]).unpack();
+                        }
+                        if (!canon_missing && index < sb.ROOT_DIR) {
+                            if (!no_errors)
+                                e.perror("missing " + param + ", index " + str.toa(index));
+                            continue;
+                        }
                     }
+                    e.puts(spath + line_delimiter);
                 }
-                e.puts(spath + line_delimiter);
             }
 //        } else
 //            e.perror("Failed to resolve relative path for" + argv + "\n");
@@ -67,7 +67,7 @@ contract realpath is putil_stat {
         if (canon_mode >= path.CANON_DIRS) {
             uint16 dir_index = is_abs_path ? fs.resolve_absolute_path(arg_dir, inodes, data) : wd;
             (, uint8 t) = fs.lookup_dir(inodes[dir_index], data[dir_index], arg_base);
-            if (t == ft.FT_UNKNOWN)
+            if (t == libstat.FT_UNKNOWN)
                 valid = false;
         }
 

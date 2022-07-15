@@ -9,7 +9,7 @@ contract cp is Utility {
         Err[] errors;
         Ar[] ars;
         string out;
-        (uint16 wd, , string flags, string pi) = p.get_env();
+        (uint16 wd, , , ) = p.get_env();
         uint16 ic = sb.get_inode_count(inodes);
         s_dirent[] contents = p.p_args.ar_misc.pos_args;
 
@@ -41,10 +41,10 @@ contract cp is Utility {
         bool dest_exists = t_ino >= sb.ROOT_DIR;
         s_stat tst = fs.istat(inodes[t_ino]);
 
-        if (dest_exists && ft.is_dir(tst.st_mode))
+        if (dest_exists && libstat.is_dir(tst.st_mode))
             to_dir = true;
 
-        bool collision = dest_exists && ft.is_reg(tst.st_mode);
+        bool collision = dest_exists && libstat.is_reg(tst.st_mode);
         bool overwrite_dest = collision && (!preserve || force);
 
 //        if (!errors.empty() || collision && preserve)
@@ -55,7 +55,7 @@ contract cp is Utility {
             string t_backup_path = t_path + "~";
             out.aif(verbose, "(backup:" + t_backup_path.squote() + ")");
             ars.push(Ar(aio.WR_COPY, 0, t_backup_path, ""));
-            dirents.append(udirent.dir_entry_line(t_ino, t_backup_path, ft.FT_REG_FILE));
+            dirents.append(udirent.dir_entry_line(t_ino, t_backup_path, libstat.FT_REG_FILE));
             ic++;
         }
 
@@ -67,11 +67,11 @@ contract cp is Utility {
             s_stat st = fs.istat(inodes[sino]);
             if (verbose) { out.append(spath.squote() + "=>" + t_path.squote()); }
             uint16 smode = st.st_mode;
-            if (ft.is_dir(smode) && aop == aio.HARDLINK)
+            if (libstat.is_dir(smode) && aop == aio.HARDLINK)
                 errors.push(Err(er.no_hardlink_on_dir, 0, spath));
-            if (ft.is_dir(smode) && aop == aio.WR_COPY && !recurse)
+            if (libstat.is_dir(smode) && aop == aio.WR_COPY && !recurse)
                 errors.push(Err(er.omitting_directory, 0, spath));
-            else if (to_file_flag && to_dir && ft.is_reg(smode))
+            else if (to_file_flag && to_dir && libstat.is_reg(smode))
                 errors.push(Err(er.cant_overwrite_dir, 0, t_path.squote()));
             else if (collision && newer_only) {
 //                if (inodes[t_ino].modified_at > inodes[sino].modified_at)

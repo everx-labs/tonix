@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.61.2;
-//import "ktypes.sol";
-import "stypes.sol";
+pragma ton-solidity >= 0.62.0;
 import "liberr.sol";
 import "str.sol";
 import "libstring.sol";
+import "sbuf_h.sol";
+import "uio_h.sol";
 library sbuf {
 
     using str for string;
@@ -190,29 +190,6 @@ library sbuf {
                 s.sect_len += cap;
         }
     }
-
-    /*function _add(s_sbuf s, bytes buf, uint16 len, bool append) internal returns (s_sbuf) {
-        if (append && (s.flags & SBUF_FINISHED) > 0)
-            return s;
-        uint16 avl = uint16(math.min(len, buf.length));
-        uint16 tot = append ? avl + s.len : avl;
-        uint16 cap = avl;
-        if (tot > s.size) {
-            if ((s.flags & SBUF_AUTOEXTEND) > 0)
-                s.size = tot;
-            else
-                cap = uint16(s.size - s.len);
-        }
-        cap = math.min(cap, avl);
-        if (cap > 0) {
-            s.buf.append(cap < avl ? string(buf).substr(0, cap) : buf);
-//            s.buf.strlcat(buf, cap);
-            s.len += cap;
-            if ((s.flags & SBUF_INSECTION) > 0)
-                s.sect_len += cap;
-        }
-        return s;
-    }*/
 
     function sbuf_uionew(s_sbuf s, s_uio, uint16) internal returns (s_sbuf) {
 

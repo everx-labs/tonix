@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.61.2;
 
-import "stypes.sol";
 import "str.sol";
+import "proc_h.sol";
 
 library argmisc {
 

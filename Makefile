@@ -75,7 +75,8 @@ USR.SBINU2:=dumpe2fs mke2fs mkfs
 SHB:=alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset special esh
 SYSFSU:=tfs tmpfs
 SYSVMU:=uma_startup umm vmm
-SYSKERNU:=vnp
+SYSKERNU:=vnp syscall
+TOOLS:=tucred tfiledesc
 UTILS:=$(BINU) $(USR.BINU)
 SYSUTILS:=$(SBINU) $(USR.SBINU) $(SYSFSU)
 
@@ -117,7 +118,7 @@ COMMA:=,
 
 #$(eval $(call t-sub,$(UOBJ)/stand,$(USRC)/stand,$(BOOTU)))
 #$(info $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset))
-$(eval $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset esh))
+$(eval $(call t-sub,$(UOBJ)/bin/eilish.dir,$(USRC)/bin/eilish.dir,alias builtin cd command compgen complete declare dirs echo enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset esh josh jobs fg kill))
 #$(info $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
 $(eval $(call t-sub,$(UOBJ)/bin,$(USRC)/bin,$(BINU)))
 #$(info $(call t-sub,$(UOBJ)/sbin,$(USRC)/sbin,$(SBINU)))
@@ -130,6 +131,7 @@ $(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/usr.sbin,$(USR.SBINU2)))
 $(eval $(call t-sub,$(UOBJ)/sys/fs,$(USRC)/sys/fs,$(SYSFSU)))
 ##$(eval $(call t-sub,sys/vm,sys/vm,$(SYSVMU)))
 $(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/sys/kern,$(SYSKERNU)))
+$(eval $(call t-sub,$(UOBJ)/sbin,$(USRC)/tools,$(TOOLS)))
 
 b0: $(patsubst %,$(MAN)/%.0,$(HELP_TOPICS))
 	rm -f $(MAN)/0.man

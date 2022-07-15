@@ -5,9 +5,10 @@ import "sh.sol";
 
 contract set is pbuiltin_special {
 
-    function _retrieve_pages(shell_env) internal pure override returns (uint8[] pages) {
-        for (uint8 i = 0; i <= sh.LAST; i++)
-            pages.push(i);
+    function _retrieve_pages(shell_env) internal pure override returns (uint8 pages) {
+        return sh.SHOPT;
+//        for (uint8 i = 0; i <= sh.LAST; i++)
+//            pages.push(i);
     }
 
     function _attr_set(shell_env) internal pure override returns (string sattrs) {

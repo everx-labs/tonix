@@ -1,14 +1,13 @@
 pragma ton-solidity >= 0.62.0;
 
-//import "pbuiltin.sol";
 import "libshellenv.sol";
-import "libprocenv.sol";
 import "xio.sol";
 contract esh {
 
     using xio for s_of;
     using libstring for string;
     using str for string;
+    using libshellenv for shell_env;
 
     function print_errors(shell_env e_in) external pure returns (uint8 rc, shell_env e) {
         e = e_in;
@@ -45,14 +44,17 @@ contract esh {
         delete e.environ[sh.PIPELINE][pipeline.length - 1];
     }
 
-    function export_env(shell_env e_in) external pure returns (p_env p, string p_comm, string p_pid) {
-        p = p_env(e_in.ofiles, e_in.cwd, e_in.umask, e_in.environ);
+    function export_env(shell_env e_in) external pure returns (shell_env e, string p_comm, string p_pid) {
+        e = e_in;
         p_comm = vars.val("COMMAND", e_in.environ[sh.SPECVARS]);
         p_pid = vars.val("PPID", e_in.environ[sh.VARIABLE]);
     }
 
+    using libfdt for s_of[];
+
     function parse_input(shell_env e_in, string input) external pure returns (shell_env e) {
         e = e_in;
+        e.ofiles.fdflush();
         string[][] ev = e.environ;
         if (input.empty())
             return e;
@@ -94,41 +96,23 @@ contract esh {
             }
         }
         string cmd_type = vars.get_array_name(cmd, ev[sh.ARRAYVAR]);
-        string cattrs;
-        string exec_engine;
-        if (cmd_type == "builtin") {
-            cattrs = "-b";
-            exec_engine = "./bin/eilish.dir/builtin";
-            res = "./bin/eilish.dir/builtin " + cmd + " " + sargs;
-        } else if (cmd_type == "command") {
-            cattrs = "-c";
-            exec_engine = "./bin/eilish.dir/command";
-            res = "./bin/eilish.dir/command " + cmd + " " + sargs;
-        } else if (cmd_type == "sysmain") {
-            cattrs = "-s";
-            exec_engine = "./bin/eilish.dir/command";
-            res = "./bin/eilish.dir/command " + cmd + " " + sargs;
-        } else if (cmd_type == "rsu") {
-            cattrs = "-r";
-            exec_engine = "./sbin/rsu";
-            res = "./sbin/rsu " + cmd + " " + sargs;
-        } else if (cmd_type == "ki") {
-            cattrs = "-k";
-            exec_engine = "./sbin/ki";
-            res = "./sbin/ki " + cmd + " " + sargs;
-        } else if (cmd_type == "function") {
-            cattrs = "-f";
-            exec_engine = "./eilish";
-            res = "./tosh execute_function " + sinput;
-        } else {
+        (string cattrs, string exec_engine) = _cmd_params(cmd_type);
+        if (!cattrs.empty())
+            res = exec_engine + " " + cmd + " " + sargs;
+        else {
             if (!cmd_type.empty())
                 serr.append("unknown commmand type: " + cmd_type);
             else
                 serr.append("command not found: " + cmd);
             res = "echo " + serr;
             ec = EXIT_FAILURE;
+            return e;
         }
         e.environ[sh.PIPELINE].push(cattrs + " " + exec_engine + "=" + cmd + " " + sargs);
+        e.environ[sh.NEXTCMD].push(exec_engine + " " + cmd + " " + sargs);
+        uint job_id = e.environ[sh.JOB].length;
+        string new_job = vars.var_record("-s", str.toa(uint16(job_id)), cmd + " " + sargs);
+        e.environ[sh.JOB].push(new_job);
         // -------------
         (params, n_params) = pos_params.split(" ");
         last_param = pos_params.empty() ? cmd : params[n_params - 1];
@@ -152,6 +136,27 @@ contract esh {
         e.environ[sh.OPTARGS] = vars.as_var_list("", opt_values);
     }
 
+    function _cmd_params(string cmd_type) internal pure returns (string cattrs, string exec_engine) {
+        if (cmd_type == "builtin") {
+            cattrs = "-b";
+            exec_engine = "./bin/eilish.dir/builtin";
+        } else if (cmd_type == "command") {
+            cattrs = "-c";
+            exec_engine = "./bin/eilish.dir/command";
+        } else if (cmd_type == "sysmain") {
+            cattrs = "-s";
+            exec_engine = "./bin/eilish.dir/command";
+        } else if (cmd_type == "rsu") {
+            cattrs = "-r";
+            exec_engine = "./sbin/rsu";
+        } else if (cmd_type == "ki") {
+            cattrs = "-k";
+            exec_engine = "./sbin/ki";
+        } else if (cmd_type == "function") {
+            cattrs = "-f";
+            exec_engine = "./eilish";
+        }
+    }   
     function _parse_params(string[] params, string opt_string) internal pure returns (string sflags, string[][2] opt_values, string serr, string pos_params, string sattrs) {
         uint n_params = params.length;
         uint opt_str_len = opt_string.byteLength();

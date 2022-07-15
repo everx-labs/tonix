@@ -7,14 +7,14 @@ import "vars.sol";
 
 abstract contract pbuiltin_special is pbuiltin_base {
     using vars for string[];
+    using vars for string;
     using libshellenv for shell_env;
-    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
+    function main(shell_env e_in) external pure returns (shell_env e) {
         e = e_in;
         string[] params = e.params();
         bool no_flags = e.flags_empty();
         bool no_params = params.empty();
-        uint8[] pages = _retrieve_pages(e);
+        uint8 n = _retrieve_pages(e);
         uint8 rc;
 
         string sattrs = _attr_set(e);
@@ -22,7 +22,6 @@ abstract contract pbuiltin_special is pbuiltin_base {
 
         if (e.flag_set("p") || (no_flags && no_params)) {
             s_of res = e.ofiles[libfdt.STDOUT_FILENO];
-            for (uint8 n: pages) {
                 string[] page = e.environ[n];
                 if (no_params) {
                     for (string line: page) {
@@ -42,10 +41,17 @@ abstract contract pbuiltin_special is pbuiltin_base {
                         rc = EXIT_FAILURE;
                     }
                 }
-            }
             e.ofiles[libfdt.STDOUT_FILENO] = res;
         } else {
+            for (string param: e.params()) {
+                e.environ[sh.ARRAYVAR][n].arrayvar_add(param);
+                e.environ[n].set_var("", param);
+            }
+            /*e = _modify(e, e.environ[sh.ARRAYVAR][n]);
             for (uint8 n: pages) {
+                e.environ[sh.ARRAYVAR][n] = _modify(e, e.environ[sh.ARRAYVAR][n]);
+            }*/
+            /*for (uint8 n: pages) {
                 string[] page = e.environ[n];
                 for (string param: e.params()) {
                     string cur_record = vars.get_pool_record(param, page);
@@ -58,7 +64,7 @@ abstract contract pbuiltin_special is pbuiltin_base {
                         rc = EXIT_FAILURE;
                     }
                 }
-            }
+            }*/
         }
         e.environ[sh.ERRNO].set_int_val("RETURN_CODE", rc);
         if (rc > 0) {
@@ -69,5 +75,6 @@ abstract contract pbuiltin_special is pbuiltin_base {
     function _name() internal pure virtual returns (string);
     function _attr_set(shell_env e) internal pure virtual returns (string);
     function _print_record(string record) internal pure virtual returns (string);
-    function _retrieve_pages(shell_env e) internal pure virtual returns (uint8[]);
+    function _retrieve_pages(shell_env e) internal pure virtual returns (uint8);
+//    function _modify(shell_env e) internal pure virtual returns (string);
 }

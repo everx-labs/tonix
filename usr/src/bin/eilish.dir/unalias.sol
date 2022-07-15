@@ -4,13 +4,16 @@ import "pbuiltin.sol";
 
 contract unalias is pbuiltin {
 
+    using vars for string;
     function _main(shell_env e_in) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[] page;
         if (!e.flag_set("a")) {
             page = e.environ[sh.ALIAS];
-            for (string param: e.params())
-                page = vars.unset_var(param, page);
+            for (string param: e.params()) {
+                page.unset_var(param);
+                e.environ[sh.ARRAYVAR][sh.ALIAS].arrayvar_remove(param);
+            }
         }
         rc = EXIT_SUCCESS;
         e.environ[sh.ALIAS] = page;

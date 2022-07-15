@@ -1,5 +1,5 @@
 pragma ton-solidity >= 0.61.2;
-import "stypes.sol";
+//import "stypes.sol";
 library priv {
 
     // The remaining privileges typically correspond to one or a small number of specific privilege checks,

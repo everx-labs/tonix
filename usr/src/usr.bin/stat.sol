@@ -36,8 +36,8 @@ Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n
             s_of f = e.fopen(name, "r");
             if (!f.ferror()) {
                 (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size,
-                    uint16 st_blksize, uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = xio.st(f.attr).unpack();
-                (string major, string minor) = libstatmode.is_block_dev(st_mode) || libstatmode.is_char_dev(st_mode) ? inode.get_device_version(st_rdev) : ("0", "0");
+                    uint16 st_blksize, uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) = libstat.st_attrs(f.attr);
+                (string major, string minor) = libstat.is_block_dev(st_mode) || libstat.is_char_dev(st_mode) ? inode.get_device_version(st_rdev) : ("0", "0");
 
                 if (fs_info) {
                     (, , string fstype, uint16 inode_count, uint16 block_count, uint16 free_inodes, uint16 free_blocks, uint16 block_size, , , , , , , ,) =
@@ -47,13 +47,13 @@ Access: (%a/%A)  Uid: (%u/%U)  Gid: (%g/%G)\nModify: %y\nChange: %z\n Birth: -\n
                     s = _fmtstr(s, "ntT", [name, format("{:x}", st_ino), fstype]);
                     out.append(s + "\n");
                 } else {
-                    if (libstatmode.is_symlink(st_mode)) {
+                    if (libstat.is_symlink(st_mode)) {
                         (, string target, ) = udirent.get_symlink_target(inodes[st_ino], data[st_ino]).unpack();
                         name.append(" -> " + target);
                     }
-                    sf.trs("Device type: %t,%T", libstatmode.is_block_dev(st_mode) || libstatmode.is_char_dev(st_mode) ? format("Device type: {},{}", major, minor) : "");
+                    sf.trs("Device type: %t,%T", libstat.is_block_dev(st_mode) || libstat.is_char_dev(st_mode) ? format("Device type: {},{}", major, minor) : "");
                     out.append(_fmtstr(sf, "aAbBCdDfFgGhinostTuUwWyYzZ", [str.toa(st_mode & 0x01FF), inode.permissions(st_mode), str.toa(st_blocks),
-                        str.toa(st_blksize), "", str.toa(st_dev), format("{:x}", st_dev), format("{:x}", st_mode), libstatmode.file_type_description(st_mode),
+                        str.toa(st_blksize), "", str.toa(st_dev), format("{:x}", st_dev), format("{:x}", st_mode), libstat.file_type_description(st_mode),
                         str.toa(st_gid), group[st_gid], str.toa(st_nlink), str.toa(st_ino), name, str.toa(st_blksize), str.toa(st_size), format("{:x}", major),
                         format("{:x}", minor), str.toa(st_uid), user[st_uid], "-", "0", fmt.ts(st_mtim), format("{}", st_mtim), fmt.ts(st_ctim), format("{}", st_ctim)]) + "\n");
                 }

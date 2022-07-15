@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "Shell.sol";
 import "libshellenv.sol";
@@ -47,34 +47,22 @@ contract eilish is Shell {
         }
     }
 
-   function main(svm sv_in, string input, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
+   function main(string input, shell_env e_in) external pure returns (shell_env e) {
         e = e_in;
 
         string[][] ev = e.environ;
-        /*string[] aliases = ev[sh.ALIAS];
-        string index;
-        string[] pages;
-        if (sv.vmem.length > 1) {
-            pages = sv.vmem[1].vm_pages;
-            index = pages[2];
-        }*/
 
-        s_of f = p.stdout();
+        s_of f = e.stdout();
         f.fflush();
-        p.p_fd.fdt_ofiles[io.STDOUT_FILENO] = f;
         e.ofiles[libfdt.STDOUT_FILENO] = f;
-        f = p.stderr();
+        f = e.stderr();
         f.fflush();
-        p.p_fd.fdt_ofiles[io.STDERR_FILENO] = f;
         e.ofiles[libfdt.STDERR_FILENO] = f;
-        f = p.p_fd.fdt_ofiles[3];
+        f = e.ofiles[3];
         f.fflush();
-        p.p_fd.fdt_ofiles[3] = f;
         e.ofiles[3] = f;
         if (input.empty())
-            return (sv, e);
+            return e;
         (string cmd_raw, string argv) = input.csplit(" ");
         string cmd_expanded = vars.val(cmd_raw, ev[sh.ALIAS]);
         string sinput = cmd_expanded.empty() ? input : cmd_expanded + " " + argv;
@@ -153,31 +141,10 @@ contract eilish is Shell {
         (params, n_params) = pos_params.split(" ");
         last_param = pos_params.empty() ? cmd : params[n_params - 1];
 
-        p.p_comm = cmd;
         s_dirent[] pas;
         for (string pm: params)
             pas.push(s_dirent(0, 0, pm));
-        p.p_args.ar_misc = s_ar_misc(sinput, sflags, sargs, uint16(n_params), params, ec, last_param,
-            serr, redir_in, redir_out, pas, opt_values);
 
-        /*string[] pa;
-        pa.push(vars.as_attributed_hashmap("COMMAND_LINE", args));
-        p.p_args.ar_args = pa;
-        p.p_args.ar_length = uint16(pa.length);*/
-
-        p.p_args.ar_args = [vars.as_var_list_old("", [
-            ["COMMAND", cmd],
-            ["COMMAND_LINE", res],
-            ["PARAMS", pos_params],
-            ["FLAGS", sflags],
-            ["ARGV", sinput],
-            ["#", str.toa(n_params)],
-            ["@", sargs],
-            ["?", str.toa(ec)],
-            ["_", last_param],
-            ["OPTERR", serr],
-            ["REDIR_IN", redir_in],
-            ["REDIR_OUT", redir_out]]), res];
         e.environ[sh.SPECVARS] = [
             "COMMAND=" + cmd,
             "COMMAND_LINE=" + res,
@@ -193,39 +160,7 @@ contract eilish is Shell {
             "REDIR_OUT=" + redir_out
         ];
         e.environ[sh.OPTARGS] = vars.as_var_list("", opt_values);
-        sv.cur_proc = p;
     }
-
-    function set_internal_vars(svm sv_in, string aliases, string opt_string, string index, string pool) external pure returns (svm sv) {
-        sv = sv_in;
-//        s_proc p = sv.cur_proc;
-        string[] pages;
-        pages.push(aliases);
-        pages.push(opt_string);
-        pages.push(index);
-        pages.push(pool);
-        s_vmem vmem1 = vmem.vmem_create("V1", 0, 4096, 0, 0, 0);
-        vmem1.vm_pages = pages;
-        if (sv.vmem.length > 1)
-            sv.vmem[1] = vmem1;
-        else
-            sv.vmem.push(vmem1);
-    }
-
-    /*function set_tosh_vars(string profile) external pure returns (uint8 ec, string out) {
-        ec = EXECUTE_SUCCESS;
-        out = vars.as_var_list("", [
-            ["_", vars.val("TOSH", profile)],
-            ["-", vars.val("-", profile)],
-            ["TOSH", vars.val("TOSH", profile)],
-            ["TOSHOPTS", vars.as_map("expand_aliases")],
-            ["TOSHPID", vars.val("TOSHPID", profile)],
-            ["TOSH_SUBSHELL", vars.val("TOSH_SUBSHELL", profile)],
-            ["TOSH_ALIASES", vars.val("TOSH_ALIASES", profile)],
-            ["SHELLOPTS", "allexport:hashall"],
-            ["TMPDIR", vars.val("TMPDIR", profile)],
-            ["SHLVL", vars.val("SHLVL", profile)]]);
-    }*/
 
     // Possible states for the parser that require it to do special things.
     uint16 constant PST_CASEPAT	    = 1;   // in a case pattern list

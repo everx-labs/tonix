@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.0;
 
-import "stypes.sol";
+import "proc_h.sol";
 
 library libproc {
     function cred(s_proc p) internal returns (s_ucred) {

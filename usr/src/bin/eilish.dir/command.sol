@@ -99,10 +99,10 @@ contract command is pbuiltin {
             if (name.substr(0, 1) == "/") {
                 index = fs.resolve_absolute_path(name, inodes, data);
                 if (index >= sb.ROOT_DIR && inodes.exists(index))
-                    t = ft.mode_to_file_type(inodes[index].mode);
+                    t = libstat.mode_to_file_type(inodes[index].mode);
             } else
                 (index, t, , ) = fs.resolve_relative_path(name, wd, inodes, data);
-            out.append(vars.var_record(ft.file_type_sign(t), name, str.toa(index)) + "\n");
+            out.append(vars.var_record(libstat.file_type_sign(t), name, str.toa(index)) + "\n");
             if (index >= sb.ROOT_DIR) {
                 if (!_is_open(fdt_ofiles, index)) {
                     s.sbuf_new(data[index], inodes[index].file_size, 0);
@@ -125,21 +125,6 @@ contract command is pbuiltin {
         (uint16 mode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
         return (uint(device_id) << 224) + (uint(i) << 208) + (uint(mode) << 192) + (uint(n_links) << 176) + (uint(owner_id) << 160) + (uint(group_id) << 144) +
             (uint(file_size) << 96) + (uint(bs) << 80) + (uint(n_blocks) << 64) + (uint(modified_at) << 32) + last_modified;
-    }
-
-    function sys_main(svm sv_in) external pure returns (svm sv) {
-        sv = sv_in;
-        s_proc p = sv.cur_proc;
-        uma_zone[] uz = sv.sz;
-        string fn_name = "main";
-        string cmd = p.p_comm;
-//        string[] params = p.params();
-        string exec_line = "./command " + fn_name + " " + cmd + " " + p.p_args.ar_misc.sargs;
-        s_of f = p.fdopen(3, "w");
-        p.fputs(exec_line, f);
-        f.fclose();
-        sv.cur_proc = p;
-        sv.sz = uz;
     }
 
     function _name() internal pure override returns (string) {

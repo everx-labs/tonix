@@ -40,7 +40,7 @@ contract lsblk is putil_stat {
             uint len = uint(status);
             for (uint16 j = 0; j < len; j++) {
                 (uint8 t, string name, ) = contents[j].unpack();
-                if (t == ft.FT_BLKDEV || t == ft.FT_CHRDEV)
+                if (t == libstat.FT_BLKDEV || t == libstat.FT_CHRDEV)
                     params.push(name);
             }
         }
@@ -50,14 +50,14 @@ contract lsblk is putil_stat {
 
         for (string s: params) {
             (uint16 dev_file_index, uint8 dev_file_ft) = fs.fetch_dir_entry(s, dev_dir, inodes, data);
-            if (dev_file_ft == ft.FT_BLKDEV || dev_file_ft == ft.FT_CHRDEV) {
+            if (dev_file_ft == libstat.FT_BLKDEV || dev_file_ft == libstat.FT_CHRDEV) {
                 (uint16 mode, uint16 owner_id, uint16 group_id, , , , , , , ) = inodes[dev_file_index].unpack();
                 (string[] lines, ) = libstring.split(data[dev_file_index], "\n");
                 string[] fields0 = fmt.get_tsv(lines[0]);
                 if (fields0.length < 4)
                     continue;
                 string name = (full_path ? "/dev/" : "") + fields0[2];
-                string mount_path = dev_file_ft == ft.FT_BLKDEV ? "/" : "";
+                string mount_path = dev_file_ft == libstat.FT_BLKDEV ? "/" : "";
                 string sowner = user[owner_id];
                 string sgroup = group[group_id];
 
@@ -85,7 +85,7 @@ contract lsblk is putil_stat {
         (DirEntry[] contents, int16 status) = udirent.read_dir(inodes[dev_dir], data[dev_dir]);
         if (status >= 0) {
             for (DirEntry de: contents)
-                if (de.file_type == ft.FT_BLKDEV || de.file_type == ft.FT_CHRDEV)
+                if (de.file_type == libstat.FT_BLKDEV || de.file_type == libstat.FT_CHRDEV)
                     device_list.push(de);
         }
     }

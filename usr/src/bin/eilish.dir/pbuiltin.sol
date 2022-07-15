@@ -5,9 +5,7 @@ import "vars.sol";
 
 abstract contract pbuiltin is pbuiltin_base {
     using vars for string[];
-    function main(svm sv_in, shell_env e_in) external pure returns (svm sv, shell_env e) {
-        sv = sv_in;
-//        s_proc p = sv.cur_proc;
+    function main(shell_env e_in) external pure returns (shell_env e) {
         uint8 rc;
         (rc, e) = _main(e_in);
         e.environ[sh.ERRNO].set_int_val("RETURN_CODE", rc);

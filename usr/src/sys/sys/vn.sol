@@ -2,7 +2,7 @@ pragma ton-solidity >= 0.61.2;
 
 import "liberr.sol";
 import "priv.sol";
-import "stypes.sol";
+//import "stypes.sol";
 import "param.sol";
 import "conf.sol";
 import "libstat.sol";
@@ -363,7 +363,7 @@ struct s_vnode {
     function vget_ino(s_vnode vp, Inode ino, uint16 i) internal {
         s_vattr sv = vp.v_attrs;
         (uint16 imode, uint16 owner_id, uint16 group_id, uint16 n_links, , , uint32 file_size, uint32 modified_at, uint32 last_modified, ) = ino.unpack();
-        ( , sv.va_type, , , , ) = libstatmode.mode(imode);
+        ( , sv.va_type, , , , ) = libstat.mode(imode);
         sv.va_mode = imode;
         sv.va_uid = owner_id;
         sv.va_gid = group_id;
