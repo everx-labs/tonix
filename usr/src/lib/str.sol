@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 /* Generic string manipulation routines */
 library str {
@@ -22,16 +22,6 @@ library str {
                 return i;
     }
 
-    function strchr_old(string s, string c) internal returns (uint) {
-        for (uint i = 0; i < s.byteLength(); i++)
-            if (s.substr(i, 1) == c)
-                return i + 1;
-    }
-    function strrchr_old(string s, string c) internal returns (uint) {
-        for (uint i = s.byteLength(); i > 0; i--)
-            if (s.substr(i - 1, 1) == c)
-                return i;
-    }
     /* Returns the position of the beginning of the first occurrence of the substring 'pattern'
      * in the string 'text', counted from 1, or 0 if the substring is not found. */
     function strstr(string text, string pattern) internal returns (uint) {

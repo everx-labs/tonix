@@ -79,27 +79,25 @@ library fmt {
     }
 
     function format_list(string header, string text) internal returns (string) {
-        if (!text.empty())
-            return header + "\n" + indent(text, 4, "\n");
+        return header + "\n" + indent(text, 4, "\n");
     }
 
     function format_line(string header, string text) internal returns (string) {
-        if (!text.empty())
-            return header + " " + indent(text, 0, "\n");
+        return header + indent(text, 0, "\n");
     }
 
     function format_custom(string header, string text, uint indent_size, string delimiter) internal returns (string) {
-        if (!text.empty())
-            return header + delimiter + indent(text, indent_size, delimiter);
+        return header + delimiter + indent(text, indent_size, delimiter);
     }
 
     function indent(string text, uint indent_size, string delimiter) internal returns (string out) {
-        (string[] lines, uint n_lines) = text.split("\n");
+        if (text.empty())
+            return "";
+        (string[] lines, ) = text.split("\n");
         string sspaces;
         for (uint i = 0; i < indent_size; i++)
             sspaces.append(" ");
-        for (uint i = 0; i < n_lines; i++)
-            out.append(sspaces + lines[i] + delimiter);
+        return sspaces + libstring.join_fields(lines, delimiter + sspaces);
     }
 
     function max_table_row_widths(string[][] rows) internal returns (uint[] max_widths) {

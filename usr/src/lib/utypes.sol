@@ -1,6 +1,5 @@
 pragma ton-solidity >= 0.61.2;
 
-enum vtype      { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD, VMARKER }
 enum vgetstate  { VGET_NONE, VGET_HOLDCNT, VGET_USECOUNT }
 
 enum idtype {
@@ -125,37 +124,6 @@ struct s_shmfd {
     uint16 shm_seals;
     uint16 shm_lp_psind;
     uint16 shm_lp_alloc_policy;
-}
-
-struct s_vfsops {
-    uint32 vfs_mount;
-    uint32 vfs_cmount;
-    uint32 vfs_unmount;
-    uint32 vfs_root;
-    uint32 vfs_cachedroot;
-    uint32 vfs_quotactl;
-    uint32 vfs_statfs;
-    uint32 vfs_sync;
-    uint32 vfs_vget;
-    uint32 vfs_fhtovp;
-    uint32 vfs_checkexp;
-    uint32 vfs_init;
-    uint32 vfs_uninit;
-    uint32 vfs_extattrctl;
-    uint32 vfs_sysctl;
-    uint32 vfs_susp_clean;
-    uint32 vfs_reclaim_lowervp;
-    uint32 vfs_unlink_lowervp;
-    uint32 vfs_purge;
-}
-
-// Userland version of the struct vfsconf.
-struct s_xvfsconf {
-    s_vfsops vfc_vfsops; // filesystem operations vector
-    string vfc_name;     // filesystem type name
-    uint16 vfc_typenum;  // historic filesystem type number
-    uint16 vfc_refcount; // number mounted of this type
-    uint16 vfc_flags;    // permanent flags
 }
 
 struct s_kevent_copyops {

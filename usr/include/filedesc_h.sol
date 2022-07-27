@@ -2,7 +2,7 @@ pragma ton-solidity >= 0.62.0;
 import "sbuf_h.sol";
 import "ucred_h.sol";
 struct s_xfile {
-//    uint16 xf_size;     // size of struct xfile
+    uint16 xf_size;     // size of struct xfile
     uint16 xf_pid;      // owning process
     uint16 xf_uid;      // effective uid of owning process
     uint16 xf_fd;       // descriptor number
@@ -10,7 +10,8 @@ struct s_xfile {
     uint16 xf_count;    // reference count
     uint16 xf_msgcount; // references from message queue
     uint32 xf_offset;   // file offset
-    bytes xf_data;      // file descriptor specific data
+//    bytes xf_data;      // file descriptor specific data
+    uint16 xf_data;
     uint16 xf_vnode;    // vnode pointer
     uint16 xf_flag;     // flags (see fcntl.h)
 }

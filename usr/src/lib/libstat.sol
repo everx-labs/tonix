@@ -1,7 +1,8 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "utypes.sol";
 import "libtable.sol";
+import "vnode_h.sol";
 
 library libstat {
 
@@ -61,9 +62,9 @@ library libstat {
     uint constant TIME_MASK = (1 << 64) - 1;
 
     function att(s_stat st) internal returns (uint) {
-        (uint st_dev, uint st_ino, uint st_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
+        (uint st_dev, uint st_ino, uint sst_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
             uint st_blocks, uint st_mtim, uint st_ctim) = st.unpack();
-        return (st_dev << 224) + (st_ino << 208) + (st_mode << 192) + (st_nlink << 176) + (st_uid << 160) + (st_gid << 144) +
+        return (st_dev << 224) + (st_ino << 208) + (sst_mode << 192) + (st_nlink << 176) + (st_uid << 160) + (st_gid << 144) +
             (st_rdev << 128) + (sst_size << 96) + (st_blksize << 80) + (st_blocks << 64) + (st_mtim << 32) + st_ctim;
     }
 
@@ -73,20 +74,20 @@ library libstat {
             uint16(val >> 80 & 0xFFFF), uint16(val >> 64 & 0xFFFF), uint32(val >> 32 & 0xFFFFFFFF), uint32(val & 0xFFFFFFFF));
     }
 
-    function pack_attrs(uint st_dev, uint st_ino, uint st_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
+    function pack_attrs(uint st_dev, uint sst_ino, uint sst_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
         uint st_blocks, uint st_mtim, uint st_ctim) internal returns (uint) {
-        return (st_dev << 224) + (st_ino << 208) + (st_mode << 192) + (st_nlink << 176) + (st_uid << 160) + (st_gid << 144) +
+        return (st_dev << 224) + (sst_ino << 208) + (sst_mode << 192) + (st_nlink << 176) + (st_uid << 160) + (st_gid << 144) +
             (st_rdev << 128) + (sst_size << 96) + (st_blksize << 80) + (st_blocks << 64) + (st_mtim << 32) + st_ctim;
     }
 
-    function unpack_attrs(uint val) internal returns (uint st_dev, uint st_ino, uint st_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
+    function unpack_attrs(uint val) internal returns (uint st_dev, uint sst_ino, uint sst_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
         uint st_blocks, uint st_mtim, uint st_ctim) {
-        (st_dev, st_ino, st_mode, st_nlink, st_uid, st_gid, st_rdev, sst_size, st_blksize, st_blocks, st_mtim, st_ctim) =
+        (st_dev, sst_ino, sst_mode, st_nlink, st_uid, st_gid, st_rdev, sst_size, st_blksize, st_blocks, st_mtim, st_ctim) =
             (val >> 224 & 0xFFFF, val >> 208 & 0xFFFF, val >> 192 & 0xFFFF, val >> 176 & 0xFFFF, val >> 160 & 0xFFFF, val >> 144 & 0xFFFF,
             val >> 128 & 0xFFFF, val >> 96 & 0xFFFFFFFF, val >> 80 & 0xFFFF, val >> 64 & 0xFFFF, val >> 32 & 0xFFFFFFFF, val & 0xFFFFFFFF);
     }
 
-    function st_attrs(uint val) internal returns (uint16 st_dev, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid,
+    function st_attrs(uint val) internal returns (uint16 st_dev, uint16 sst_ino, uint16 sst_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid,
         uint16 st_rdev, uint32 sst_size, uint16 st_blksize, uint16 st_blocks, uint32 st_mtim, uint32 st_ctim) {
         return (uint16(val >> 224 & 0xFFFF), uint16(val >> 208 & 0xFFFF), uint16(val >> 192 & 0xFFFF), uint16(val >> 176 & 0xFFFF),
             uint16(val >> 160 & 0xFFFF), uint16(val >> 144 & 0xFFFF), uint16(val >> 128 & 0xFFFF), uint32(val >> 96 & 0xFFFFFFFF),
@@ -95,6 +96,12 @@ library libstat {
 
     function st_size(uint val) internal returns (uint32) {
         return uint32(val >> 96 & 0xFFFFFFFF);
+    }
+    function st_mode(uint val) internal returns (uint16) {
+        return uint16(val >> 192 & 0xFFFF);
+    }
+    function st_ino(uint val) internal returns (uint16) {
+        return uint16(val >> 208 & 0xFFFF);
     }
     function makedev(uint8 major, uint8 minor) internal returns (uint16) {
         return uint16(major << 8) + minor;
@@ -108,44 +115,44 @@ library libstat {
         return uint8(dev & 0xFF);
     }
 
-    function is_block_dev(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_IFMT) == S_IFBLK;
+    function is_block_dev(uint16 mode) internal returns (bool) {
+        return (mode & S_IFMT) == S_IFBLK;
     }
 
-    function is_char_dev(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_IFMT) == S_IFCHR;
+    function is_char_dev(uint16 mode) internal returns (bool) {
+        return (mode & S_IFMT) == S_IFCHR;
     }
 
-    function is_reg(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_IFMT) == S_IFREG;
+    function is_reg(uint16 mode) internal returns (bool) {
+        return (mode & S_IFMT) == S_IFREG;
     }
 
-    function is_dir(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_IFMT) == S_IFDIR;
+    function is_dir(uint16 mode) internal returns (bool) {
+        return (mode & S_IFMT) == S_IFDIR;
     }
 
-    function is_symlink(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_IFMT) == S_IFLNK;
+    function is_symlink(uint16 mode) internal returns (bool) {
+        return (mode & S_IFMT) == S_IFLNK;
     }
 
-    function is_socket(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_IFMT) == S_IFSOCK;
+    function is_socket(uint16 mode) internal returns (bool) {
+        return (mode & S_IFMT) == S_IFSOCK;
     }
 
-    function is_pipe(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_IFMT) == S_IFIFO;
+    function is_pipe(uint16 mode) internal returns (bool) {
+        return (mode & S_IFMT) == S_IFIFO;
     }
 
-    function is_gid(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_ISGID) > 0;
+    function is_gid(uint16 mode) internal returns (bool) {
+        return (mode & S_ISGID) > 0;
     }
 
-    function is_uid(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_ISUID) > 0;
+    function is_uid(uint16 mode) internal returns (bool) {
+        return (mode & S_ISUID) > 0;
     }
 
-    function is_vtx(uint16 st_mode) internal returns (bool) {
-        return (st_mode & S_ISVTX) > 0;
+    function is_vtx(uint16 mode) internal returns (bool) {
+        return (mode & S_ISVTX) > 0;
     }
 
     function type_long(s_stat st) internal returns (string) {
@@ -203,10 +210,10 @@ library libstat {
     }
 
     function as_row(uint st) internal returns (string[]) {
-            (uint st_dev, uint st_ino, uint st_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev,
-                 uint sst_size, uint st_blksize, uint st_blocks, uint st_mtim, uint st_ctim) = unpack_attrs(st);
-            return [str.toa(st_dev), str.toa(st_ino), str.toa(st_mode), str.toa(st_nlink), str.toa(st_uid), str.toa(st_gid),
-                str.toa(st_rdev), str.toa(sst_size), str.toa(st_blksize), str.toa(st_blocks), str.toa(st_mtim), str.toa(st_ctim)];
+        (uint st_dev, uint sst_ino, uint sst_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev,
+            uint sst_size, uint st_blksize, uint st_blocks, uint st_mtim, uint st_ctim) = unpack_attrs(st);
+        return [str.toa(st_dev), str.toa(sst_ino), str.toa(sst_mode), str.toa(st_nlink), str.toa(st_uid), str.toa(st_gid),
+            str.toa(st_rdev), str.toa(sst_size), str.toa(st_blksize), str.toa(st_blocks), str.toa(st_mtim), str.toa(st_ctim)];
     }
 
     function format_index(uint[] index) internal returns (string) {

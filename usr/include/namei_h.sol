@@ -1,6 +1,7 @@
 pragma ton-solidity >= 0.62.0;
 import "proc_h.sol";
-
+import "uio_h.sol";
+import "bufobj_h.sol";
 enum nameiop { LOOKUP, CREATE, DELETE, RENAME }
 
 struct s_componentname {

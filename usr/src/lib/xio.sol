@@ -5,7 +5,7 @@ import "io.sol";
 import "sbuf.sol";
 import "libfdt.sol";
 import "libstat.sol";
-
+import "filedesc_h.sol";
 library xio {
 
     using str for string;
@@ -77,10 +77,8 @@ library xio {
 
     function fflush(s_of f) internal returns (bytes ret) {
         f.offset = 0;
-        s_sbuf s = f.buf;
-        ret = s.sbuf_data();
-        s.sbuf_clear();
-        f.buf = s;
+        ret = f.buf.buf;
+        f.buf.sbuf_clear();
     }
 
     function fgetc(s_of f) internal returns (bytes) {
@@ -102,12 +100,13 @@ library xio {
         f.offset = s.sbuf_len();
     }
 
-    function fputs(s_of f, string str) internal {
-        s_sbuf s = f.buf;
-        s.sbuf_cat(str);
-        s.sbuf_nl_terminate();
-        f.buf = s;
-        f.offset = s.sbuf_len();
+    function fputs(s_of f, string s) internal {
+//        s_sbuf s = f.buf;
+//        s.sbuf_cat(str);
+//        s.sbuf_nl_terminate();
+//        f.buf = s;
+        f.buf.sbuf_cat(s);
+        f.offset = f.buf.sbuf_len();
     }
 
     function fread(s_of f, uint16 size, uint16 nmemb) internal returns (bytes) {

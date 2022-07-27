@@ -3,7 +3,7 @@ pragma ton-solidity >= 0.62.0;
 import "ucred_h.sol";
 import "filedesc_h.sol";
 import "racct_h.sol";
-import "sysent_h.sol";
+import "libsyscall.sol";
 
 enum td_states { TDS_INACTIVE, TDS_INHIBITED, TDS_CAN_RUN, TDS_RUNQ, TDS_RUNNING }
 
@@ -59,8 +59,8 @@ struct s_ps_strings {
     uint16 ps_nenvstr;   // the number of environment strings
 }
 struct s_thread {
-//    s_proc td_proc;    // Associated process
-    uint16 td_proc;    // Associated process
+    s_proc td_proc;    // Associated process
+//    uint16 td_proc;    // Associated process
     uint16 td_tid;     // Thread ID
     uint16 td_flags;   // TDF_* flags
     uint16 td_dupfd;   // Ret value from fdopen
@@ -94,4 +94,22 @@ struct s_prpsinfo {
 }
 struct s_thrmisc {
     string pr_tname; // Thread name, null terminated [MAXCOMLEN+1];
+}
+
+struct s_pgrp {
+    uint16[] pg_members; // Pointer to pgrp members.
+    uint16 pg_session;   // Pointer to session.
+    uint16 pg_id;        // Process group id.
+    uint16 pg_flags;     // PGRP_ flags
+}
+struct s_session {
+    uint16 s_count;      // Ref cnt; pgrps in session - atomic.
+    uint16 s_leader;     // Session leader.
+    uint16 k_ttyvp;     // Vnode of controlling tty.
+//    k_cdev_priv k_ttydp; // Device of controlling tty.
+    uint16 k_ttydp; // Device of controlling tty.
+    uint16 k_ttyp;        // Controlling tty.
+//    k_tty k_ttyp;        // Controlling tty.
+    uint16 s_sid;        // Session ID.
+    string s_login;      // Setlogin() name:
 }

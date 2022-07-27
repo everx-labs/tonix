@@ -1,5 +1,7 @@
-pragma ton-solidity >= 0.61.2;
-//import "stypes.sol";
+pragma ton-solidity >= 0.62.0;
+
+import "proc_h.sol";
+import "ucred_h.sol";
 library priv {
 
     // The remaining privileges typically correspond to one or a small number of specific privilege checks,

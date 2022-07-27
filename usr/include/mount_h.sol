@@ -1,8 +1,41 @@
 pragma ton-solidity >= 0.62.0;
 
+import "vnode_h.sol";
 struct s_fsid {
     uint32[2] val;
 }
+struct s_vfsops {
+    uint32 vfs_mount;
+    uint32 vfs_cmount;
+    uint32 vfs_unmount;
+    uint32 vfs_root;
+    uint32 vfs_cachedroot;
+    uint32 vfs_quotactl;
+    uint32 vfs_statfs;
+    uint32 vfs_sync;
+    uint32 vfs_vget;
+    uint32 vfs_fhtovp;
+    uint32 vfs_checkexp;
+    uint32 vfs_init;
+    uint32 vfs_uninit;
+    uint32 vfs_extattrctl;
+    uint32 vfs_sysctl;
+    uint32 vfs_susp_clean;
+    uint32 vfs_reclaim_lowervp;
+    uint32 vfs_unlink_lowervp;
+    uint32 vfs_purge;
+}
+
+// Userland version of the struct vfsconf.
+struct s_xvfsconf {
+    s_vfsops vfc_vfsops; // filesystem operations vector
+    string vfc_name;     // filesystem type name
+    uint16 vfc_typenum;  // historic filesystem type number
+    uint16 vfc_refcount; // number mounted of this type
+    uint16 vfc_flags;    // permanent flags
+}
+
+
 struct s_statfs {
     uint16 f_version;     // structure version number
     uint16 f_type;        // type of filesystem

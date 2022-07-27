@@ -1,14 +1,8 @@
 pragma ton-solidity >= 0.61.2;
 
-import "liberr.sol";
-import "libstring.sol";
-import "sb.sol";
-import "libstat.sol";
-import "ucred.sol";
-import "io.sol";
+import "proc_h.sol";
+import "libpgroup.sol";
 import "libsyscall.sol";
-import "sbuf.sol";
-import "param.sol";
 import "conf.sol";
 
 struct s_crypt_data {

@@ -11,7 +11,7 @@ library parg {
     using io for s_proc;
     using xio for s_of;
 
-    function map_file(s_proc p, string name) internal returns (string[]) {
+    /*function map_file(s_proc p, string name) internal returns (string[]) {
         string all_lines = read_file(p, name);
         if (!all_lines.empty()) {
             (string[] lines, ) = all_lines.split("\n");
@@ -28,7 +28,7 @@ library parg {
                 return all_lines;
         } else
             p.perror(name + ": failed to open");
-    }
+    }*/
 
     function shift_args(s_proc p) internal {
         s_ar_misc misc = p.p_args.ar_misc;

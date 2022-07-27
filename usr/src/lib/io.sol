@@ -7,7 +7,7 @@ import "xio.sol";
 import "dirent.sol";
 library io {
 
-    using libstat for s_stat;
+//    using libstat for s_stat;
     using sbuf for s_sbuf;
     using xio for s_of;
     using dirent for s_dirdesc;
@@ -134,7 +134,7 @@ library io {
             flags |= O_APPEND | O_CREAT;
     }
 
-    function open(s_proc p, string path, uint16 /*flags*/) internal returns (uint16) {
+    /*function open(s_proc p, string path, uint16 flags) internal returns (uint16) {
         s_of[] fdt = p.p_fd.fdt_ofiles;
         uint n_files = p.p_fd.fdt_nfiles;
         for (uint i = 0; i < n_files; i++) {
@@ -146,7 +146,7 @@ library io {
                     return uint16(i);
             }
         }
-    }
+    }*/
 
     function _fetch(s_proc p, string path) internal returns (uint) {
         return fetch_fdt(p.p_fd.fdt_ofiles, path);
@@ -157,7 +157,7 @@ library io {
             if (fdt[i].path == path)
                 return i + 1;
     }
-    function fopen(s_proc p, string path, string mode) internal returns (s_of f) {
+    /*function fopen(s_proc p, string path, string mode) internal returns (s_of f) {
         uint16 flags = mode_to_flags(mode);
         uint q = fetch_fdt(p.p_fd.fdt_ofiles, path);
         if (q > 0) {
@@ -180,7 +180,7 @@ library io {
                 return flags > 0 ? f : f;
         }
         f.flags |= io.SERR;
-    }
+    }*/
 
     function opendir(s_proc p, string filename) internal returns (s_of f) {
         uint q = fetch_fdt(p.p_fd.fdt_ofiles, filename);
@@ -191,7 +191,7 @@ library io {
         }
     }
 
-    function fdopendir(s_proc p, uint16 fd) internal returns (s_of f) {
+    /*function fdopendir(s_proc p, uint16 fd) internal returns (s_of f) {
         f = fdopen(p, fd, "r");
         p.p_fd.fdt_ofiles[fd] = f;
     }
@@ -238,7 +238,7 @@ library io {
             s_of f = p.p_fd.fdt_ofiles[fd];
             return (uint16(f.buf.size), string(f.buf.buf));
         }
-    }
+    }*/
 
     function perror(s_proc p, string reason) internal {
         s_of f = p.p_fd.fdt_ofiles[STDERR_FILENO];
@@ -249,10 +249,11 @@ library io {
         p.p_fd.fdt_ofiles[STDERR_FILENO] = f;
     }
 
-    function puts(s_proc p, string str) internal {
-        s_of f = p.p_fd.fdt_ofiles[STDOUT_FILENO];
-        f.fputs(str);
-        p.p_fd.fdt_ofiles[STDOUT_FILENO] = f;
+    function puts(s_proc p, string s) internal {
+        p.p_fd.fdt_ofiles[STDOUT_FILENO].fputs(s + "\n");
+        //s_of f = p.p_fd.fdt_ofiles[STDOUT_FILENO];
+        //f.fputs(str);
+        //p.p_fd.fdt_ofiles[STDOUT_FILENO] = f;
     }
 
     function fputs(s_proc p, string str, s_of f) internal {

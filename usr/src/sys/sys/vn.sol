@@ -2,7 +2,8 @@ pragma ton-solidity >= 0.61.2;
 
 import "liberr.sol";
 import "priv.sol";
-//import "stypes.sol";
+import "vnode_h.sol";
+import "mount_h.sol";
 import "param.sol";
 import "conf.sol";
 import "libstat.sol";
@@ -385,7 +386,7 @@ struct s_vnode {
         st.stt(attrs);
         (, uint16 st_ino, uint16 st_mode, uint16 st_nlink, uint16 st_uid, uint16 st_gid, uint16 st_rdev, uint32 st_size,
             uint16 st_blksize, , uint32 st_mtim, uint32 st_ctim) = st.unpack();
-        sv.va_type = st.vnode_type();
+        sv.va_type = vtype.VREG;//libstat.vnode_type(st);
         sv.va_mode = st_mode;
         sv.va_uid = st_uid;
         sv.va_gid = st_gid;

@@ -1,4 +1,16 @@
 pragma ton-solidity >= 0.62.0;
+
+// Information about the current user. */
+struct user_info {
+    uint16 uid;
+    uint16 euid;
+    uint16 gid;
+    uint16 egid;
+    string user_name;
+    string shell;
+    string home_dir;
+}
+
 library sh {
     uint8 constant ALIAS     = 0;
     uint8 constant ARRAYVAR  = 1;

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "filedesc_h.sol";
 import "xio.sol";
@@ -18,15 +18,31 @@ library dirent {
 
     uint16 constant DIRBLKSIZ = 1024;
 
-
-/* flags for opendir2 */
+    // flags for opendir2
     uint16 constant DTF_HIDEW      = 0x0001; // hide whiteout entries
     uint16 constant DTF_NODUP      = 0x0002; // don't return duplicate names
     uint16 constant DTF_REWIND     = 0x0004; // rewind after reading union stack
     uint16 constant __DTF_READALL  = 0x0008; // everything has been read
     uint16 constant __DTF_SKIPREAD = 0x0010; // assume internal buffer is populated
 
-    function alphasort(s_dirent[]) internal returns (uint16, s_dirent[]) {}
+    //	File types
+    uint8 constant DT_UNKNOWN = 0;
+    uint8 constant DT_FIFO = 1;
+    uint8 constant DT_CHR  = 2;
+    uint8 constant DT_DIR  = 4;
+    uint8 constant DT_BLK  = 6;
+    uint8 constant DT_REG  = 8;
+    uint8 constant DT_LNK  = 10;
+    uint8 constant DT_SOCK = 12;
+    uint8 constant DT_WHT  = 14;
+
+    function IFTODT(uint16 mode) internal returns (uint8) {
+        return uint8((mode & 0xF000) >> 12);
+    }
+    function DTTOIF(uint8 dirtype) internal returns (uint16) {
+        return uint16(dirtype) << 12;
+    }
+   function alphasort(s_dirent[]) internal returns (uint16, s_dirent[]) {}
 
 	/*uint16 dd_fd;	 // file descriptor associated with directory
 	uint16 dd_loc;	 // offset in current buffer

@@ -1,138 +1,137 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.62.0;
 
 import "io.sol";
-import "ucred.sol";
 import "liberr.sol";
+import "path.sol";
+import "proc_h.sol";
+import "libucred.sol";
+import "libfdt.sol";
+import "libfattr.sol";
+
+struct s_sysent {
+    uint8 sy_narg;
+    uint8 sy_flags;
+    uint8 sy_module;
+    uint16 sy_code;
+    string sy_name;
+}
+
 library libsyscall {
 
-    using sucred for s_ucred;
+    using libsyscall for s_thread;
+    using libucred for s_thread;
+    using libfdt for s_thread;
+//    using libfattr for s_thread;
 
-    function _syscall_name(uint16 number) internal returns (string) {
+    uint8 constant UCRED = 1;
+    uint8 constant FDT   = 2;
+    uint8 constant FATTR = 3;
+    uint8 constant MISC  = 4;
+    uint8 constant IO    = 5;
+    uint8 constant THREAD = 6;
+    uint8 constant SIGNAL = 7;
+    uint8 constant SHM    = 8;
+    uint8 constant AIO    = 9;
+    uint8 constant AUDIT  = 10;
+    uint8 constant THR    = 11;
+    uint8 constant CAPS   = 12;
+    uint8 constant MAC    = 13;
+    uint8 constant CLOCK  = 14;
+    uint8 constant RESERVED = 15;
+    uint8 constant ACL    = 16;
+    uint8 constant CPUSET = 17;
+    uint8 constant JAIL   = 18;
+    uint8 constant KSEM   = 19;
+    uint8 constant KMQ    = 20;
+    uint8 constant MOD    = 21;
+    uint8 constant RCTL   = 22;
+    uint8 constant SCHED  = 23;
+    uint8 constant SCTP   = 24;
+    uint8 constant FHANDLE = 25;
+    uint8 constant EXTATTR = 26;
+    uint8 constant LAST = EXTATTR;
+//    uint8 constant IO    = 7;
+//    uint8 constant IO    = 8;
+//    uint8 constant IO    = 9;
+
+    function syscall_thread_enter(s_thread td, s_sysent se) internal {
+
+    }
+    function syscall_thread_exit(s_thread td, s_sysent se) internal {
+
+    }
+
+    function syscall_ids() internal returns (uint16[] res) {
+        res = [SYS_syscall];
+        for (uint16 id: libucred.syscall_ids())
+            res.push(id);
+        for (uint16 id: libfdt.syscall_ids())
+            res.push(id);
+        for (uint16 id: libfattr.syscall_ids())
+            res.push(id);
+    }
+
+    function syscall_module(uint16 id) internal returns (uint8) {
+        if (id == SYS_syscall) return 4;
+        for (uint16 sid: libucred.syscall_ids())
+            if (sid == id)
+                return UCRED;
+        for (uint16 sid: libfdt.syscall_ids())
+            if (sid == id)
+                return FDT;
+        for (uint16 sid: libfattr.syscall_ids())
+            if (sid == id)
+                return FATTR;
+    }
+    function syscall_nargs(uint16 id) internal returns (uint8) {
+        uint8 smod = syscall_module(id);
+        if (smod == MISC) return 2;
+        if (smod == UCRED) return libucred.syscall_nargs(id);
+        if (smod == FDT) return libfdt.syscall_nargs(id);
+        if (smod == FATTR) return libfattr.syscall_nargs(id);
+    }
+
+    function syscall_name(uint16 number) internal returns (string) {
         mapping (uint16 => string) d;
-        d[SYS_open] = "open";
+        d[SYS_syscall] = "syscall";
+        for (uint16 id: libucred.syscall_ids())
+            d[id] = libucred.syscall_name(id);
+        for (uint16 id: libfdt.syscall_ids())
+            d[id] = libfdt.syscall_name(id);
+        for (uint16 id: libfattr.syscall_ids())
+            d[id] = libfattr.syscall_name(id);
         return d[number];
     }
 
-    function _syscall_nargs(uint16 n) internal returns (uint8) {
-        if (n == SYS_getuid || n == SYS_geteuid || n == SYS_getgid || n == SYS_getegid)// || n == SYS_getuid || n == SYS_getuid || )
-            return 0;
-        if (n == SYS_setuid || n == SYS_seteuid || n == SYS_setgid || n == SYS_setegid)// || n == SYS_getuid || n == SYS_getuid || )
-            return 1;
-    }
-
-    function _syscall_group(uint16 n) internal returns (uint8) {
-        if (n == SYS_getuid || n == SYS_geteuid || n == SYS_getgid || n == SYS_getegid)// || n == SYS_getuid || n == SYS_getuid || )
-            return 1;
-        if (n == SYS_setuid || n == SYS_seteuid || n == SYS_setgid || n == SYS_setegid)// || n == SYS_getuid || n == SYS_getuid || )
-            return 2;
-    }
-
-    function _ucred_1(s_thread t, uint16 number) internal returns (uint16) {
-        uint8 e;
-        uint16 rv;
-        s_ucred cr = t.td_ucred;
-        if (number == SYS_getpid)
-            e = 0;
-//        else if (number == SYS_setuid)
-//            e = cr.setuid()
-        else if (number == SYS_getuid)
-            rv = cr.getuid();
-        else if (number == SYS_geteuid)
-            rv = cr.geteuid();
-        else if (number == SYS_getgid)
-            rv = cr.getgid();
-        else if (number == SYS_getegid)
-            rv = cr.getegid();
-//        else if (number == SYS_getgroups) {
-
-//        }
-        return rv;
-//        t.td_errno = e;
-//        t.tdu_retval[0] = rv;
-    }
-
-    function _ucred_2(s_thread t, uint16 number, uint16 id) internal returns (s_ucred) {
-        uint8 e;
+   function do_syscall(s_thread td, uint16 number, string[] args) internal {
+        uint8 ec;
 //        uint16 rv;
-        s_ucred cr = t.td_ucred;
-        if (number == SYS_setuid)
-            e = cr.setuid(id);
-        else if (number == SYS_seteuid)
-            e = cr.seteuid(id);
-        else if (number == SYS_setgid)
-            e = cr.setgid(id);
-        else if (number == SYS_setegid)
-            e = cr.setegid(id);
-//        t.tdu_retval[0] = rv;
-        if (e == 0)
-            return cr;
-    }
+        uint n_args = args.length;
+        string sarg1 = n_args > 0 ? args[0] : "";
+//        string sarg2 = n_args > 1 ? args[1] : "";
+        uint16 arg1 = n_args > 0 ? str.toi(sarg1) : 0;
+//        uint16 arg2 = n_args > 1 ? str.toi(sarg2) : 0;
 
-/*    function _io_1(s_thread t, uint16 number, uint16 id) internal returns (s_uio) {
-        uint8 e;
-//        if (number == SYS_write)
-//            e = io.write();
-    }*/
-            /*
-    function getuid(s_ucred cr) internal returns (uint16) {
-        return cr.cr_ruid;
-    }
-    function geteuid(s_ucred cr) internal returns (uint16) {
-        return cr.cr_uid;
-    }
-    function getgid(s_ucred cr) internal returns (uint16) {
-        return cr.cr_rgid;
-    }
-    function getegid(s_ucred cr) internal returns (uint16) {
-        return cr.cr_groups[0];
-    }
-    function setuid(s_ucred cr, uint16 uid) internal returns (uint16) {
-
-        else if (number == SYS_getpid)
-        else if (number == SYS_getpid)
-        else if (number == SYS_getpid)
-        else if (number == SYS_getpid)
-        else if (number == SYS_getpid)
-        else */
-    /*uint16 constant SYS_getpid              = 20;
-    uint16 constant SYS_mount               = 21;
-    uint16 constant SYS_unmount             = 22;
-    uint16 constant SYS_setuid              = 23;
-    uint16 constant SYS_getuid              = 24;
-    uint16 constant SYS_geteuid             = 25;
-    }*/
-
-    function do_syscall(s_thread td, uint16 number, uint16[] args) internal returns (uint16) {
-        uint8 e;
-        uint16 rv;
-        uint8 scg = _syscall_group(number);
-        if (scg == 0)
-            e = err.ENOSYS;
-        else if (scg == 1) {
-            e = 0;
-            rv = _ucred_1(td, number);
-        } else if (scg == 2) {
-            s_ucred nc = _ucred_2(td, number, args[0]);
-            td.td_ucred = nc;
-        }
-
-        td.td_errno = e;
-        td.td_retval = rv;
-    }
-
-    function syscall(s_proc p, uint16 number) internal returns (uint8) {
-        s_ucred td_realucred = p.p_ucred;   // Reference to credentials.
-        s_ucred td_ucred = p.p_ucred;       // Used credentials, temporarily switchable.
-        s_plimit td_limit = p.p_limit;      // Resource limits.
-        string td_name = _syscall_name(number);         // Thread name.
-//        s_xfile xfile;
-        uint8 td_errno;        // Error from last syscall.
-        td_states td_state;     // thread state
-        uint32 tdu_retval;
-
-        s_thread t = s_thread(p.p_pid, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);
-        if (!td_name.empty())
-        return t.td_errno;
+        if (number == SYS_syscall) {
+            uint8 sm = syscall_module(arg1);
+            for (uint i = 0; i < n_args - 1; i++)
+                args[i] = args[i + 1];
+            args.pop();
+            if (sm == UCRED) {
+                td.ucred_syscall(arg1, args);
+//                s_ucred nc = td.td_ucred;
+            } else if (sm == FDT) {
+                td.fdt_syscall(arg1, args);
+//                s_of[] res = td.td_proc.p_fd.fdt_ofiles;
+            } else if (sm == FATTR) {
+//                td.fattr_syscall(arg1, args);
+            }
+//            rv = td.td_retval;
+//            ec = td.td_errno;
+        } else
+            ec = err.ENOSYS;
+//        td.td_errno = ec;
+//        td.td_retval = rv;
     }
 
     uint16 constant SYS_syscall     = 0;
@@ -266,6 +265,7 @@ library libsyscall {
     uint16 constant SYS_issetugid   = 253;
     uint16 constant SYS_lchown      = 254;
     uint16 constant SYS_lio_listio  = 257;
+    uint16 constant SYS_freebsd11_getdents  = 272;
     uint16 constant SYS_lchmod      = 274;
     uint16 constant SYS_lutimes     = 276;
     uint16 constant SYS_preadv      = 289;
@@ -390,21 +390,21 @@ library libsyscall {
     uint16 constant SYS_extattr_list_file   = 438;
     uint16 constant SYS_extattr_list_link   = 439;
 
-    uint16 constant SYS_lgetfh              = 160;
-    uint16 constant SYS_getfh               = 161;
-    uint16 constant SYS_fhopen              = 298;
-    uint16 constant SYS_fhstat             = 553;
-    uint16 constant SYS_fhstatfs           = 558;
-    uint16 constant SYS_getfhat            = 564;
-    uint16 constant SYS_fhlink             = 565;
-    uint16 constant SYS_fhlinkat           = 566;
-    uint16 constant SYS_fhreadlink         = 567;
+    uint16 constant SYS_lgetfh     = 160;
+    uint16 constant SYS_getfh      = 161;
+    uint16 constant SYS_fhopen     = 298;
+    uint16 constant SYS_fhstat     = 553;
+    uint16 constant SYS_fhstatfs   = 558;
+    uint16 constant SYS_getfhat    = 564;
+    uint16 constant SYS_fhlink     = 565;
+    uint16 constant SYS_fhlinkat   = 566;
+    uint16 constant SYS_fhreadlink = 567;
 
-    uint16 constant SYS_jail                = 338;
-    uint16 constant SYS_jail_attach         = 436;
-    uint16 constant SYS_jail_get           = 506;
-    uint16 constant SYS_jail_set           = 507;
-    uint16 constant SYS_jail_remove        = 508;
+    uint16 constant SYS_jail        = 338;
+    uint16 constant SYS_jail_attach = 436;
+    uint16 constant SYS_jail_get    = 506;
+    uint16 constant SYS_jail_set    = 507;
+    uint16 constant SYS_jail_remove = 508;
 
 
     uint16 constant SYS_kmq_open            = 457;
@@ -681,4 +681,107 @@ library libsyscall {
     * 514 is obsolete cap_new
     * 548 is obsolete numa_getaffinity
     * 549 is obsolete numa_setaffinity
-    */    
+    */
+
+
+/*
+    function syscallenter(s_thread td) internal {
+    	s_proc p;
+    	s_syscall_args sa;
+    	s_sysent se;
+    	uint8 error;
+        bool traced;
+    	bool sy_thr_static;
+    //	VM_CNT_INC(v_syscall);
+    	p = td.td_proc;
+    	sa = td.td_sa;
+    //	if (!(td.td_cowgen != atomic_load_int(p.p_cowgen)))
+    //		thread_cow_update(td);
+    	traced = (p.p_flag & P_TRACED) > 0;
+    	if (!(traced || (td.td_dbgflags & TDB_USERWR) > 0)) {
+    		td.td_dbgflags &= ~TDB_USERWR;
+    		if (traced)
+    			td.td_dbgflags |= TDB_SCE;
+    	}
+    	error = p.p_sysent.sv_fetch_syscall_args(td);
+    //	KTR_START4(KTR_SYSC, "syscall", syscallname(p, sa.code), td, "pid:%d", td.td_proc.p_pid, "arg0:%p", sa.args[0], "arg1:%p", sa.args[1], "arg2:%p", sa.args[2]);
+	    if (error == 0)
+            se = sa.callp;
+	    if (error == 0 && traced) {
+	    	if (p.p_ptevents & PTRACE_SCE)
+	    		ptracestop((td), SIGTRAP, 0);
+		    if ((td.td_dbgflags & TDB_USERWR) != 0) {
+		    	// Reread syscall number and arguments if debugger modified registers or memory.
+		    	error = p.p_sysent.sv_fetch_syscall_args(td);
+                if (error == 0)
+		    	    se = sa.callp;
+		    }
+	    } else {
+	    	td.td_errno = error;
+        }
+    	// Fetch fast sigblock value at the time of syscall entry to handle sleepqueue primitives which might call cursig().
+    //	if (sigfastblock_fetch_always)
+    //		sigfastblock_fetch(td);
+    	// Let system calls set td_errno directly
+    //	KASSERT((td.td_pflags & TDP_NERRNO) == 0, ("%s: TDP_NERRNO set", __func__));
+    	sy_thr_static = (se.sy_thrcnt & SY_THR_STATIC) != 0;
+    	if (!sy_thr_static) {
+    		error = syscall_thread_enter(td, se);
+    		if (error != 0)
+    	        td.td_errno = error;
+    	}
+    	error = se.sy_call(td, sa.args);
+    		// Save the latest error return value.
+    		if ((td.td_pflags & TDP_NERRNO) != 0)
+    			td.td_pflags &= ~TDP_NERRNO;
+    		else
+    			td.td_errno = error;
+    	if (!sy_thr_static)
+    		syscall_thread_exit(td, se);
+    	else {
+    		error = se.sy_call(td, sa.args);
+    		// Save the latest error return value
+    		if ((td.td_pflags & TDP_NERRNO) != 0)
+    			td.td_pflags &= ~TDP_NERRNO;
+    		else
+    			td.td_errno = error;
+    	}
+    //	KTR_STOP4(KTR_SYSC, "syscall", syscallname(p, sa.code), (uintptr_t)td, "pid:%d", td.td_proc.p_pid, "error:%d", error, "retval0:%#lx", td.td_retval[0], "retval1:%#lx", td.td_retval[1]);
+    	if (traced)
+    		td.td_dbgflags &= ~TDB_SCE;
+    	p.p_sysent.sv_set_syscall_retval(td, error);
+    }
+    function syscallret(s_thread td) internal {
+    	s_proc p;
+    	s_syscall_args sa;
+    //	ksiginfo_t ksi;
+        bool traced;
+    //	KASSERT(td.td_errno != ERELOOKUP, ("ERELOOKUP not consumed syscall %d", td.td_sa.code));
+    	p = td.td_proc;
+    	sa = td.td_sa;
+    	//if (td.td_errno == ENOTCAPABLE || td.td_errno == ECAPMODE) {
+    		if ((trap_enotcap || (p.p_flag2 & P2_TRAPCAP) != 0) && IN_CAPABILITY_MODE(td)) {
+    			ksiginfo_init_trap(ksi);
+    			ksi.ksi_signo = SIGTRAP;
+    			ksi.ksi_errno = td.td_errno;
+    			ksi.ksi_code = TRAP_CAP;
+    			ksi.ksi_info.si_syscall = sa.original_code;
+    //			trapsignal(td, ksi);
+    		}
+        // Handle reschedule and other end-of-syscall issues
+//    	userret(td, td.td_frame);
+    	if ((p.p_flag & P_TRACED) > 0) {
+    		traced = 1;
+    		td.td_dbgflags |= TDB_SCX;
+    	}
+    	if ((traced || (td.td_dbgflags & (TDB_EXEC | TDB_FORK)) > 0)) {
+		    if (traced && (td.td_dbgflags & TDB_EXEC) > 0) {
+//		    	ptracestop(td, SIGTRAP, 0);
+		    	td.td_dbgflags &= ~TDB_EXEC;
+		    }
+    //	if (traced && ((td.td_dbgflags & (TDB_FORK | TDB_EXEC)) != 0 || (p.p_ptevents & PTRACE_SCX) != 0))
+    //			ptracestop(td, SIGTRAP, 0);
+    		td.td_dbgflags &= ~(TDB_SCX | TDB_EXEC | TDB_FORK);
+    	}
+    }
+*/

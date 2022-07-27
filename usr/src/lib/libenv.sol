@@ -5,108 +5,83 @@ import "vars.sol";
 library libenv {
 
     using libstring for string;
+    using vars for string[];
+    using libenv for string[];
 
     //  obtains the current value of the environment	variable, name
-    function get(string name, string[] e) internal returns (string) {
+    function get(string[] e, string name) internal returns (string) {
         return vars.val(name, e);
-        /*string pat = "[" + name + "]";
-        (string[] lines, ) = e.split("\n");
-        for (string line: lines) {
-            uint q = str.strstr(line, pat);
-            if (q > 0) {
-                string s = e.val(pat + "=", "\n");
-                return str.unwrp(s);
-            }
-        }*/
     }
 
-    function geti(string name, string[] e) internal returns (uint16) {
-        string val = get(name, e);
+    function geti(string[] e, string name) internal returns (uint16) {
+        string val = get(e, name);
         return str.toi(val);
 //        string val = get(name, e);
 //        return sgr.toi();
-    }
-
-    function get_old(string name, string[] e) internal returns (string) {
-        string line = vars.get_pool_record(name, e);
-        if (!line.empty()) {
-            (, , string value) = vars.split_var_record(line);
-            return value;
-        }
     }
 
     // inserts or resets the environment variable name in the current environment list.
     // If the variable name does not exist in the list, it is inserted with the given value. If the
     // variable does exist, the argument overwrite is tested; if overwrite is zero, the variable is
     // not reset, otherwise it is reset to the given value.
-    function set(string name, string value, bool overwrite, string[] e) internal returns (string[]) {
-        string val = get(name, e);
+    function set(string[] e, string name, string value, bool overwrite) internal {
+        string val = get(e, name);
         string token = name + "=" + value;
-        if (val.empty())
-            return put(token, e);
-        if (!overwrite)
-            return e;
-        return put(token, e);
-//        string cur_line = vars.get_pool_record(name, env);
-//        string new_line = var_record("", name, value);
-//        return vars.set_var("", name + "=" + value, e);
-//        if (line.empty())
-//            return env + new_line + "\n";
-//        if (overwrite)
-//            return env + new_line + "\n";
+        if (val.empty() || overwrite)
+            e.put(token);
     }
 
     //takes an argument of the form ``name=value'' and puts it directly into the current
     // environment, so altering	the argument shall change the environment. If the variable name does not exist	in the
     // list, it is inserted with the given value. If the variable name does exist, it is	reset to the given value.
-    function put(string token, string[] e) internal returns (string[]) {
-        return vars.set_var("", token, e);
+    function put(string[] e, string token) internal {
+        e.set_var("", token);
     }
 
     // deletes all instances of the variable name pointed to by name from the list.
-    function unset(string name, string[] e) internal returns (string[]) {
-        return vars.unset_var(name, e);
+    function unset(string[] e, string name) internal {
+        e.unset_var(name);
     }
 
     function getbsize(string[] e) internal returns (uint16, string) {
-        return (geti("BLOCKSIZE", e), "cells");
+        return (geti(e, "BLOCKSIZE"), "cells");
     }
 
     function getuid(string[] e) internal returns (uint16) {
-        return geti("UID", e);
+        return geti(e, "UID");
     }
 
     function geteuid(string[] e) internal returns (uint16) {
-        return geti("EUID", e);
+        return geti(e, "EUID");
     }
 
     function getgid(string[] e) internal returns (uint16) {
-        return geti("GID", e);
+        return geti(e, "GID");
     }
 
     function getegid(string[] e) internal returns (uint16) {
-        return geti("EGID", e);
+        return geti(e, "EGID");
     }
 
-    function setuid(uint16 uid, string[] e) internal returns (string[]) {
-        return put("UID=" + str.toa(uid), e);
+    function setuid(string[] e, uint16 uid) internal {
+        e.put("UID=" + str.toa(uid));
     }
 
-    function seteuid(uint16 euid, string[] e) internal returns (string[]) {
-        return put("EUID=" + str.toa(euid), e);
+    function seteuid(string[] e, uint16 euid) internal {
+        e.put("EUID=" + str.toa(euid));
     }
 
-    function setgid(uint16 gid, string[] e) internal returns (string[]) {
-        return put("GID=" + str.toa(gid), e);
+    function setgid(string[] e, uint16 gid) internal {
+        e.put("GID=" + str.toa(gid));
     }
 
-    function setegid(uint16 egid, string[] e) internal returns (string[]) {
-        return put("EGID=" + str.toa(egid), e);
+    function setegid(string[] e, uint16 egid) internal {
+        e.put("EGID=" + str.toa(egid));
     }
 
-    function setregid(uint16 rgid, uint16 egid, string[] e) internal returns (string[]) {
-        string[] res = setgid(rgid, e);
-        return setegid(egid, res);
+    function setregid(string[] e, uint16 rgid, uint16 egid) internal {
+        e.setgid(rgid);
+        e.setegid(egid);
     }
 
     function getregid(string[] e) internal returns (uint16, uint16) {
@@ -117,20 +92,20 @@ library libenv {
         return getuid(e) != geteuid(e) || getgid(e) != getegid(e);
     }
 
-    function sethostname(string name, string[] e) internal returns (string[]) {
-        return put("HOSTNAME=" + name, e);
+    function sethostname(string[] e, string name) internal {
+        e.put("HOSTNAME=" + name);
     }
 
     function gethostname(string[] e) internal returns (string) {
-        return get("HOSTNAME", e);
+        return get(e, "HOSTNAME");
     }
 
-    function setusershell(string name, string[] e) internal returns (string[]) {
-        return put("SHELL=" + name, e);
+    function setusershell(string[] e, string name) internal {
+        e.put("SHELL=" + name);
     }
 
     function getusershell(string[] e) internal returns (string) {
-        return get("SHELL", e);
+        return get(e, "SHELL");
     }
 
     /*function getdomainname(char *, int) internal returns (string) {

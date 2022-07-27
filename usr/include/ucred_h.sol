@@ -30,7 +30,3 @@ struct s_xucred {
     uint16[] cr_groups;  // groups
     uint16 cr_pid;
 }
-
-library libucred {
-    uint8 constant XU_NGROUPS = 16;
-}

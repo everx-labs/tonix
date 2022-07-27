@@ -4,6 +4,7 @@ import "io.sol";
 import "libfdt.sol";
 import "sh.sol";
 import "vars.sol";
+import "libsyscall.sol";
 
 struct shell_env {
     s_of[] ofiles;    // Open files inherited upon invocation of the shell, plus open files controlled by exec
@@ -18,7 +19,7 @@ struct shell_env {
     string options;   // Options turned on at invocation or by set
     uint16 apid;      // Process IDs of the last commands in asynchronous lists known to this shell environment
     string aliases;   // Shell aliases
-    string dirstack;*/
+    */
 }
 
 library libshellenv {
@@ -26,21 +27,25 @@ library libshellenv {
     using sbuf for s_sbuf;
     using libfdt for s_of[];
     using vars for string[];
-//    using libarg for string[][];
 
     function flag_set(shell_env e, byte b) internal returns (bool) {
-        bytes flags = vars.val("FLAGS", e.environ[sh.SPECVARS]);
+        bytes flags = vars.val("FLAGS", e.environ[sh.VARIABLE]);
         return flags.empty() ? false : str.strchr(flags, b) > 0;
     }
+
     function flag_values(shell_env e, string flags_query) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
-        uint len = flags_query.byteLength();
-        string flags_set = vars.val("FLAGS", e.environ[sh.SPECVARS]);
+        return _flag_values(vars.val("FLAGS", e.environ[sh.VARIABLE]), flags_query);
+    }
+
+    function shell_option_values(shell_env e, string flags_query) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
+        return _flag_values(vars.val("-", e.environ[sh.VARIABLE]), flags_query);
+    }
+
+    function _flag_values(string flags_actual, bytes flags_query) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
         bool[] tmp;
-        uint i;
-        for (byte b: bytes(flags_query)) {
-            tmp.push(str.strchr(flags_set, b) > 0);
-            i++;
-        }
+        uint len = flags_query.length;
+        for (byte b: flags_query)
+            tmp.push(str.strchr(flags_actual, b) > 0);
         return (len > 0 ? tmp[0] : false,
                 len > 1 ? tmp[1] : false,
                 len > 2 ? tmp[2] : false,
@@ -52,7 +57,7 @@ library libshellenv {
     }
     function flags_set(shell_env e, bytes flags_query) internal returns (bool, bool, bool, bool) {
         uint len = flags_query.length;
-        string flags = vars.val("FLAGS", e.environ[sh.SPECVARS]);
+        string flags = vars.val("FLAGS", e.environ[sh.VARIABLE]);
         bool[] tmp;
         uint i;
         for (byte b: flags_query) {
@@ -65,19 +70,19 @@ library libshellenv {
                 len > 3 ? tmp[3] : false);
     }
     function get_args(shell_env e) internal returns (string[] args, string flags, string argv) {
-        string[] esv = e.environ[sh.SPECVARS];
+        string[] esv = e.environ[sh.VARIABLE];
         (args, ) = libstring.split(vars.val("PARAMS", esv), ' ');
         flags = vars.val("FLAGS", esv);
         argv = vars.val("ARGV", esv);
     }
     function params(shell_env e) internal returns (string[] args) {
-        (args, ) = libstring.split(vars.val("PARAMS", e.environ[sh.SPECVARS]), ' ');
+        (args, ) = libstring.split(vars.val("PARAMS", e.environ[sh.VARIABLE]), ' ');
     }
     function get_cwd(shell_env e) internal returns (uint16) {
         return vars.int_val("WD", e.environ[sh.VARIABLE]);
     }
     function get_cmd(shell_env e) internal returns (string) {
-        return vars.val("COMMAND", e.environ[sh.SPECVARS]);
+        return vars.val("COMMAND", e.environ[sh.VARIABLE]);
     }
     function opt_value(shell_env e, string opt_name) internal returns (string) {
         return vars.val(opt_name, e.environ[sh.OPTARGS]);
@@ -86,10 +91,33 @@ library libshellenv {
         return vars.int_val(opt_name, e.environ[sh.OPTARGS]);
     }
     function flags_empty(shell_env e) internal returns (bool) {
-        return vars.val("FLAGS", e.environ[sh.SPECVARS]).empty();
+        return vars.val("FLAGS", e.environ[sh.VARIABLE]).empty();
     }
     function env_value(shell_env e, string name) internal returns (string) {
         return vars.val(name, e.environ[sh.VARIABLE]);
+    }
+    function env_var_values(shell_env e, string[] names) internal returns (string s1, string s2, string s3, string s4) {
+        string[] evv = e.environ[sh.VARIABLE];
+        uint len = names.length;
+        if (len > 0) s1 = vars.val(names[0], evv);
+        if (len > 1) s2 = vars.val(names[1], evv);
+        if (len > 2) s3 = vars.val(names[2], evv);
+        if (len > 3) s4 = vars.val(names[3], evv);
+    }
+    function set_env_vars(shell_env e, string[] names, string[] values) internal {
+        string[] evv = e.environ[sh.VARIABLE];
+        uint vlen = values.length;
+        for (uint i = 0; i < names.length; i++)
+            evv.set_val(names[i], i < vlen ? values[i] : "");
+        e.environ[sh.VARIABLE] = evv;
+    }
+    function env_var_int_values(shell_env e, string[] names) internal returns (uint16 i1, uint16 i2, uint16 i3, uint16 i4) {
+        string[] evv = e.environ[sh.VARIABLE];
+        uint len = names.length;
+        if (len > 0) i1 = vars.int_val(names[0], evv);
+        if (len > 1) i2 = vars.int_val(names[1], evv);
+        if (len > 2) i3 = vars.int_val(names[2], evv);
+        if (len > 3) i4 = vars.int_val(names[3], evv);
     }
     function env_vars(shell_env e) internal returns (string[]) {
         return e.environ[sh.VARIABLE];
@@ -103,43 +131,41 @@ library libshellenv {
             (, string name, string value) = vars.split_var_record(rec);
             groups[str.toi(name)] = value;
         }
-        /*users[0] = "root";
-        groups[0] = "wheel";*/
     }
     function exit(shell_env e, uint status) internal {
-//        e.environ[sh.ERRNO] = vars.set_var("", "ERRNO=" + str.toa(status), e.environ[sh.ERRNO]);
         e.environ[sh.ERRNO].set_int_val("EXIT_STATUS", status);
     }
     function retur(shell_env e, uint status) internal {
         e.environ[sh.ERRNO].set_int_val("RETURN_CODE", status);
-//        e.environ[sh.ERRNO] = vars.set_var("", "EXITSTATUS=" + str.toa(status), e.environ[sh.ERRNO]);
     }
 
-    function syscall(shell_env e, uint16 number, uint16[] args) internal {
-        uint16 n_args = uint16(args.length);
-        string[] sargs;
-        for (uint i = 0; i < n_args; i++)
-            sargs.push(str.toa(args[i]));
-        e.environ[sh.SIGNAL].push("-" + str.toa(n_args) + " " + str.toa(number) + "=" + libstring.join_fields(sargs, ' '));
+    function syscall(shell_env e, uint16 number, string[] args) internal {
+        e.environ[sh.SIGNAL].push("-" + str.toa(args.length) + " " + str.toa(number) + "=" + libstring.join_fields(args, ' '));
     }
 
+    function signal(shell_env e, uint8 number, uint8 jid, uint16 pid) internal {
+        e.environ[sh.SIGNAL].push("-d " + str.toa(jid > 0 ? jid : pid) + "=" + str.toa(number));
+    }
+
+    function set_err(shell_env e, uint8 errno, string s) internal {
+        e.environ[sh.ERRNO].set_int_val("ERRNO", errno);
+        if (!s.empty())
+            e.environ[sh.ERRNO].set_val("REASON", s);
+    }
     function perror(shell_env e, string reason) internal {
         e.environ[sh.ERRNO].set_val("REASON", reason);
-//        s_of f = e.ofiles[libfdt.STDERR_FILENO];
-//        string[] page = e.environ[sh.ERRNO];
-//        e.environ[sh.ERRNO] = vars.set_var("", "REASON=" + reason, e.environ[sh.ERRNO]);
-//        uint8 ec = f.buf.error;
-//        string err_msg = err.strerror(ec);
-//        string err_msg = p.p_comm + ": ";
-//        if (!reason.empty())
-//            err_msg.append(reason + " ");
-//        f.fputs(err_msg);
-//        e.ofiles[libfdt.STDERR_FILENO] = f;
+    }
+
+    function notfound(shell_env e, string arg) internal {
+        if (!arg.empty())
+            e.environ[sh.ERRNO].set_val("REASON", arg);
+        e.environ[sh.ERRNO].set_int_val("ERRNO", 1);
+    }
+    function gets(shell_env e) internal returns (string res) {
+        res = e.ofiles[libfdt.STDIN_FILENO].fflush();
     }
     function puts(shell_env e, string str) internal {
-        s_of f = e.ofiles[libfdt.STDOUT_FILENO];
-        f.fputs(str);
-        e.ofiles[libfdt.STDOUT_FILENO] = f;
+        e.ofiles[libfdt.STDOUT_FILENO].fputs(str + "\n");
     }
     function fputs(shell_env e, string str, s_of f) internal {
         uint16 idx = f.fileno();
@@ -214,5 +240,4 @@ library libshellenv {
         return format("open files {} cwd {} umask {} environ {}\n",
             s_ofiles, e_cwd.path, e_umask, s_environ);
     }
-
 }

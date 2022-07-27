@@ -5,7 +5,7 @@ struct job_cmd {
     string sarg;
     string argv;
     string exec_line;
-    string[] params;
+    string[] pargs;
     string flags;
     uint16 n_args;
     uint8 ec;

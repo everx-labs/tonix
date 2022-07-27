@@ -1,5 +1,8 @@
 pragma ton-solidity >= 0.62.0;
 
+import "namei_h.sol";
+enum vtype      { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD, VMARKER }
+
 struct s_vnode {
     vtype v_type;		 // vnode type
     uint16 v_irflag;	 // frequently read flags
