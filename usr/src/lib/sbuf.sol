@@ -1,6 +1,6 @@
-pragma ton-solidity >= 0.62.0;
-import "liberr.sol";
-import "str.sol";
+pragma ton-solidity >= 0.64.0;
+//import "liberr.sol";
+//import "str.sol";
 import "libstring.sol";
 import "sbuf_h.sol";
 import "uio_h.sol";
@@ -9,6 +9,8 @@ library sbuf {
     using str for string;
     using sbuf for s_sbuf;
     using libstring for string;
+
+    uint8 constant ENOMEM   = 12; // Cannot allocate memory
 
     uint32 constant SBUF_FIXEDLEN   = 0x00000000; // fixed length buffer (default)
     uint32 constant SBUF_AUTOEXTEND = 0x00000001; // automatically extend buffer
@@ -24,9 +26,9 @@ library sbuf {
 
     uint32 constant HD_COLUMN_MASK = 0xff;
     uint32 constant HD_DELIM_MASK  = 0xff00;
-    uint32 constant HD_OMIT_COUNT  = (1 << 16);
-    uint32 constant HD_OMIT_HEX    = (1 << 17);
-    uint32 constant HD_OMIT_CHARS  = (1 << 18);
+    uint32 constant HD_OMIT_COUNT  = 1 << 16;
+    uint32 constant HD_OMIT_HEX    = 1 << 17;
+    uint32 constant HD_OMIT_CHARS  = 1 << 18;
 
     /*struct s_sbuf {
         bytes buf;       // storage buffer
@@ -40,7 +42,7 @@ library sbuf {
 
     function sbuf_new(s_sbuf s, string buf, uint32 length, uint32 flags) internal returns (s_sbuf) {
         uint16 len = buf.strlen();
-        uint8 error = len > length ? err.ENOMEM : 0;
+        uint8 error = len > length ? ENOMEM : 0;
         s = s_sbuf(buf, error, length, len, flags, 0, 0);
         return s;
     }
@@ -116,7 +118,7 @@ library sbuf {
 
     function sbuf_finish(s_sbuf s) internal returns (uint8) {
         if (s.len > s.size)
-            s.error = err.ENOMEM;
+            s.error = ENOMEM;
         s.flags |= SBUF_FINISHED;
         return s.error;
     }
@@ -156,12 +158,12 @@ library sbuf {
     function sbuf_count_drain(bytes arg, string data, uint16 len) internal returns (uint16) {}
     function sbuf_printf_drain(bytes arg, string data, uint16 len) internal returns (uint16) {}
 
-    function sbuf_vprintf(s_sbuf s, string fmt, string[] ss, uint16[] dd) internal returns (uint16) {
+    function sbuf_vprintf(s_sbuf s, string sfmt, string[] ss, uint16[] dd) internal returns (uint16) {
         for (string s0: ss)
-            fmt.subst("%s", s0);
+            sfmt.subst("%s", s0);
         for (uint16 d0: dd)
-            fmt.subst("%d", str.toa(d0));
-        s.add(fmt, uint16(fmt.byteLength()), true);
+            sfmt.subst("%d", str.toa(d0));
+        s.add(sfmt, str.strlen(sfmt), true);
     }
 
     function sbuf_putbuf(s_sbuf s) internal returns (bytes) {

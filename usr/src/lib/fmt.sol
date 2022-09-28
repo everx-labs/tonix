@@ -172,66 +172,10 @@ library fmt {
             (fields, ) = s.split("\t");
     }
 
-    function to_address(string saddr) internal returns (address) {
-        uint len = saddr.byteLength();
-        if (len > 60) {
-            string s_hex = "0x" + saddr.substr(2);
-            optional(int) u_addr = stoi(s_hex);
-            if (u_addr.hasValue())
-                return address.makeAddrStd(0, uint(u_addr.get()));
-        }
-    }
-
     function dec_to_oct(uint p, uint width) internal returns (string res) {
         for (uint i = 0; i < width; i++) {
             res = format("{}", p & 0x07) + res;
             p >>= 3;
-        }
-    }
-
-    function v0(uint i) internal returns (string res) {
-        TvmBuilder b;
-        b.storeUnsigned(i, 256);
-        TvmSlice slice = b.toSlice();
-        TvmSlice slice2 = slice;
-        TvmSlice slice3 = slice;
-        string s = slice.decode(string);
-        bytes ba = slice2.decode(bytes);
-        uint u = slice3.decode(uint);
-        res.append(s + " ");
-        res.append(string(ba) + " ");
-        res.append(format("{} ", u));
-        res.append("\n");
-    }
-
-    function byte_sum(bytes bts, uint offset, uint count) internal returns (uint sum) {
-        for (uint i = offset; i < offset + count; i++)
-            sum += uint8(bytes1(bts[i]));
-    }
-
-    function octal_dump(uint8[] widths, uint[] values) internal returns (string) {
-        Column[] cf;
-        string[] line;
-        for (uint i = 0; i < values.length; i++) {
-            cf.push(Column(true, widths[i], RIGHT));
-            line.push(dec_to_oct(values[i], widths[i] - 1));
-        }
-        return format_table_ext(cf, [line], " ", "\n");
-    }
-
-    function parse_record(string line, string separator) internal returns (uint[] values, string[] names, address[] addresses) {
-        (string[] fields, ) = line.split_line(separator, "\n");
-        for (string s: fields) {
-            uint len = s.byteLength();
-            if (len > 65)
-                addresses.push(to_address(s));
-            else {
-                optional(int) val = stoi(s);
-                if (val.hasValue())
-                    values.push(uint(val.get()));
-                else
-                    names.push(s);
-            }
         }
     }
 

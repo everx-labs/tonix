@@ -7,27 +7,22 @@ import "proc_h.sol";
 import "libucred.sol";
 import "libfdt.sol";
 import "libfattr.sol";
-
-struct s_sysent {
-    uint8 sy_narg;
-    uint8 sy_flags;
-    uint8 sy_module;
-    uint16 sy_code;
-    string sy_name;
-}
+import "libproc.sol";
+import "libsysent.sol";
 
 library libsyscall {
 
     using libsyscall for s_thread;
+    using libsysent for s_sysentvec;
     using libucred for s_thread;
     using libfdt for s_thread;
 //    using libfattr for s_thread;
 
-    uint8 constant UCRED = 1;
-    uint8 constant FDT   = 2;
-    uint8 constant FATTR = 3;
-    uint8 constant MISC  = 4;
-    uint8 constant IO    = 5;
+    uint8 constant UCRED  = 1;
+    uint8 constant FDT    = 2;
+    uint8 constant FATTR  = 3;
+    uint8 constant MISC   = 4;
+    uint8 constant IO     = 5;
     uint8 constant THREAD = 6;
     uint8 constant SIGNAL = 7;
     uint8 constant SHM    = 8;
@@ -49,10 +44,105 @@ library libsyscall {
     uint8 constant SCTP   = 24;
     uint8 constant FHANDLE = 25;
     uint8 constant EXTATTR = 26;
-    uint8 constant LAST = EXTATTR;
+    uint8 constant LAST    = EXTATTR;
 //    uint8 constant IO    = 7;
 //    uint8 constant IO    = 8;
 //    uint8 constant IO    = 9;
+
+    function cpu_fetch_syscall_args(s_thread td) internal returns (uint8) {
+    	s_proc p;
+    	uint16 ap;
+        uint16 dst_ap;
+        s_syscall_args sa;
+        p = td.td_proc;
+        sa = td.td_sa;
+    //  ap = td->td_frame->tf_a[0];
+        dst_ap = sa.args[0];
+    //  sa.code = td->td_frame->tf_t[0];
+        sa.original_code = sa.code;
+        if (sa.code == SYS_syscall || sa.code == SYS___syscall) {
+            sa.code = ap++;
+        } else {
+            dst_ap = ap++;
+        }
+        if ((sa.code >= p.p_sysent.sv_size))
+            sa.callp = p.p_sysent.sv_table[0];
+        else
+            sa.callp = p.p_sysent.sv_table[sa.code];
+        /*if ((sa.code >= p.p_sysent.length))
+            sa.callp = p.p_sysent[0];
+        else
+            sa.callp = p.p_sysent[sa.code];*/
+    //  KASSERT(sa->callp->sy_narg <= nitems(sa->args), ("Syscall %d takes too many arguments", sa->code));
+    //  memcpy(dst_ap, ap, (NARGREG - 1) * sizeof(*dst_ap));
+        td.td_retval = 0;
+    }
+
+
+    function syscallenter(s_thread td) internal {
+        s_proc p;
+        s_syscall_args sa;
+        s_sysent se;
+        uint8 error;
+        bool traced;
+//      bool sy_thr_static;
+        p = td.td_proc;
+        sa = td.td_sa;
+//       	traced = (p.p_flag & libproc.P_TRACED) > 0;
+        /*if (!(traced || (td.td_dbgflags & libproc.TDB_USERWR) > 0)) {
+            td.td_dbgflags &= ~libproc.TDB_USERWR;
+            if (traced)
+                td.td_dbgflags |= libproc.TDB_SCE;
+        }*/
+        error = p.p_sysent.sv_fetch_syscall_args(td);
+//        error = td.cpu_fetch_syscall_args();
+    //	KTR_START4(KTR_SYSC, "syscall", syscallname(p, sa.code), td, "pid:%d", td.td_proc.p_pid, "arg0:%p", sa.args[0], "arg1:%p", sa.args[1], "arg2:%p", sa.args[2]);
+	    if (error == 0)
+            se = sa.callp;
+	    if (error == 0 && traced) {
+//          if (p.p_ptevents & libproc.PTRACE_SCE)
+//              ptracestop((td), SIGTRAP, 0);
+            /*if ((td.td_dbgflags & libproc.TDB_USERWR) != 0) {
+            // Reread syscall number and arguments if debugger modified registers or memory.
+            error = p.p_sysent.sv_fetch_syscall_args(td);
+               if (error == 0)
+                se = sa.callp;
+            }*/
+        } else {
+           	td.td_errno = error;
+        }
+        // Fetch fast sigblock value at the time of syscall entry to handle sleepqueue primitives which might call cursig().
+    //  if (sigfastblock_fetch_always)
+    //      sigfastblock_fetch(td);
+        // Let system calls set td_errno directly
+    //	KASSERT((td.td_pflags & TDP_NERRNO) == 0, ("%s: TDP_NERRNO set", __func__));
+        /*&sy_thr_static = (se.sy_thrcnt & libproc.SY_THR_STATIC) != 0;
+        if (!sy_thr_static) {
+            error = syscall_thread_enter(td, se);
+            if (error != 0)
+                td.td_errno = error;
+        }*/
+        error = td.sy_call(se, sa.args);
+            // Save the latest error return value.
+            if ((td.td_pflags & libproc.TDP_NERRNO) != 0)
+                td.td_pflags &= ~libproc.TDP_NERRNO;
+            else
+                td.td_errno = error;
+//    	if (!sy_thr_static)
+//    		syscall_thread_exit(td, se);
+//    	else {
+            error = td.sy_call(se, sa.args);
+            // Save the latest error return value
+            if ((td.td_pflags & libproc.TDP_NERRNO) != 0)
+                td.td_pflags &= ~libproc.TDP_NERRNO;
+            else
+                td.td_errno = error;
+//    	}
+    //	KTR_STOP4(KTR_SYSC, "syscall", syscallname(p, sa.code), (uintptr_t)td, "pid:%d", td.td_proc.p_pid, "error:%d", error, "retval0:%#lx", td.td_retval[0], "retval1:%#lx", td.td_retval[1]);
+//    	if (traced)
+//          td.td_dbgflags &= ~libproc.TDB_SCE;
+        p.p_sysent.sv_set_syscall_retval(td, error);
+    }
 
     function syscall_thread_enter(s_thread td, s_sysent se) internal {
 
@@ -103,7 +193,10 @@ library libsyscall {
         return d[number];
     }
 
-   function do_syscall(s_thread td, uint16 number, string[] args) internal {
+    function sy_call(s_thread td, s_sysent se, uint16[] args) internal returns (uint8) {
+
+    }
+    function do_syscall(s_thread td, uint16 number, string[] args) internal {
         uint8 ec;
 //        uint16 rv;
         uint n_args = args.length;
@@ -265,7 +358,7 @@ library libsyscall {
     uint16 constant SYS_issetugid   = 253;
     uint16 constant SYS_lchown      = 254;
     uint16 constant SYS_lio_listio  = 257;
-    uint16 constant SYS_freebsd11_getdents  = 272;
+    uint16 constant SYS_freebsd11_getdents = 272;
     uint16 constant SYS_lchmod      = 274;
     uint16 constant SYS_lutimes     = 276;
     uint16 constant SYS_preadv      = 289;
@@ -285,15 +378,15 @@ library libsyscall {
     uint16 constant SYS_afs3_syscall = 377;
     uint16 constant SYS_nmount      = 378;
 
-    uint16 constant SYS___syscall   = 198;
-    uint16 constant SYS___sysctl    = 202;
-    uint16 constant SYS___getcwd    = 326;
-    uint16 constant SYS___setugid   = 374;
-    uint16 constant SYS___semctl    = 510;
+    uint16 constant SYS___syscall        = 198;
+    uint16 constant SYS___sysctl         = 202;
+    uint16 constant SYS___getcwd         = 326;
+    uint16 constant SYS___setugid        = 374;
+    uint16 constant SYS___semctl         = 510;
     uint16 constant SYS___cap_rights_get = 515;
     uint16 constant SYS___sysctlbyname   = 570;
     uint16 constant SYS___realpathat     = 574;
-    uint16 constant SYS___specialfd = 577;
+    uint16 constant SYS___specialfd      = 577;
 
     uint16 constant SYS___acl_get_file      = 347;
     uint16 constant SYS___acl_set_file      = 348;
@@ -451,49 +544,49 @@ library libsyscall {
     uint16 constant SYS_rctl_remove_rule   = 529;
 
 
-    uint16 constant SYS_sched_setparam      = 327;
-    uint16 constant SYS_sched_getparam      = 328;
-    uint16 constant SYS_sched_setscheduler  = 329;
-    uint16 constant SYS_sched_getscheduler  = 330;
-    uint16 constant SYS_sched_yield         = 331;
+    uint16 constant SYS_sched_setparam         = 327;
+    uint16 constant SYS_sched_getparam         = 328;
+    uint16 constant SYS_sched_setscheduler     = 329;
+    uint16 constant SYS_sched_getscheduler     = 330;
+    uint16 constant SYS_sched_yield            = 331;
     uint16 constant SYS_sched_get_priority_max = 332;
     uint16 constant SYS_sched_get_priority_min = 333;
     uint16 constant SYS_sched_rr_get_interval  = 334;
 
 
-    uint16 constant SYS_sctp_peeloff        = 471;
+    uint16 constant SYS_sctp_peeloff             = 471;
     uint16 constant SYS_sctp_generic_sendmsg     = 472;
     uint16 constant SYS_sctp_generic_sendmsg_iov = 473;
     uint16 constant SYS_sctp_generic_recvmsg     = 474;
 
-    uint16 constant SYS_shmat               = 228;
-    uint16 constant SYS_shmdt               = 230;
-    uint16 constant SYS_shmget              = 231;
-    uint16 constant SYS_shm_unlink         = 483;
-    uint16 constant SYS_shmctl             = 512;
-    uint16 constant SYS_shm_open2          = 571;
-    uint16 constant SYS_shm_rename         = 572;
+    uint16 constant SYS_shmat      = 228;
+    uint16 constant SYS_shmdt      = 230;
+    uint16 constant SYS_shmget     = 231;
+    uint16 constant SYS_shm_unlink = 483;
+    uint16 constant SYS_shmctl     = 512;
+    uint16 constant SYS_shm_open2  = 571;
+    uint16 constant SYS_shm_rename = 572;
 
-    uint16 constant SYS_sigaltstack         = 53;
-    uint16 constant SYS_sigprocmask         = 340;
-    uint16 constant SYS_sigsuspend          = 341;
-    uint16 constant SYS_sigpending          = 343;
-    uint16 constant SYS_sigtimedwait        = 345;
-    uint16 constant SYS_sigwaitinfo         = 346;
-    uint16 constant SYS_sigaction           = 416;
-    uint16 constant SYS_sigreturn           = 417;
-    uint16 constant SYS_sigwait             = 429;
-    uint16 constant SYS_sigqueue            = 456;
-    uint16 constant SYS_sigfastblock       = 573;
+    uint16 constant SYS_sigaltstack  = 53;
+    uint16 constant SYS_sigprocmask  = 340;
+    uint16 constant SYS_sigsuspend   = 341;
+    uint16 constant SYS_sigpending   = 343;
+    uint16 constant SYS_sigtimedwait = 345;
+    uint16 constant SYS_sigwaitinfo  = 346;
+    uint16 constant SYS_sigaction    = 416;
+    uint16 constant SYS_sigreturn    = 417;
+    uint16 constant SYS_sigwait      = 429;
+    uint16 constant SYS_sigqueue     = 456;
+    uint16 constant SYS_sigfastblock = 573;
 
 
-    uint16 constant SYS_thr_create          = 430;
-    uint16 constant SYS_thr_exit            = 431;
-    uint16 constant SYS_thr_self            = 432;
-    uint16 constant SYS_thr_kill            = 433;
-    uint16 constant SYS_thr_suspend         = 442;
-    uint16 constant SYS_thr_wake            = 443;
-    uint16 constant SYS_thr_kill2          = 481;
+    uint16 constant SYS_thr_create   = 430;
+    uint16 constant SYS_thr_exit     = 431;
+    uint16 constant SYS_thr_self     = 432;
+    uint16 constant SYS_thr_kill     = 433;
+    uint16 constant SYS_thr_suspend  = 442;
+    uint16 constant SYS_thr_wake     = 443;
+    uint16 constant SYS_thr_kill2    = 481;
 
 
     uint16 constant SYS_kenv               = 390;
@@ -686,102 +779,103 @@ library libsyscall {
 
 /*
     function syscallenter(s_thread td) internal {
-    	s_proc p;
-    	s_syscall_args sa;
-    	s_sysent se;
-    	uint8 error;
+        s_proc p;
+        s_syscall_args sa;
+        s_sysent se;
+        uint8 error;
         bool traced;
-    	bool sy_thr_static;
-    //	VM_CNT_INC(v_syscall);
-    	p = td.td_proc;
-    	sa = td.td_sa;
-    //	if (!(td.td_cowgen != atomic_load_int(p.p_cowgen)))
-    //		thread_cow_update(td);
-    	traced = (p.p_flag & P_TRACED) > 0;
-    	if (!(traced || (td.td_dbgflags & TDB_USERWR) > 0)) {
-    		td.td_dbgflags &= ~TDB_USERWR;
-    		if (traced)
-    			td.td_dbgflags |= TDB_SCE;
-    	}
-    	error = p.p_sysent.sv_fetch_syscall_args(td);
-    //	KTR_START4(KTR_SYSC, "syscall", syscallname(p, sa.code), td, "pid:%d", td.td_proc.p_pid, "arg0:%p", sa.args[0], "arg1:%p", sa.args[1], "arg2:%p", sa.args[2]);
-	    if (error == 0)
-            se = sa.callp;
-	    if (error == 0 && traced) {
-	    	if (p.p_ptevents & PTRACE_SCE)
-	    		ptracestop((td), SIGTRAP, 0);
-		    if ((td.td_dbgflags & TDB_USERWR) != 0) {
-		    	// Reread syscall number and arguments if debugger modified registers or memory.
-		    	error = p.p_sysent.sv_fetch_syscall_args(td);
-                if (error == 0)
-		    	    se = sa.callp;
-		    }
-	    } else {
-	    	td.td_errno = error;
+        bool sy_thr_static;
+    //  VM_CNT_INC(v_syscall);
+        p = td.td_proc;
+        sa = td.td_sa;
+    //  if (!(td.td_cowgen != atomic_load_int(p.p_cowgen)))
+    //      thread_cow_update(td);
+        traced = (p.p_flag & P_TRACED) > 0;
+        if (!(traced || (td.td_dbgflags & TDB_USERWR) > 0)) {
+            td.td_dbgflags &= ~TDB_USERWR;
+            if (traced)
+                td.td_dbgflags |= TDB_SCE;
         }
-    	// Fetch fast sigblock value at the time of syscall entry to handle sleepqueue primitives which might call cursig().
-    //	if (sigfastblock_fetch_always)
-    //		sigfastblock_fetch(td);
-    	// Let system calls set td_errno directly
-    //	KASSERT((td.td_pflags & TDP_NERRNO) == 0, ("%s: TDP_NERRNO set", __func__));
-    	sy_thr_static = (se.sy_thrcnt & SY_THR_STATIC) != 0;
-    	if (!sy_thr_static) {
-    		error = syscall_thread_enter(td, se);
-    		if (error != 0)
-    	        td.td_errno = error;
-    	}
-    	error = se.sy_call(td, sa.args);
-    		// Save the latest error return value.
-    		if ((td.td_pflags & TDP_NERRNO) != 0)
-    			td.td_pflags &= ~TDP_NERRNO;
-    		else
-    			td.td_errno = error;
-    	if (!sy_thr_static)
-    		syscall_thread_exit(td, se);
-    	else {
-    		error = se.sy_call(td, sa.args);
-    		// Save the latest error return value
-    		if ((td.td_pflags & TDP_NERRNO) != 0)
-    			td.td_pflags &= ~TDP_NERRNO;
-    		else
-    			td.td_errno = error;
-    	}
-    //	KTR_STOP4(KTR_SYSC, "syscall", syscallname(p, sa.code), (uintptr_t)td, "pid:%d", td.td_proc.p_pid, "error:%d", error, "retval0:%#lx", td.td_retval[0], "retval1:%#lx", td.td_retval[1]);
-    	if (traced)
-    		td.td_dbgflags &= ~TDB_SCE;
-    	p.p_sysent.sv_set_syscall_retval(td, error);
+        error = p.p_sysent.sv_fetch_syscall_args(td);
+    //  KTR_START4(KTR_SYSC, "syscall", syscallname(p, sa.code), td, "pid:%d", td.td_proc.p_pid, "arg0:%p", sa.args[0], "arg1:%p", sa.args[1], "arg2:%p", sa.args[2]);
+            if (error == 0)
+               se = sa.callp;
+        if (error == 0 && traced) {
+            if (p.p_ptevents & PTRACE_SCE)
+                ptracestop((td), SIGTRAP, 0);
+                if ((td.td_dbgflags & TDB_USERWR) != 0) {
+                  	// Reread syscall number and arguments if debugger modified registers or memory.
+                  	error = p.p_sysent.sv_fetch_syscall_args(td);
+                    if (error == 0)
+              	        se = sa.callp;
+                }
+	    } else {
+	        td.td_errno = error;
+        }
+        // Fetch fast sigblock value at the time of syscall entry to handle sleepqueue primitives which might call cursig().
+    //  if (sigfastblock_fetch_always)
+    //  	sigfastblock_fetch(td);
+        // Let system calls set td_errno directly
+    //  KASSERT((td.td_pflags & TDP_NERRNO) == 0, ("%s: TDP_NERRNO set", __func__));
+        sy_thr_static = (se.sy_thrcnt & SY_THR_STATIC) != 0;
+        if (!sy_thr_static) {
+            error = syscall_thread_enter(td, se);
+            if (error != 0)
+                td.td_errno = error;
+        }
+        error = se.sy_call(td, sa.args);
+        // Save the latest error return value.
+        if ((td.td_pflags & TDP_NERRNO) != 0)
+            td.td_pflags &= ~TDP_NERRNO;
+        else
+            td.td_errno = error;
+        if (!sy_thr_static)
+            syscall_thread_exit(td, se);
+        else {
+            error = se.sy_call(td, sa.args);
+        // Save the latest error return value
+        if ((td.td_pflags & TDP_NERRNO) != 0)
+            td.td_pflags &= ~TDP_NERRNO;
+        else
+            td.td_errno = error;
+        }
+    //  KTR_STOP4(KTR_SYSC, "syscall", syscallname(p, sa.code), (uintptr_t)td, "pid:%d", td.td_proc.p_pid, "error:%d", error, "retval0:%#lx", td.td_retval[0], "retval1:%#lx", td.td_retval[1]);
+        if (traced)
+            td.td_dbgflags &= ~TDB_SCE;
+        p.p_sysent.sv_set_syscall_retval(td, error);
     }
+/*
     function syscallret(s_thread td) internal {
-    	s_proc p;
-    	s_syscall_args sa;
-    //	ksiginfo_t ksi;
+        s_proc p;
+        s_syscall_args sa;
+    //  ksiginfo_t ksi;
         bool traced;
-    //	KASSERT(td.td_errno != ERELOOKUP, ("ERELOOKUP not consumed syscall %d", td.td_sa.code));
-    	p = td.td_proc;
-    	sa = td.td_sa;
-    	//if (td.td_errno == ENOTCAPABLE || td.td_errno == ECAPMODE) {
-    		if ((trap_enotcap || (p.p_flag2 & P2_TRAPCAP) != 0) && IN_CAPABILITY_MODE(td)) {
-    			ksiginfo_init_trap(ksi);
-    			ksi.ksi_signo = SIGTRAP;
-    			ksi.ksi_errno = td.td_errno;
-    			ksi.ksi_code = TRAP_CAP;
-    			ksi.ksi_info.si_syscall = sa.original_code;
-    //			trapsignal(td, ksi);
-    		}
-        // Handle reschedule and other end-of-syscall issues
-//    	userret(td, td.td_frame);
-    	if ((p.p_flag & P_TRACED) > 0) {
-    		traced = 1;
-    		td.td_dbgflags |= TDB_SCX;
-    	}
-    	if ((traced || (td.td_dbgflags & (TDB_EXEC | TDB_FORK)) > 0)) {
-		    if (traced && (td.td_dbgflags & TDB_EXEC) > 0) {
-//		    	ptracestop(td, SIGTRAP, 0);
-		    	td.td_dbgflags &= ~TDB_EXEC;
-		    }
+    //  KASSERT(td.td_errno != ERELOOKUP, ("ERELOOKUP not consumed syscall %d", td.td_sa.code));
+        p = td.td_proc;
+        sa = td.td_sa;
+        //if (td.td_errno == ENOTCAPABLE || td.td_errno == ECAPMODE) {
+        if ((trap_enotcap || (p.p_flag2 & P2_TRAPCAP) != 0) && IN_CAPABILITY_MODE(td)) {
+            ksiginfo_init_trap(ksi);
+            ksi.ksi_signo = SIGTRAP;
+            ksi.ksi_errno = td.td_errno;
+            ksi.ksi_code = TRAP_CAP;
+            ksi.ksi_info.si_syscall = sa.original_code;
+        //  trapsignal(td, ksi);
+            }
+           // Handle reschedule and other end-of-syscall issues
+//          userret(td, td.td_frame);
+        if ((p.p_flag & P_TRACED) > 0) {
+            traced = 1;
+            td.td_dbgflags |= TDB_SCX;
+        }
+        if ((traced || (td.td_dbgflags & (TDB_EXEC | TDB_FORK)) > 0)) {
+	        if (traced && (td.td_dbgflags & TDB_EXEC) > 0) {
+//              ptracestop(td, SIGTRAP, 0);
+                td.td_dbgflags &= ~TDB_EXEC;
+            }
     //	if (traced && ((td.td_dbgflags & (TDB_FORK | TDB_EXEC)) != 0 || (p.p_ptevents & PTRACE_SCX) != 0))
-    //			ptracestop(td, SIGTRAP, 0);
-    		td.td_dbgflags &= ~(TDB_SCX | TDB_EXEC | TDB_FORK);
-    	}
+    //	        ptracestop(td, SIGTRAP, 0);
+            td.td_dbgflags &= ~(TDB_SCX | TDB_EXEC | TDB_FORK);
+        }
     }
 */

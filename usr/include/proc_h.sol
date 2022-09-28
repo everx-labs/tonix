@@ -3,9 +3,12 @@ pragma ton-solidity >= 0.62.0;
 import "ucred_h.sol";
 import "filedesc_h.sol";
 import "racct_h.sol";
-import "libsyscall.sol";
+import "sysent_h.sol";
+import "signal_h.sol";
 
 enum td_states { TDS_INACTIVE, TDS_INHIBITED, TDS_CAN_RUN, TDS_RUNQ, TDS_RUNNING }
+enum p_states { PRS_NEW, PRS_NORMAL, PRS_ZOMBIE }
+enum tda { TDA_AST, TDA_OWEUPC, TDA_HWPMC, TDA_VFORK, TDA_ALRM, TDA_PROF, TDA_MAC, TDA_SCHED, TDA_UFS, TDA_GEOM, TDA_KQUEUE, TDA_RACCT, TDA_MOD1, TAD_MOD2, TDA_SIG, TDA_KTRACE, TDA_SUSPEND, TDA_SIGSUSPEND, TDA_MOD3, TAD_MOD4, TDA_MAX }
 
 struct s_ar_misc {
     string argv;
@@ -32,19 +35,66 @@ struct s_pargs {
 }
 
 struct s_proc {
-    s_ucred p_ucred;     // Process owner's identity
-    s_xfiledesc p_fd;    // Open files
-    s_xpwddesc p_pd;     // Cwd, chroot, jail, umask
-    s_plimit p_limit;    // Resource limits
-    uint32 p_flag;       // P_* flags
-    uint16 p_pid;        // Process identifier
-    uint16 p_oppid;      // Real parent pid
-    string p_comm;       // Process name
-    s_sysent[] p_sysent; // Syscall dispatch info
-    s_pargs p_args;      // Process arguments
+    s_ucred p_ucred;      // Process owner's identity
+    s_xfiledesc p_fd;     // Open files
+    s_xpwddesc p_pd;      // Cwd, chroot, jail, umask
+    s_plimit p_limit;     // Resource limits
+    uint32 p_flag;        // P_* flags
+    uint16 p_pid;         // Process identifier
+    ksiginfo p_ksi;       // Locked by parent proc lock
+    s_sigqueue p_sigqueue; // Sigs not delivered to a td
+    uint16 p_oppid;       // Real parent pid
+    string p_comm;        // Process name
+    s_sysentvec p_sysent; // Syscall dispatch info
+    s_pargs p_args;       // Process arguments
     string[] environ;
-    uint8 p_xexit;      // Exit code
-    uint16 p_numthreads; // Number of threads
+    uint8 p_xexit;        // Exit code
+    uint8 p_xsig;         // Stop/kill sig.
+    uint16 p_pgrp;        // Pointer to process group.
+    uint16 p_numthreads;  // Number of threads
+    uint16 p_leader;
+}
+
+struct proc {
+    uint8 p_ucred;      // Process owner's identity
+//    s_xfiledesc p_fd;     // Open files
+    s_filedesc p_fd;     // Open files
+    s_xpwddesc p_pd;      // Cwd, chroot, jail, umask
+    s_plimit p_limit;     // Resource limits
+    uint32 p_flag;        // P_* flags
+    uint16 p_pid;         // Process identifier
+    ksiginfo p_ksi;       // Locked by parent proc lock
+    s_sigqueue p_sigqueue; // Sigs not delivered to a td
+    uint16 p_oppid;       // Real parent pid
+    string p_comm;        // Process name
+    s_sysentvec p_sysent; // Syscall dispatch info
+    s_pargs p_args;       // Process arguments
+    string[] environ;
+    uint8 p_xexit;        // Exit code
+    uint8 p_xsig;         // Stop/kill sig.
+    uint16 p_pgrp;        // Pointer to process group.
+    uint16 p_numthreads;  // Number of threads
+    uint16 p_leader;
+}
+
+struct s_proc_old {
+    s_ucred p_ucred;      // Process owner's identity
+    s_xfiledesc p_fd;     // Open files
+    s_xpwddesc p_pd;      // Cwd, chroot, jail, umask
+    s_plimit p_limit;     // Resource limits
+    uint32 p_flag;        // P_* flags
+    uint16 p_pid;         // Process identifier
+    ksiginfo p_ksi;       // Locked by parent proc lock
+    s_sigqueue p_sigqueue; // Sigs not delivered to a td
+    uint16 p_oppid;       // Real parent pid
+    string p_comm;        // Process name
+    s_sysentvec p_sysent; // Syscall dispatch info
+    s_pargs p_args;       // Process arguments
+    string[] environ;
+    uint8 p_xexit;        // Exit code
+    uint8 p_xsig;         // Stop/kill sig.
+    uint16 p_pgrp;        // Pointer to process group.
+    uint16 p_numthreads;  // Number of threads
     uint16 p_leader;
 }
 
@@ -58,27 +108,61 @@ struct s_ps_strings {
     string[] ps_envstr;  // first of 0 or more environment strings
     uint16 ps_nenvstr;   // the number of environment strings
 }
+
+struct s_syscall_args {
+    uint16 code;
+    uint16 original_code;
+    s_sysent callp;
+    uint16[8] args;
+}
+
 struct s_thread {
     s_proc td_proc;    // Associated process
-//    uint16 td_proc;    // Associated process
     uint16 td_tid;     // Thread ID
-    uint16 td_flags;   // TDF_* flags
-    uint16 td_dupfd;   // Ret value from fdopen
+    s_sigqueue td_sigqueue; // Sigs arrived, not delivered.
+    uint32 td_flags;   // TDF_* flags
+    uint32 td_pflags;  // Private thread (TDP_*) flags.
+    uint8 td_dupfd;   // Ret value from fdopen
     s_ucred td_realucred; // Reference to credentials
     s_ucred td_ucred;  // Used credentials, temporarily switchable
     s_plimit td_limit; // Resource limits
     string td_name;    // Thread name
     uint8 td_errno;    // Error from last syscall
+    uint32 td_sigmask; // Current signal mask (actually sigset_t)
+    s_syscall_args td_sa; // Syscall parameters. Copied on fork for child tracing
+//  td_sigblock_ptr;   // uptr for fast sigblock.
+//  uint32 td_sigblock_val; // fast sigblock value read at
     td_states td_state; // thread state
     uint32 td_retval;
 }
-struct s_unrhdr {  // Header element for a unr number space.
-    uint16 low;    // Lowest item
-    uint16 high;   // Highest item
-    uint16 busy;   // Count of allocated items
-    uint16 alloc;  // Count of memory allocations
-    uint16 first;  // items in allocated from start
-    uint16 last;   // items free at end
+
+struct thread {
+    uint8 td_proc;    // Associated process
+    uint16 td_tid;     // Thread ID
+    s_sigqueue td_sigqueue; // Sigs arrived, not delivered.
+    uint32 td_flags;   // TDF_* flags
+    uint32 td_pflags;  // Private thread (TDP_*) flags.
+    uint8 td_dupfd;   // Ret value from fdopen
+    uint8 td_realucred; // Reference to credentials
+    uint8 td_ucred;  // Used credentials, temporarily switchable
+    s_plimit td_limit; // Resource limits
+    string td_name;    // Thread name
+    uint8 td_errno;    // Error from last syscall
+    uint32 td_sigmask; // Current signal mask (actually sigset_t)
+    s_syscall_args td_sa; // Syscall parameters. Copied on fork for child tracing
+//  td_sigblock_ptr;   // uptr for fast sigblock.
+//  uint32 td_sigblock_val; // fast sigblock value read at
+    td_states td_state; // thread state
+    uint32 td_retval;
+}
+
+struct s_unrhdr { // Header element for a unr number space.
+    uint16 low;   // Lowest item
+    uint16 high;  // Highest item
+    uint16 busy;  // Count of allocated items
+    uint16 alloc; // Count of memory allocations
+    uint16 first; // items in allocated from start
+    uint16 last;  // items free at end
 }
 struct s_prstatus {
     uint16 pr_version;   // Version number of struct
@@ -97,19 +181,19 @@ struct s_thrmisc {
 }
 
 struct s_pgrp {
-    uint16[] pg_members; // Pointer to pgrp members.
-    uint16 pg_session;   // Pointer to session.
-    uint16 pg_id;        // Process group id.
-    uint16 pg_flags;     // PGRP_ flags
+    s_proc[] pg_members;   // Pointer to pgrp members.
+    s_session pg_session;  // Pointer to session.
+    s_sigio[] pg_sigiolst; // List of sigio sources.
+    uint16 pg_id;          // Process group id.
+    uint16 pg_flags;       // PGRP_ flags
 }
+
 struct s_session {
-    uint16 s_count;      // Ref cnt; pgrps in session - atomic.
-    uint16 s_leader;     // Session leader.
-    uint16 k_ttyvp;     // Vnode of controlling tty.
-//    k_cdev_priv k_ttydp; // Device of controlling tty.
-    uint16 k_ttydp; // Device of controlling tty.
-    uint16 k_ttyp;        // Controlling tty.
-//    k_tty k_ttyp;        // Controlling tty.
-    uint16 s_sid;        // Session ID.
-    string s_login;      // Setlogin() name:
+    uint16 s_count; // Ref cnt; pgrps in session - atomic
+    uint16 s_leader;// Session leader
+    uint16 s_ttyvp; // Vnode of controlling tty
+    uint16 s_ttydp; // Device of controlling tty
+    uint16 s_ttyp;  // Controlling tty
+    uint16 s_sid;   // Session ID
+    string s_login; // Setlogin() name
 }

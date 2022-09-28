@@ -1,13 +1,13 @@
 pragma ton-solidity >= 0.61.2;
 
+import "ucred_h.sol";
 import "liberr.sol";
 import "priv.sol";
 import "vnode_h.sol";
+import "sb_h.sol";
 import "mount_h.sol";
-import "param.sol";
 import "conf.sol";
 import "libstat.sol";
-import "sb.sol";
 
 library vn {
 
@@ -58,15 +58,17 @@ library vn {
     uint16 constant IO_BUFLOCKED   = 0x2000; // ffs flag; indir buf is locked
     uint16 constant IO_RANGELOCKED = 0x4000; // range locked
     uint16 constant IO_DATASYNC    = 0x8000; // do only data I/O synchronously
-    uint8 constant IO_SEQMAX    = 0x7F;  // seq heuristic max value
-    uint8 constant IO_SEQSHIFT  = 16;  // seq heuristic in upper 16 bits
+
+    uint8 constant IO_SEQMAX       = 0x7F;  // seq heuristic max value
+    uint8 constant IO_SEQSHIFT     = 16;  // seq heuristic in upper 16 bits
+
     // Flags for accmode_t.
     uint32 constant VEXEC              = 0x00000040; // 000000000100; // execute/search permission
     uint32 constant VWRITE             = 0x00000080; // 000000000200; // write permission
     uint32 constant VREAD              = 0x00000100; // 000000000400; // read permission
     uint32 constant VADMIN             = 0x00001000; // 000000010000; // being the file owner
     uint32 constant VAPPEND            = 0x00004000; // 000000040000; // permission to write/append
-    uint32 constant VEXPLICIT_DENY     = 0x00008000; // 000000100000; //  VEXPLICIT_DENY makes VOP_ACCESSX(9) return EPERM or EACCES only if permission was denied explicitly, by a "deny" rule in NFSv4 ACL, and 0 otherwise.  This never happens with ordinary unix access rights or POSIX.1e ACLs.  Obviously, VEXPLICIT_DENY must be OR-ed with some other V* constant.
+    uint32 constant VEXPLICIT_DENY     = 0x00008000; // 000000100000; // VEXPLICIT_DENY makes VOP_ACCESSX(9) return EPERM or EACCES only if permission was denied explicitly, by a "deny" rule in NFSv4 ACL, and 0 otherwise.  This never happens with ordinary unix access rights or POSIX.1e ACLs.  Obviously, VEXPLICIT_DENY must be OR-ed with some other V* constant.
     uint32 constant VREAD_NAMED_ATTRS  = 0x00010000; // 000000200000; // not used
     uint32 constant VWRITE_NAMED_ATTRS = 0x00020000; // 000000400000; // not used
     uint32 constant VDELETE_CHILD      = 0x00040000; // 000001000000;
@@ -134,9 +136,9 @@ library vn {
     uint16 constant S_IWUSR = 1 << 7;
     uint16 constant S_IRUSR = 1 << 8;
     uint16 constant S_IRWXU = S_IRUSR + S_IWUSR + S_IXUSR;
-    uint16 constant S_ISVTX = 1 << 9;  //   sticky bit
-    uint16 constant S_ISGID = 1 << 10; //   set-group-ID bit
-    uint16 constant S_ISUID = 1 << 11; //   set-user-ID bit
+    uint16 constant S_ISVTX = 1 << 9;  // sticky bit
+    uint16 constant S_ISGID = 1 << 10; // set-group-ID bit
+    uint16 constant S_ISUID = 1 << 11; // set-user-ID bit
     uint16 constant S_IFIFO = 1 << 12;
     uint16 constant S_IFCHR = 1 << 13;
     uint16 constant S_IFDIR = 1 << 14;
@@ -144,52 +146,52 @@ library vn {
     uint16 constant S_IFREG = 1 << 15;
     uint16 constant S_IFLNK = S_IFREG + S_IFCHR;
     uint16 constant S_IFSOCK = S_IFREG + S_IFDIR;
-    uint16 constant S_IFMT  = 0xF000; //   bit mask for the file type bit field
+    uint16 constant S_IFMT  = 0xF000;   //   bit mask for the file type bit field
 
 /*struct s_namecache {
-	uint16 nc_dvp;	  // vnode of parent of name
-	uint32 nc_dvpid;  // capability number of nc_dvp
-	uint16 nc_vp;	  // vnode the name refers to
-	uint32 nc_vpid;   // capability number of nc_vp
-	uint8 nc_nlen;	  // length of name
-	string nc_name;	  // segment name
+    uint16 nc_dvp;    // vnode of parent of name
+    uint32 nc_dvpid;  // capability number of nc_dvp
+    uint16 nc_vp;     // vnode the name refers to
+    uint32 nc_vpid;   // capability number of nc_vp
+    uint8 nc_nlen;    // length of name
+    string nc_name;	  // segment name
 }*/
 /*struct s_componentname {
-	nameiop cn_nameiop;	// namei operation
-	uint32 cn_flags;	// flags to namei
-	s_proc cn_proc;	    // process requesting lookup
-	s_ucred cn_cred;	// credentials
-	string cn_pnbuf;	// pathname buffer
-	string cn_nameptr;	// pointer to looked up name
-	uint8 cn_namelen;	// length of looked up component
-	uint32 cn_hash;	// hash value of looked up name
-//	long	cn_consume;	// chars to consume in lookup()
+    nameiop cn_nameiop;	// namei operation
+    uint32 cn_flags;    // flags to namei
+    s_proc cn_proc;	    // process requesting lookup
+    s_ucred cn_cred;    // credentials
+    string cn_pnbuf;    // pathname buffer
+    string cn_nameptr;  // pointer to looked up name
+    uint8 cn_namelen;   // length of looked up component
+    uint32 cn_hash;	    // hash value of looked up name
+//  long cn_consume;    // chars to consume in lookup()
 }
 struct s_nameidata {
     string ni_dirp;     // pathname pointer
-	uio_seg ni_segflg;	// location of pathname
-	uint16 ni_startdir; // starting directory
-	uint16 ni_rootdir;	// logical root directory
-    uint16 ni_topdir;	// logical top directory
+    uio_seg ni_segflg;  // location of pathname
+    uint16 ni_startdir; // starting directory
+    uint16 ni_rootdir;  // logical root directory
+    uint16 ni_topdir;   // logical top directory
     uint16 dir_fd;      // starting directory for *at functions
-	uint16 ni_vp;		// vnode of result
-	uint16 ni_dvp;		// vnode of intermediate directory
-	uint16 ni_pathlen;	// remaining chars in path
-	string ni_next;		// next location in pathname
-	uint8 ni_loopcnt;	// count of symlinks encountered
-	s_componentname ni_cnd;
+    uint16 ni_vp;       // vnode of result
+    uint16 ni_dvp;      // vnode of intermediate directory
+    uint16 ni_pathlen;  // remaining chars in path
+    string ni_next;	    // next location in pathname
+    uint8 ni_loopcnt;   // count of symlinks encountered
+    s_componentname ni_cnd;
 }
 struct s_vnode {
-    vtype v_type;		 // vnode type
-    uint16 v_irflag;	 // frequently read flags
-    uint16 v_seqc;		 // modification count
-    uint32 v_nchash;	 // namecache hash
+    vtype v_type;        // vnode type
+    uint16 v_irflag;     // frequently read flags
+    uint16 v_seqc;       // modification count
+    uint32 v_nchash;     // namecache hash
     s_vattr v_attrs;     // attrs
-    bytes v_data;		 // private data for fs
+    bytes v_data;        // private data for fs
     s_namecache[] v_cache_src; // Cache entries from us
     s_namecache[] v_cache_dst; // Cache entries to us
-    s_namecache v_cache_dd;    // Cache entry for .. vnode
-    uint16 v_iflag;          // vnode flags (see below)
+    s_namecache v_cache_dd; // Cache entry for .. vnode
+    uint16 v_iflag;         // vnode flags (see below)
     uint16 v_vflag;         // vnode flags
     uint16 v_mflag;         // mnt-specific vnode flags
 }
@@ -207,7 +209,7 @@ struct s_vnode {
         if (rc > 0)
             return rc;
         if ((ioflag & IO_APPEND) > 0) {}
-//            buf.append(vp.v_data);
+//          buf.append(vp.v_data);
     }
     function VOP_CREATE(s_vnode dvp, s_componentname cnp, s_vattr vap) internal returns (uint8 rc, s_vnode vpp) {
 //	    (nameiop cn_nameiop, uint32 cn_flags, s_proc cn_proc, s_ucred cn_cred, string cn_pnbuf,
@@ -404,68 +406,68 @@ struct s_vnode {
 
     function vaccess(vtype ntype, uint16 file_mode,	uint16 file_uid, uint16 file_gid, uint32 accmode, s_ucred cred) internal returns (uint8) {
         uint16 cr_uid = cred.cr_uid;
-	    uint32 ag;
+        uint32 ag;
         uint32 pg;
         if (file_uid == cr_uid) {
             ag |= VADMIN;
-		    if ((file_mode & S_IXUSR) > 0)
-			    ag |= VEXEC;
-		    if ((file_mode & S_IRUSR) > 0)
-			    ag |= VREAD;
-		    if ((file_mode & S_IWUSR) > 0)
-			    ag |= (VWRITE | VAPPEND);
-    		if ((accmode & ag) == accmode)
-			    return 0;
+            if ((file_mode & S_IXUSR) > 0)
+                ag |= VEXEC;
+            if ((file_mode & S_IRUSR) > 0)
+                ag |= VREAD;
+            if ((file_mode & S_IWUSR) > 0)
+                ag |= (VWRITE | VAPPEND);
+            if ((accmode & ag) == accmode)
+                return 0;
         }
-	    if (groupmember(cred, file_gid)) {
-		    if ((file_mode & S_IXGRP) > 0)
-			    ag |= VEXEC;
-		    if ((file_mode & S_IRGRP) > 0)
-			    ag |= VREAD;
-		    if ((file_mode & S_IWGRP) > 0)
-			    ag |= (VWRITE | VAPPEND);
-		    if ((accmode & ag) == accmode)
-			    return 0;
-    	}
-	    if ((file_mode & S_IXOTH) > 0)
-		    ag |= VEXEC;
-	    if ((file_mode & S_IROTH) > 0)
-		    ag |= VREAD;
-	    if ((file_mode & S_IWOTH) > 0)
-		    ag |= (VWRITE | VAPPEND);
-	    if ((accmode & ag) == accmode)
-		    return 0;
-	    if (ntype == vtype.VDIR) {
-		if (((accmode & VEXEC) > 0) && ((ag & VEXEC) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_LOOKUP) == 0)
-			pg |= VEXEC;
-	    } else {
-    		if ((accmode & VEXEC) > 0 && ((ag & VEXEC) == 0) &&
-		        (file_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0 &&
-		            priv.priv_check_cred(cred, priv.PRIV_VFS_EXEC) == 0)
-			pg |= VEXEC;
-	    }
-	    if (((accmode & VREAD) > 0) && ((ag & VREAD) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_READ) == 0)
-		    pg |= VREAD;
-	    if (((accmode & VWRITE) > 0) && ((ag & VWRITE) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_WRITE) == 0)
-		    pg |= (VWRITE | VAPPEND);
-	    if (((accmode & VADMIN) > 0) && ((ag & VADMIN) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_ADMIN) == 0)
-		    pg |= VADMIN;
-	    if ((accmode & (pg | ag)) == accmode)
-		    return 0;
-    	return (accmode & VADMIN) > 0 ? err.EPERM : err.EACCES;
+        if (groupmember(cred, file_gid)) {
+            if ((file_mode & S_IXGRP) > 0)
+                ag |= VEXEC;
+            if ((file_mode & S_IRGRP) > 0)
+                ag |= VREAD;
+            if ((file_mode & S_IWGRP) > 0)
+                ag |= (VWRITE | VAPPEND);
+            if ((accmode & ag) == accmode)
+                return 0;
+        }
+        if ((file_mode & S_IXOTH) > 0)
+            ag |= VEXEC;
+        if ((file_mode & S_IROTH) > 0)
+            ag |= VREAD;
+        if ((file_mode & S_IWOTH) > 0)
+            ag |= (VWRITE | VAPPEND);
+        if ((accmode & ag) == accmode)
+            return 0;
+        if (ntype == vtype.VDIR) {
+            if (((accmode & VEXEC) > 0) && ((ag & VEXEC) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_LOOKUP) == 0)
+                pg |= VEXEC;
+        } else {
+            if ((accmode & VEXEC) > 0 && ((ag & VEXEC) == 0) &&
+                (file_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0 &&
+                priv.priv_check_cred(cred, priv.PRIV_VFS_EXEC) == 0)
+            pg |= VEXEC;
+        }
+        if (((accmode & VREAD) > 0) && ((ag & VREAD) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_READ) == 0)
+            pg |= VREAD;
+        if (((accmode & VWRITE) > 0) && ((ag & VWRITE) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_WRITE) == 0)
+            pg |= (VWRITE | VAPPEND);
+        if (((accmode & VADMIN) > 0) && ((ag & VADMIN) == 0) && priv.priv_check_cred(cred, priv.PRIV_VFS_ADMIN) == 0)
+            pg |= VADMIN;
+        if ((accmode & (pg | ag)) == accmode)
+            return 0;
+        return (accmode & VADMIN) > 0 ? err.EPERM : err.EACCES;
     }
 
 //    function vn_rdwr(s_vnode vp, uio_rw rw, bytes base, uint32 len, uint32 offset, uio_seg segflg, uint16 ioflg, s_ucred active_cred, s_ucred file_cred, uint32 aresid, s_thread td) internal returns (uint8 rc, bytes buf) {
-    function vn_rdwr(s_vnode vp, uio_rw rw, bytes base, uint32 len, uint32 offset, uio_seg , uint16 , s_ucred active_cred, s_ucred , uint32 aresid, s_thread ) internal returns (uint8 rc, bytes buf) {
-        uint32 flags = rw == uio_rw.UIO_READ ? VREAD : VWRITE;
+    function vn_rdwr(s_vnode vp, uio_rwo rw, bytes base, uint32 len, uint32 offset, uio_seg , uint16 , s_ucred active_cred, s_ucred , uint32 aresid, s_thread ) internal returns (uint8 rc, bytes buf) {
+        uint32 flags = rw == uio_rwo.UIO_READ ? VREAD : VWRITE;
         rc = vn.vaccess(vp.v_type, vp.v_attrs.va_mode, vp.v_attrs.va_uid, vp.v_attrs.va_gid, flags, active_cred);
         if (rc > 0)
             return (rc, buf);
         bytes vdata = vp.v_data;
         uint32 cap = math.min(len, aresid);
-        if (rw == uio_rw.UIO_READ) {
+        if (rw == uio_rwo.UIO_READ) {
             buf = string(vdata).substr(offset, cap);
-        } else if (rw == uio_rw.UIO_WRITE) {
+        } else if (rw == uio_rwo.UIO_WRITE) {
             buf = string(base).substr(offset, cap);
         }
     }

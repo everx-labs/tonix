@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.60.0;
 
-/*interface peer {
+interface peer {
     struct uma_cell_slab {
     uint16 ucs_link;      // slabs in zone
     uint16 ucs_freecount; // How many are free?
@@ -10,7 +10,8 @@ pragma ton-solidity >= 0.60.0;
     TvmCell ucs_data;
 }
 
-    function store_state(uma_keg[] kegs, uma_bucket_zone[] bucket_zones, uma_zone[] zones, uma_slab[] slabs, uma_bucket[] buckets, uint32 uma_kmem_total, uint32 uma_kmem_limit, string log, string trace, string err, bytes[] pg, bytes[] sb, bytes[] bk, TvmCell[] cl, uma_domain k0, uma_cache cache) external;
+//    function store_state(uma_keg[] kegs, uma_bucket_zone[] bucket_zones, uma_zone[] zones, uma_slab[] slabs, uma_bucket[] buckets, uint32 uma_kmem_total, uint32 uma_kmem_limit, string log, string trace, string err, TvmCell[] cl, uma_domain k0, uma_cache cache) external;
+    function store_state(uma_bucket_zone[] bucket_zones, uma_zone[] zones, TvmCell[] cl, uma_domain k0, uma_cache cache) external;
 }
 
 interface uma_zone_client {

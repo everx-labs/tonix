@@ -13,7 +13,7 @@ struct s_aiocb {
 
 struct iovec	{
     uint32 iov_base;  // Base address
-	uint32 iov_len;    // Length
+    uint32 iov_len;    // Length
 }
 
 struct Ar {
@@ -94,7 +94,6 @@ library aio {
     //      when all I/Os are complete, the optional signal "sig" is sent.
     /*function lio_listio(uint8 lio_mode, s_aiocb[] acb_list) internal returns (uint8) {
         for (s_aiocb cb: acb_list) {
-
         }
    }*/
 
@@ -104,8 +103,8 @@ library aio {
     }
 
     // Finish up I/O, releasing I/O resources and returns the value
-    //      that would have been associated with a synchronous I/O request.
-    //      This routine must be called once and only once for each
+    // that would have been associated with a synchronous I/O request.
+    // This routine must be called once and only once for each
     function aio_return(s_aiocb iocb) internal returns (uint8) {
         return iocb.status;
     }

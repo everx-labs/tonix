@@ -103,11 +103,11 @@ library err {
     uint8 constant EINTEGRITY   = 97; // Integrity check failed
     uint8 constant ELAST        = 97; // Must be equal largest errno
 
-    int8 constant ERESTART    = -1; // restart syscall
-    int8 constant EJUSTRETURN = -2; // don't modify regs, just return
-    int8 constant ENOIOCTL    = -3; // ioctl not handled by this layer
-    int8 constant EDIRIOCTL   = -4; // do direct ioctl in GEOM
-    int8 constant ERELOOKUP   = -5; // retry the directory lookup
+    uint8 constant ERESTART    = 1; // restart syscall
+    uint8 constant EJUSTRETURN = 2; // don't modify regs, just return
+    uint8 constant ENOIOCTL    = 3; // ioctl not handled by this layer
+    uint8 constant EDIRIOCTL   = 4; // do direct ioctl in GEOM
+    uint8 constant ERELOOKUP   = 5; // retry the directory lookup
 
     function strerror(uint8 ec) internal returns (string) {
         if (ec == ESUCCESS) return "";

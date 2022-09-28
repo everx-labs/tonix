@@ -11,15 +11,15 @@ struct uma_bucket {
 
 struct uma_hash {
     uint16 uh_slab_hash; // Hash table for slabs
-	uint16 uh_hashsize;	// Current size of the hash table
-	uint32 uh_hashmask;	// Mask used during hashing
-//	uma_hash_slab[] uh_slab_hash;	// Hash table for slabs
+    uint16 uh_hashsize;	 // Current size of the hash table
+    uint32 uh_hashmask;	 // Mask used during hashing
+//  uma_hash_slab[] uh_slab_hash; // Hash table for slabs
 }
 
 struct uma_hash_slab {
-	uint32 uhs_hlink;  // Link for hash table
-	bytes uhs_data;    // First item
-	uma_slab uhs_slab; // Must be last.
+    uint32 uhs_hlink;  // Link for hash table
+    bytes uhs_data;    // First item
+    uma_slab uhs_slab; // Must be last.
 }
 
 struct uma_domain {
@@ -53,11 +53,11 @@ struct uma_keg {
 }
 
 struct uma_slab {
-    uint16 us_link;      // slabs in zone
+    uint16 us_link;  // slabs in zone
     uint16 us_freecount; // How many are free?
-    uint8 us_flags;      // Page flags
-    uint8 us_domain;     // Backing NUMA domain.
-    uint16 us_free;      // Free bitmask, flexible.
+    uint8 us_flags;  // Page flags
+    uint8 us_domain; // Backing NUMA domain.
+    uint16 us_free;  // Free bitmask, flexible.
     bytes us_data;
 }
 
@@ -99,10 +99,10 @@ struct uma_zone {
 }
 
 struct uma_bucket_zone {
-	bytes8 ubz_name;
-	uint16 ubz_entries;	// Number of items it can hold.
-	uint16 ubz_maxsize;	// Maximum allocation size per-item.
-	uma_zone ubz_zone;
+    bytes8 ubz_name;
+    uint16 ubz_entries;	// Number of items it can hold.
+    uint16 ubz_maxsize;	// Maximum allocation size per-item.
+    uma_zone ubz_zone;
 }
 
 struct uma_cache_bucket {
@@ -112,13 +112,13 @@ struct uma_cache_bucket {
 }
 
 struct uma_cache {
-	uint32 uc_allocs;	// Count of allocations
-	uint32 uc_frees;	// Count of frees
+    uint32 uc_allocs; // Count of allocations
+    uint32 uc_frees;  // Count of frees
     uint32 uc_size;
     uint32 uc_flags;
-	uma_bucket uc_freebucket;	 // Bucket we're freeing to
-	uma_bucket uc_allocbucket; // Bucket to allocate from
-	uma_bucket uc_crossbucket; // cross domain bucket
+    uma_bucket uc_freebucket;  // Bucket we're freeing to
+    uma_bucket uc_allocbucket; // Bucket to allocate from
+    uma_bucket uc_crossbucket; // cross domain bucket
 }
 
 struct it {
@@ -184,7 +184,7 @@ library uma {
 //    uint8 constant SLAB_MAX_SETSIZE = 255;
     uint16 constant	UMA_CACHESPREAD_MAX_SIZE = 32 * 1024;
     uint8 constant UMA_MAX_WASTE = 10;
-    uint8 constant UMA_MIN_EFF = 100 - UMA_MAX_WASTE;
+    uint8 constant UMA_MIN_EFF = 90;//100 - UMA_MAX_WASTE;
 
     uint8 constant UMA_ZONE    = 1;
     uint8 constant ZONES_ZONE  = 2;
@@ -195,7 +195,7 @@ library uma {
     uint8 constant INODES_ZONE = 7;
 }
 
-library libmalloc {
+/*library libmalloc {
     uint16 constant M_NOWAIT      = 0x0001; // do not block
     uint16 constant M_WAITOK      = 0x0002; // ok to block
     uint16 constant M_NORECLAIM   = 0x0080; // do not reclaim after failure
@@ -207,4 +207,4 @@ library libmalloc {
     uint16 constant M_BESTFIT     = 0x2000; // only for vmem, low fragmentation
     uint16 constant M_EXEC        = 0x4000; // allocate executable space
     uint16 constant M_NEXTFIT     = 0x8000; // only for vmem, follow cursor
-}
+}*/

@@ -54,28 +54,11 @@ struct s_xvnode {
     bytes xv_un;
 }
 
-// Userland version of struct tty, for sysctl kern.ttys
-struct s_xtty {
-    uint16 xt_size;    // Structure size.
-    uint16 xt_insize;  // Input queue size.
-    uint16 xt_incc;    // Canonicalized characters.
-    uint16 xt_inlc;    // Input line charaters.
-    uint16 xt_inlow;   // Input low watermark.
-    uint16 xt_outsize; // Output queue size.
-    uint16 xt_outcc;   // Output queue usage.
-    uint16 xt_outlow;  // Output low watermark.
-    uint16 xt_column;  // Current column position.
-    uint16 xt_pgid;    // Foreground process group.
-    uint16 xt_sid;     // Session.
-    uint16 xt_flags;   // Terminal option flags.
-    uint32 xt_dev;     // Userland device. XXXKIB truncated
-}
-
-struct s_sigaction {
+/*struct s_sigaction {
     uint32 __sigaction_u; // signal handler
     uint16 sa_flags;      // see signal options below
     uint8[] sa_mask;      // signal mask to apply
-}
+}*/
 
 struct __siginfo {
     uint8 si_signo;  // signal number
@@ -160,13 +143,3 @@ struct s_uprof {     // Profile arguments.
 struct s_sched_param {
     uint16 sched_priority;
 }
-
-// Window/terminal size structure.  This information is stored by the kernel
-// in order to provide a consistent interface, but is not used by the kernel.
-struct s_winsize {
-    uint16 ws_row;    // rows, in characters
-    uint16 ws_col;    // columns, in characters
-    uint16 ws_xpixel; // horizontal size, pixels
-    uint16 ws_ypixel; // vertical size, pixels
-}
-

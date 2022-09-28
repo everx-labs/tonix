@@ -89,22 +89,22 @@ library icore {
 
 struct uma_type_header {
     /* Static per-zone data, some extracted from the supporting keg. */
-	bytes10 uth_name;   //[UTH_MAX_NAME];
-	uint16 uth_align;	/* Keg: alignment. */
-	uint16 uth_size;	/* Keg: requested size of item. */
-	uint16 uth_rsize;	/* Keg: real size of item. */
-	uint16 uth_maxpages;/* Keg: maximum number of pages. */
-	uint16 uth_limit;	/* Keg: max items to allocate. */
-	/* Current dynamic zone/keg-derived statistics. */
-	uint16 uth_pages;	/* Keg: pages allocated. */
-	uint16 uth_keg_free;	/* Keg: items free. */
-	uint16 uth_zone_free;	/* Zone: items free. */
-	uint16 uth_bucketsize;	/* Zone: desired bucket size. */
-	uint16 uth_zone_flags;	/* Zone: flags. */
-	uint16 uth_allocs;	/* Zone: number of allocations. */
-	uint16 uth_frees;	/* Zone: number of frees. */
-	uint16 uth_fails;	/* Zone: number of alloc failures. */
-	uint16 uth_sleeps;	/* Zone: number of alloc sleeps. */
-	uint16 uth_xdomain;	/* Zone: Number of cross domain frees. */
-	uint16 _uth_reserved1;	/* Reserved. */
+    bytes10 uth_name;   //[UTH_MAX_NAME];
+    uint16 uth_align;	/* Keg: alignment. */
+    uint16 uth_size;	/* Keg: requested size of item. */
+    uint16 uth_rsize;	/* Keg: real size of item. */
+    uint16 uth_maxpages;/* Keg: maximum number of pages. */
+    uint16 uth_limit;	/* Keg: max items to allocate. */
+    /* Current dynamic zone/keg-derived statistics. */
+    uint16 uth_pages;	/* Keg: pages allocated. */
+    uint16 uth_keg_free;	/* Keg: items free. */
+    uint16 uth_zone_free;	/* Zone: items free. */
+    uint16 uth_bucketsize;	/* Zone: desired bucket size. */
+    uint16 uth_zone_flags;	/* Zone: flags. */
+    uint16 uth_allocs;	/* Zone: number of allocations. */
+    uint16 uth_frees;	/* Zone: number of frees. */
+    uint16 uth_fails;	/* Zone: number of alloc failures. */
+    uint16 uth_sleeps;	/* Zone: number of alloc sleeps. */
+    uint16 uth_xdomain;	/* Zone: Number of cross domain frees. */
+    uint16 _uth_reserved1;	/* Reserved. */
 }

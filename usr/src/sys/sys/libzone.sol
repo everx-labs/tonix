@@ -13,7 +13,6 @@ library libcache {
     uint8 constant UMA_CACHE_HEADER_SIZEOF = 34; // 3 * UMA_BUCKET_HEADER_SIZEOF + 16
 
     function init(uma_cache cache, bytes arg, uint16 size) internal returns (uint8 ec) {
-
         if (size != arg.length)
             return uer.ARG_SIZE_MISMATCH;
         if (size < UMA_CACHE_HEADER_SIZEOF)
@@ -27,9 +26,9 @@ library libcache {
         cache.uc_size = uint32(v >> 32 & 0xFFFFFFFF);
         cache.uc_flags = uint32(v & 0xFFFFFFFF);
 
-	    /*uma_bucket uc_freebucket;
-	    uma_bucket uc_allocbucket;
-	    uma_bucket uc_crossbucket;*/
+        /*uma_bucket uc_freebucket;
+        uma_bucket uc_allocbucket;
+        uma_bucket uc_crossbucket;*/
         from = to;
         to += libbucket.UMA_BUCKET_HEADER_SIZEOF;
         ec = cache.uc_freebucket.init(arg[from : to], to - from);
@@ -213,10 +212,10 @@ library libzone {
 
 //    function uma_import(uma_zone zone, bytes arg, uint16 count, uint8 domain, uint32 flags) internal virtual returns (bytes[], uint16) {
     function zone_import(uma_zone zone, bytes arg, uint16 max, uint8 domain, uint16 flags) internal returns (bytes[] bucket, uint16 i) {
-	    uma_keg keg = zone.uz_keg;
+        uma_keg keg = zone.uz_keg;
         uint8 ec;
-//        bytes itm;
-//        def = dom.slabs[0].def_item(keg);
+//      bytes itm;
+//      def = dom.slabs[0].def_item(keg);
         uint len = arg.length;
         uint16 n_items = uint16(len / keg.uk_size);
         if (n_items > max && flags >= 0)
@@ -226,7 +225,7 @@ library libzone {
 //        uint16 over_reserve = n_items - from_reserve;
         uint16 from_reserve = math.min(n_items, rsv);
         uint16 over_reserve = n_items - from_reserve;
-	    (uint16 idx, uma_slab slab) = keg.fetch_slab(domain);
+        (uint16 idx, uma_slab slab) = keg.fetch_slab(domain);
         if (idx > 0 && (rsv == 0 || keg.uk_domain[domain].ud_free_items >= rsv)) {
             if (slab.us_freecount >= n_items) {
                 slab.us_data.append(arg);
@@ -234,11 +233,11 @@ library libzone {
                 slab.us_free += over_reserve;
                 keg.uk_domain[domain].slabs[idx - 1] = slab;
                 keg.uk_domain[domain].ud_free_items -= n_items;
-//                if (from_reserve > 0)
-//                    keg.uk_reserve -= from_reserve;
+//              if (from_reserve > 0)
+//                  keg.uk_reserve -= from_reserve;
                 rsv -= from_reserve;
-//                if (slab.us_free > keg.uk_reserve)
-//                    keg.uk_offset = slab.us_free - keg.uk_reserve;
+//              if (slab.us_free > keg.uk_reserve)
+//                  keg.uk_offset = slab.us_free - keg.uk_reserve;
                 if (slab.us_free > rsv)
                     keg.uk_offset = slab.us_free - rsv;
                 keg.uk_reserve = rsv;
@@ -254,13 +253,13 @@ library libzone {
                 else
                     (ec, itm) = zone.item_ctor(zone.uz_flags, zone.uz_size, arg, flags, itm);
                 if (ec == 0) {
-		    	    bucket.push(itm);
+                    bucket.push(itm);
                     i++;
-		    	    if (keg.uk_reserve > 0 && keg.uk_domain[domain].ud_free_items <= keg.uk_reserve)
+    	            if (keg.uk_reserve > 0 && keg.uk_domain[domain].ud_free_items <= keg.uk_reserve)
                         break;
                 } else
                     break;
-		    }*/
+            }*/
         } else
             ec = uer.SLAB_FETCH_FAILED;
         if (ec > 0) {
@@ -270,7 +269,6 @@ library libzone {
         } else {
             bucket.push(arg);
         }
-
     }
 
     function _zaddr(uint16 zone_id, uint16 slab_id, uint16 offset) internal returns (uint32) {
@@ -280,7 +278,7 @@ library libzone {
     function alloc_item(uma_zone zone, bytes udata, uint8 domain, uint32 flags) internal returns (uint32 addr, bytes item) {
         uint8 ec;
         uint16 off;
-	    if (zone.uz_max_items > 0 && zone.alloc_limit(1, flags) == 0)
+        if (zone.uz_max_items > 0 && zone.alloc_limit(1, flags) == 0)
             ec = uer.ZONE_ALLOC_LIMIT_EXCEEDED;
         uma_keg keg = zone.uz_keg;
         (uint16 slab_id, uma_slab slab) = keg.fetch_slab(domain);
@@ -292,7 +290,7 @@ library libzone {
                 ec = uer.ITEM_IN_SLAB_ALLOC_FAILED;
         }
         if (ec == 0) {
-	        if ((zone.uz_flags & uma.UMA_ZFLAG_CTORDTOR) > 0 && zone.uz_ctor > 0)
+            if ((zone.uz_flags & uma.UMA_ZFLAG_CTORDTOR) > 0 && zone.uz_ctor > 0)
                 (ec, item) = zone.item_ctor(zone.uz_flags, zone.uz_size, udata, flags, item);
 //            if (zone.uz_init > 0)
 //                (ec, item) = zone.item_init()
@@ -312,8 +310,8 @@ library libzone {
             zone.uz_items++;
         } else {
             zone.uz_fails++;
-	        if (zone.uz_max_items > 0)
-		        zone.free_limit(1);
+            if (zone.uz_max_items > 0)
+                zone.free_limit(1);
         }
         zone.uz_keg = keg;
     }
@@ -324,67 +322,66 @@ library libzone {
     }
 
     function free_item(uma_zone zone, bytes item, bytes udata, zfreeskip skip) internal {
-	    zone.item_dtor(item, zone.uz_size, udata, skip);
-	    if (skip < zfreeskip.SKIP_FINI && zone.uz_fini > 0) {
-//	    	zone.uz_fini(item, zone.uz_size);
-	    }
-	    if (skip == zfreeskip.SKIP_CNT)
-	    	return;
-	    zone.uz_frees++;
-	    if (zone.uz_max_items > 0)
-	    	zone.free_limit(1);
+        zone.item_dtor(item, zone.uz_size, udata, skip);
+        if (skip < zfreeskip.SKIP_FINI && zone.uz_fini > 0) {
+//          zone.uz_fini(item, zone.uz_size);
+        }
+        if (skip == zfreeskip.SKIP_CNT)
+            return;
+        zone.uz_frees++;
+        if (zone.uz_max_items > 0)
+            zone.free_limit(1);
     }
     function alloc_limit(uma_zone zone, uint16 count, uint32 ) internal returns (uint16) {
-	    uint16 old;
-	    uint16 max;
-	    max = zone.uz_max_items;
+        uint16 old;
+        uint16 max;
+        max = zone.uz_max_items;
         if (max == 0)
             return 0;
-    	old = zone.uz_items + count;
-	    if (old + count <= max)
-		    return count;
-	    if (old < max) {
-		    zone.free_limit(old + count - max);
-		    return max - old;
-	    }
+       	old = zone.uz_items + count;
+        if (old + count <= max)
+            return count;
+        if (old < max) {
+            zone.free_limit(old + count - max);
+            return max - old;
+        }
     }
     function free_limit(uma_zone zone, uint16 count) internal {
-	    uint16 old;
-	    old = zone.uz_items - count;
-	    if (old == 0 || old - count >= zone.uz_max_items)
-		    return;
+        uint16 old;
+        old = zone.uz_items - count;
+        if (old == 0 || old - count >= zone.uz_max_items)
+            return;
     }
 
     function put_bucket(uma_zone zone, uint8 , uma_bucket bucket, bytes udata) internal {
-	    uma_zone_domain zdom = zone.uz_domain;
-	    if (bucket.ub_cnt == 0)
-	    	return;
-	    zdom.uzd_nitems += bucket.ub_cnt;
-	    if (zdom.uzd_nitems < zone.uz_max_items) { // bucket max items
-	    	if (zdom.uzd_buckets.empty())
-	    		zdom.uzd_buckets.push(bucket);
-	    	return;
-	    }
-	    zdom.uzd_nitems -= bucket.ub_cnt;
+        uma_zone_domain zdom = zone.uz_domain;
+        if (bucket.ub_cnt == 0)
+            return;
+        zdom.uzd_nitems += bucket.ub_cnt;
+        if (zdom.uzd_nitems < zone.uz_max_items) { // bucket max items
+            if (zdom.uzd_buckets.empty())
+                zdom.uzd_buckets.push(bucket);
+            return;
+        }
+        zdom.uzd_nitems -= bucket.ub_cnt;
         zone.uz_domain = zdom;
-    	zone.bucket_free(bucket, udata);
+        zone.bucket_free(bucket, udata);
     }
 
     function bucket_free(uma_zone zone, uma_bucket bucket, bytes udata) internal {
-	    if (bucket.ub_cnt != 0)
-		    zone.bucket_drain(bucket);
-
-	    if ((zone.uz_flags & uma.UMA_ZFLAG_BUCKET) == 0)
-		    udata = "" + bytes4(zone.uz_flags);
+        if (bucket.ub_cnt != 0)
+            zone.bucket_drain(bucket);
+        if ((zone.uz_flags & uma.UMA_ZFLAG_BUCKET) == 0)
+            udata = "" + bytes4(zone.uz_flags);
 //        uint16 idx = bucket_zone_lookup(bucket.ub_entries);
 //        if (idx > 0)
 //            ubz = _bucket_zones[idx - 1];
-//	    this.uma_zfree_arg(zone_id, infini.bucket_header_fini(bucket), udata);
+//      this.uma_zfree_arg(zone_id, infini.bucket_header_fini(bucket), udata);
     }
 
     function fetch_bucket(uma_zone zone) internal returns (uma_bucket bucket) {
         uma_zone_domain zdom = zone.uz_domain;
-	    bool dtor = false;
+        bool dtor = false;
         if (zdom.uzd_buckets.empty())
             return zdom.uzd_cross;
         bucket = zdom.uzd_buckets[0];
@@ -392,12 +389,12 @@ library libzone {
 //            this.er("zone_fetch_bucket", zone_id, FETCH_BUCKET_ITEM_COUNT_UNDERFLOW);
 //    	if (bucket.ub_cnt > 0)
 //            this.er("zone_fetch_bucket", zone_id, FETCH_BUCKET_EMPTY_BUCKET_IN_CACHE);
-    	zdom.uzd_nitems -= bucket.ub_cnt;
-    	if (dtor)
-    		for (uint16 i = 0; i < bucket.ub_cnt; i++)
-    			zone.item_dtor(bucket.ub_bucket[i], zone.uz_size, "", zfreeskip.SKIP_NONE);
+        zdom.uzd_nitems -= bucket.ub_cnt;
+        if (dtor)
+            for (uint16 i = 0; i < bucket.ub_cnt; i++)
+                zone.item_dtor(bucket.ub_bucket[i], zone.uz_size, "", zfreeskip.SKIP_NONE);
         zone.uz_domain = zdom;
-    	return bucket;
+        return bucket;
     }
 
     function bucket_drain(uma_zone zone, uma_bucket bucket) internal {
@@ -439,7 +436,7 @@ library libzone {
             if (zc == ZONE_CTOR) {
 //	            (ec, res) = zone.ctor(zone.def_item(ZONES_ZONE), size, udata, flags);
                 uma_zone z;
-	            (ec, z) = zone_ctor(item, size, udata, flags);
+                (ec, z) = zone_ctor(item, size, udata, flags);
                 if (ec == 0)
                     res = z.fini(UMA_ZONE_SIZEOF);
             } else if (zc == CHUNK_CTOR)
@@ -448,12 +445,12 @@ library libzone {
                 (ec, res) = libloadinfo.chunk_hash_ctor(item, size, udata, flags);
             if (ec == 0)
                 return (0, res);
-//            else if (zc == KEG_CTOR)
-//                (ec, res) = zone.uz_keg.ctor(def_item(KEGS_ZONE), size, udata, flags);
-//	    	if (ec > 0)
-//	    	    zone.free_item(res, udata, zfreeskip.SKIP_DTOR);
+//          else if (zc == KEG_CTOR)
+//              (ec, res) = zone.uz_keg.ctor(def_item(KEGS_ZONE), size, udata, flags);
+//          if (ec > 0)
+//      	    zone.free_item(res, udata, zfreeskip.SKIP_DTOR);
 	    }
-//            res = item;
+//      res = item;
     }
 
     function zone_ctor_arg_fini(string name, uint16 size) internal returns (bytes) {
@@ -488,33 +485,31 @@ library libzone {
     }
 
     function item_dtor(uma_zone zone, bytes item, uint16 size, bytes udata, zfreeskip skip) internal {
-    	if (skip < zfreeskip.SKIP_DTOR) {
+        if (skip < zfreeskip.SKIP_DTOR) {
             uint16 id = zone.uz_dtor;
-    		if (id == ZONE_DTOR)
-    			zone.dtor(item, size, udata);
+            if (id == ZONE_DTOR)
+        	    zone.dtor(item, size, udata);
             else if (id == KEG_DTOR)
-    			zone.uz_keg.dtor(item, size, udata);
-    	}
+                zone.uz_keg.dtor(item, size, udata);
+        }
     }
 
     function dtor(uma_zone zone, bytes /*arg*/, uint16, bytes) internal {
-	    uma_keg keg;
+        uma_keg keg;
         bytes empty;
-
 //        uint16 zone_id = uint16(bytes2(arg));
 //        uma_zone zone = _zone(zone_id);
 //	    LIST_REMOVE(zone, uz_link);
-    	if ((zone.uz_flags & (UMA_ZONE_SECONDARY | uma.UMA_ZFLAG_CACHE)) == 0) {
-    		keg = zone.uz_keg;
-    		keg.uk_reserve = 0;
-    	}
+        if ((zone.uz_flags & (UMA_ZONE_SECONDARY | uma.UMA_ZFLAG_CACHE)) == 0) {
+            keg = zone.uz_keg;
+            keg.uk_reserve = 0;
+        }
 //    	zone_reclaim(zone_id, UMA_ANYDOMAIN, M_WAITOK, true);
-
-	    if ((zone.uz_flags & (UMA_ZONE_SECONDARY | uma.UMA_ZFLAG_CACHE)) == 0) {
-	    	keg = zone.uz_keg;
-//	    	LIST_REMOVE(keg, uk_link);
-	    	zone.free_item(keg.fini(libkeg.UMA_KEG_SIZEOF), empty, zfreeskip.SKIP_NONE);
-	    }
+        if ((zone.uz_flags & (UMA_ZONE_SECONDARY | uma.UMA_ZFLAG_CACHE)) == 0) {
+            keg = zone.uz_keg;
+//          LIST_REMOVE(keg, uk_link);
+            zone.free_item(keg.fini(libkeg.UMA_KEG_SIZEOF), empty, zfreeskip.SKIP_NONE);
+        }
     }
 
     function init(uma_zone zone, bytes arg, uint16 size) internal returns (uint8 ec) {
@@ -545,7 +540,6 @@ library libzone {
         zone.uz_keg = keg;
         if (size == to)
             return 0;
-
         uma_cache cache;
         from = to;
         to += libcache.UMA_CACHE_HEADER_SIZEOF;
@@ -557,7 +551,6 @@ library libzone {
         zone.uz_cpu = cache;
         if (size == to)
             return 0;
-
         uma_zone_domain udomain;
         from = to;
         to += libudomain.UMA_ZONE_DOMAIN_HEADER_SIZEOF;
@@ -584,7 +577,4 @@ library libzone {
         if (size > UMA_ZONE_HEADER_SIZEOF + libkeg.UMA_KEG_SIZEOF)
             res.append(uz_domain.fini(libudomain.UMA_ZONE_DOMAIN_HEADER_SIZEOF));
     }
-
 }
-
-

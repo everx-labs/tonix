@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.62.0;
 
 import "io.sol";
-import "liberr.sol";
+//import "liberr.sol";
 import "path.sol";
 import "priv.sol";
 import "dirent.sol";
@@ -11,6 +11,10 @@ struct timeval {
 }
 
 library libfattr {
+
+    uint8 constant EBADF    = 9; // Bad file descriptor
+    uint8 constant EINVAL   = 22; // Invalid argument
+    uint8 constant ENOSYS       = 78; // Function not implemented
 
     using libfattr for s_thread;
 
@@ -59,9 +63,9 @@ library libfattr {
                 for (string line: lines)
                     dirents.push(dirent.parse_dirent(line));
             } else
-                ec = err.EINVAL;
+                ec = EINVAL;
         } else
-            ec = err.EBADF;
+            ec = EBADF;
     }
 
     function _get_dirent(s_dirent[] des, string sp) internal returns (s_dirent) {
@@ -186,7 +190,7 @@ library libfattr {
 
             }
         } else
-            ec = err.ENOSYS;
+            ec = ENOSYS;
 //        if (number == SYS_mkdir)
         td.td_errno = ec;
         td.td_retval = rv;

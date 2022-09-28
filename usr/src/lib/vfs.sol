@@ -523,8 +523,34 @@ library vfs {
     }
 
     function parse_device_info(string dev_info_s) internal returns (DeviceInfo dev_info) {
-        (uint[] values, string[] names, address[] addresses) = fmt.parse_record(dev_info_s, "\t");
+        (uint[] values, string[] names, address[] addresses) = parse_record(dev_info_s, "\t");
         return DeviceInfo(uint8(values[0]), uint8(values[1]), names[0], uint16(values[2]), uint16(values[3]), addresses[0]);
+    }
+
+    function parse_record(string line, string separator) internal returns (uint[] values, string[] names, address[] addresses) {
+        (string[] fields, ) = line.split_line(separator, "\n");
+        for (string s: fields) {
+            uint len = s.byteLength();
+            if (len > 65)
+                addresses.push(to_address(s));
+            else {
+                optional(int) val = stoi(s);
+                if (val.hasValue())
+                    values.push(uint(val.get()));
+                else
+                    names.push(s);
+            }
+        }
+    }
+
+    function to_address(string saddr) internal returns (address) {
+        uint len = saddr.byteLength();
+        if (len > 60) {
+            string s_hex = "0x" + saddr.substr(2);
+            optional(int) u_addr = stoi(s_hex);
+            if (u_addr.hasValue())
+                return address.makeAddrStd(0, uint(u_addr.get()));
+        }
     }
 
     function parse_device_info_2(string dev_info_s) internal returns (string dev_name, uint8 major_id, uint8 minor_id, uint16 block_size, uint16 n_blocks, uint16 device_id) {

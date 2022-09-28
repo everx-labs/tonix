@@ -1,7 +1,7 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.64.0;
 struct s_sbuf {
     bytes buf;       // storage buffer
-    uint8 error;    // current error code
+    uint8 error;     // current error code
     uint32 size;     // size of storage buffer
     uint16 len;      // current length of string
     uint32 flags;    // flags

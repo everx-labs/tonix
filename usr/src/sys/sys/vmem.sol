@@ -68,24 +68,26 @@ library vmem {
     uint16 constant M_EXEC        = 0x4000; // allocate executable space
     uint16 constant M_NEXTFIT     = 0x8000; // only for vmem, follow cursor
 
-    uint8 constant VMEM_NAME_MAX =  16;
-    uint8 constant BT_MAXALLOC =    4;
-    uint8 constant BT_MAXFREE = (BT_MAXALLOC * 8);
-    uint8 constant VMEM_OPTORDER =  5;
-    uint8 constant VMEM_OPTVALUE =  uint8(1) << VMEM_OPTORDER;
-    uint8 constant VMEM_MAXORDER = VMEM_OPTVALUE - 1 + 2 * 8 - VMEM_OPTORDER;
-    uint8 constant VMEM_HASHSIZE_MIN =  16;
+    uint8 constant VMEM_NAME_MAX    = 16;
+    uint8 constant BT_MAXALLOC      = 4;
+    uint8 constant BT_MAXFREE       = (BT_MAXALLOC * 8);
+    uint8 constant VMEM_OPTORDER    = 5;
+    uint8 constant VMEM_OPTVALUE    = uint8(1) << VMEM_OPTORDER;
+    uint8 constant VMEM_MAXORDER    = VMEM_OPTVALUE - 1 + 2 * 8 - VMEM_OPTORDER;
+    uint8 constant VMEM_HASHSIZE_MIN = 16;
     uint32 constant VMEM_HASHSIZE_MAX = 131072;
     uint8 constant VMEM_QCACHE_IDX_MAX = 16;
-    uint16 constant VMEM_FITMASK = M_BESTFIT | M_FIRSTFIT | M_NEXTFIT;
-    uint16 constant VMEM_FLAGS   = M_NOWAIT | M_WAITOK | M_USE_RESERVE | M_NOVM | M_BESTFIT | M_FIRSTFIT | M_NEXTFIT;
-    uint16 constant BT_FLAGS     = M_NOWAIT | M_WAITOK | M_USE_RESERVE | M_NOVM;
-    uint8 constant QC_NAME_MAX    = 16;
-    uint8 constant VMEM_ADDR_MIN         =  0;
-    uint8 constant VMEM_ADDR_QCACHE_MIN  =  1;
-    uint8 constant VMEM_ALLOC           = 0x01;
-    uint8 constant VMEM_FREE            = 0x02;
-    uint8 constant VMEM_MAXFREE         = 0x10;
+    uint16 constant VMEM_FITMASK    = M_BESTFIT | M_FIRSTFIT | M_NEXTFIT;
+    uint16 constant VMEM_FLAGS      = M_NOWAIT | M_WAITOK | M_USE_RESERVE | M_NOVM | M_BESTFIT | M_FIRSTFIT | M_NEXTFIT;
+    uint16 constant BT_FLAGS        = M_NOWAIT | M_WAITOK | M_USE_RESERVE | M_NOVM;
+    uint8 constant QC_NAME_MAX      = 16;
+    uint8 constant VMEM_ADDR_MIN    = 0;
+    uint8 constant VMEM_ADDR_QCACHE_MIN = 1;
+
+    uint8 constant VMEM_ALLOC   = 0x01;
+    uint8 constant VMEM_FREE    = 0x02;
+    uint8 constant VMEM_MAXFREE = 0x10;
+
     uint8 constant BT_TYPE_SPAN         = 1; // Allocated from importfn
     uint8 constant BT_TYPE_SPAN_STATIC  = 2; // vmem_add() or create.
     uint8 constant BT_TYPE_FREE         = 3; // Available space.

@@ -4,6 +4,7 @@ import "uma_int.sol";
 import "libslab.sol";
 import "libzone.sol";
 import "uer.sol";
+import "libmalloc.sol";
 
 library libdomain {
 
@@ -102,11 +103,9 @@ library libkeg {
 //        slab_id = keg.page_alloc(0, domain);
 //        keg.uk_pgoff = slab_id;
 //        keg.uk_domain[domain].ud_slab = slab_id;
-
-
     function fetch_free_slab(uma_keg keg, uint8 domain, uint32 flags) internal returns (uma_slab slab) {
-    	uint16 reserve = (flags & libmalloc.M_USE_RESERVE) > 0 ? 0 : keg.uk_reserve;
-    	if (keg.uk_domain[domain].ud_free_items > reserve)
+        uint16 reserve = (flags & libmalloc.M_USE_RESERVE) > 0 ? 0 : keg.uk_reserve;
+        if (keg.uk_domain[domain].ud_free_items > reserve)
             slab = keg.first_slab(domain);
     }
 
@@ -171,10 +170,10 @@ library libkeg {
     }
 
 struct keg_layout_result {
-	uint32 format;
-	uint16 slabsize;
-	uint16 ipers;
-	uint16 eff;
+    uint32 format;
+    uint16 slabsize;
+    uint16 ipers;
+    uint16 eff;
 }
 
     function layout_one(uma_keg keg, uint16 rsize, uint16 slabsize, uint32 fmt) internal returns (keg_layout_result kl) {
@@ -201,28 +200,24 @@ struct keg_layout_result {
 	    uint32[2] fmts;
 	    uint16 nfmt;
 	    uint16 slabsize;
-
-//	    KASSERT((keg.uk_flags & (UMA_ZFLAG_INTERNAL | UMA_ZONE_VM)) == 0 || (keg.uk_flags & (UMA_ZONE_NOTOUCH | UMA_ZONE_PCPU)) == 0, ("%s: incompatible flags 0x%b", __func__, keg.uk_flags, PRINT_UMA_ZFLAGS));
-    	uint16 alignsize = keg.uk_align + 1;
-	    uint16 rsize = math.max(keg.uk_size, uma.UMA_SMALLEST_UNIT);
-
-	    if ((keg.uk_flags & libzone.UMA_ZONE_CACHESPREAD) > 0) {
-	    	if ((rsize & alignsize) == 0)
-	    		rsize += alignsize;
-	    	slabsize = rsize * (uma.PAGE_SIZE / alignsize);
-	    	slabsize = math.min(slabsize, rsize * libslab.SLAB_MAX_SETSIZE);
-	    	slabsize = math.min(slabsize, uma.UMA_CACHESPREAD_MAX_SIZE);
-	    } else
-	    	slabsize = keg.uk_size;
-
-	    if ((keg.uk_flags & (libzone.UMA_ZONE_NOTOUCH | libzone.UMA_ZONE_PCPU)) == 0)
-	    	fmts[nfmt++] = 0;
-	    if ((keg.uk_flags & (uma.UMA_ZFLAG_INTERNAL | libzone.UMA_ZONE_VM)) > 0)
-	    	fmts[nfmt++] = uma.UMA_ZFLAG_INTERNAL;
-	    else
-	    	fmts[nfmt++] = uma.UMA_ZFLAG_OFFPAGE;
-
-	    uint16 i = (slabsize + rsize - keg.uk_size) / math.max(uma.PAGE_SIZE, rsize);
+//      KASSERT((keg.uk_flags & (UMA_ZFLAG_INTERNAL | UMA_ZONE_VM)) == 0 || (keg.uk_flags & (UMA_ZONE_NOTOUCH | UMA_ZONE_PCPU)) == 0, ("%s: incompatible flags 0x%b", __func__, keg.uk_flags, PRINT_UMA_ZFLAGS));
+       	uint16 alignsize = keg.uk_align + 1;
+        uint16 rsize = math.max(keg.uk_size, uma.UMA_SMALLEST_UNIT);
+        if ((keg.uk_flags & libzone.UMA_ZONE_CACHESPREAD) > 0) {
+            if ((rsize & alignsize) == 0)
+                rsize += alignsize;
+            slabsize = rsize * (uma.PAGE_SIZE / alignsize);
+            slabsize = math.min(slabsize, rsize * libslab.SLAB_MAX_SETSIZE);
+            slabsize = math.min(slabsize, uma.UMA_CACHESPREAD_MAX_SIZE);
+        } else
+            slabsize = keg.uk_size;
+        if ((keg.uk_flags & (libzone.UMA_ZONE_NOTOUCH | libzone.UMA_ZONE_PCPU)) == 0)
+            fmts[nfmt++] = 0;
+        if ((keg.uk_flags & (uma.UMA_ZFLAG_INTERNAL | libzone.UMA_ZONE_VM)) > 0)
+            fmts[nfmt++] = uma.UMA_ZFLAG_INTERNAL;
+        else
+            fmts[nfmt++] = uma.UMA_ZFLAG_OFFPAGE;
+        uint16 i = (slabsize + rsize - keg.uk_size) / math.max(uma.PAGE_SIZE, rsize);
 //	    KASSERT(i >= 1, ("keg %s(%p) flags=0x%b slabsize=%u, rsize=%u, i=%u", keg.uk_name, keg, keg.uk_flags, PRINT_UMA_ZFLAGS, slabsize, rsize, i));
 	    for ( ; ; i++) {
 	    	slabsize = (rsize <= uma.PAGE_SIZE) ? i : (rsize * (i - 1) + keg.uk_size);
@@ -241,19 +236,19 @@ struct keg_layout_result {
     			break;
 	    }
 
-	    uint16 pages = kl.slabsize;
-	    keg.uk_rsize = rsize;
-	    keg.uk_ipers = kl.ipers;
-	    keg.uk_ppera = pages;
-	    keg.uk_flags |= kl.format;
+        uint16 pages = kl.slabsize;
+        keg.uk_rsize = rsize;
+        keg.uk_ipers = kl.ipers;
+        keg.uk_ppera = pages;
+        keg.uk_flags |= kl.format;
 
-	    if ((keg.uk_flags & uma.UMA_ZFLAG_OFFPAGE) > 0 || (keg.uk_ipers - 1) * rsize >= uma.PAGE_SIZE) {
-	    	if ((keg.uk_flags & libzone.UMA_ZONE_NOTPAGE) > 0)
-	    		keg.uk_flags |= uma.UMA_ZFLAG_HASH;
-	    	else
-	    		keg.uk_flags |= uma.UMA_ZFLAG_VTOSLAB;
-	    }
-//    	KASSERT(keg.uk_ipers > 0 && keg.uk_ipers <= SLAB_MAX_SETSIZE, ("%s: keg=%s, flags=0x%b, rsize=%u, ipers=%u, ppera=%u", __func__, keg.uk_name, keg.uk_flags, PRINT_UMA_ZFLAGS, rsize, keg.uk_ipers, pages));
+        if ((keg.uk_flags & uma.UMA_ZFLAG_OFFPAGE) > 0 || (keg.uk_ipers - 1) * rsize >= uma.PAGE_SIZE) {
+            if ((keg.uk_flags & libzone.UMA_ZONE_NOTPAGE) > 0)
+                keg.uk_flags |= uma.UMA_ZFLAG_HASH;
+            else
+                keg.uk_flags |= uma.UMA_ZFLAG_VTOSLAB;
+        }
+//      KASSERT(keg.uk_ipers > 0 && keg.uk_ipers <= SLAB_MAX_SETSIZE, ("%s: keg=%s, flags=0x%b, rsize=%u, ipers=%u, ppera=%u", __func__, keg.uk_name, keg.uk_flags, PRINT_UMA_ZFLAGS, rsize, keg.uk_ipers, pages));
     }
 
     function init(uma_keg keg, bytes arg, uint16 size) internal returns (uint8 ec) {
@@ -309,13 +304,12 @@ struct keg_layout_result {
     }
 
     function dtor(uma_keg keg, bytes arg, uint16 size, bytes ) internal {
-	    uint16 free;
+        uint16 free;
         uint16 pages;
-
         keg.init(arg, size);
-	    for (uint16 i = 0; i < 1; i++) {
-	    	free += keg.uk_domain[i].ud_free_items;
-	    	pages += keg.uk_domain[i].ud_pages;
+        for (uint16 i = 0; i < 1; i++) {
+            free += keg.uk_domain[i].ud_free_items;
+            pages += keg.uk_domain[i].ud_pages;
 	    }
     }
 

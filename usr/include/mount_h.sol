@@ -124,7 +124,7 @@ struct s_pfs_node {
     s_vfsopt[] vfc_opts;    // mount options
 }
 struct s_mount {
-    uint16 mnt_vfs_ops;         // pending vfs ops
+    uint8 mnt_vfs_ops;         // pending vfs ops
     uint16 mnt_kern_flag;       // kernel only flags
     uint64 mnt_flag;            // flags shared with user
     s_vnode mnt_rootvnode;
@@ -135,16 +135,16 @@ struct s_mount {
     s_vnode mnt_syncer;         // syncer vnode
     uint16 mnt_ref;             // Reference count
     s_vnode[] mnt_nvnodelist;   // list of vnodes
-    uint16 mnt_nvnodelistsize;  // # of vnodes
-    uint16 mnt_writeopcount;    // write syscalls pending
+    uint8 mnt_nvnodelistsize;  // # of vnodes
+    uint8 mnt_writeopcount;    // write syscalls pending
     s_vfsopt[] mnt_opt;         // current mount options
     s_vfsopt[] mnt_optnew;      // new options passed to fs
-    uint16 mnt_maxsymlinklen;   // max size of short symlink
+    uint8 mnt_maxsymlinklen;   // max size of short symlink
     s_statfs mnt_stat;          // cache of filesystem stats
     s_ucred mnt_cred;           // credentials of mounter
     bytes mnt_data;             // private data
     uint32 mnt_time;            // last time writte
     uint16 mnt_iosize_max;      // max size for clusters, etc
-//    struct netexport *mnt_export; // export list
-    string mnt_label;                // MAC label for the fs
+//  netexport mnt_export;       // export list
+    string mnt_label;           // MAC label for the fs
 }

@@ -5,9 +5,9 @@ struct s_sockaddr {
     string sa_data;
 }
 struct s_sockaddr_in {
-  uint8 sin_family;
-  uint16 sin_port;
-  uint sin_addr;
+    uint8 sin_family;
+    uint16 sin_port;
+    uint sin_addr;
 }
 
 struct s_xsockbuf {
@@ -23,9 +23,9 @@ struct s_xsockbuf {
 }
 //  Structure to export socket from kernel to utilities, via sysctl(3).
 struct s_xsocket {
-//    ksize         xso_len;        // length of this structure
-    uint16 xso_so;         // kernel address of struct socket
-    uint16 so_pcb;         // kernel address of struct inpcb
+//    ksize xso_len; // length of this structure
+    uint16 xso_so;   // kernel address of struct socket
+    uint16 so_pcb;   // kernel address of struct inpcb
     uint64 so_oobmark;
     int32  xso_protocol;
     int32  xso_family;
@@ -43,4 +43,3 @@ struct s_xsocket {
     s_xsockbuf so_rcv;
     s_xsockbuf so_snd;
 }
-

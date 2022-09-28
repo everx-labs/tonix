@@ -283,35 +283,31 @@ library priv {
         // defined for the API.  Historically, flags specified using the real uid
         // instead of the effective uid, and whether or not the check should be
         // allowed in jail.
-	    // KASSERT(PRIV_VALID(priv), ("priv_check_cred: invalid privilege %d", priv));
-
-	    if (ppriv == PRIV_VFS_LOOKUP)
-	    	return priv_check_cred_vfs_lookup(cred);
-	    else if (ppriv == PRIV_VFS_GENERATION)
-	    	return priv_check_cred_vfs_generation(cred);
+        // KASSERT(PRIV_VALID(priv), ("priv_check_cred: invalid privilege %d", priv));
+        if (ppriv == PRIV_VFS_LOOKUP)
+            return priv_check_cred_vfs_lookup(cred);
+        else if (ppriv == PRIV_VFS_GENERATION)
+            return priv_check_cred_vfs_generation(cred);
 //	    error = priv_check_cred_pre(cred, ppriv);
 //	    error = prison_priv_check(cred, ppriv);
-        /*if (unprivileged_mlock && (ppriv == PRIV_VM_MLOCK || ppriv == PRIV_VM_MUNLOCK))
-			error = 0;
-	    if (unprivileged_read_msgbuf && ppriv == PRIV_MSGBUF)
-	    	error = 0;
-
-	    if (suser_enabled(cred)) {*/
-	    	if (ppriv == PRIV_MAXFILES || ppriv == PRIV_MAXPROC || ppriv == PRIV_PROC_LIMIT)
-	    		if (cred.cr_ruid == 0)
-	    			error = 0;
-	    	else {
+           /*if (unprivileged_mlock && (ppriv == PRIV_VM_MLOCK || ppriv == PRIV_VM_MUNLOCK))
+            error = 0;
+        if (unprivileged_read_msgbuf && ppriv == PRIV_MSGBUF)
+            error = 0;
+        if (suser_enabled(cred)) {*/
+            if (ppriv == PRIV_MAXFILES || ppriv == PRIV_MAXPROC || ppriv == PRIV_PROC_LIMIT)
+                if (cred.cr_ruid == 0)
+                    error = 0;
+            else {
                 if (cred.cr_uid == 0)
-	    			error = 0;
-	    	}
+                    error = 0;
+            }
 //	    }
-
-	    if (ppriv == PRIV_KMEM_READ)
-	    	error = 0;
-
-//	    if (ppriv == PRIV_DEBUG_UNPRIV)
-//	    	if (prison_allow(cred, PR_ALLOW_UNPRIV_DEBUG))
-//	    		error = 0;
+        if (ppriv == PRIV_KMEM_READ)
+        	error = 0;
+//      if (ppriv == PRIV_DEBUG_UNPRIV)
+//          if (prison_allow(cred, PR_ALLOW_UNPRIV_DEBUG))
+//              error = 0;
 
 //	return priv_check_cred_post(cred, ppriv, error, false);
 //	return (priv_check_cred_post(cred, ppriv, error, true));

@@ -575,9 +575,9 @@ library libkernprot {
     		setsugid(p);
     	}
     	if (rgid != 0 && oldcred.cr_rgid != rgid) {
-    		change_rgid(newcred, rgid);
-    		setsugid(p);
-    	}
+            change_rgid(newcred, rgid);
+            setsugid(p);
+        }
     	if ((rgid != 0 || newcred.cr_groups[0] != newcred.cr_rgid) &&
     	    newcred.cr_svgid != newcred.cr_groups[0]) {
     		change_svgid(newcred, newcred.cr_groups[0]);
@@ -767,9 +767,9 @@ library libkernprot {
     	l = 1;
     	h = cred.cr_ngroups;
     	while (l < h) {
-    		m = l + ((h - l) / 2);
-    		if (cred.cr_groups[m] < gid)
-    			l = m + 1;
+    	    m = l + ((h - l) / 2);
+    	    if (cred.cr_groups[m] < gid)
+            	l = m + 1;
     		else
     			h = m;
     	}
@@ -869,14 +869,14 @@ library libkernprot {
      * not be visible anymore).
      */
     function proc_set_cred(s_proc p, s_ucred newcred) internal {
-    	s_ucred cr;
-    	cr = p.p_ucred;
+        s_ucred cr;
+        cr = p.p_ucred;
 //    	MPASS(cr != NULL);
 //    	KASSERT(newcred->cr_users == 0, ("%s: users %d not 0 on cred %p", __func__, newcred->cr_users, newcred));
 //    	KASSERT(cr->cr_users > 0, ("%s: users %d not > 0 on cred %p", __func__, cr->cr_users, cr));
-    	cr.cr_users--;
-    	p.p_ucred = newcred;
-    	newcred.cr_users = 1;
+        cr.cr_users--;
+        p.p_ucred = newcred;
+        newcred.cr_users = 1;
     }
 
     function proc_unset_cred(s_proc p) internal {

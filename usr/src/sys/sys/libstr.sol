@@ -3,57 +3,57 @@ import "uma_int.sol";
 import "uer.sol";
 
 struct strbuf {
-	uint16 alloc;
-	uint16 len;
-	bytes buf;
+    uint16 alloc;
+    uint16 len;
+    bytes buf;
 }
 
 library libstrbuf {
 
  //strbuf_swap(strbuf a, strbuf b){SWAP(*a, *b);}
     function strbuf_avail(strbuf sb) internal returns (uint16) {
-          return sb.alloc > 0 ? sb.alloc - sb.len - 1 : 0;
+        return sb.alloc > 0 ? sb.alloc - sb.len - 1 : 0;
     }
 
     function strbuf_setlen(strbuf sb, uint16 len) internal {
-    	if (len > (sb.alloc > 0 ? sb.alloc - 1 : 0)) {}
-//    		BUG("strbuf_setlen() beyond buffer");
-    	sb.len = len;
-    	/*if (sb.buf != strbuf_slopbuf)
-    		sb.buf[len] = 0;
-    	else
-    		assert(!strbuf_slopbuf[0])*/
+        if (len > (sb.alloc > 0 ? sb.alloc - 1 : 0)) {}
+//          BUG("strbuf_setlen() beyond buffer");
+        sb.len = len;
+        /*if (sb.buf != strbuf_slopbuf)
+               sb.buf[len] = 0;
+        else
+            assert(!strbuf_slopbuf[0])*/
     }
 
     function strbuf_complete(strbuf sb, byte term) internal {
-    	if (sb.len > 0 && sb.buf[sb.len - 1] != term)
-    		strbuf_addch(sb, term);
+        if (sb.len > 0 && sb.buf[sb.len - 1] != term)
+            strbuf_addch(sb, term);
     }
 
     function strbuf_addch(strbuf sb, byte c) internal {
-    	if (strbuf_avail(sb) == 0)
-    		strbuf_grow(sb, 1);
-    	sb.buf[sb.len++] = c;
-    	sb.buf[sb.len] = 0;
+        if (strbuf_avail(sb) == 0)
+            strbuf_grow(sb, 1);
+        sb.buf[sb.len++] = c;
+        sb.buf[sb.len] = 0;
     }
 
     function strlen(string s) internal returns (uint16) {
         return uint16(s.byteLength());
     }
     function strbuf_addstr(strbuf sb, string s) internal {
-    	strbuf_add(sb, s, strlen(s));
+        strbuf_add(sb, s, strlen(s));
     }
 
     function strbuf_insertstr(strbuf sb, uint16 pos, string s) internal {
-    	strbuf_insert(sb, pos, s, strlen(s));
+        strbuf_insert(sb, pos, s, strlen(s));
     }
 
 //    function strbuf_strip_suffix(strbuf sb, string suffix) internal returns (uint16) {
-//	    if (strip_suffix_mem(sb.buf, sb.len, suffix)) {
-//		    strbuf_setlen(sb, sb.len);
-//		    return 1;
-//	    } else
-//		    return 0;
+//      if (strip_suffix_mem(sb.buf, sb.len, suffix)) {
+//  	    strbuf_setlen(sb, sb.len);
+//          return 1;
+//      } else
+//          return 0;
 //    }
 
     function  strbuf_split_str(string str, uint16 terminator, uint16 max) internal returns (strbuf[]) {
@@ -149,8 +149,8 @@ library libstrbuf {
 //typedef size_t (*expand_fn_t) (strbuf sb, string placeholder, bytes context);
 //#define STRBUF_ENCODE_SLASH 1
 struct strbuf_expand_dict_entry {
-	string placeholder;
-	string value;
+    string placeholder;
+    string value;
 }
 struct FILE {
     uint16 fd;

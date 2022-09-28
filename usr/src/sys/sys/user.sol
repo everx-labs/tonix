@@ -1,91 +1,91 @@
 struct kinfo_proc {
-    uint16     ki_structsize;          // size of this structure
-    uint16     ki_layout;              // reserved: layout identifier
-    s_pargs ki_args;         // address of command arguments
-    s_proc ki_paddr;         // address of proc
-    struct  user *ki_addr;          // kernel virtual addr of u-area
-    k_vnode ki_tracep;       // pointer to trace file
-    k_vnode ki_textvp;       // pointer to executable file
-    struct  filedesc *ki_fd;        // pointer to open file info
-    struct  vmspace *ki_vmspace;    // pointer to kernel vmspace struct
-    bytes ki_wchan;           // sleep address
-    uint16 ki_pid;                 // Process identifier
-    uint16 ki_ppid;                // parent process id
-    uint16 ki_pgid;                // process group id
-    uint16 ki_tpgid;               // tty process group id
-    uint16 ki_sid;                 // Process session ID
-    uint16 ki_tsid;                // Terminal session ID
-    uint16 ki_jobc;                // job control counter
+    uint16 ki_structsize;  // size of this structure
+    uint16 ki_layout;      // reserved: layout identifier
+    s_pargs ki_args;       // address of command arguments
+    s_proc ki_paddr;       // address of proc
+    struct user *ki_addr; // kernel virtual addr of u-area
+    k_vnode ki_tracep;     // pointer to trace file
+    k_vnode ki_textvp;     // pointer to executable file
+    s_filedesc *ki_fd;     // pointer to open file info
+    struct vmspace *ki_vmspace;    // pointer to kernel vmspace struct
+    bytes ki_wchan;        // sleep address
+    uint16 ki_pid;         // Process identifier
+    uint16 ki_ppid;        // parent process id
+    uint16 ki_pgid;        // process group id
+    uint16 ki_tpgid;       // tty process group id
+    uint16 ki_sid;         // Process session ID
+    uint16 ki_tsid;        // Terminal session ID
+    uint16 ki_jobc;        // job control counter
     uint32 ki_tdev_freebsd11;     // controlling tty dev
-    uint16[] ki_siglist;            // Signals arrived but not delivered
-    uint16[] ki_sigmask;            // Current signal mask
-    uint16[] ki_sigignore;          // Signals being ignored
-    uint16[] ki_sigcatch;           // Signals being caught by user
-    uint16 ki_uid;                 // effective user id
-    uint16 ki_ruid;                // Real user id
-    uint16 ki_svuid;               // Saved effective user id
-    uint16 ki_rgid;                // Real group id
-    uint16 ki_svgid;               // Saved effective group id
-    uint16   ki_ngroups;             // number of groups
-    uint16[]   ki_groups;           // groups [KI_NGROUPS]
-    uint32 ki_size;              // virtual size
-    uint32 ki_rssize;              // current resident set size in pages
-    uint32 ki_swrss;               // resident set size before last swap
-    uint32 ki_tsize;               // text size (pages) XXX
-    uint32 ki_dsize;               // data size (pages) XXX
-    uint32 ki_ssize;               // stack size (pages)
-    uint16 ki_xstat;               // Exit status for wait & stop signal
-    uint16 ki_acflag;              // Accounting flags
-    uint16 ki_pctcpu;              // %cpu for process during ki_swtime
-    uint16 ki_estcpu;              // Time averaged value of ki_cpticks
-    uint16 ki_slptime;             // Time since last blocked
-    uint16 ki_swtime;              // Time swapped in or out
-    uint16 ki_cow;                 // number of copy-on-write faults
-    uint64 ki_runtime;           // Real time in microsec
+    uint16[] ki_siglist;   // Signals arrived but not delivered
+    uint16[] ki_sigmask;   // Current signal mask
+    uint16[] ki_sigignore; // Signals being ignored
+    uint16[] ki_sigcatch;  // Signals being caught by user
+    uint16 ki_uid;         // effective user id
+    uint16 ki_ruid;        // Real user id
+    uint16 ki_svuid;       // Saved effective user id
+    uint16 ki_rgid;        // Real group id
+    uint16 ki_svgid;       // Saved effective group id
+    uint16 ki_ngroups;     // number of groups
+    uint16[] ki_groups;    // groups [KI_NGROUPS]
+    uint32 ki_size;        // virtual size
+    uint32 ki_rssize;      // current resident set size in pages
+    uint32 ki_swrss;       // resident set size before last swap
+    uint32 ki_tsize;       // text size (pages) XXX
+    uint32 ki_dsize;       // data size (pages) XXX
+    uint32 ki_ssize;       // stack size (pages)
+    uint16 ki_xstat;       // Exit status for wait & stop signal
+    uint16 ki_acflag;      // Accounting flags
+    uint16 ki_pctcpu;      // %cpu for process during ki_swtime
+    uint16 ki_estcpu;      // Time averaged value of ki_cpticks
+    uint16 ki_slptime;     // Time since last blocked
+    uint16 ki_swtime;      // Time swapped in or out
+    uint16 ki_cow;         // number of copy-on-write faults
+    uint64 ki_runtime;     // Real time in microsec
     uint32 ki_start;       // starting time
     uint32 ki_childtime;   // time used by process children
-    uint32    ki_flag;                // P_* flags
-    uint32    ki_kiflag;              // KI_* flags (below)
-    uint16     ki_traceflag;           // Kernel trace points
-    uint8    ki_stat;                // S* process status
-    int8  ki_nice;            // Process "nice" value
-    uint8    ki_lock;                // Process lock (prevent swap) count
-    uint8    ki_rqindex;             // Run queue index
-    uint8  ki_oncpu_old;           // Which cpu we are on (legacy)
-    uint8  ki_lastcpu_old;         // Last cpu we were on (legacy)
-    string ki_tdname[TDNAMLEN+1];  // thread name
-    string ki_wmesg[WMESGLEN+1];   // wchan message
-    string ki_login[LOGNAMELEN+1]; // setlogin name
-    string ki_lockname[LOCKNAMELEN+1]; // lock name
-    string ki_comm[COMMLEN+1];     // command name
-    string ki_emul[KI_EMULNAMELEN+1];  // emulation name
-    string ki_loginclass[LOGINCLASSLEN+1]; // login class
-    string ki_moretdname[MAXCOMLEN-TDNAMLEN+1];    // more thread name
-    uint64 ki_tdev;               // controlling tty dev
-    uint16     ki_oncpu;               // Which cpu we are on
-    uint16     ki_lastcpu;             // Last cpu we were on
-    uint16     ki_tracer;              // Pid of tracing process
-    uint16     ki_flag2;               // P2_* flags
-    uint16     ki_fibnum;              // Default FIB number
-    uint16   ki_cr_flags;            // Credential flags
-    uint16     ki_jid;                 // Process jail ID
-    uint16     ki_numthreads;          // XXXKSE number of threads in total
-    uint16 ki_tid;                 // XXXKSE thread id
-    struct  priority ki_pri;        // process priority
-    s_rusage ki_rusage;       // process rusage statistics
-    s_rusage ki_rusage_ch;    // rusage of children processes
-    struct  pcb *ki_pcb;            // kernel virtual addr of pcb
-    uint32  ki_kstack;             // kernel virtual addr of stack
-    uint32  ki_udata;              // User convenience pointer
-    s_thread ki_tdaddr;      // address of thread
-    struct  pwddesc *ki_pd;         // pointer to process paths info
-    uint32    ki_sflag;               // PS_* flags
-    uint32    ki_tdflags;             // XXXKSE kthread flag
+    uint32 ki_flag;        // P_* flags
+    uint32 ki_kiflag;      // KI_* flags (below)
+    uint16 ki_traceflag;   // Kernel trace points
+    uint8  ki_stat;        // S* process status
+    int8  ki_nice;         // Process "nice" value
+    uint8 ki_lock;         // Process lock (prevent swap) count
+    uint8 ki_rqindex;      // Run queue index
+    uint8  ki_oncpu_old;   // Which cpu we are on (legacy)
+    uint8  ki_lastcpu_old; // Last cpu we were on (legacy)
+    string ki_tdname;      // thread name [TDNAMLEN+1]
+    string ki_wmesg;       // wchan message [WMESGLEN+1]
+    string ki_login;       // setlogin name [LOGNAMELEN+1]
+    string ki_lockname;    // lock name [LOCKNAMELEN+1]
+    string ki_comm;        // command name [COMMLEN+1]
+    string ki_emul;        // emulation name [KI_EMULNAMELEN+1]
+    string ki_loginclass;  // login class [LOGINCLASSLEN+1]
+    string ki_moretdname;  // more thread name [MAXCOMLEN-TDNAMLEN+1]
+    uint64 ki_tdev;        // controlling tty dev
+    uint16 ki_oncpu;       // Which cpu we are on
+    uint16 ki_lastcpu;     // Last cpu we were on
+    uint16 ki_tracer;      // Pid of tracing process
+    uint16 ki_flag2;       // P2_* flags
+    uint16 ki_fibnum;      // Default FIB number
+    uint16 ki_cr_flags;    // Credential flags
+    uint16 ki_jid;         // Process jail ID
+    uint16 ki_numthreads;  // XXXKSE number of threads in total
+    uint16 ki_tid;         // XXXKSE thread id
+    struct priority ki_pri;// process priority
+    s_rusage ki_rusage;    // process rusage statistics
+    s_rusage ki_rusage_ch; // rusage of children processes
+    struct  pcb *ki_pcb;   // kernel virtual addr of pcb
+    uint32 ki_kstack;      // kernel virtual addr of stack
+    uint32 ki_udata;       // User convenience pointer
+    s_thread ki_tdaddr;    // address of thread
+    s_pwddesc ki_pd;       // pointer to process paths info
+    uint32 ki_sflag;       // PS_* flags
+    uint32 ki_tdflags;     // XXXKSE kthread flag
 }
 
 struct user {
-    struct  pstats u_stats;         // *p_stats
-    struct  kinfo_proc u_kproc;     // eproc
+    struct pstats u_stats;     // *p_stats
+    struct kinfo_proc u_kproc; // eproc
 }
 
 struct kf_sock {
@@ -104,12 +104,12 @@ struct kf_sock {
 }
 
 struct kf_file {
-    uint16 kf_file_type;           // Vnode type.
-    uint64 kf_file_fsid;           // Vnode filesystem id.
-    uint64 kf_file_rdev;           // File device.
-    uint64 kf_file_fileid;         // Global file id.
-    uint64 kf_file_size;           // File size.
-    uint16 kf_file_mode;           // File mode.
+    uint16 kf_file_type;   // Vnode type.
+    uint64 kf_file_fsid;   // Vnode filesystem id.
+    uint64 kf_file_rdev;   // File device.
+    uint64 kf_file_fileid; // Global file id.
+    uint64 kf_file_size;   // File size.
+    uint16 kf_file_mode;   // File mode.
 }
 
 struct kf_pipe {
@@ -240,12 +240,12 @@ void fill_kinfo_proc(struct proc *, struct kinfo_proc *);
     uint8 constant KF_VTYPE_VBAD   = 8;
     uint8 constant KF_VTYPE_UNKNOWN = 255;
 
-    int8 constant KF_FD_TYPE_CWD  = -1;      // Current working directory
-    int8 constant KF_FD_TYPE_ROOT = -2;      // Root directory
-    int8 constant KF_FD_TYPE_JAIL = -3;      // Jail directory
-    int8 constant KF_FD_TYPE_TRACE = -4;      // Ktrace vnode
-    int8 constant KF_FD_TYPE_TEXT = -5;      // Text vnode
-    int8 constant KF_FD_TYPE_CTTY = -6;      // Controlling terminal
+    int8 constant KF_FD_TYPE_CWD  = -1;  // Current working directory
+    int8 constant KF_FD_TYPE_ROOT = -2;  // Root directory
+    int8 constant KF_FD_TYPE_JAIL = -3;  // Jail directory
+    int8 constant KF_FD_TYPE_TRACE = -4; // Ktrace vnode
+    int8 constant KF_FD_TYPE_TEXT = -5;  // Text vnode
+    int8 constant KF_FD_TYPE_CTTY = -6;  // Controlling terminal
 
     uint32 constant KF_FLAG_READ     = 0x00000001;
     uint32 constant KF_FLAG_WRITE    = 0x00000002;

@@ -6,11 +6,11 @@ import "vars.sol";
 import "libstat.sol";
 
 /*struct s_dirent {
-	uint16 d_fileno;
+    uint16 d_fileno;
     uint16 d_reclen;
-	uint8 d_type;
-	uint16 d_namlen;
-	string d_name;
+    uint8 d_type;
+    uint16 d_namlen;
+    string d_name;
 }*/
 
 struct s_direct {

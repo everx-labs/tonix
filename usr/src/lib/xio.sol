@@ -101,10 +101,10 @@ library xio {
     }
 
     function fputs(s_of f, string s) internal {
-//        s_sbuf s = f.buf;
-//        s.sbuf_cat(str);
-//        s.sbuf_nl_terminate();
-//        f.buf = s;
+//      s_sbuf s = f.buf;
+//      s.sbuf_cat(str);
+//      s.sbuf_nl_terminate();
+//      f.buf = s;
         f.buf.sbuf_cat(s);
         f.offset = f.buf.sbuf_len();
     }

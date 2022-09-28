@@ -15,13 +15,13 @@ library unistd {
     using libstat for s_stat;
     using io for s_thread;
     using sbuf for s_sbuf;
-    using sucred for s_ucred;
+    using libucred for s_ucred;
     using libsyscall for s_thread;
 
-    uint8 constant F_ULOCK       = 0; // unlock locked section
-    uint8 constant F_LOCK        = 1; // lock a section for exclusive use
-    uint8 constant F_TLOCK       = 2; // test and lock a section for exclusive use
-    uint8 constant F_TEST        = 3; // test a section for locks by other procs
+    uint8 constant F_ULOCK = 0; // unlock locked section
+    uint8 constant F_LOCK  = 1; // lock a section for exclusive use
+    uint8 constant F_TLOCK = 2; // test and lock a section for exclusive use
+    uint8 constant F_TEST  = 3; // test a section for locks by other procs
 
     uint16 constant SLBF  = 0x0001; // line buffered
     uint16 constant SNBF  = 0x0002; // unbuffered
@@ -463,15 +463,15 @@ library unistd {
         s_ucred td_realucred = p.p_ucred;   // Reference to credentials.
         s_ucred td_ucred = p.p_ucred;       // Used credentials, temporarily switchable.
         s_plimit td_limit = p.p_limit;      // Resource limits.
-        string td_name = libsyscall._syscall_name(number);         // Thread name.
+        string td_name = libsyscall.syscall_name(number);         // Thread name.
 //        s_xfile xfile;
         uint8 td_errno;        // Error from last syscall.
         td_states td_state;     // thread state
         uint32 tdu_retval;
-        s_thread t = s_thread(p.p_pid, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);
-        if (!td_name.empty())
-            t.do_syscall(number, scargs);
-        return t;
+        //s_thread t = s_thread(p.p_pid, 1, 0, 0, td_realucred, td_ucred, td_limit, td_name, td_errno, td_state, tdu_retval);
+        //if (!td_name.empty())
+        //    t.do_syscall(number, scargs);
+        //return t;
     }
     function undelete(s_proc p, string) internal returns (uint16) {}
     function unwhiteout(s_proc p, string) internal returns (uint16) {}

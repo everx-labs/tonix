@@ -3,7 +3,6 @@ pragma ton-solidity >= 0.62.0;
 import "filedesc_h.sol";
 import "xio.sol";
 import "libstat.sol";
-import "liberr.sol";
 import "libstring.sol";
 library dirent {
 
@@ -11,12 +10,13 @@ library dirent {
     using str for string;
     using libstring for string;
 /*struct s_dirent {
-	uint16 d_fileno;
-	uint8 d_type;
-	string d_name;
+    uint16 d_fileno;
+    uint8 d_type;
+    string d_name;
 }*/
 
     uint16 constant DIRBLKSIZ = 1024;
+    uint8 constant ENOENT   = 2; // No such file or directory
 
     // flags for opendir2
     uint16 constant DTF_HIDEW      = 0x0001; // hide whiteout entries
@@ -63,7 +63,7 @@ library dirent {
         uint p = s.strchr("\t");
         if (p > 1) {
             optional(int) index_u = stoi(s.substr(p));
-            return s_dirent(index_u.hasValue() ? uint16(index_u.get()) : err.ENOENT, libstat.file_type(s.substr(0, 1)), s.substr(1, p - 2));
+            return s_dirent(index_u.hasValue() ? uint16(index_u.get()) : ENOENT, libstat.file_type(s.substr(0, 1)), s.substr(1, p - 2));
         }
     }
 

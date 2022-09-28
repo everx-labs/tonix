@@ -216,12 +216,12 @@ library libstat {
             str.toa(st_rdev), str.toa(sst_size), str.toa(st_blksize), str.toa(st_blocks), str.toa(st_mtim), str.toa(st_ctim)];
     }
 
-    function format_index(uint[] index) internal returns (string) {
+/*    function format_index(uint[] index) internal returns (string) {
         string[][] table = [["Dev", "Ino", "Mode", "Ln", "UID", "GID", "rdev", "size", "blksz", "blk", "Modified", "Changed"]];
         for (uint attr: index)
             table.push(as_row(attr));
         return libtable.format_rows(table, [uint(4), 3, 5, 2, 5, 5, 4, 6, 5, 3, 8, 8], libtable.CENTER);
-    }
+    }*/
 
     function mode_to_file_type(uint16 imode) internal returns (uint8 t) {
         (t, , , , , ) = mode(imode);

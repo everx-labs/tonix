@@ -1,7 +1,0 @@
-#set -x
-
-file_in=$1
-while read line; do
-    echo ">" "$line"
-    ./ty "$line"
-done < $file_in;

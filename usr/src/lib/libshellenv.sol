@@ -5,7 +5,7 @@ import "libfdt.sol";
 import "sh.sol";
 import "vars.sol";
 import "libsyscall.sol";
-
+import "libnlist.sol";
 struct shell_env {
     s_of[] ofiles;    // Open files inherited upon invocation of the shell, plus open files controlled by exec
     s_of cwd;         // Working directory as set by cd
@@ -27,6 +27,11 @@ library libshellenv {
     using sbuf for s_sbuf;
     using libfdt for s_of[];
     using vars for string[];
+
+
+    function dump_nvl(shell_env e, nvlist_t nvl, uint16 mask) internal {
+        e.ofiles[libfdt.STDOUT_FILENO].fputs(libnv.dump(nvl, mask));
+    }
 
     function flag_set(shell_env e, byte b) internal returns (bool) {
         bytes flags = vars.val("FLAGS", e.environ[sh.VARIABLE]);

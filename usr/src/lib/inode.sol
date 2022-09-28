@@ -1,6 +1,7 @@
 pragma ton-solidity >= 0.62.0;
 
 import "sb.sol";
+import "fmt.sol";
 import "libstat.sol";
 
 library inode {

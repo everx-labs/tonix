@@ -2,6 +2,7 @@ pragma ton-solidity >= 0.62.0;
 
 import "filedesc_h.sol";
 import "proc_h.sol";
+import "libfdt.sol";
 library libio {
 
     uint16 constant SYS_read    = 3;

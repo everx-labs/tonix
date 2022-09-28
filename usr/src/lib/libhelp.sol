@@ -2,20 +2,7 @@ pragma ton-solidity >= 0.61.0;
 
 import "libstring.sol";
 import "fmt.sol";
-
-struct CommandHelp {
-    string name;
-    string synopsis;
-    string purpose;
-    string description;
-    string options;
-    string notes;
-    string author;
-    string bugs;
-    string see_also;
-    string version;
-}
-
+import "utilhelp_h.sol";
 library libhelp {
 
     function usage(CommandHelp ch) internal returns (string) {

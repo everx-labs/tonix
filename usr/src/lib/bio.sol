@@ -1,29 +1,29 @@
 pragma ton-solidity >= 0.58.0;
 
 import "io.sol";
-import "liberr.sol";
+//import "liberr.sol";
 import "libstat.sol";
 
 struct s_biobuf {
-	s_biobufhdr h;
-	string b;
+    s_biobufhdr h;
+    string b;
 }
 
 //enum td_states { TDS_INACTIVE, TDS_INHIBITED, TDS_CAN_RUN, TDS_RUNQ, TDS_RUNNING }
 
 struct s_biobufhdr {
-	int32 icount;	 // neg num of bytes at eob
-	uint32 ocount;	 // num of bytes at bob
-	uint32 rdline;	 // num of bytes after rdline
-	uint16 runesize; // num of bytes of last getrune
-	uint16 state;	 // r/w/inactive
-	uint16 fid;		 // open file
-	uint16 flag;	 // magic if malloc'ed
-	uint32 offset;	 // offset of buffer in file
-	uint32 bsize;	 // size of buffer
-	uint32 bbuf;	 // pointer to beginning of buffer
-	uint32 ebuf;	 // pointer to end of buffer
-	uint32 gbuf;	 // pointer to good data in buf
+    int32 icount;    // neg num of bytes at eob
+    uint32 ocount;   // num of bytes at bob
+    uint32 rdline;   // num of bytes after rdline
+    uint16 runesize; // num of bytes of last getrune
+    uint16 state;    // r/w/inactive
+    uint16 fid;      // open file
+    uint16 flag;     // magic if malloc'ed
+    uint32 offset;   // offset of buffer in file
+    uint32 bsize;    // size of buffer
+    uint32 bbuf;     // pointer to beginning of buffer
+    uint32 ebuf;     // pointer to end of buffer
+    uint32 gbuf;     // pointer to good data in buf
 }
 
 library libbio {
@@ -36,7 +36,7 @@ library libbio {
         for (uint i = 0; i < n_files; i++) {
             s_of f = fdt[i];
             if (f.path == file)
-//                return Bfdopen(p, f.file, mode);
+//              return Bfdopen(p, f.file, mode);
                 return Bfdopen(p, uint16(i), mode);
         }
         p.p_xexit = err.ENOENT;
@@ -45,7 +45,6 @@ library libbio {
     function Bfdopen(s_proc p, uint16 fd, uint16 mode) internal returns (s_biobuf b) {
         s_of[] fdt = p.p_fd.fdt_ofiles;
         uint n_files = p.p_fd.fdt_nfiles;
-
         if (fd < n_files) {
             s_of f = fdt[fd];
             s_stat st;
