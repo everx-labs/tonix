@@ -17,3 +17,5 @@ vfs
 tonos-cli.conf.json
 tmp
 run
+*.conf
+bak

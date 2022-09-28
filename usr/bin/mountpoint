@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/bin/mountpoint
-jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >mountpoint.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main mountpoint.args >../proc_out
-cd - > /dev/null

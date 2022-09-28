@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/bin/findmnt
-jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >findmnt.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main findmnt.args >../proc_out
-cd - > /dev/null

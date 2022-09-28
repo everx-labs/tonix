@@ -1,5 +1,0 @@
-cd /home/boris/tonix/tmp/bin/whatis
-#jq '{p_in: .p}' ../proc >whatis.args
-jq --slurpfile v1 /home/boris/tonix/usr/share/man/1.man '{p_in: .p, help_files: $v1}' ../proc >whatis.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main whatis.args >../proc_out
-cd - > /dev/null

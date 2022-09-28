@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/bin/lslogins
-jq '{p_in: .p}' ../proc >lslogins.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main lslogins.args >../proc_out
-cd - > /dev/null

@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/bin/paste
-jq '{p_in: .p}' ../proc >paste.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main paste.args >../proc_out
-cd - > /dev/null

@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/bin/chfn
-jq '{p_in: .p}' ../proc >chfn.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main chfn.args >../proc_out
-cd - > /dev/null
