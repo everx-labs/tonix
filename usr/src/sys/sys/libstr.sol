@@ -33,8 +33,10 @@ library libstrbuf {
     function strbuf_addch(strbuf sb, byte c) internal {
         if (strbuf_avail(sb) == 0)
             strbuf_grow(sb, 1);
-        sb.buf[sb.len++] = c;
-        sb.buf[sb.len] = 0;
+        sb.buf.append(bytes(c));
+        sb.len++;
+//        sb.buf[sb.len++] = c;
+//        sb.buf[sb.len] = 0;
     }
 
     function strlen(string s) internal returns (uint16) {

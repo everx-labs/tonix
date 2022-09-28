@@ -5,9 +5,6 @@ import "pbuiltin.sol";
 contract builtin is pbuiltin {
 
     using vars for string;
-    constructor(device_t pdev, device_t dev) udev (pdev, dev) public {
-        tvm.accept();
-    }
 
     function _main(shell_env e_in, job_cmd cc) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;

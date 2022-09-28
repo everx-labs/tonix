@@ -4,9 +4,10 @@ UTILS:=cat cp df ln ls mkdir mv realpath rm rmdir basename chfn colrm column cut
 CTX:=$(UTILS)
 H:=Repo
 
+NET:=rfld
 include $(R_ROOT)/Makefile.common
 
-URL:=$(URL_RFLD)
+#URL:=$(URL_RFLD)
 
 R:=RepoU
 r:=$(OPT)/Repo/bin/$R

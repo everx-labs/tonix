@@ -3,7 +3,6 @@ pragma ton-solidity >= 0.63.0;
 import "pbuiltin_base.sol";
 import "vars.sol";
 import "job_h.sol";
-import "libjobcommand.sol";
 
 abstract contract pbuiltin is pbuiltin_base {
     using vars for string[];

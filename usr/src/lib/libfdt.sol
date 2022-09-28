@@ -236,7 +236,7 @@ library libfdt {
 // consists of only the ``open()'' routine, because all subsequent references to this file will be direct to the other driver.
 // XXX: we could give this one a cloning event handler if necessary.
 
-    function fdopen(s_cdev dev, uint16 mode, uint8 ftype, s_thread td) internal returns (uint8) { // 3926427505
+    function fdopen(s_cdev dev, uint16, uint8, s_thread td) internal returns (uint8) { // 3926427505
     	td.td_dupfd = libdevice.dev2unit(dev);
     	return ENODEV;
     }
@@ -297,7 +297,7 @@ library libfdt {
     }
 
     function closef(s_file fp, s_thread td) internal returns (uint8) { // 305215061
-    	s_vnode vp;
+//    	s_vnode vp;
     	s_filedesc_to_leader fdtol;
     	s_filedesc fdp;
     //	MPASS(td != NULL);
@@ -369,7 +369,7 @@ library libfdt {
     	fp.f_ops = ops;
     }
 
-    function dofileread(s_thread td, uint8 fd, s_file fp, s_uio auio, uint32 offset, uint16 flags) internal returns (uint8 error, bytes buf) {
+    function dofileread(s_thread td, uint8, s_file fp, s_uio auio, uint32 offset, uint16 flags) internal returns (uint8 error, bytes buf) {
         // Finish zero length reads right here
         if (auio.uio_resid == 0) {
             td.td_retval = 0;
@@ -403,7 +403,7 @@ library libfdt {
         }
 */
     }
-    function dofilewrite(s_thread td, uint8 fd, s_file fp, s_uio auio, uint32 offset, uint16 flags) internal returns (uint8 error, s_file fpp) {
+    function dofilewrite(s_thread td, uint8, s_file fp, s_uio auio, uint32 offset, uint16) internal returns (uint8 error, s_file fpp) {
         fpp = fp;
         auio.uio_rw = uio_rwo.UIO_WRITE;
         auio.uio_td = td.td_tid;
@@ -420,7 +420,7 @@ library libfdt {
         cnt -= auio.uio_resid;
         td.td_retval = cnt;
     }
-    function fo_write(s_file fp, s_uio auio, s_ucred uc, uint16 flags, s_thread td) internal returns (uint8) { // 1237979137
+    function fo_write(s_file fp, s_uio auio, s_ucred, uint16, s_thread) internal returns (uint8) { // 1237979137
         bytes buf;
         for (s_iovec v: auio.uio_iov)
             buf.append(v.iov_data);
@@ -530,7 +530,7 @@ library libfdt {
             return (EBADF, fp);
         }
 //      seq = seqc_read_notmodify(fd_seqc(fdt, fd));
-        s_filedescent fde = fdt.fdt_ofiles[fd];
+//        s_filedescent fde = fdt.fdt_ofiles[fd];
 //      haverights = cap_rights_fde_inline(fde);
 //      fp = fde.fde_file;
         fp = fdt.fdt_ofiles[fd].fde_file;
@@ -607,7 +607,7 @@ library libfdt {
 
     function kern_dup(s_thread td, fddp mode, uint8 flags, uint8 old, uint8 dnew) internal returns (uint8 error) {
         uint8 maxfd;
-        s_proc p = td.td_proc;
+//        s_proc p = td.td_proc;
         s_filedesc fdp = td.td_proc.p_fd.fd_fd;
         //MPASS((flags & ~(FDDUP_FLAG_CLOEXEC)) == 0);
         //MPASS(mode < FDDUP_LASTMODE);
@@ -655,7 +655,7 @@ library libfdt {
         oldfde = fdp.fd_files.fdt_ofiles[old];
         //KASSERT(oldfp == oldfde.fde_file, "fdt_ofiles shift from growth observed at fd %d", old);
         s_filedescent newfde = fdp.fd_files.fdt_ofiles[dnew];
-        s_file delfp = newfde.fde_file;
+//        s_file delfp = newfde.fde_file;
         // Duplicate the source descriptor.
 //      fde_copy(oldfde, newfde);
         newfde = oldfde;
@@ -1211,7 +1211,7 @@ library libfdt {
 //            t[idx] = f;
 //        }
     }
-    function fdputchar(s_of[] t, byte c) internal {
+    function fdputchar(s_of[] t, byte) internal {
         s_sbuf s = t[STDOUT_FILENO].buf;
 //        s.sbuf_putc(c);
         t[STDOUT_FILENO].buf = s;

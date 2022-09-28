@@ -43,7 +43,7 @@ contract subr_fattr is Base {
     }
 
     function _print_fattrs(uint[] attrs) internal pure returns (string out) {
-        return libstat.format_index(attrs);
+//        return libstat.format_index(attrs);
     }
 
 }

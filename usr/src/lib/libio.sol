@@ -5,6 +5,8 @@ import "proc_h.sol";
 import "libfdt.sol";
 library libio {
 
+    uint8 constant ENOSYS       = 78; // Function not implemented
+
     uint16 constant SYS_read    = 3;
     uint16 constant SYS_write   = 4;
     uint16 constant SYS_readv   = 120;
@@ -43,15 +45,15 @@ library libio {
         uint16 rv;
 //        s_of[] fdt;
 //        s_dirent[] dirents;
-        s_of[] fdt_in = td.td_proc.p_fd.fdt_ofiles;
+//        s_of[] fdt_in = td.td_proc.p_fd.fdt_ofiles;
 //        uint len = fdt.length;
         uint n_args = args.length;
         string sarg1 = n_args > 0 ? args[0] : "";
 //        string sarg2 = n_args > 1 ? args[1] : "";
-        uint16 arg1 = n_args > 0 ? str.toi(sarg1) : 0;
+//        uint16 arg1 = n_args > 0 ? str.toi(sarg1) : 0;
 //        uint16 arg2 = n_args > 1 ? str.toi(sarg2) : 0;
-        s_of f;
-        (ec, f) = libfdt.fdopen(fdt_in, arg1);
+//        s_of f;
+//        (ec, f) = libfdt.fdopen(fdt_in, arg1);
 //        s_sbuf b = f.buf;
         if (number == SYS_read) {
 
@@ -59,7 +61,7 @@ library libio {
         } else if (number == SYS_write) {
 
         } else
-            ec = err.ENOSYS;
+            ec = ENOSYS;
         td.td_errno = ec;
         td.td_retval = rv;
     }

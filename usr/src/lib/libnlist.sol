@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.64.0;
 import "str.sol";
 import "libtable.sol";
 import "filedesc_h.sol";
@@ -131,6 +131,9 @@ struct nvpair_header {
 
 library libnvpair {
 
+    uint8 constant EINVAL   = 22; // Invalid argument
+    uint8 constant ENAMETOOLONG = 63; // File name too long
+
     uint24 constant	NVPAIR_MAGIC =	0x6e7670; // "nvp"
     uint16 constant NV_NAME_MAX   = 2048;
     uint8 constant NV_TYPE_NONE   = 0;
@@ -188,9 +191,9 @@ library libnvpair {
     function create_pair(uint8 ntype, string name, string value, uint16 nitems) internal returns (uint8 ec, nvpair_t nvp) {
 //        nvpair_t nvp = libnvpair.create_pair(ntype, name, value, nitems);
         if (ntype < NV_TYPE_FIRST || ntype > NV_TYPE_LAST)
-            ec = err.EINVAL;
+            ec = EINVAL;
         else if (str.strlen(name) >= NV_NAME_MAX)
-            ec = err.ENAMETOOLONG;
+            ec = ENAMETOOLONG;
         else {
             nvp = nvpair_t(NVPAIR_MAGIC, name, ntype, value, str.strlen(value), nitems);
             uint32 size;
@@ -333,6 +336,10 @@ library libnvpair {
 }
 
 library libnv {
+
+    uint8 constant EEXIST   = 17; // File exists
+    uint8 constant EINVAL   = 22; // Invalid argument
+
     uint8 constant NV_NAME_MAX   = 30;
     uint8 constant NV_TYPE_NONE   = 0;
     uint8 constant NV_TYPE_NULL   = 1;
@@ -498,7 +505,7 @@ library libnv {
             items.pop();
             nvl.nvl_items = items;
         } else {
-            nvl.nvl_error = err.EINVAL;
+            nvl.nvl_error = EINVAL;
         }
     }
 
@@ -517,7 +524,7 @@ library libnv {
             items.pop();
             nvl.nvl_items = items;
         } else {
-            nvl.nvl_error = err.EINVAL;
+            nvl.nvl_error = EINVAL;
         }
     }
 
@@ -535,7 +542,7 @@ library libnv {
                     nvp.nvp_datasize += size;
                     nvl.nvl_items[idx] = nvp;
                 } else
-                    ec = err.EINVAL;
+                    ec = EINVAL;
             } else {
                 (ec, nvp) = libnvpair.create_pair(ntype, name, value, 0);
                 if (ec == 0)
@@ -902,7 +909,7 @@ library libnv {
         if ((nvl.nvl_flags & NV_FLAG_NO_UNIQUE) == 0) {
             if (nvlist_exists(nvl, nvp.nvp_name)) {
                 nvp.nvpair_free();
-                nvl.nvl_error = err.EEXIST;
+                nvl.nvl_error = EEXIST;
 //              ERRNO_SET(nvl->nvl_error);
                 return false;
             }
@@ -920,7 +927,7 @@ library libnv {
     	}
         if ((nvl.nvl_flags & NV_FLAG_NO_UNIQUE) == 0) {
             if (nvlist_exists(nvl, nvp.nvp_name)) {
-                nvl.nvl_error = err.EEXIST;
+                nvl.nvl_error = EEXIST;
   //    	    ERRNO_SET(nvlist_error(nvl));
                 return;
         	}

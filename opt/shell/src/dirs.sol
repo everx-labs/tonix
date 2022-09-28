@@ -4,9 +4,6 @@ import "pbuiltin.sol";
 
 contract dirs is pbuiltin {
 
-    constructor(device_t pdev, device_t dev) udev (pdev, dev) public {
-        tvm.accept();
-    }
     function _main(shell_env e_in, job_cmd cc) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[] page = e.environ[sh.DIRSTACK];

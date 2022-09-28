@@ -21,7 +21,7 @@ contract josh {
         cc = cc_in;
         (command_type c_type, uint16 flags, uint16 line, s_redirect[] redirects, simple_com value) = cmd_in.unpack();
         if (c_type == command_type.cm_simple) {
-            (uint16 flags, uint16 line, word_desc[] words, s_redirect[] redirects) = value.unpack();
+            (uint16 cflags, uint16 cline, word_desc[] words, s_redirect[] credirects) = value.unpack();
             if (words.empty()) {
                 return (e, j, js, cmd, cc);
             }
@@ -41,22 +41,22 @@ contract josh {
         e = e_in;
         string s;
         s_table t0;
-        t0.add_header(["jid", "pid", "status", "exec_line"],
-                    [uint(2),   5,      8,      12], libtable.CENTER);
+//        t0.add_header(["jid", "pid", "status", "exec_line"],
+//                    [uint(2),   5,      8,      12], libtable.CENTER);
         for (job_spec js: j.jobs)
             t0.add_row(libjobspec.as_row(js));
         t0.compute();
-        s.append(t0.out);
+//        s.append(t0.out);
         s_table t;
-        t.add_header(["cmd", "sarg", "argv", "exec_line", "params", "flags", "n_args", "ec", "last", "opterr", "redir_in", "redir_out"],
-                     [uint(10), 50,  50,        50,         50,     20,         3,      3,      10,     30,     20,         20],
-                    libtable.CENTER);
+//        t.add_header(["cmd", "sarg", "argv", "exec_line", "params", "flags", "n_args", "ec", "last", "opterr", "redir_in", "redir_out"],
+//                     [uint(10), 50,  50,        50,         50,     20,         3,      3,      10,     30,     20,         20],
+//                    libtable.CENTER);
 //        for (job_spec js: j.jobs)
 //            for (job_cmd c: js.commands)
 //                t.add_row(libcommand.as_row(c));
 
         t.compute();
-        s.append(t.out);
+//        s.append(t.out);
         e.puts(s);
     }
 

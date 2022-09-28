@@ -243,7 +243,7 @@ struct s_vnode {
         rc = 0;
     }
     function VOP_BWRITE(s_vnode vp, s_buf bp) internal returns (uint8 ) {
-        vp.v_bufobj.bo_dirty.push(bp);
+//        vp.v_bufobj.bo_dirty.push(bp);
 
     }
     function VOP_FDATASYNC(s_vnode vp, s_thread td) internal returns (uint8 rc) {}

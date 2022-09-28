@@ -17,8 +17,8 @@ contract jobs is job_control {
         string out;
         string spid = vars.val("PPID", e.environ[sh.VARIABLE]);
         s_table t;
-        t.add_header(["", "", "", ""],
-                    [uint(4),   5,      8,      20], libtable.CENTER);
+//        t.add_header(["", "", "", ""],
+//                    [uint(4),   5,      8,      20], libtable.CENTER);
         for (job_spec js: j.jobs) {
             (uint8 jid, uint16 pid, job_status status, string exec_line, ) = js.unpack();
             t.add_row(['[' + str.toa(jid) + ']+', str.toa(pid), libjobspec.jobstatus(status), exec_line]);
@@ -30,7 +30,7 @@ contract jobs is job_control {
             t.add_row(['[' + name + ']+', spid, libjobspec.jobstatus(status), exec_line]);
         }
         t.compute();
-        out.append(t.out);
+//        out.append(t.out);
         if (run_cmd) {
         }
         e.puts(out);

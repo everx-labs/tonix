@@ -12,9 +12,10 @@ struct BuiltinHelp {
 import "parg.sol";
 import "libshellenv.sol";
 import "libjobcommand.sol";
-import "udev.sol";
+//import "udev.sol";
 
-abstract contract pbuiltin_base is udev {
+abstract contract pbuiltin_base {
+//abstract contract pbuiltin_base is udev {
 //contract pbuiltin_base is udev {
     using libstring for string;
     using str for string;

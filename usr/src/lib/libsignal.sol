@@ -287,6 +287,7 @@ struct siginfo {
         string sarg2 = n_args > 1 ? args[1] : "";
         uint16 arg1 = n_args > 0 ? str.toi(sarg1) : 0;
         uint16 arg2 = n_args > 1 ? str.toi(sarg2) : 0;
+        if (arg1 == arg2) {}
         if (number == SYS_kill) {
 //            rv = libstat.st_ino(td.td_proc.p_pd.pwd_cdir.attr);
             if (rv > 0)
@@ -408,6 +409,8 @@ struct siginfo {
         uint32 si_value; // signal value
         uint32 trapno;   // machine specific trap code
         s_siginfo ssi = s_siginfo(si_signo, si_errno, si_code, si_pid, si_uid, si_status, si_addr, si_value, trapno);
+//        ksiginfo
+        ssi;
         //return ksiginfo(ssi, KSI_INS);
     }
 
@@ -541,7 +544,7 @@ struct siginfo {
         }
         exit1(td, 0, sig);
     }
-    function sigev_findtd(s_proc p, s_sigevent sigev) internal returns (uint8, s_thread[] ttd) {
+    function sigev_findtd(s_proc, s_sigevent sigev) internal returns (uint8, s_thread[] ttd) {
         s_thread td;
         if (sigev.sigev_notify == SIGEV_THREAD_ID) {
   //        td = tdfind(sigev.sigev_notify_thread_id, p.p_pid);
@@ -886,7 +889,7 @@ struct siginfo {
         return 0;
     }
 
-    function sigtd(s_proc p, uint8 sig, bool fast_sigblock) internal returns (s_thread signal_td) {
+    function sigtd(s_proc, uint8 sig, bool) internal returns (s_thread signal_td) {
         s_thread td;
         s_thread tcurthread = curthread();
         if (!tcurthread.td_sigmask.SIGISMEMBER0(sig))

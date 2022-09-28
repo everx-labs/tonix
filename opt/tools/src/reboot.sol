@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.64.0;
 
 import "Utility.sol";
 import "pw.sol";
@@ -26,7 +26,8 @@ contract reboot is Utility {
         s_ucred p_ucred = s_ucred(n_ref, uid, uid, uid, 1, gid, gid, "root", gid, [uint16(gid)]);
         s_of[] fdt_ofiles = _get_std(["/dev/stdin", "/dev/stdout", "/dev/stderr", "errno", "/", "/"]);
         fdt_ofiles.push(er.export());
-        s_xfiledesc p_fd = s_xfiledesc(8, fdt_ofiles);
+        s_filedesc fd_fd;
+        s_xfiledesc p_fd = s_xfiledesc(8, fdt_ofiles, fd_fd);
         s_xpwddesc p_pd = s_xpwddesc(fdt_ofiles[4], fdt_ofiles[5], 0x1FF);
 
         s_plimit p_limit;    // Resource limits.

@@ -4,9 +4,6 @@ import "pbuiltin_base.sol";
 
 contract cd is pbuiltin_base {
 
-    constructor(device_t pdev, device_t dev) udev (pdev, dev) public {
-        tvm.accept();
-    }
     using vars for string[];
     function main(shell_env e_in, job_cmd cc_in) external pure returns (shell_env e) {
         e = e_in;

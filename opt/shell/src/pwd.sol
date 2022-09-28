@@ -2,7 +2,7 @@ pragma ton-solidity >= 0.62.0;
 
 import "pbuiltin.sol";
 
-contract pwd is pbuiltin {
+contract _pwd is pbuiltin {
 
     function _main(shell_env e_in, job_cmd cc) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;

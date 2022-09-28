@@ -12,6 +12,12 @@ library libucred {
 
     uint8 constant XU_NGROUPS = 16;
 
+    uint8 constant EPERM    = 1; // Operation not permitted
+    uint8 constant ESRCH    = 3; // No such process
+    uint8 constant EACCES   = 13; // Permission denied
+    uint8 constant EINVAL   = 22; // Invalid argument
+    uint8 constant ENAMETOOLONG = 63; // File name too long
+
     using libucred for s_proc;
     using libucred for s_ucred;
     using libucred for s_thread;
@@ -86,7 +92,7 @@ library libucred {
             cr.cr_svuid = cr.cr_uid;
             cr.cr_uid = uid;
         } else
-            return err.EPERM;
+            return EPERM;
     }
     function seteuid(s_ucred cr, uint16 euid) internal returns (uint8) {
         cr.cr_uid = euid;
@@ -131,7 +137,7 @@ library libucred {
             ngroups = cr.cr_ngroups - 1;
         else {
             if (gidsetlen < ngroups)
-                ngroups = err.EINVAL;
+                ngroups = EINVAL;
             else
             gidset = cr.cr_groups;
             ngroups = cr.cr_ngroups;
@@ -236,7 +242,7 @@ library libucred {
         if (pid == 0) {
             p = td.td_proc;
         } else {
-            p = pfind(pid);
+            p = libproc.pfind(pid);
             if (p.p_pid == 0)
                 return err.ESRCH;
             error = p_cansee(td, p);
@@ -295,7 +301,7 @@ library libucred {
             error = 0;
         else {
             if (uap.gidsetsize < ngrp)
-                return err.EINVAL;
+                return EINVAL;
 //          error = copyout(cred.cr_groups, uap.gidset, ngrp * 16);
         }
         td.td_retval = ngrp;
@@ -303,13 +309,13 @@ library libucred {
 
     function sys_setsid(s_thread td) internal returns (uint8 error) {
         s_proc p = td.td_proc;
-        s_pgrp pgrp = pgfind(p.p_pid);
+        s_pgrp pgrp = libproc.pgfind(p.p_pid);
         s_pgrp newpgrp;
         s_session newsess;
 //       newpgrp = uma_zalloc(pgrp_zone, M_WAITOK);
 //       newsess = malloc(sizeof(struct session), M_SESSION, M_WAITOK | M_ZERO);
         if (p.p_leader == p.p_pid || pgrp.pg_id != 0)
-            error = err.EPERM;
+            error = EPERM;
         else {
             enterpgrp(p, p.p_pid, newpgrp, newsess);
             td.td_retval = p.p_pid;
@@ -333,40 +339,40 @@ library libucred {
         s_session none;
 //      s_pgrp no_pgrp;
         if (pgid < 0)
-            return err.EINVAL;
+            return EINVAL;
 //          newpgrp = uma_zalloc(pgrp_zone, M_WAITOK);
         if (pid > 0 && pid != curp.p_pid) {
-                targp = pfind(pid);
+                targp = libproc.pfind(pid);
                 if (targp.p_pid == 0)
-                    return err.ESRCH;
+                    return ESRCH;
                 if (!inferior(targp))
-                    return err.ESRCH;
+                    return ESRCH;
                 error = p_cansee(td, targp);
 //          	if (targp.p_leader == 0 || targp.p_session != curp.p_session)
 //          	    return err.EPERM;
                 if ((targp.p_flag & libproc.P_EXEC) > 0)
-                    return err.EACCES;
+                    return EACCES;
         } else
             targp = curp;
 //          if (SESS_LEADER(targp))
 //              return err.EPERM;
             if (pgid == 0)
                 pgid = targp.p_pid;
-            pgrp = pgfind(pgid);
+            pgrp = libproc.pgfind(pgid);
             if (pgrp.pg_id == 0) {
                 if (pgid == targp.p_pid) {
                     error = enterpgrp(targp, pgid, newpgrp, none);
                     if (error == 0)
                         delete newpgrp;
                 } else
-                    return err.EPERM;
+                    return EPERM;
             } else {
 //          if (pgrp == targp.p_pgrp) {
 //              goto done;
 //          }
                 if (pgrp.pg_id != targp.p_pid) {
 //                  && pgrp.pg_session != curp.p_session) {
-                    return err.EPERM;
+                    return EPERM;
                 }
                 error = enterthispgrp(targp, pgrp);
             }
@@ -645,7 +651,7 @@ library libucred {
             td.td_proc.p_flag |= libproc.P_SUGID;
             return 0;
         }
-        return err.EINVAL;
+        return EINVAL;
     }
 
     // Check if gid is a member of the group set.
@@ -763,7 +769,7 @@ library libucred {
     function curthread() internal returns (s_thread) {}
 
     function sigiofree(s_sigio sigio) internal {
-    	crfree(sigio.sio_ucred);
+//    	crfree(sigio.sio_ucred);
 //    	free(sigio, M_SIGIO);
     }
     function funsetown_locked(s_sigio sigio) internal returns (s_sigio) {
@@ -802,7 +808,7 @@ library libucred {
         }
 //       	sigio = malloc(sizeof(struct sigio), M_SIGIO, M_WAITOK);
         sigio.sio_pgid = pgid;
-        sigio.sio_ucred = crhold(curthread().td_ucred);
+//        sigio.sio_ucred = crhold(curthread().td_ucred);
 //        sigio.sio_myref = sigiop;
         ret = 0;
         if (pgid > 0) {
@@ -811,7 +817,7 @@ library libucred {
             if (ret == 0) {
 //              _PRELE(proc);
                 if ((proc.p_flag & libproc.P_WEXIT) != 0) {
-                    ret = err.ESRCH;
+                    ret = ESRCH;
 //                } else if (proc.p_session != curthread.td_proc.p_session) {
                     // Policy - Don't allow a process to FSETOWN a process in another session.
                     // Remove this test to allow maximum flexibility or restrict FSETOWN to the current process or process group for maximum safety.
@@ -823,9 +829,9 @@ library libucred {
             }
         } else /* if (pgid < 0) */ {
             osigio = funsetown_locked(sigiop);
-            pgrp = pgfind(-pgid);
+            pgrp = libproc.pgfind(-pgid);
             if (pgrp.pg_id == 0) {
-                ret = err.ESRCH;
+                ret = ESRCH;
             } else {
 //                if (pgrp.pg_session != curthread().td_proc.p_session) {
                     // Policy - Don't allow a process to FSETOWN a process in another session.

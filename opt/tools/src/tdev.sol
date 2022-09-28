@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.63.0;
+pragma ton-solidity >= 0.64.0;
 
 import "udev.sol";
 import "libdevice.sol";
@@ -6,6 +6,7 @@ import "fmt.sol";
 import "libtable.sol";
 contract tdev is udev {
 
+    device_t _pdev;
     using libtable for s_table;
     constructor(device_t pdev) udev (pdev) public {
         _pdev = pdev;
@@ -71,13 +72,14 @@ contract tdev is udev {
     }
     function to_string(TvmSlice s) internal pure returns (bytes res) {
         uint nbytes = s.bits() / 8;
-        while (nbytes > 0) {
-            uint8 b = s.decode(uint8);
-            if (b == 0)
-                return len;
-            len++;
-            nbytes--;
-        }
+        uint len;
+        //while (nbytes > 0) {
+        //    uint8 b = s.decode(uint8);
+        //    if (b == 0)
+        //        return len;
+        //    len++;
+        //    nbytes--;
+        //}
 
         if (nbytes > 2) {
             uint8 len = s.decode(uint8);
