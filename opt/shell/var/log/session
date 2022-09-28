@@ -1,0 +1,387 @@
+> pwd
+> echo hi
+> help
+> alias
+> pwd
+> pwd
+> echo hi
+> alias
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> help
+> help pwd
+> type pwd
+> help
+> echo hi
+> alias
+> enable
+> declare -p
+> export
+> compgen -a
+> compgen -b
+> compgen -c
+> compgen -e
+> help
+> enable
+> enable -a
+> pwd
+> enable
+> enable
+> enable -n
+> enable -np
+> enable -a
+> dirs
+> pwd
+> pushd /
+> pushd /
+> pwd
+> dirs
+> popd
+> q
+> dirs
+> pushd /etc
+> popd
+> dirs
+> pwd
+> help
+> pwd
+> ls
+> pwd
+> help
+> pwd
+> pwd
+> type pwd
+> pwd
+> pwd
+> enable -a
+> enable disown
+> enable -a
+> help
+> q
+> pwd
+> jobs
+> pwd
+> pwd
+> type qq
+> pwd
+> type pwd
+> builtin pwd
+> pwd
+> jobs
+> q
+> jobs
+> wpd
+> pwd
+> type pwd
+> type  pwd
+> type echo
+> type -a echo
+> type -a alias
+> type pwd
+> type -a pwd
+> q
+> pwd
+> builtin pwd
+> builtin true
+> builtin export
+> builtin export -p
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> export -p
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> builtin pwd
+> builtin export
+> export
+> builtin export
+> export -p
+> builtin export -p
+> builtin export -p
+> declare
+> pwd
+> help
+> jobs
+> disown
+> jobs
+> disown
+> disown -s
+> jobs
+> disown -r
+> disown -a
+> jobs
+> disown -ar
+> q
+> jobs
+> q
+> disown -a
+> disown -a
+> pwd
+> jobs
+> jobs
+> whoami
+> q
+> whoami
+> whoami
+> whoami
+> lslogins
+> ls -al
+> pwd
+> q
+> builtin pwd
+> tfiledesc
+> lsof
+> syscall
+> shopt
+> pwd
+> shopt
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> help -m pwd cd
+> help -q cf
+> help -q cd
+> shopt
+> pwd
+> pwd
+> type qqq
+> pwd
+> type q
+> pwd
+> help
+> shopt
+> setopt
+> help set
+> echo $-
+> set
+> set
+> set
+> set
+> help set
+> set -x
+> help getopt
+> set -x
+> shopt
+> set -x
+> set -x
+> set -x
+> pwd
+> set -x
+> echo $?
+> echo $-
+> set
+> help set
+> pwd
+> help set
+> set -m
+> echo $?
+> pwd
+> set
+> help set
+> pwd
+> set
+> echo $?
+> echo $-
+> echo $SHELLOPTS
+> set
+> declare -p
+> enable
+> export
+> complete
+> complete -p
+> compgen -b
+> compgen -a
+> compgen -b
+> compgen -a
+> 
+> pwd
+> declare
+> declare -p
+> pwd
+> pwd
+> pwd
+> pwd
+> help
+> declare -p
+> export
+> export -p
+> compgen -a
+> compgen -b
+> compgen -a
+> compgen -b
+> compgen -b a
+> compgen -a
+> compgen -b
+> compgen -abcd
+> compgen -a
+> compgen -b
+> compgen -d
+> compgen -ef
+> compgen -g
+> compgen -h
+> compgen -k
+> help compgen
+> help pwd
+> help compgen
+> compgen -s
+> export
+> exoirt -p
+> export -p
+> help export
+> export -n
+> help export
+> export
+> export -p
+> export -p HOSTNAME
+> export -p
+> alias
+> export
+> declare -p
+> declare
+> declare
+> declare -p
+> declare -x
+> declare -i
+> declare
+> declare -p P
+> builtin pwd
+> builtin declare
+> builtin export
+> builtin export -p
+> builtin readonly
+> builtin export -p
+> builtin export
+> builtin export -p
+> builtin declare -p
+> builtin declare
+> builtin readonly
+> pwd
+> help
+> alias
+> de
+> alias
+> ty pwd
+> exporgt
+> export
+> export
+> export
+> export
+> export -p
+> export
+> export
+> export
+> declare
+> export
+> export
+> export -p
+> export
+> export
+> export
+> export
+> readonly
+> declare
+> declare -x
+> declare -i
+> compgen -a
+> compgen -abcd
+> compgen -e
+> type pwd
+> type de
+> enable
+> enable
+> enable -p
+> enable -a
+> enable
+> enable -s
+> help
+> shopt
+> set
+> pwd
+> alias
+> alias ar=readonly -p
+> alias
+> alias ra=readonly -p
+> alias
+> alias -p
+> alias ra=readonly -p
+> alias
+> alias -p
+> alias ra=readonly
+> alias
+> unalias qq
+> pwd
+> help set
+> help jobs
+> help jobs
+> q
+> help jobs
+> help
+> enable
+> help jobs
+> help
+> help set
+> help export
+> help
+> help pwd
+> help help
+> help -m help
+> help cd
+> help
+> help alias
+> help shopt
+> help
+> help type
+> help disown
+> help fg
+> help pwd
+> help cd
+> help
+> hepl help
+> help help
+> q
+> jobs
+> help jobs
+> jobs -l
+> jobs -n
+> pwd
+> help
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> ls
+> q
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd
+> pwd

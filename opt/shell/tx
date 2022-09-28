@@ -1,0 +1,17 @@
+#set -x
+cd proc/curproc/esh
+make clean
+while true
+do
+    read -p "$ " input
+    case $input in
+        q|quit) break;;
+        debug) ./esh debug "$input";;
+        *) ./esh parse "$input"
+           [ -s cmdline ] && . ./cmdline
+#           [ -s cmdline ] && . ./cmdline
+            ./esh flush_std
+        ;;
+    esac
+done
+cd -
