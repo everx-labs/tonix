@@ -23,6 +23,8 @@ SYSUTILS:=$(SBINU) $(USR.SBINU) $(SYSFSU)
 
 #URL:=$(URL_FLD)
 
+tools:
+	$(MAKE) -f tools.mk
 #_pay=$(TOOLS_BIN)/$(GIVER)/s4.sh $1 $2
 #_pay=$(TOOLS_BIN)/$(GIVER)/s3.sh $1 $2
 #_pay=$(TOOLS_BIN)/$(GIVER)/s2.sh $1 $2
