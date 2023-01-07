@@ -13,7 +13,7 @@ contract MIME {
     uint8 constant TYPE_MESSAGE = 9; // A message that encapsulates other messages. This can be used, for instance, to represent an email that includes a forwarded message as part of its data, or to allow sending very large messages in chunks as if it were multiple messages. Examples include message/rfc822 (for forwarded or replied-to message quoting) and message/partial to allow breaking a large message into smaller ones automatically to be reassembled by the recipient
     uint8 constant TYPE_MULTIPART = 10; // Data that is comprised of multiple components which may individually have different MIME types. Examples include multipart/form-data (for data produced using the FormData API) and multipart/byteranges (defined in RFC 7233: 5.4.1 and used with HTTP's 206 "Partial Content" response returned when the fetched data is only part of the content, such as is delivered using the Range header)
 
-    uint8 constant SUBTYPE_APPLICATION_X-EXECUTABLE = 1;
+    uint8 constant SUBTYPE_APPLICATION_X_EXECUTABLE = 1;
     uint8 constant SUBTYPE_APPLICATION_GRAPHQL = 2;
     uint8 constant SUBTYPE_APPLICATION_JAVASCRIPT = 3;
     uint8 constant SUBTYPE_APPLICATION_JSON= 4;
@@ -41,8 +41,7 @@ contract MIME {
     uint8 constant SUBTYPE_IMAGE_PNG = 7;
     uint8 constant SUBTYPE_IMAGE_SVG_XML = 8;
     uint8 constant SUBTYPE_IMAGE_WEBP = 9;
-    uint8 constant SUBTYPE_IMAGE_WEBP = 10;
-    uint8 constant SUBTYPE_IMAGE_X_MNG = 11;
+    uint8 constant SUBTYPE_IMAGE_X_MNG = 10;
 
     uint8 constant SUBTYPE_TEXT_CSS = 1;
     uint8 constant SUBTYPE_TEXT_CSV = 2;
@@ -52,3 +51,4 @@ contract MIME {
     uint8 constant SUBTYPE_TEXT_XML = 6;
 
     uint8 constant SUBTYPE_MULTIPART_FORM_DATA = 1;
+}
