@@ -1,4 +1,4 @@
-R_ROOT:=~/tonix
+R_ROOT:=~/z/tonix
 
 HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset esh
 BOOTU:=Repo
@@ -24,7 +24,7 @@ SYSUTILS:=$(SBINU) $(USR.SBINU) $(SYSFSU)
 #URL:=$(URL_FLD)
 
 tools:
-	$(MAKE) -f tools.mk
+	$(MAKE) -f tools.mk tools
 #_pay=$(TOOLS_BIN)/$(GIVER)/s4.sh $1 $2
 #_pay=$(TOOLS_BIN)/$(GIVER)/s3.sh $1 $2
 #_pay=$(TOOLS_BIN)/$(GIVER)/s2.sh $1 $2
