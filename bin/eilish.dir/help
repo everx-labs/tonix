@@ -1,4 +1,0 @@
-cd /home/boris/tonix/tmp/bin/eilish.dir/help
-jq --slurpfile v1 /home/boris/tonix/usr/share/man/0.man '{sv_in: ., help_files: $v1}' ../vm >help.args
-~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main help.args >../vm_out
-cd - > /dev/null

@@ -1,0 +1,17 @@
+#set -x
+X=xeen
+R="tonos-cli -c etc/$X.conf runx -m"
+
+function run() {
+    $R $1 --$2 "$3" "$4" >qr
+    cmd=`jq -r .cmd qr`
+    eval "$cmd"
+}
+while true
+do
+    read -p "cash $ " -rsn1 inp
+    tonos-cli -c etc/$X.conf runx -m complete --b $inp >complete.res
+    cmd=`jq -r .cmd complete.res`
+    eval "$cmd"
+done
+
