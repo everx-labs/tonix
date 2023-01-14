@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "builtin",
+    "synopsis": "[shell-builtin [arg ...]]",
+    "purpose": "Execute shell builtins.",
+    "description": "Execute SHELL-BUILTIN with arguments ARGs without performing command lookup.",
+    "options": "",
+    "arguments": "",
+    "exit_status": "Returns the exit status of SHELL-BUILTIN, or false if SHELL-BUILTIN is not a shell builtin."
+  }
+}

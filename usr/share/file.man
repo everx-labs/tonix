@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "file",
+    "synopsis": "[OPTION...] [FILE...]",
+    "purpose": "determine file type",
+    "description": "Determine type of FILE.",
+    "options": "-b      do not prepend filenames to output lines\n-E      on filesystem errors, issue an error message and exit\n-L      follow symlinks (default if POSIXLY_CORRECT is set)\n-h      don't follow symlinks (default if POSIXLY_CORRECT is not set) (default)\n-N      do not pad output\n-v      print the version of the program and exit\n-0      terminate filenames with ASCII NUL",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

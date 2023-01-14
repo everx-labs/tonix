@@ -1,0 +1,130 @@
+MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
+
+# Tools directories
+TOOLS_BIN:=~/bin
+SOLC:=$(TOOLS_BIN)/solc
+SOLD:=$(TOOLS_BIN)/sold
+LIB:=$(TOOLS_BIN)/stdlib_sol.tvm
+LINKER:=$(TOOLS_BIN)/tvm_linker
+TOC:=$(TOOLS_BIN)/tonos-cli
+
+USR:=$(R_ROOT)/usr
+OPT:=$(R_ROOT)/opt
+USH:=$(USR)/share
+MAN:=$(USH)/man
+
+BUS:=$(OPT)/bus
+N?=0
+HCC?=$(BUS)/$(ETC)/$H$N.conf
+
+INC_PATH:=$(USR)/include
+OPT_INC_PATH?=$(OPT)/include
+LIB_PATH:=$(USR)/src/lib
+SYS_LIB_PATH:=$(USR)/src/sys/sys
+
+URL_dev:=net.ton.dev
+URL_fld:=gql.custler.net
+URL_rfld:=rfld-dapp.itgold.io
+
+URL:=$(URL_$(NET))
+GIVER:=Novi
+
+BIN:=bin
+BLD:=build
+ETC:=etc
+SRC:=src
+TMP:=tmp
+
+RKEYS:=~/k1.keys
+VAL0:=15
+
+#_pay=$(TOC) -c $(R_ROOT)/etc/$(GIVER).$(NET).conf callx --dest $1 --val $2
+_pay=$(TOC) -c $(R_ROOT)/etc/$(GIVER).$(NET).conf callx -m sendTo --dest $1 --val $2
+INIT:=$H
+DEPLOYED=$(patsubst %,$(BLD)/%.deployed,$(INIT))
+CONFD=$(patsubst %,$(ETC)/%.conf,$(CTX))
+CSS=$(patsubst %,$(BLD)/%.cs,$(CTX))
+RES=$(patsubst %,$(BLD)/%.ress,$(CTX))
+STORED_IMGS:=$(TMP)/images
+
+NULL:=
+SPACE:=$(NULL) $(NULL)
+
+dirs:
+	mkdir -p $(DIRS)
+cc: $(CSS)
+	@true
+deploy: $(DEPLOYED)
+	-cat $^
+config:
+	$(TOC) config --url $(URL) --is_json true
+ss: $(RES)
+	@true
+conf: $(CONFD)
+	-cat $^
+fk:
+	touch $(RES)
+$(BLD)/%.tvc: $(SRC)/%.sol
+	$(SOLD) $< -I $(INC_PATH) -I $(OPT_INC_PATH) -I $(LIB_PATH) -I $(SYS_LIB_PATH) -O $(BLD)
+$(BLD)/%.cs: $(SRC)/%.sol
+#	$(SOLD) $< -I $(INC_PATH) -I $(OPT_INC_PATH) -I $(LIB_PATH) -I $(SYS_LIB_PATH) -O $(BLD) --print_code | jq -r '.code' >$@
+#	$(SOLD) $< -I $(INC_PATH) -I $(OPT_INC_PATH) -I $(LIB_PATH) -I $(SYS_LIB_PATH) -O $(BLD) --print_code --private-function-id >cout
+	$(SOLD) $< -I $(INC_PATH) -I $(OPT_INC_PATH) -I $(LIB_PATH) -I $(SYS_LIB_PATH) -O $(BLD) --print_code >cout
+	jq -r '.code' cout >$@
+$(BLD)/%.fid: $(SRC)/%.sol
+	$(SOLD) $< -I $(INC_PATH) -I $(OPT_INC_PATH) -I $(LIB_PATH) -I $(SYS_LIB_PATH) --private-function-ids >$@
+#	jq '.code' cout >$@
+#	$(shell [ -s $@ ] || rm $@)
+#$(BLD)/%.dbg: $(BLD)/%.code
+#	$(LINKER) compile --lib $(LIB) $< --debug-map $(BLD)/$*.dbg -o $@
+#$(BLD)/%.cs: $(BLD)/%.tvc
+#	$(LINKER) decode --tvc $< | grep 'code:' | cut -d ' ' -f 3 | tr -d '\n' >$@
+V?=
+
+
+$(BLD)/%.ts: $(BLD)/%.cs $(HCC)
+	$(eval idx!=$(TOC) -c $(word 2,$^) runx -m get_drivers {} | jq -r '.out' | grep -w $* | tr -s ' ' | cut -d ' ' -f 1)
+	$(TOC) -c $(word 2,$^) callx -m update_driver --index $(idx) --c `cat $<` >$@
+
+ib: $(HCC)
+	$(TOC) -c $< callx -m devinit
+drv: $(HCC)
+	$(MAKE) -C $(BUS) gdrv bus=$(HCC)
+dev: $(HCC)
+	$(MAKE) -C $(BUS) gdvs bus=$(HCC)
+acc: $(HCC)
+	$(MAKE) -C $(BUS) rstat bus=$(HCC)
+
+name?=
+val?=15
+pay: $(ETC)/$(name).conf
+	$(call _pay,`jq -r '.config.addr' $<`,$(val))
+add: $(BLD)/$(name).cs $(HCC)
+	$(TOC) -c $(word 2,$^) callx -m add_model --name $(name) --c `cat $<`
+ad: $(BLD)/$(name).cs $(HCC)
+	$(TOC) -c $(word 2,$^) callx -m add_driver --name $(name) --c `cat $<`
+ud: $(BLD)/$(name).cs $(HCC)
+	$(TOC) -c $(word 2,$^) callx -m update_driver --name $(name) --c `cat $<`
+dd: $(HCC)
+	$(TOC) -c $< callx -m delete_device --name $(name)
+adv: $(HCC)
+	$(TOC) -c $< callx -m add_device --name $(name)
+$(STORED_IMGS): $(HCC)
+	$(TOC) -c $< runx -m _images | jq '._images' >$@
+images: $(STORED_IMGS)
+	@true
+$(ETC)/hosts.%: %.conf
+	$(TOC) -c $< runx -m get_devices | jq -j '.out' | grep -v "0:0000000000000000000000000000000000000000000000000000000000000000" | tail -n +2 >$@
+$(ETC)/drivers.%: %.conf
+	$(TOC) -c $< runx -m get_drivers {} | jq -r '.out' | tail -n +2 | head -n -1 | tr -s ' ' | cut -d ' ' -f 3 >$@
+$(ETC)/devs.%: $(ETC)/hosts.%
+	cut -f 1 $< >$@
+drdevs: $(ETC)/drivers.$H $(ETC)/devs.$H $(ETC)/hosts.$H
+	$(foreach d,$(file <$<),echo D: $d\
+	$(eval nameunits!=grep $d $(word 2,$^) | cut -f 1);\
+	$(foreach n,$(nameunits),\
+	$(TOC) -c $(ETC)/$n.conf config --url $(URL) --addr `grep -w $n $(word 3,$^) | cut -f 2` --abi $(CURDIR)/$(BLD)/$d.abi.json --is_json true --balance_in_tons true;))
+
+list:
+	LC_ALL=C $(MAKE) -pRrq -f Makefile : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+.PHONY: list cc ss hosts tt tty

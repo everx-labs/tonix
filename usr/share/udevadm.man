@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "udevadm",
+    "synopsis": "info [options] [devpath]",
+    "purpose": "udev management tool",
+    "description": "Expects a command and command specific options.",
+    "options": "",
+    "notes": "",
+    "author": "not yet Written",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.00"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "man",
+    "synopsis": "[COMMAND]",
+    "purpose": "an interface to the system reference manuals",
+    "description": "System's manual pager. Each page argument given to man is normally the name of a program, utility or function.",
+    "options": "-a     display all the manual pages with names that match the search criteria.",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "find all matching manual pages",
+    "see_also": "apropos, whatis",
+    "version": "0.01"
+  }
+}

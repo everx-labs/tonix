@@ -1,0 +1,332 @@
+./bin/eilish.dir/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/builtin pwd 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin pwd 
+./bin/esh builtin type pwd
+./bin/esh builtin type  pwd
+./bin/esh builtin type echo
+./bin/esh builtin type -a echo
+./bin/esh builtin type -a alias
+./bin/esh builtin type pwd
+./bin/esh builtin type -a pwd
+./bin/esh builtin pwd 
+./bin/esh builtin builtin pwd
+./bin/esh builtin builtin true
+./bin/esh builtin builtin export
+./bin/esh builtin builtin export -p
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin builtin pwd
+./bin/esh builtin builtin export
+./bin/esh builtin export 
+./bin/esh builtin builtin export
+./bin/esh builtin export -p
+./bin/esh builtin builtin export -p
+./bin/esh builtin builtin export -p
+./bin/esh builtin declare 
+./bin/esh builtin pwd 
+./bin/esh builtin help 
+./bin/esh builtin jobs 
+./bin/esh builtin disown 
+./bin/esh builtin jobs 
+./bin/esh builtin disown 
+./bin/esh builtin disown -s
+./bin/esh builtin jobs 
+./bin/esh builtin disown -r
+./bin/esh builtin disown -a
+./bin/esh builtin jobs 
+./bin/esh builtin disown -ar
+./bin/esh builtin jobs 
+./bin/esh builtin disown -a
+./bin/esh builtin disown -a
+./bin/esh builtin pwd 
+./bin/esh builtin jobs 
+./bin/esh builtin jobs 
+./bin/esh builtin pwd 
+./bin/esh builtin builtin pwd
+./bin/esh builtin builtin pwd
+./bin/esh builtin shopt 
+./bin/esh builtin pwd 
+./bin/esh builtin shopt 
+./bin/esh builtin shopt 
+./bin/esh builtin shopt 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin help -m pwd cd
+./bin/esh builtin help -q cf
+./bin/esh builtin help -q cd
+./bin/esh builtin shopt 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin type qqq
+./bin/esh builtin pwd 
+./bin/esh builtin type q
+./bin/esh builtin pwd 
+./bin/esh builtin help 
+./bin/esh builtin shopt 
+./bin/esh builtin shopt 
+./bin/esh builtin help set
+./bin/esh builtin echo 
+./bin/esh builtin set 
+./bin/esh builtin set 
+./bin/esh builtin set 
+./bin/esh builtin set 
+./bin/esh builtin help set
+./bin/esh builtin set -x
+./bin/esh builtin help getopt
+./bin/esh builtin set -x
+./bin/esh builtin shopt 
+./bin/esh builtin set -x
+./bin/esh builtin set -x
+./bin/esh builtin set -x
+./bin/esh builtin pwd 
+./bin/esh builtin set -x
+./bin/esh builtin echo 
+./bin/esh builtin echo 
+./bin/esh builtin set 
+./bin/esh builtin help set
+./bin/esh builtin pwd 
+./bin/esh builtin help set
+./bin/esh builtin set -m
+./bin/esh builtin echo 
+./bin/esh builtin pwd 
+./bin/esh builtin set 
+./bin/esh builtin help set
+./bin/esh builtin pwd 
+./bin/esh builtin set 
+./bin/esh builtin echo 0
+./bin/esh builtin echo xm
+./bin/esh builtin echo 
+./bin/esh builtin set 
+./bin/esh builtin declare -p
+./bin/esh builtin enable 
+./bin/esh builtin export 
+./bin/esh builtin complete 
+./bin/esh builtin complete -p
+./bin/esh builtin compgen -b
+./bin/esh builtin compgen -a
+./bin/esh builtin compgen -b
+./bin/esh builtin compgen -a
+./bin/esh builtin pwd 
+./bin/esh builtin declare 
+./bin/esh builtin declare -p
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin pwd 
+./bin/esh builtin help 
+./bin/esh builtin declare -p
+./bin/esh builtin export 
+./bin/esh builtin export -p
+./bin/esh builtin compgen -a
+./bin/esh builtin compgen -b
+./bin/esh builtin compgen -a
+./bin/esh builtin compgen -b
+./bin/esh builtin compgen -b a
+./bin/esh builtin compgen -a
+./bin/esh builtin compgen -b
+./bin/esh builtin compgen -abcd
+./bin/esh builtin compgen -a
+./bin/esh builtin compgen -b
+./bin/esh builtin compgen -d
+./bin/esh builtin compgen -ef
+./bin/esh builtin compgen -g
+./bin/esh builtin compgen -h
+./bin/esh builtin compgen -k
+./bin/esh builtin help compgen
+./bin/esh builtin help pwd
+./bin/esh builtin help compgen
+./bin/esh builtin compgen -s
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export -p
+./bin/esh builtin help export
+./bin/esh builtin export -n
+./bin/esh builtin help export
+./bin/esh builtin export 
+./bin/esh builtin export -p
+./bin/esh builtin export -p HOSTNAME
+./bin/esh builtin export -p
+./bin/esh builtin alias 
+./bin/esh builtin export 
+./bin/esh builtin declare -p
+./bin/esh builtin declare 
+./bin/esh builtin declare 
+./bin/esh builtin declare -p
+./bin/esh builtin declare -x
+./bin/esh builtin declare -i
+./bin/esh builtin declare 
+./bin/esh builtin declare -p P
+./bin/esh builtin builtin pwd
+./bin/esh builtin builtin declare
+./bin/esh builtin builtin export
+./bin/esh builtin builtin export -p
+./bin/esh builtin builtin readonly
+./bin/esh builtin builtin export -p
+./bin/esh builtin builtin export
+./bin/esh builtin builtin export -p
+./bin/esh builtin builtin declare -p
+./bin/esh builtin builtin declare
+./bin/esh builtin builtin readonly
+./bin/esh builtin pwd 
+./bin/esh builtin help 
+./bin/esh builtin alias 
+./bin/esh builtin declare -p 
+./bin/esh builtin alias 
+./bin/esh builtin type pwd
+./bin/esh builtin type pwd
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export -p
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin declare 
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export -p
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin export 
+./bin/esh builtin readonly 
+./bin/esh builtin declare 
+./bin/esh builtin declare -x
+./bin/esh builtin declare -i
+./bin/esh builtin compgen -a
+./bin/esh builtin compgen -abcd
+./bin/esh builtin compgen -e
+./bin/esh builtin type pwd
+./bin/esh builtin type de
+./bin/esh builtin enable 
+./bin/esh builtin enable 
+./bin/esh builtin enable -p
+./bin/esh builtin enable -a
+./bin/esh builtin enable 
+./bin/esh builtin enable -s
+./bin/esh builtin help 
+./bin/esh builtin shopt 
+./bin/esh builtin set 
+./bin/esh builtin pwd 
+./bin/esh builtin alias 
+./bin/esh builtin alias ar=readonly -p
+./bin/esh builtin alias 
+./bin/esh builtin alias ra=readonly -p
+./bin/esh builtin alias 
+./bin/esh builtin alias -p
+./bin/esh builtin alias ra=readonly -p
+./bin/esh builtin alias 
+./bin/esh builtin alias -p
+./bin/esh builtin alias ra=readonly
+./bin/esh builtin alias 
+./bin/esh builtin unalias qq
+./bin/esh builtin pwd 
+./bin/esh builtin help set
+./bin/esh builtin help jobs
+./bin/esh builtin help jobs
+./bin/esh builtin help jobs
+./bin/esh builtin help 
+./bin/esh builtin enable 
+./bin/esh builtin help jobs
+./bin/esh builtin help 
+./bin/esh builtin help set
+./bin/esh builtin help export
+./bin/esh builtin help 
+./bin/esh builtin help pwd
+./bin/esh builtin help help
+./bin/esh builtin help -m help
+./bin/esh builtin help cd
+./bin/esh builtin help 
+./bin/esh builtin help alias
+./bin/esh builtin help shopt
+./bin/esh builtin help 
+./bin/esh builtin help type
+./bin/esh builtin help disown
+./bin/esh builtin help fg
+./bin/esh builtin help pwd
+./bin/esh builtin help cd
+./bin/esh builtin help 
+./bin/esh builtin help 
+./bin/esh builtin help help
+./bin/esh builtin jobs 
+./bin/esh builtin help jobs
+./bin/esh builtin jobs -l
+./bin/esh builtin jobs -n
+./bin/esh builtin pwd 
+./bin/esh builtin help 
+./bin/esh builtin pwd 

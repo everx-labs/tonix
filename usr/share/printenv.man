@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "printenv",
+    "synopsis": "[OPTION]... [VARIABLE]...",
+    "purpose": "print all or part of environment",
+    "description": "Print the values of the specified environment VARIABLE(s).  If no VARIABLE is specified, print name and value pairs for them all.",
+    "options": "-0      end each output line with NUL, not newline",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

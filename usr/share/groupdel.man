@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "groupdel",
+    "synopsis": "[options] GROUP",
+    "purpose": "delete a group",
+    "description": "Modifies the system account files, deleting all entries that refer to GROUP. The named group must exist.",
+    "options": "-f     delete group even if it is the primary group of a user",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

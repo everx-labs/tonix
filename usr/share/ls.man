@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "ls",
+    "synopsis": "[OPTION]... [FILE]...",
+    "purpose": "list directory contents",
+    "description": "List information about the FILE (the current directory by default).\nSort entries alphabetically if none of -cftuvSUX nor --sort is specified.",
+    "options": "-a      do not ignore entries starting with .\n-A      do not list implied . and ..\n-B      do not list implied entries ending with ~\n-c      with -lt: sort by, and show, ctime; with -l: show ctime and sort by name, otherwise: sort by ctime, newest first\n-C      list entries by columns\n-d      list directories themselves, not their contents\n-f      do not sort, enable -aU\n-F      append indicator (one of */=>@|) to entries\n-g      like -l, but do not list owner\n-G      in a long listing, don't print group names\n-h      with -l and -s, print sizes like 1K 234M 2G etc.\n-H      follow symbolic links listed on the command line\n-i      print the index number of each file\n-k      default to 1024-byte blocks for disk usage; used only with -s and per directory totals\n-L      for a symbolic link, show information for the file the link references rather than for the link itself\n-l      use a long listing format\n-m      fill width with a comma separated list of entries\n-n      like -l, but list numeric user and group IDs\n-N      print entry names without quoting\n-o      like -l, but do not list group information\n-p      append / indicator to directories\n-q      print ? instead of nongraphic characters\n-Q      enclose entry names in double quotes\n-r      reverse order while sorting\n-R      list subdirectories recursively\n-s      print the allocated size of each file, in blocks\n-S      sort by file size, largest first\n-t      sort by modification time, newest first\n-u      with -lt: sort by, and show, access time; with -l: show access time and sort by name; otherwise: sort by access time, newest first\n-U      do not sort; list entries in directory order\n-v      natural sort of (version) numbers within text\n-x      list entries by lines instead of by columns\n-X      sort alphabetically by entry extension\n-1      list one file per line. Avoid '\\n' with -q or -b",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "mount",
+    "synopsis": "[-l]\t-a [-fnrvw]\t-[NTBM] <source> <directory>",
+    "purpose": "mount a filesystem",
+    "description": "Attach the filesystem found on some device to the file tree",
+    "options": "-a      mount all filesystems mentioned in fstab\n-c      don't canonicalize paths\n-f      dry run; skip the mount syscall\n-T      alternative file to /etc/fstab\n-l      show also filesystem labels\n-n      don't write to /etc/mtab\n-r      mount the filesystem read-only\n-v      say what is being done\n-w      mount the filesystem read-write (default)\n-N      perform mount in another namespace\n-B      mount a subtree somewhere else\n-M      move a subtree to some other place",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "umount, findmnt, losetup, mke2fs, ",
+    "version": "0.01"
+  }
+}

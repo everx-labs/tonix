@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "fsck",
+    "synopsis": "[filesystem...]",
+    "purpose": "check and repair a Tonix filesystem",
+    "description": "Used to check and optionally repair one or more Tonix filesystems.",
+    "options": "-A      check all filesystems\n-l      list all filenames\n-a      automatic repair\n-r      interactive repair\n-s      output super-block information\n-f      force check\n-v      be verbose\n-R      skip root filesystem\n-p      automatic repair (no questions)\n-N      don't execute, just show what would be done\n-n      make no changes to the filesystem",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "dumpe2fs, mke2fs, (debugfs)*",
+    "version": "0.01"
+  }
+}

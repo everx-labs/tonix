@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "tr",
+    "synopsis": "[OPTION]... SET1 [SET2]",
+    "purpose": "translate or delete characters",
+    "description": "Translate, squeeze, and/or delete characters from standard input, writing to standard output.",
+    "options": "-d      delete characters in SET1, do not translate\n-s      replace each sequence of a repeated character that is listed in the last specified SET, with a single occurrence of that character",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

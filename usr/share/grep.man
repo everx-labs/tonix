@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "grep",
+    "synopsis": "[OPTION...] PATTERNS [FILE...]",
+    "purpose": "print lines that match patterns",
+    "description": "Searches for PATTERNS in each FILE and prints each line that matches a pattern.",
+    "options": "-v      invert the sense of matching, to select non-matching lines\n-x      select only those matches that exactly match the whole line",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

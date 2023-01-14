@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "du",
+    "synopsis": "[OPTION]... [FILE]...",
+    "purpose": "estimate disk usage",
+    "description": "Summarize disk usage of the set of FILEs, recursively for directories.",
+    "options": "-a      write counts for all files, not just directories\n-b      block size = 1 byte\n-c      produce a grand total\n-D      dereference only symlinks that are listed on the command line\n-h      print sizes in human readable format (e.g., 12K 1M)\n-H      equivalent to -D\n-k      block size = 1K\n-L      dereference all symbolic links\n-l      count sizes many times if hard linked\n-m      block size = 1M\n-P      don't follow any symbolic links (this is the default)\n-S      for directories do not include size of subdirectories\n-s      display only a total for each argument\n-x      skip directories on different file systems\n-0      end each output line with NUL, not newline",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

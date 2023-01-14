@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "ulimit",
+    "synopsis": "[-SHabcdefiklmnpqrstuvxPT] [limit]",
+    "purpose": "Modify shell resource limits.",
+    "description": "Provides control over the resources available to the shell and processes it creates, on systems that allow such control.",
+    "options": "-S        use the `soft' resource limit\n-H        use the `hard' resource limit\n-a        all current limits are reported\n-b        the socket buffer size\n-c        the maximum size of core files created\n-d        the maximum size of a process's data segment\n-e        the maximum scheduling priority (`nice')\n-f        the maximum size of files written by the shell and its children\n-i        the maximum number of pending signals\n-l        the maximum size a process may lock into memory\n-m        the maximum resident set size\n-n        the maximum number of open file descriptors\n-p        the pipe buffer size\n-q        the maximum number of bytes in POSIX message queues\n-r        the maximum real-time scheduling priority\n-s        the maximum stack size\n-t        the maximum amount of cpu time in seconds\n-u        the maximum number of user processes\n-v        the size of virtual memory\n-x        the maximum number of file locks\n-P        the maximum number of pseudoterminals\n-T        the maximum number of threads\n\nNot all options are available on all platforms.",
+    "arguments": "If LIMIT is given, it is the new value of the specified resource; the\nspecial LIMIT values `soft', `hard', and `unlimited' stand for the\ncurrent soft limit, the current hard limit, and no limit, respectively.\nOtherwise, the current value of the specified resource is printed.  If\nno option is given, then -f is assumed.\n\nValues are in 1024-byte increments, except for -t, which is in seconds,\n-p, which is in increments of 512 bytes, and -u, which is an unscaled\nnumber of processes.",
+    "exit_status": "Returns success unless an invalid option is supplied or an error occurs."
+  }
+}

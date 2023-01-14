@@ -1,0 +1,21 @@
+#set -x
+case $1 in
+    parse) make -b run_make_cmd in="$2";;
+    builtin) make -b run_builtin cmd=$2;;
+    execute_cmd) make -b run_execute_cmd;;
+    dispose_cmd) make -b run_dispose_cmd;;
+    builtin_job) make -b run_builtin_job cmd=$2;;
+    display_help) make -b exec_help cmd=$2;;
+    command) make -b exec_core cmd=$2;;
+    syscall) make -b exec_subr cmd=$2;;
+    pg) make -b exec_pgroup cmd=$2
+    make -b run_dispose_cmd cmd=$2
+    make -b flush_std
+    ;;
+    nl) make -b exec_nl cmd=$2
+    make -b run_dispose_cmd cmd=$2
+    make -b flush_std
+    ;;
+    debug) make -b debug.$2 cmd=$2;;
+    flush_std) make -b flush_std;;
+esac

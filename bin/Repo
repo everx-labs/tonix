@@ -1,0 +1,12 @@
+set -x
+fn=$1
+t="tonos-cli -c etc/Repo.conf"
+case $fn in
+#    etc_hosts|models) ~/bin/tonos-cli -c ~/tonix/etc/Repo.conf runx -m $fn | jq -j '.out';;
+    etc_hosts|models) $t runx -m $fn | jq -j '.out';;
+    add_model) $t callx -m $fn --name $2 --c `cat $3`;;
+    update_model_at_index) $t callx -m $fn --index $2 --c `cat $3`;;
+    upgrade) $t callx -m $fn --c `cat $2`;;
+    stat) ~/bin/tonos-cli -j account `jq -r '.config.addr' ~/tonix/etc/Repo.conf` | jq -r '.[].balance, (.[]."data(boc)" | length / 2)' ;;
+    images) $t runx -m _images | jq '._images'
+esac

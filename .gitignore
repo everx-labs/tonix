@@ -8,5 +8,14 @@ etc/*
 system/*/*
 vfs
 *.log
+*.cs
+*.code
+*.tvc
+*.boc
+*.ress
 .vscode
 tonos-cli.conf.json
+tmp
+run
+*.conf
+bak

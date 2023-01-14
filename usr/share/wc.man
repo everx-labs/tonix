@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "wc",
+    "synopsis": "[OPTION]... [FILE]...",
+    "purpose": "print newline, word, and byte counts for each file",
+    "description": "Print newline, word, and byte counts for each FILE, and a total line if more than one FILE is specified.\nA word is a non-zero-length sequence of characters delimited by white space.",
+    "options": "-c      print the byte counts\n-m      print the character counts\n-l      print the newline counts\n-L      print the maximum display width\n-w      print the word counts",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "help",
+    "synopsis": "[-dms] [pattern ...]",
+    "purpose": "Display information about builtin commands.",
+    "description": "Displays brief summaries of builtin commands. If PATTERN is specified, gives detailed help on all commands\nmatching PATTERN, otherwise the list of help topics is printed.",
+    "options": "-d        output short description for each topic\n-m        display usage in pseudo-manpage format\n-s        output only a short usage synopsis for each topic matching PATTERN",
+    "arguments": "Arguments:\n  PATTERN   Pattern specifying a help topic",
+    "exit_status": "Returns success unless PATTERN is not found or an invalid option is given."
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "utmpdump",
+    "synopsis": "[options] [filename]",
+    "purpose": "dump UTMP and WTMP files in raw format",
+    "description": "Dump UTMP and WTMP files in raw format, so they can be examined.",
+    "options": "-r      write back dumped data into utmp file\n-o      write to file instead of standard output",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

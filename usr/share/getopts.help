@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "getopts",
+    "synopsis": "optstring name [arg]",
+    "purpose": "Parse option arguments.",
+    "description": "Getopts is used by shell procedures to parse positional parameters as options.",
+    "options": "OPTSTRING contains the option letters to be recognized; if a letter is followed by a colon, the option\nis expected to have an argument, which should be separated from it by white space.\n\nEach time it is invoked, getopts will place the next option in the shell variable $name, initializing name\nif it does not exist, and the index of the next argument to be processed into the shell variable OPTIND.\nOPTIND is initialized to 1 each time the shell or a shell script is invoked.  When an option requires an argument,\ngetopts places that argument into the shell variable OPTARG.",
+    "arguments": "getopts reports errors in one of two ways. If the first character of OPTSTRING is a colon, getopts uses silent error\nreporting. In this mode, no error messages are printed.  If an invalid option is seen, getopts places the option character\nfound into OPTARG. If a required argument is not found, getopts places a ':' into NAME and sets OPTARG to the option character\nfound. If getopts is not in silent mode, and an invalid option is seen, getopts places '?' into NAME and unsets OPTARG.\nIf a required argument is not found, a '?' is placed in NAME, OPTARG is unset, and a diagnostic message is printed.\n\nIf the shell variable OPTERR has the value 0, getopts disables the printing of error messages, even if the first character\nof OPTSTRING is not a colon.  OPTERR has the value 1 by default.\n\nGetopts normally parses the positional parameters ($0 - $9), but if more arguments are given, they are parsed instead.",
+    "exit_status": "Returns success if an option is found; fails if the end of options is encountered or an error occurs."
+  }
+}

@@ -1,0 +1,9 @@
+set -x
+cd /home/boris/tonix/proc/curproc
+jq -n --arg v "$@" --slurpfile ev shell_env '{e_in: $ev[], input: $v}' >eilish.args
+tonos-cli -c /home/boris/tonix/etc/eilish.conf runx -m main eilish.args >sa.out
+jq -er '."Error"? // empty' sa.out && exit $?
+jq '.e' sa.out >shenv_out
+[ -s shenv_out ] && cp shenv_out shell_env
+cd /home/boris/tonix
+. proc/curproc/cmdline

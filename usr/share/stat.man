@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "stat",
+    "synopsis": "[OPTION]... FILE...",
+    "purpose": "display file or file system status",
+    "description": "Display file or file system status.",
+    "options": "-L      follow links\n-f      display file system status instead of file status\n-c      use the specified FORMAT instead of the default; output a newline after each use of FORMAT\n-t      print the information in terse form\nThe valid format sequences for files (without -f):\n  %a   access rights in octal\n  %A   access rights in human readable form\n  %b   number of blocks allocated (see %B)\n  %B   the size in bytes of each block reported by %b\n  %C   SELinux security context string\n  %d   device number in decimal\n  %D   device number in hex\n  %f   raw mode in hex\n  %F   file type\n  %g   group ID of owner\n  %G   group name of owner\n  %h   number of hard links\n  %i   inode number\n  %m   mount point\n  %n   file name\n  %N   quoted file name with dereference if symbolic link\n  %o   optimal I/O transfer size hint\n  %s   total size, in bytes\n  %t   major device type in hex, for character/block device special files\n  %T   minor device type in hex, for character/block device special files\n  %u   user ID of owner\n  %U   user name of owner\n  %w   time of file birth, human-readable; - if unknown\n  %W   time of file birth, seconds since Epoch; 0 if unknown\n  %y   time of last data modification, human-readable\n  %Y   time of last data modification, seconds since Epoch\n  %z   time of last status change, human-readable\n  %Z   time of last status change, seconds since Epoch\n\nValid format sequences for file systems:\n  %a   free blocks available to non-superuser\n  %b   total data blocks in file system\n  %c   total file nodes in file system\n  %d   free file nodes in file system\n  %f   free blocks in file system\n  %i   file system ID in hex\n  %l   maximum length of filenames\n  %n   file name\n  %s   block size (for faster transfers)\n  %S   fundamental block size (for block counts)\n  %t   file system type in hex\n  %T   file system type in human readable form\n-t is equivalent to the following FORMAT:\n    %n %s %b %f %u %g %D %i %h %t %T %Y %Z %W %o %C\n-t -f is equivalent to the following FORMAT:\n    %n %i %l %t %s %S %b %f %a %c %d",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "File creation time, maximum length of filenames, file system type in hex, fundametal block size\nand some other attributes are not yet supported",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

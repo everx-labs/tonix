@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "basename",
+    "synopsis": "OPTION... NAME...",
+    "purpose": "strip directory and suffix from filenames",
+    "description": "Print NAME with any leading directory components removed.",
+    "options": "-a      support multiple arguments and treat each as a NAME\n-s      remove a trailing SUFFIX; implies -a\n-z      end each output line with NUL, not newline",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "Suffix removal is not yet supported",
+    "see_also": "dirname, readlink",
+    "version": "0.01"
+  }
+}

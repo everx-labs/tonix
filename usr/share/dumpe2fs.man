@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "dumpe2fs",
+    "synopsis": "[ -bfghixV ] device",
+    "purpose": "dump ext2/ext3/ext4 filesystem information",
+    "description": "Prints the super block and blocks group information for the filesystem present on device.",
+    "options": "-h     only display the superblock information and not any of the block group descriptor detail information\n-i      display the filesystem data from an image file created by e2image, using device as the pathname to the image file",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

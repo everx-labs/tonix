@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "echo",
+    "synopsis": "[-neE] [arg ...]",
+    "purpose": "Write arguments to the standard output.",
+    "description": "Display the ARGs, separated by a single space character and followed by a newline, on the standard output.",
+    "options": "-n        do not append a newline\n-e        enable interpretation of the following backslash escapes\n-E        explicitly suppress interpretation of backslash escapes",
+    "arguments": "",
+    "exit_status": "Returns success unless a write error occurs."
+  }
+}

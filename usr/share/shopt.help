@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "shopt",
+    "synopsis": "[-pqsu] [-o] [optname ...]",
+    "purpose": "Set and unset shell options.",
+    "description": "Change the setting of each shell option OPTNAME.  Without any option arguments, list each supplied OPTNAME,\nor all shell options if no OPTNAMEs are given, with an indication of whether or not each is set.",
+    "options": "-o        restrict OPTNAMEs to those defined for use with `set -o'\n-p        print each shell option with an indication of its status\n-q        suppress output\n-s        enable (set) each OPTNAME\n-u        disable (unset) each OPTNAME",
+    "arguments": "",
+    "exit_status": "Returns success if OPTNAME is enabled; fails if an invalid option is given or OPTNAME is disabled."
+  }
+}

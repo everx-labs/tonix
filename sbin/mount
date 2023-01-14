@@ -1,0 +1,4 @@
+cd /home/boris/tonix/tmp/sbin/mount
+jq --slurpfile fs ../fs '$fs[] + {p_in: .p, argv: .argv}' ../proc >mount.args
+~/bin/tonos-cli -j run `jq -r '.config.addr' tonos-cli.conf.json` main mount.args >../proc_out
+cd - > /dev/null

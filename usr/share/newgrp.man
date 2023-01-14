@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "newgrp",
+    "synopsis": "[-] [group]",
+    "purpose": "log in to a new group",
+    "description": "Change the current group ID during a login session.",
+    "options": "",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

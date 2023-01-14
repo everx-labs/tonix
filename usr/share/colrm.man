@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "colrm",
+    "synopsis": "[start [stop]]",
+    "purpose": "remove columns from a file",
+    "description": "Removes selected columns from the lines of a file. A column is defined as a single character in a line. Output is written to the standard output.\nIf only the start column is specified, columns numbered less than the start column will be written.  If both start and stop columns are\nspecified, columns numbered less than the start column or greater than the stop column will be written.  Column numbering starts with one, not zero.",
+    "options": "",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "column, cut, paste",
+    "version": "0.01"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "jobs",
+    "synopsis": "[-lnprs] [jobspec ...] or jobs -x command [args]",
+    "purpose": "Display status of jobs.",
+    "description": "Lists the active jobs.  JOBSPEC restricts output to that job. Without options, the status of all active jobs is displayed.",
+    "options": "-l        lists process IDs in addition to the normal information\n-n        lists only processes that have changed status since the last notification\n-p        lists process IDs only\n-r        restrict output to running jobs\n-s        restrict output to stopped jobs",
+    "arguments": "If -x is supplied, COMMAND is run after all job specifications that appear in ARGS have been replaced with the process ID\nof that job's process group leader.",
+    "exit_status": "Returns success unless an invalid option is given or an error occurs. If -x is used, returns the exit status of COMMAND."
+  }
+}

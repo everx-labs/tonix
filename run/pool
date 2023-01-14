@@ -1,0 +1,41 @@
+-a [keyword]=( ! elif fi while case else for then { } do done until if esac )
+-a [builtin]=( tosh help declare type builtin pwd read hash command export readonly alias unalias unset enable test cd dirs pushd popd echo complete ulimit shopt source jobs mapfile compgen exec set shift board )
+-a [command]=( ls du file namei cat colrm column cut expand grep head look rev tail tr unexpand paste wc readlink realpath env man whatis mkfs mke2fs fsck mount umount losetup udevadm df findmnt mountpoint touch cp mv rm rmdir mkdir ln install groupadd groupdel groupmod useradd userdel usermod chfn newgrp lslogins finger who last fuser utmpdump ps whoami id hostname tfs tmpfs printenv basename dirname uname groups getent lsblk login kaio ftp lsof explain reboot vnp sdz pathchk procstat diff patch )
+-a [sysmain]=( lastlogin vmm umm vmstat dumpe2fs stat )
+-a [limit]=( )
+-a [function]=( display_help display_man_page builtin_read_fs ustat exec b_exec main hi )
+-a [alias]=( de en ty )
+-- [de]="declare -p"
+-- [en]="enable"
+-- [ty]="type"
+-xi [EUID]="0"
+-x [SHLVL]="1"
+-x [HOSTNAME]
+-x [WD]="14"
+-x [PWD]="/"
+-x [OLDPWD]="/"
+-x [LOGNAME]="root"
+-xi [UID]="0"
+-xi [GID]="0"
+-x [USER]="root"
+-x [HOME]="/home/root"
+-x [SHELL]="./ei"
+-x [PPID]="1"
+-- [_]="./tosh"
+-- [-]="himBHs"
+-- [TOSH]="./tosh"
+-- [TOSHOPTS]="( expand_aliases)"
+-- [TOSHPID]="2"
+-- [TOSH_SUBSHELL]="0"
+-- [TOSH_ALIASES]
+-- [SHELLOPTS]="allexport:hashall"
+-- [TMPDIR]="tmp"
+-- [SHLVL]="1"
+
+-A [/bin]=( [ls]="0" [cat]="1" [mv]="0" [ln]="1" )
+-f [builtin_read_fs]={. builtin_read_fs $0 $@;. on_b_exec}
+-f [read_input]={. $0 read_input $@}
+-f [exec]={. exec $0 $@}
+-f [run]={. $0 run $@}
+-f [print]={. $0 print $@}
+-f [hi]={ echo hi }

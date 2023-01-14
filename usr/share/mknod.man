@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "mknod",
+    "synopsis": "[OPTION]... NAME TYPE [MAJOR MINOR]",
+    "purpose": "make block or character special files",
+    "description": "Create the special file NAME of the given TYPE.",
+    "options": "-m     set file permission bits to MODE, not a=rw - umask",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

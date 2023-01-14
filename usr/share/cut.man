@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "cut",
+    "synopsis": "OPTION... [FILE]...",
+    "purpose": "remove sections from each line of files",
+    "description": "Print selected parts of lines from each FILE to standard output.",
+    "options": "-f     select only these fields; also print lines with no delimiter character, unless the -s option is specified\n-b      select only these bytes\n-c      select only these characters\n-d      use DELIM instead of TAB for field delimiter\n-s      do not print lines not containing delimiters\n-o      use STRING as the output delimiter. the default is to use the input delimiter\n-z      line delimiter is NUL, not newline empty",
+    "notes": "Use one, and only one of -b, -c or -f.  Each LIST is made up of one range, or many ranges separated by commas.\nSelected input is written in the same order that it is read, and is written exactly once. Each range is one of:\n  N     N'th byte, character or field, counted from 1\n  N-    from N'th byte, character or field, to end of line\n  N-M   from N'th to M'th (included) byte, character or field\n  -M    from first to M'th (included) byte, character or field",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

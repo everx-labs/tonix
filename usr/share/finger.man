@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "finger",
+    "synopsis": "[-lms] [user ...]",
+    "purpose": "user information lookup program",
+    "description": "Displays information about the system users.",
+    "options": "-l      produces a multi-line format displaying all of the information described for the -s option as well as the user's home directory\n-m      prevent matching of user names\n-s      displays the user's login name, write status and login time",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

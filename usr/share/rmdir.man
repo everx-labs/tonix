@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "rmdir",
+    "synopsis": "[OPTION]... DIRECTORY...",
+    "purpose": "remove empty directories",
+    "description": "Remove the DIRECTORY(ies), if they are empty.",
+    "options": "-p      remove DIRECTORY and its ancestors; e.g., 'rmdir -p a/b/c' is similar to 'rmdir a/b/c a/b a'\n-v      output a diagnostic for every directory processed",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

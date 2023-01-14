@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "userdel",
+    "synopsis": "[options] LOGIN",
+    "purpose": "delete a user account and related files",
+    "description": "A low level utility for removing users.",
+    "options": "-f      force removal of files, even if not owned by user\n-r      remove the user's home directory",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

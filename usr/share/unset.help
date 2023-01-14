@@ -1,0 +1,11 @@
+{
+  "bh": {
+    "name": "unset",
+    "synopsis": "[-f] [-v] [-n] [name ...]",
+    "purpose": "Unset values and attributes of shell variables and functions.",
+    "description": "For each NAME, remove the corresponding variable or function.",
+    "options": "-f        treat each NAME as a shell function\n-v        treat each NAME as a shell variable\n-n        treat each NAME as a name reference and unset the variable itself rather than the variable it references",
+    "arguments": "Without options, unset first tries to unset a variable, and if that fails, tries to unset a function.\nSome variables cannot be unset; also see `readonly'.",
+    "exit_status": "Returns success unless an invalid option is given or a NAME is read-only."
+  }
+}

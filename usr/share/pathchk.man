@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "pathchk",
+    "synopsis": "[OPTION]... NAME...",
+    "purpose": "check whether file names are valid or portable",
+    "description": "Diagnose invalid or unportable file names.",
+    "options": "-p      check for most POSIX systems\n-P      check for empty names and leading \"-\"",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}

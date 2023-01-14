@@ -1,0 +1,14 @@
+{
+  "ch": {
+    "name": "mountpoint",
+    "synopsis": "[-d|-q] directory | file\t-x device",
+    "purpose": "see if a directory or file is a mountpoint",
+    "description": "Checks whether the given directory or file is mentioned in the /proc/self/mountinfo file.",
+    "options": "-d      quiet mode - don't print anything\n-q      print maj:min device number of the filesystem\n-x      print maj:min device number of the block device",
+    "notes": "",
+    "author": "Written by Boris",
+    "bugs": "",
+    "see_also": "",
+    "version": "0.01"
+  }
+}
