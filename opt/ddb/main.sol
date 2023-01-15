@@ -1,17 +1,6 @@
 pragma ton-solidity >= 0.64.0;
 
 import "command.sol";
-struct db_symtab {
-	string name;		// symtab name
-	uint32 start;		// symtab location
-	uint32 end;
-    db_private _private;// optional machdep pointer
-}
-
-struct db_private {
-	uint32 strtab;
-	uint32 relbase;
-}
 
 struct ddb_script {
 	string ds_scriptname; //[DB_MAXSCRIPTNAME];

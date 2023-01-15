@@ -27,6 +27,11 @@ contract output is input {
     uint8 db_newlines;			    // # lines this page
     uint8 db_maxlines;			    // max lines/page when paging
 
+    uint32 db_dot;      	// current location
+    uint32 db_last_addr;	// last explicit address typed
+    uint32 db_prev;	        // last address examined or written
+    uint32 db_next;	        // next address to be examined or written
+
     uint constant NULL = 0;
     bool db_ed_style = true;
 

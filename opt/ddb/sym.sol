@@ -1,12 +1,28 @@
 pragma ton-solidity >= 0.64.0;
 
-contract sym {
+import "output.sol";
+struct db_symtab {
+	string name;		// symtab name
+	uint32 start;		// symtab location
+	uint32 end;
+    db_private _private;// optional machdep pointer
+}
+struct db_private {
+	uint32 strtab;
+	uint32 relbase;
+}
+struct db_variable {
+	string name;    // Name of variable
+	uint8 valuep;	// value of variable
+	uint32 fcn;   // db_varfcn_t function to call when reading/writing
+}
+contract sym is output {
 // Multiple symbol tables
     //#define	MAXNOSYMTABS	3	/* mach, ux, emulator */
 
-    db_symtab_t[1]	db_symtabs;//[MAXNOSYMTABS] = {{0,},};
+    db_symtab[1]	db_symtabs;//[MAXNOSYMTABS] = {{0,},};
     uint8 db_nsymtab = 0;
-    db_symtab_t	db_last_symtab; /* where last symbol was found */
+    db_symtab	db_last_symtab; /* where last symbol was found */
 
     uint8 db_cpu = 0;
 

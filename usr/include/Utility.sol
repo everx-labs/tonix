@@ -22,11 +22,9 @@ abstract contract Utility is Base {
     function print_usage() external pure returns (string) {
         (string name, string synopsis, , string description, string options, , , , , ) = _command_help().unpack();
         options.append("\n--help\tdisplay this help and exit\n--version\toutput version information and exit");
-        //(string[] lines, ) = options.split("\n");
         options.translate("\n", "\n  ");
         options = "Options:\n" + options;
         string usage = "Usage: " + name + " " + synopsis;
-        //return libstring.join_fields([usage, description, fmt.format_custom("Options:", options, 2, "\n")], "\n");
         return libstring.join_fields([usage, description, options], '\n');
     }
 

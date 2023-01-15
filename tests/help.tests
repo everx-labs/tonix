@@ -1,8 +1,0 @@
-help t
-help --help
-help help
-help
-man help
-help -m alias builtin cd command compgen complete declare dirs echo eilish enable exec export getopts hash help jobs mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset
-quit
-

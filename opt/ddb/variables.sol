@@ -1,11 +1,9 @@
 pragma ton-solidity >= 0.64.0;
-
 struct db_variable {
 	string name;    // Name of variable
 	uint8 valuep;	// value of variable
 	uint32 fcn;   // db_varfcn_t function to call when reading/writing
 }
-
 contract variables {
 
     uint8 constant DB_VAR_GET =	0;
@@ -14,7 +12,7 @@ contract variables {
     //#define	FCN_NULL	((db_varfcn_t *)0)
 
     db_variable[] db_vars;
-    db_variable db_evars = db_vars + nitems(db_vars);
+    db_variable db_evars = db_vars;// + nitems(db_vars);
 
     function init_db_vars() internal {
     	db_vars = [
@@ -63,7 +61,7 @@ contract variables {
     	return ((func)(vp, DB_VAR_GET));
     }
 
-    function db_write_variable(db_variable vp, db_expr_t value) internal returns (bool) {
+    function db_write_variable(db_variable vp, uint8 value) internal returns (bool) {
     	uint32 func = vp.fcn;
     	if (func == FCN_NULL) {
     		vp.valuep = value;

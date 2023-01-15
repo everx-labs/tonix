@@ -1,13 +1,14 @@
 pragma ton-solidity >= 0.64.0;
 import "output.sol";
 import "access.sol";
-import "sym.sol";
-contract examine is output, access {
-    uint32 db_dot;      	// current location
-    uint32 db_last_addr;	// last explicit address typed
-    uint32 db_prev;	        // last address examined or written
-    uint32 db_next;	        // next address to be examined or written
-    string	db_examine_format = "x"; // [TOK_STRING_SIZE]
+import "expr.sol";
+//import "sym.sol";
+contract examine is output, access, expression {
+//    uint32 db_dot;      	// current location
+//    uint32 db_last_addr;	// last explicit address typed
+//    uint32 db_prev;	        // last address examined or written
+//    uint32 db_next;	        // next address to be examined or written
+    string db_examine_format = "x"; // [TOK_STRING_SIZE]
 
     function db_examine_cmd(uint8 addr, bool have_addr, uint8 count, byte modif) internal {
     	if (modif != '\x00')

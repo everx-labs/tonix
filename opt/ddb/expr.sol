@@ -1,5 +1,9 @@
-
-contract expr {
+pragma ton-solidity >= 0.64.0;
+import "lex.h";
+import "lex.sol";
+import "output.sol";
+import "variables.sol";
+contract expr is output, variables {
     function db_term() internal returns (bool f, uint8 valuep) {
     	byte t = db_read_token();
     	if (t == tIDENT) {
@@ -85,7 +89,7 @@ contract expr {
     		    db_error(NULL);
     		    /*NOTREACHED*/
     	    }
-    	    return (true, db_get_value(valuep, 4, false);
+    	    return (true, db_get_value(valuep, 4, false));
     	}
     	db_unread_token(t);
     	return db_term();
@@ -94,7 +98,7 @@ contract expr {
     function db_mult_expr() internal returns (bool f, uint8 lhs) {
         (f, lhs) = db_unary();
     	if (!f)
-    	    return (false, valuep);
+    	    return (false, lhs);
     	byte t = db_read_token();
     	while (t == tSTAR || t == tSLASH || t == tPCT || t == tHASH || t == tBIT_AND) {
             uint8 rhs;

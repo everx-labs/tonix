@@ -1,7 +1,4 @@
-#R_ROOT:=~/
-#R_ROOT:=$(PWD)/..
-#R_ROOT:=~/z/tonix
-R_ROOT := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))/..
+R_ROOT:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))..
 export
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
 NET:=rfld
@@ -27,17 +24,14 @@ URL_fld:=gql.custler.net
 URL_rfld:=rfld-dapp.itgold.io
 URL:=$(URL_$(NET))
 
-PRIME?=
-SUBS?=
-
-vars:   ## Values of the special variables
-	@printf "MAKEFILE_LIST: %s\nVARIABLES: %s\nFEATURES: %s\nINCLUDE_DIRS: %s\n" $(MAKEFILE_LIST) $(.VARIABLES) $(.FEATURES) $(.INCLUDE_DIRS)
-v2:     ## Values of all variables
-	$(foreach v, $(.VARIABLES), $(info $(v) = $($(v))))
-info:   ## Local context information
-	@printf "Prime: %s\nHost: %s\nNet: %s\n" $(PRIME) $H $(NET)
-	@printf "Current: %s\nRoot: %s\nSubdirs: %s\n" $(CURDIR) $(R_ROOT) $(SUBS)
-help:   ## Show this help
-	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
-list:   ## List the existing targets
-	LC_ALL=C $(MAKE) -pRrq -f Makefile : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+#vars:   ## Values of the special variables
+#	@printf "MAKEFILE_LIST: %s\nVARIABLES: %s\nFEATURES: %s\nINCLUDE_DIRS: %s\n" $(MAKEFILE_LIST) $(.VARIABLES) $(.FEATURES) $(.INCLUDE_DIRS)
+#v2:     ## Values of all variables
+#	$(foreach v, $(.VARIABLES), $(info $(v) = $($(v))))
+#info:   ## Local context information
+#	@printf "Prime: %s\nHost: %s\nNet: %s\n" $(PRIME) $H $(NET)
+#	@printf "Current: %s\nRoot: %s\nSubdirs: %s\n" $(CURDIR) $(R_ROOT) $(SUBS)
+#help:   ## Show this help
+#	@fgrep -h "##" $(MAKEFILE_LIST) | fgrep -v fgrep | sed -e 's/\\$$//' | sed -e 's/##//'
+#list:   ## List the existing targets
+#	LC_ALL=C $(MAKE) -pRrq -f Makefile : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'

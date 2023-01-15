@@ -1,4 +1,3 @@
-#e_$1=$(ETC)/$1.$(NET).conf
 define t-acc
 e_$1=../$(ETC)/$1.conf
 a_$1=$(TOC) -c $$(e_$1) account
@@ -9,5 +8,4 @@ cc=$(TOC) -c $$(ee) callx -m $$(subst .,,$$(suffix $$@))
 c_$1=$(TOC) -c $$(e_$1) callx -m $$@
 p_$1=$(TOC) -c $$(e_$1) runx -m $$@ | jq -r .out
 endef
-#$(foreach c,$(PRIME),$(info $(call t-acc,$c)))
 $(foreach c,$(PRIME),$(eval $(call t-acc,$c)))
