@@ -1,4 +1,4 @@
-R_ROOT:=$(PWD)
+R_ROOT:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 TOOLS_BIN:=$(R_ROOT)/bin
 SOLD:=$(TOOLS_BIN)/sold
 LINKER:=$(TOOLS_BIN)/tvm_linker
