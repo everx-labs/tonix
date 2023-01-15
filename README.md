@@ -1,8 +1,6 @@
 # **Tonix**
 
-* A set of standalone utilities implementing basic file system functionality
-* Everscale intrinsic lateral interactive shell with a Unix-style command line interface
-* A set of libraries with assorted helper functions for smart-contract development
+* A set of libraries with assorted helper functions for system smart-contract development
 
 ## Pre-requisites
 
@@ -16,8 +14,10 @@
 
 ## Components
 
-    opt/core:       PoC coreutils
-    opt/dev:        disassembly
-    opt/shell:      PoC shell
-    usr/include:    header files
-    usr/src/lib:    libraries
+* opt:      optional packages
+**opt/core:    PoC coreutils
+** opt/dev:     disassembly
+** opt/shell:   PoC shell
+* usr:      user utilities and libraries
+**usr/include:  header files
+** usr/src/lib:  libraries

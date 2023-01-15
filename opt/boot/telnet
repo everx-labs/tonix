@@ -1,5 +1,6 @@
 #set -x
 X=xeen
+#X=loader
 R="tonos-cli -c etc/$X.conf runx -m"
 
 function run() {
@@ -9,8 +10,8 @@ function run() {
 }
 while true
 do
-    read -p "cash $ " -rsn1 inp
-    tonos-cli -c etc/$X.conf runx -m complete --b $inp >complete.res
+    read -p "> " -rsn1 inp
+    tonos-cli -c etc/$X.conf runx -m complete --b "$inp" >complete.res
     cmd=`jq -r .cmd complete.res`
     eval "$cmd"
 done

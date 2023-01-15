@@ -193,6 +193,25 @@ library libvmem {
             out.append(format(" {} frags", bfrag));
         }
     }
+
+    function dump_cell(TvmCell c) internal returns (string out) {
+        TvmSlice s = c.toSlice();
+        (uint16 nb, uint8 nr) = s.size();
+        string snb = nb > 0 ? format("{:3}", nb) : "-";
+        string sr = nr > 0 ? format(" {}", nr) : "";
+        out.append(snb + sr);
+        if ((nb % 248) == 2) {
+            uint ni = s.loadUnsigned(2);
+            ni;
+            (uint nf, uint nrem) = math.divmod(nb - 2, 248);
+            out.append(format("{} {} ", nf, nrem));
+            repeat (nf)
+                out.append(format("{:X}", s.loadUnsigned(248)));
+        } else {
+            out.append("....");
+        }
+
+    }
     function dump_mem(mapping (uint32 => TvmCell) m) internal returns (string out) {
         for ((uint32 a, TvmCell c): m) {
             TvmSlice s = c.toSlice();

@@ -157,6 +157,7 @@ library libfdt {
     using libfdt for fdescenttbl;
     uint8 constant FREAD	= 0x01;
     uint8 constant FWRITE	= 0x02;
+    uint8 constant FRW      = FREAD + FWRITE;
     uint8 constant FEXEC	= 0x04;	// Open for execute only
     uint8 constant EBADF    = 9;  // Bad file descriptor
     function fget_unlocked(fdescenttbl fdt, uint8 fd) internal returns (uint8 error, file fpp) {

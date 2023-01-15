@@ -5,6 +5,10 @@ library libflags {
         if (p.hasValue())
             return uint(p.get());
     }
+
+    function set(mapping (uint8 => string) flags, byte o) internal returns (bool) {
+        return flags.exists(uint8(o));
+    }
     function flags_set(mapping (uint8 => string) flags, bytes optstring) internal returns (bool f1, bool f2, bool f3, bool f4) {
         uint len = optstring.length;
         f1 = len > 0 && flags.exists(uint8(optstring[0]));
