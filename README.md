@@ -14,10 +14,16 @@
 
 ## Components
 
-* opt:      optional packages
-**opt/core:    PoC coreutils
-** opt/dev:     disassembly
-** opt/shell:   PoC shell
-* usr:      user utilities and libraries
-**usr/include:  header files
-** usr/src/lib:  libraries
+* opt:         optional packages
+* opt/core:    PoC coreutils
+* opt/dev:     disassembly
+* opt/shell:   PoC shell
+* usr:         user utilities and libraries
+* usr/include: header files
+* usr/src/lib: libraries
+
+To build an optional component:
+
+cd opt/<component>
+make
+

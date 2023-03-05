@@ -1,6 +1,6 @@
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
 temps:=cmdline run_make_cmd run_execute_cmd run_dispose_cmd
-OPT:=/home/boris/tonix/opt
+OPT:=../../../opt
 SHETC:=$(OPT)/shell/etc
 clean:
 	rm -f $(temps)
@@ -61,7 +61,7 @@ post_builtin_job=jq '{j_in:.j}' $@ >job_list
 post_dispose_cmd=jq -rj '.stdout' $@ >stdout && jq -rj '.stderr' $@ >stderr
 post_builtin=
 
-debug.%: $(SHETC)/%.conf /home/boris/tonix/opt/shell/build/%.debug.json %.args
+debug.%: $(SHETC)/%.conf ../../../build/%.debug.json %.args
 	tonos-cli -c $< debug run `jq -j '.config.addr' $<` -d $(word 2,$^) $f $(word 3,$^)
 RED=`tput setaf 1`
 GREEN=`tput setaf 2`

@@ -1,3 +1,27 @@
+R_ROOT:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))..
+export
+MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
+NET:=rfld
+#NET:=fld
+#NET:=dev
+GIVER:=Novi
+VAL0:=15
+VAL1:=1
+TOOLS_BIN:=$(R_ROOT)/bin
+RKEYS:=$(R_ROOT)/k1.keys
+# Tools directories
+SOLD:=$(TOOLS_BIN)/sold
+LINKER:=$(TOOLS_BIN)/tvm_linker
+TOC:=$(TOOLS_BIN)/tonos-cli
+BIN:=bin
+BLD:=build
+ETC:=etc
+TMP:=tmp
+URL_dev:=net.ton.dev
+URL_fld:=gql.custler.net
+URL_rfld:=rfld-dapp.itgold.io
+URL:=$(URL_$(NET))
+
 #_pay=$(TOC) -c $(R_ROOT)/etc/$(GIVER).$(NET).conf callx -m sendTo --dest $1 --val $2
 1?=
 2?=
@@ -12,11 +36,10 @@ DEPLOYED=$(patsubst %,$(BLD)/%.deployed,$(INIT))
 CONFD=$(patsubst %,$(ETC)/%.conf,$(CTX))
 CCS=$(patsubst %,$(BLD)/%.cs,$(CTX))
 CSS=$(patsubst %,$(BLD)/%.tvc,$(CTX))
-NULL:=
-SPACE:=$(NULL) $(NULL)
-DIRS:=$(BLD) $(ETC)
+DIRS:=$(BLD) $(ETC) $(TMP)
 INC_PATH?=
-all: $(CSS) | $(DIRS)
+#all: $(CSS) | $(DIRS)
+all: dirs config cc
 
 $(DIRS):
 	mkdir -p $@
@@ -26,8 +49,8 @@ cs: $(CCS) | $(DIRS) ## compile source contracts to generate a cell with code
 	@true
 cc: $(CSS) | $(DIRS) ## compile source contracts to generate a cell with code
 	@true
-uc: $(BLD)/$H.cs
-	$(TOC) -c $(ETC)/$H.conf callx -m uc --c $(file <$<)
+#uc: $(BLD)/$H.cs
+#	$(TOC) -c $(ETC)/$H.conf callx -m uc --c $(file <$<)
 clean:
 	rm -f $(BLD)/*.cs
 deploy: $(DEPLOYED) ## Deploy a set of contracts marked as initial
@@ -41,7 +64,8 @@ $(BLD)/%.tvc: %.sol
 $(BLD)/%.cs: $(BLD)/%.tvc
 	$(LINKER) decode --tvc $< | grep 'code:' | cut -d ' ' -f 3 | tr -d '\n' >$@
 
-$(BLD)/$H.shift: $(BLD)/$H.tvc $(RKEYS)
+#$(BLD)/$H.shift: $(BLD)/$H.tvc $(RKEYS)
+$(BLD)/%.shift: $(BLD)/%.tvc $(RKEYS)
 	$(TOC) -j genaddr $< --setkey $(word 2,$^) | jq -r '.raw_address' >$@
 $(BLD)/%.cargs:
 	$(file >$@,{})
@@ -62,10 +86,14 @@ up: $(BLD)/$(name).cs $(ETC)/$(name).conf
 	$(TOC) -c $(word 2,$^) callx -m uc --c $(file <$<)
 up_%: $(BLD)/%.cs $(ETC)/%.conf
 	$(TOC) -c $(word 2,$^) callx -m uc --c $(file <$<)
-hconf: $(BLD)/$H.shift $(BLD)/$H.abi.json
-	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true
-dhconf: $(BLD)/$H.shift $(BLD)/$H.abi.json
-	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true --project_id 2e786c9575af406fa784085c88b5e7e3 --access_key 38f728004a4b40e2a8aa30f8fee45346 
+hconf_%: $(ETC)/%conf
+
+$(ETC)/%.conf: $(BLD)/%.shift $(BLD)/%.abi.json
+	$(TOC) -c $@ config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true
+#hconf: $(BLD)/$H.shift $(BLD)/$H.abi.json
+#	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true
+#dhconf: $(BLD)/$H.shift $(BLD)/$H.abi.json
+#	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true --project_id 2e786c9575af406fa784085c88b5e7e3 --access_key 38f728004a4b40e2a8aa30f8fee45346 
 $(TMP)/%.tvc: $(TMP)/%.boc
 	$(TOC) decode account boc $< -d $@
 dump_%: $(TMP)/%.tvc $(BLD)/%.abi.json

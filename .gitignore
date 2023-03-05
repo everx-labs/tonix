@@ -12,7 +12,7 @@ vfs
 *.code
 *.tvc
 *.boc
-*.ress
+*.res
 .vscode
 tonos-cli.conf.json
 tmp

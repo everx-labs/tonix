@@ -1,4 +1,4 @@
-R_ROOT:=~/tonix
+R_ROOT:=~/newdir/tonix
 
 UTILS:=cat cp df ln ls mkdir mv realpath rm rmdir basename chfn colrm column cut diff dirname env expand fuser look lslogins lsof man paste patch pathchk printenv ps rev tail tr uname unexpand whatis whoami du file findmnt finger getent grep groups head hostid hostname id last login lsblk mountpoint namei newgrp readlink stat touch wc who
 CTX:=$(UTILS)

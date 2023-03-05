@@ -1,8 +1,19 @@
 X:=xeen
+P:=pai
 L:=loader
-H:=$X
-D:=$L
+I:=ixeen
+U:=hush
+H:=$P
+D:=$L $L $I
 CTX:=$D $H
 INC_PATH+=include lib
-include $(PWD)/../vars.mk
-include $(PWD)/../deploy.mk
+include ../common.mk
+
+h=ixeen
+SHELL = /bin/bash
+
+m?=complete
+%: %.res
+	jq -r .out $<
+	printf "`tput setaf 1` `jq -r .err $<` `tput sgr0`\n"
+	eval `jq -r .cmd $<`
