@@ -2,6 +2,7 @@ R_ROOT:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))..
 export
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
 NET:=rfld
+#NET:=fld
 #NET:=dev
 GIVER:=Novi
 VAL0:=15

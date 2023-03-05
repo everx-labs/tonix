@@ -34,15 +34,11 @@ deploy: $(DEPLOYED) ## Deploy a set of contracts marked as initial
 	-cat $^
 config:
 	$(TOC) config --url $(URL) --is_json true
-#ss: $(RES)
-#	@true
 conf: $(CONFD)
 	-cat $^
-#fk:
-#	touch $(RES)
 $(BLD)/%.tvc: %.sol
 	$(SOLD) $< $(foreach i,$(INC_PATH),-I $i) -O $(BLD)
-$(BLD)/$H.cs: $(BLD)/$H.tvc
+$(BLD)/%.cs: $(BLD)/%.tvc
 	$(LINKER) decode --tvc $< | grep 'code:' | cut -d ' ' -f 3 | tr -d '\n' >$@
 
 $(BLD)/$H.shift: $(BLD)/$H.tvc $(RKEYS)
@@ -62,10 +58,14 @@ name?=
 val?=15
 pay: $(ETC)/$(name).conf
 	$(call _pay,`jq -r '.config.addr' $<`,$(val))
+up: $(BLD)/$(name).cs $(ETC)/$(name).conf
+	$(TOC) -c $(word 2,$^) callx -m uc --c $(file <$<)
+up_%: $(BLD)/%.cs $(ETC)/%.conf
+	$(TOC) -c $(word 2,$^) callx -m uc --c $(file <$<)
 hconf: $(BLD)/$H.shift $(BLD)/$H.abi.json
-	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(CURDIR)/$(word 2,$^) --is_json true --balance_in_tons true
+	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true
 dhconf: $(BLD)/$H.shift $(BLD)/$H.abi.json
-	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(CURDIR)/$(word 2,$^) --is_json true --balance_in_tons true --project_id 2e786c9575af406fa784085c88b5e7e3 --access_key 38f728004a4b40e2a8aa30f8fee45346 
+	$(TOC) -c $(ETC)/$H.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true --project_id 2e786c9575af406fa784085c88b5e7e3 --access_key 38f728004a4b40e2a8aa30f8fee45346 
 $(TMP)/%.tvc: $(TMP)/%.boc
 	$(TOC) decode account boc $< -d $@
 dump_%: $(TMP)/%.tvc $(BLD)/%.abi.json
