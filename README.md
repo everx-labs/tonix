@@ -24,6 +24,15 @@
 
 To build an optional component:
 
+```shell
 cd opt/<component>
 make
+```
 
+### `opt/mesh` example user interface for smart contract
+
+```shell
+cd opt/mesh
+make
+bash me.sh
+```
