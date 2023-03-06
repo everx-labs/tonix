@@ -1,0 +1,58 @@
+{
+	"ABI version": 2,
+	"version": "2.3",
+	"header": ["time"],
+	"functions": [
+		{
+			"name": "sendTo",
+			"inputs": [
+				{"name":"dest","type":"address"},
+				{"name":"val","type":"uint32"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "setTreasury",
+			"inputs": [
+				{"name":"addr","type":"address"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "viewAddress",
+			"inputs": [
+			],
+			"outputs": [
+				{"name":"value0","type":"address"}
+			]
+		},
+		{
+			"name": "upgrade",
+			"inputs": [
+				{"name":"c","type":"cell"}
+			],
+			"outputs": [
+			]
+		},
+		{
+			"name": "constructor",
+			"inputs": [
+			],
+			"outputs": [
+			]
+		}
+	],
+	"data": [
+	],
+	"events": [
+	],
+	"fields": [
+		{"name":"_pubkey","type":"uint256"},
+		{"name":"_timestamp","type":"uint64"},
+		{"name":"_constructorFlag","type":"bool"},
+		{"name":"_treasury","type":"address"},
+		{"name":"_list","type":"map(address,uint32)"}
+	]
+}

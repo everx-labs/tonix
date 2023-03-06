@@ -1,5 +1,5 @@
 HELP_TOPICS:=alias builtin cd command compgen complete declare dirs echo eilish enable exec export hash help mapfile popd pushd pwd read readonly set shift shopt source test type ulimit unalias unset jobs fg kill disown
-CTX:=$(HELP_TOPICS) esh josh make_cmd execute_cmd dispose_cmd ash ish
+CTX:=$(HELP_TOPICS) esh josh make_cmd execute_cmd dispose_cmd ish
 INC_PATH+=../../usr/include ../../usr/src/lib ../../usr/src/sys/sys
 include ../common.mk
 
