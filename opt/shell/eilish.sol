@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "Shell.sol";
 import "libshellenv.sol";
@@ -11,8 +11,11 @@ struct Command {
 }
 
 contract eilish is Shell {
+    using libstring for string;
+    using str for string;
 
-    using libshellenv for shell_env;
+//    using libshellenv for shell_env;
+
     function compound(string input, string aliases) external pure returns (Command[] res) {
         return _compound(input, aliases);
     }
@@ -218,7 +221,7 @@ contract eilish is Shell {
                 }
                 uint o_len = bo.length;//o.byteLength();
                 if (o_len == 1) {
-                    byte b = bo[0];//bytes(o)[0];
+                    bytes1 b = bo[0];//bytes(o)[0];
                     uint p = str.strchr(opt_string, b); // _strstr() for long options ?
                     if (p > 0) {
                         if (p < opt_str_len && opt_string.substr(p, 1) == ":") {

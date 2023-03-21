@@ -1,8 +1,10 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "pbuiltin.sol";
 contract set is pbuiltin {
     using libstring for string;
+    using vars for string[];
+
     function _main(shell_env e_in, job_cmd cc) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         string[][] ev = e.environ;
@@ -39,7 +41,7 @@ contract set is pbuiltin {
         e.puts(attrs);
 
         bytes sattrs = "abefhkmnptuvxBCEHPT";
-        for (byte b: sattrs) {
+        for (bytes1 b: sattrs) {
             if (str.strchr(flags, b) > 0 && str.strchr(attrs, b) == 0 && str.strchr(shellflags, b) == 0)
                 shellflags.append(bytes(b));
             if (str.strchr(attrs, b) > 0 && str.strchr(flags, b) == 0 && str.strchr(shellflags, b) > 0)

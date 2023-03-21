@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.63.0;
+pragma ton-solidity >= 0.67.0;
 
 import "pbuiltin.sol";
 
 contract complete is pbuiltin {
-
+    using libstring for string;
     function _main(shell_env e_in, job_cmd cc) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         rc = EXIT_SUCCESS;

@@ -1,16 +1,44 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
+enum job_status { UNDEF, NEW, RUNNING, STOPPED, DONE }
 
-import "job_h.sol";
+//import "job_h.sol";
 import "libstring.sol";
 import "libtable.sol";
 import "vars.sol";
+struct job_spec {
+    uint8 jid;
+    uint16 pid;
+    job_status status;
+    string exec_line;
+    job_cmd[] commands;
+}
+struct job_list {
+    uint8 cur_job;
+    job_spec[] jobs;
+}
+struct job_cmd {
+    string cmd;
+    string sarg;
+    string argv;
+    string exec_line;
+    string[] pargs;
+    string flags;
+    uint16 n_args;
+    uint8 ec;
+    string last;
+    string opterr;
+    string redir_in;
+    string redir_out;
+}
+
+using libjobcommand for job_cmd global;
 
 library libjobcommand {
 
     using libstring for string;
 // Possible values for the `flags' field of a WORD_DESC.
 
-    function flag_set(job_cmd jc, byte b) internal returns (bool) {
+    function flag_set(job_cmd jc, bytes1 b) internal returns (bool) {
         bytes flags = jc.flags;
         return flags.empty() ? false : str.strchr(flags, b) > 0;
     }
@@ -20,7 +48,7 @@ library libjobcommand {
     function _flag_values(string flags_actual, bytes flags_query) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
         bool[] tmp;
         uint len = flags_query.length;
-        for (byte b: flags_query)
+        for (bytes1 b: flags_query)
             tmp.push(str.strchr(flags_actual, b) > 0);
         return (len > 0 ? tmp[0] : false,
                 len > 1 ? tmp[1] : false,
@@ -36,7 +64,7 @@ library libjobcommand {
         string flags = jc.flags;
         bool[] tmp;
         uint i;
-        for (byte b: flags_query) {
+        for (bytes1 b: flags_query) {
             tmp.push(str.strchr(flags, b) > 0);
             i++;
         }

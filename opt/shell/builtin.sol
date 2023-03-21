@@ -1,9 +1,11 @@
-pragma ton-solidity >= 0.63.0;
+pragma ton-solidity >= 0.67.0;
 
 import "pbuiltin.sol";
 
 contract builtin is pbuiltin {
 
+    using vars for string[];
+    using libstring for string;
     using vars for string;
 
     function _main(shell_env e_in, job_cmd cc) internal pure override returns (uint8 rc, shell_env e) {
@@ -44,13 +46,13 @@ contract builtin is pbuiltin {
             if (cmd == "export") sattrs = cc.flag_set("n") ? "+x" : "-x";
             if (cmd == "declare") {
                 bytes battrs = "aAxirtnf";
-                for (byte b: battrs)
+                for (bytes1 b: battrs)
                     if (e.flag_set(b))
                         sattrs.append(bytes(b));
             }
             if (cc.flag_set("f"))
                 sattrs.append("f");
-            byte ba;
+            bytes1 ba;
             if (!sattrs.empty())
                 ba = bytes(sattrs)[0];
             string[] page = e.environ[n_page];

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "libshellenv.sol";
 import "libcommand.sol";
@@ -7,11 +7,6 @@ import "libjobcommand.sol";
 contract dispose_cmd {
 
     using libfdt for s_of[];
-    using libshellenv for shell_env;
-    using libstring for string;
-    using vars for string[];
-    using vars for string;
-    using libjobcommand for job_cmd;
     uint8 constant NO_PIPE = 255;
 
     function main(shell_env e_in, s_command cmd_in, job_cmd cc_in) external pure returns (shell_env e, uint8 rc, string stdout, string stderr, string comm, string cmdline, job_spec cj, job_cmd cc, s_command cmd) {

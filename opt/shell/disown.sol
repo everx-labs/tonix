@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "job_control.sol";
 import "libjobspec.sol";
@@ -49,7 +49,7 @@ contract disown is job_control {
         out.append(t.out);
         e.puts(out);*/
 
-        uint8 nval;
+        uint8 nv;
         uint8 job_id;
         uint16 pid;
         for (string param: params) {

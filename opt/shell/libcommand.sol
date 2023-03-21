@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.62.0;
 
-import "job_h.sol";
+//import "job_h.sol";
 import "libstring.sol";
 import "libtable.sol";
 import "vars.sol";

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "pbuiltin_base.sol";
 import "libcompspec.sol";
@@ -6,7 +6,6 @@ import "vars.sol";
 
 contract enable is pbuiltin_base {
 
-    using sbuf for s_sbuf;
     using vars for string[];
 
     function main(shell_env e_in, job_cmd cc_in) external pure returns (shell_env e) {

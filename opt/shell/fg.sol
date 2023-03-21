@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "job_control.sol";
 import "libjobspec.sol";
@@ -11,7 +11,7 @@ contract fg is job_control {
         e = e_in;
         j = j_in;
         cc = cc_in;
-        string[] page = e.environ[sh.JOB];
+//        string[] page = e.environ[sh.JOB];
         rc = EXIT_SUCCESS;
         string[] params = cc.params();
         uint8 cur_job = params.empty() ? j_in.cur_job : uint8(str.toi(params[0]));
