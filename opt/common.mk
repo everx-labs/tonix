@@ -8,8 +8,8 @@ NET:=rfld
 GIVER:=Novi
 VAL0:=15
 VAL1:=1
-TOOLS_BIN:=~/bin/0.67
-#TOOLS_BIN:=$(R_ROOT)/bin
+#TOOLS_BIN:=~/bin/0.67
+TOOLS_BIN:=$(R_ROOT)/bin
 RKEYS:=$(R_ROOT)/k1.keys
 # Tools directories
 SOLD:=$(TOOLS_BIN)/sold
@@ -60,7 +60,7 @@ conf: $(CONFD)
 	-cat $^
 $(BLD)/%.tvc: %.sol
 #	$(SOLD) $< $(foreach i,$(INC_PATH),-I $i) -O $(BLD)
-	$(SOLD) $< --base-path . $(foreach i,$(INC_PATH),-i $i) -o $(BLD)	
+	$(SOLD) $< --base-path . $(foreach i,$(INC_PATH),-i $i) -o $(BLD)
 $(BLD)/%.cs: $(BLD)/%.tvc
 	$(LINKER) decode --tvc $< | grep 'code:' | cut -d ' ' -f 3 | tr -d '\n' >$@
 
