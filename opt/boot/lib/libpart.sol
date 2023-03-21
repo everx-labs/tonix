@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.66.0;
+pragma ton-solidity >= 0.67.0;
 import "bio.h";
 import "disk.h";
 import "fs.h";
@@ -139,7 +139,7 @@ library libpart {
         uint16 dsize = size - dblkno;
         uint16 sblockloc = sblkno;
         uint16 si = sblockloc + 2;
-        s = fss(0, 1, 0, si, metaspace, sblockloc, sblockloc, cstotal, now, size, dsize, 0);
+        s = fss(0, 1, 0, si, metaspace, sblockloc, sblockloc, cstotal, block.timestamp, size, dsize, 0);
     }
     function queue_bio(bio_queue bq, bio b, uint32 a) internal {
         bq.queue.push(b);
@@ -168,7 +168,7 @@ library libpart {
             }
         }
         uint32 pblkno;
-        return bio(cmd, flags, dev, dsk, 0, resid, data, ma, ma_n, 0, resid, resid, 0, now, pblkno);
+        return bio(cmd, flags, dev, dsk, 0, resid, data, ma, ma_n, 0, resid, resid, 0, block.timestamp, pblkno);
     }
     function create_disk(string name, uint8 t, uint8 n) internal returns (s_disk d) {
         disk_geometry dg = def_disk_geometry(t);
@@ -341,7 +341,7 @@ library libpart {
     function print_partition(uint8 i, partition p) internal returns (string out) {
         (uint32 p_size, uint32 p_offset, uint8 p_fsize, uint8 p_fstype, uint8 p_frag, uint8 p_cpg) = p.unpack();
         string nums = p_fstype >= FS_TOFS ? format("\t  {}    {}    {}", p_fsize, p_frag, p_cpg) : "";
-        out.append(format("  {}:\t{}\t{}\t{} {}\n", bytes(byte(0x61 + i)), p_size, p_offset, FN[p_fstype], nums));
+        out.append(format("  {}:\t{}\t{}\t{} {}\n", bytes(bytes1(0x61 + i)), p_size, p_offset, FN[p_fstype], nums));
     }
     function print_part_table(part_table t) internal returns (string out) {
 	    (uint8 d_npartitions, uint16 d_bbsize, uint8 d_sbsize, partition[8] d_partitions) = t.unpack();

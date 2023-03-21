@@ -1,15 +1,11 @@
-pragma ton-solidity >= 0.64.0;
+pragma ton-solidity >= 0.67.0;
 
-import "ged.sol";
 import "libctl.sol";
-contract cell is ged {
+contract cell {
 
     uint32 _flags;// = libctl.UNITS_BITS;
 
-    constructor(device_t pdev) public ged(pdev) {
-        tvm.accept();
-    }
-
+    mapping (uint32 => TvmCell) _mem;
     function encode_ctl(string name, string desc, uint8 ctype, uint8 size, uint8 max, uint8 def, uint8 off, uint32 mask) external pure returns (TvmCell c) {
         return libctl.encode(name, desc, ctype, size, max, def, off, mask);
     }
