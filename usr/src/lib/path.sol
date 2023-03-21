@@ -1,10 +1,10 @@
-pragma ton-solidity >= 0.58.0;
+pragma ton-solidity >= 0.66.0;
 
 import "libstring.sol";
 
-library path {
+library libpath {
 
-    using str for string;
+    using str for bytes;
     using libstring for string;
 
     uint16 constant CANON_NONE  = 0;
@@ -19,7 +19,7 @@ library path {
             return (".", "");
         if (s == "/")
             return ("/", "/");
-        uint q = s.strrchr("/");
+        uint q = str.strrchr(s, "/");
         if (q == 0)
             return (".", s);
         if (q == 1)
@@ -32,7 +32,7 @@ library path {
             return (".", "");
         if (s == "/")
             return ("/", "/");
-        uint q = s.strchr("/");
+        uint q = str.strchr(s, "/");
         if (q == 0)
             return (".", s);
         if (q == 1)
@@ -45,7 +45,7 @@ library path {
             return (".", "", "");
         if (s == "/")
             return ("/", "", "");
-        uint q = s.strchr("/");
+        uint q = str.strchr(s, "/");
         if (q == 0)
             return (".", s, "");
         if (q == 1) {
@@ -62,7 +62,7 @@ library path {
             return ".";
         if (s == "/")
             return "/";
-        uint q = s.strrchr("/");
+        uint q = str.strrchr(s, "/");
         if (q == 0)
             return ".";
         string sorg = s;
@@ -77,7 +77,7 @@ library path {
     function strip_path(string spath) internal returns (string res) {
         res = libstring.tr_squeeze(spath, "/");
         uint len = res.byteLength();
-        if (len > 0 && res.strrchr("/") == len)
+        if (len > 0 && str.strrchr(res, "/") == len)
             res = res.substr(0, len - 1);
     }
 

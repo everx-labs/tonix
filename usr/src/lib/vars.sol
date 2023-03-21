@@ -16,10 +16,10 @@ library vars {
     using vars for string[];
 
     function check_attrs(string attrs, bytes sattrs, bytes uattrs) internal returns (bool) {
-        for (byte sa: sattrs)
+        for (bytes1 sa: sattrs)
             if (str.strchr(attrs, sa) == 0)
                 return false;
-        for (byte ua: uattrs)
+        for (bytes1 ua: uattrs)
             if (str.strchr(attrs, ua) > 0)
                 return false;
         return true;
@@ -34,7 +34,7 @@ library vars {
     function build_attr_sets(bytes battrs) internal returns (bytes sattrs, bytes uattrs) {
             bool add_set = false;
             bool add_unset = false;
-            for (byte b: battrs) {
+            for (bytes1 b: battrs) {
                 if (add_set) {
                     sattrs.push(b);
                     add_set = false;
@@ -77,7 +77,7 @@ library vars {
         }
     }
 
-    function gen_records(string[] page, byte b, string arg) internal returns (string[] res) {
+    function gen_records(string[] page, bytes1 b, string arg) internal returns (string[] res) {
         uint len = arg.byteLength();
         bool any_name = len == 0;
         bool any_attr = b == '-' || uint8(b) == 0;
@@ -126,8 +126,8 @@ library vars {
         bytes part_attrs = bytes(spart_attrs);
         uint part_attrs_len = part_attrs.length / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
-            byte attr_sign = part_attrs[i * 2];
-            byte attr_sym = part_attrs[i * 2 + 1];
+            bytes1 attr_sign = part_attrs[i * 2];
+            bytes1 attr_sym = part_attrs[i * 2 + 1];
             bool flag_cur = str.strchr(cur_attrs, attr_sym) > 0;
             bool flag_match = (flag_cur && attr_sign == "-");
             if (!flag_match)
@@ -141,13 +141,13 @@ library vars {
         bytes part_attrs = bytes(spart_attrs);
         uint part_attrs_len = part_attrs.length / 2;
         for (uint i = 0; i < part_attrs_len; i++) {
-            byte attr_sign = part_attrs[i * 2];
-            byte attr_sym = part_attrs[i * 2 + 1];
+            bytes1 attr_sign = part_attrs[i * 2];
+            bytes1 attr_sym = part_attrs[i * 2 + 1];
             bool flag_cur = str.strchr(cur_attrs, attr_sym) > 0;
             if (!flag_cur && attr_sign == "-")
-                res.append(string(attr_sym));
+                res.append(string(bytes(attr_sym)));
             else if (flag_cur && attr_sign == "+")
-                res = res.translate(string(attr_sym), "");
+                res = res.translate(string(bytes(attr_sym)), "");
         }
         if (res == "-")
             return "--";
@@ -363,7 +363,7 @@ library vars {
     uint16 constant ATTR_MASK_INT   = 0xFF00;
 
     function get_mask_ext(bytes sattrs) internal returns (uint16 mask) {
-        for (byte b: sattrs) {
+        for (bytes1 b: sattrs) {
             if (b == 'x') mask |= ATTR_EXPORTED;
             if (b == 'r') mask |= ATTR_READONLY;
             if (b == 'a') mask |= ATTR_ARRAY;
@@ -393,7 +393,7 @@ library vars {
         bytes battrs = "xrafilAtIUNMSTP";
 //        sattrs = mask_base_type(mask);
         uint a = 1;
-        for (byte b: battrs) {
+        for (bytes1 b: battrs) {
             if ((mask & a) > 0)
                 sattrs.append(bytes(b));
             a <<= 1;

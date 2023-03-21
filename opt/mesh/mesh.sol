@@ -1,4 +1,4 @@
-pragma ever-solidity >= 0.66.0;
+pragma ever-solidity >= 0.67.0;
 
 contract mesh {
 
@@ -27,7 +27,7 @@ contract mesh {
         string out;
         if (s.empty())
             return (hout, cmd);
-        byte b0 = bytes(s)[0];
+        bytes1 b0 = bytes(s)[0];
         uint8 v = uint8(b0);
         (uint idev, uint ct, uint ctx, uint itm, uint arg, uint val) = _from_handle(h);
         MENU ectx = MENU(ctx);
@@ -85,9 +85,9 @@ contract mesh {
             out.append(format("{}) {}\n", i, items[i]));
     }
 
-    function strchr(bytes s, byte c) internal pure returns (uint) {
+    function strchr(bytes s, bytes1 c) internal pure returns (uint) {
         uint i;
-        for (byte b: s) {
+        for (bytes1 b: s) {
             if (b == c)
                 return i + 1;
             i++;

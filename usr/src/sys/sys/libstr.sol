@@ -25,12 +25,12 @@ library libstrbuf {
             assert(!strbuf_slopbuf[0])*/
     }
 
-    function strbuf_complete(strbuf sb, byte term) internal {
+    function strbuf_complete(strbuf sb, bytes1 term) internal {
         if (sb.len > 0 && sb.buf[sb.len - 1] != term)
             strbuf_addch(sb, term);
     }
 
-    function strbuf_addch(strbuf sb, byte c) internal {
+    function strbuf_addch(strbuf sb, bytes1 c) internal {
         if (strbuf_avail(sb) == 0)
             strbuf_grow(sb, 1);
         sb.buf.append(bytes(c));
@@ -96,7 +96,7 @@ library libstrbuf {
     function strbuf_add_commented_lines(strbuf out, string buf, uint16 size) internal {}
     function strbuf_add(strbuf sb, bytes data, uint16 len) internal {}
     function strbuf_addbuf(strbuf sb, strbuf sb2) internal {}
-    function strbuf_join_argv(strbuf buf, uint16 argc, string[] argv, byte  delim) internal returns (string) {}
+    function strbuf_join_argv(strbuf buf, uint16 argc, string[] argv, bytes1 delim) internal returns (string) {}
     function strbuf_expand(strbuf sb, string fmt, uint16 fn, bytes context) internal {}
     function strbuf_expand_literal_cb(strbuf sb, string placeholder, bytes context) internal returns (uint16) {}
     function strbuf_expand_dict_cb(strbuf sb, string placeholder, bytes context) internal returns (uint16) {}
@@ -137,8 +137,8 @@ library libstrbuf {
     function strbuf_addstr_xml_quoted(strbuf sb, string s) internal {}
     function strbuf_branchname(strbuf sb, string name, bool allowed) internal {}
     function strbuf_check_branch_ref(strbuf sb, string name) internal returns (uint16) {}
-    function is_rfc3986_unreserved(byte ch) internal returns (uint16) {}
-    function is_rfc3986_reserved_or_unreserved(byte ch) internal returns (uint16) {}
+    function is_rfc3986_unreserved(bytes1 ch) internal returns (uint16) {}
+    function is_rfc3986_reserved_or_unreserved(bytes1 ch) internal returns (uint16) {}
     function strbuf_addstr_urlencode(strbuf sb, string name, bool allow_unencoded_fn) internal {}
     function printf_ln(string fmt) internal returns (uint16) {}
     function fprintf_ln(FILE fp, string fmt) internal returns (uint16) {}

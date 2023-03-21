@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "libshellenv.sol";
 import "libcommand.sol";
@@ -6,12 +6,9 @@ import "libjobcommand.sol";
 
 contract execute_cmd {
 
-    using libfdt for s_of[];
-    using libshellenv for shell_env;
     using libstring for string;
     using vars for string[];
     using vars for string;
-    using libjobcommand for job_cmd;
     uint8 constant NO_PIPE = 255;
 
     function main(shell_env e_in, s_command cmd_in, job_cmd cc_in) external pure returns (shell_env e, s_command cmd, job_cmd cc, string comm, string cmdline) {
@@ -96,7 +93,7 @@ contract execute_cmd {
             else if (cn == "export") sattrs = fn ? "+x" : "-x";
             else if (cn == "declare") {
                 bytes battrs = "aAxirtnf";
-                for (byte b: battrs)
+                for (bytes1 b: battrs)
                     if (cc_in.flag_set(b))
                         sattrs.append(bytes(b));
                 if (sattrs.empty())
@@ -109,7 +106,7 @@ contract execute_cmd {
             }
             if (ff)
                 sattrs.append("f");
-            byte ba;
+            bytes1 ba;
             if (!sattrs.empty())
                 ba = bytes(sattrs)[0];
             page = e.environ[n_page];
@@ -188,9 +185,9 @@ contract execute_cmd {
         }
     }
 
-    function _printf_line(string line, string fmt) internal pure returns (string res) {
+    function _printf_line(string line, string sfmt) internal pure returns (string res) {
         (string attrs, string name, string value) = vars.split_var_record(line);
-        res = fmt;
+        res = sfmt;
         res.translate("%a", attrs);
         res.translate("%n", name);
         res.translate("%v", value);

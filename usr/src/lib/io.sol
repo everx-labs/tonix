@@ -7,9 +7,6 @@ import "xio.sol";
 import "dirent.sol";
 library io {
 
-//    using libstat for s_stat;
-    using sbuf for s_sbuf;
-    using xio for s_of;
     using dirent for s_dirdesc;
 
     uint16 constant O_RDONLY    = 0;
@@ -256,15 +253,15 @@ library io {
         //p.p_fd.fdt_ofiles[STDOUT_FILENO] = f;
     }
 
-    function fputs(s_proc p, string str, s_of f) internal {
+    function fputs(s_proc p, string s, s_of f) internal {
         uint16 idx = f.fileno();
         if (idx >= 0 && idx < p.p_fd.fdt_nfiles) {
-            f.fputs(str);
+            f.fputs(s);
             p.p_fd.fdt_ofiles[idx] = f;
         }
     }
 
-    function putchar(s_proc p, byte c) internal {
+    function putchar(s_proc p, bytes1 c) internal {
         s_sbuf s = p.p_fd.fdt_ofiles[STDOUT_FILENO].buf;
         s.sbuf_putc(c);
         p.p_fd.fdt_ofiles[STDOUT_FILENO].buf = s;

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.63.0;
+pragma ton-solidity >= 0.67.0;
 
 import "pbuiltin.sol";
 import "xio.sol";
@@ -9,7 +9,8 @@ import "fs.sol";
 
 contract command is pbuiltin {
 
-    using sbuf for s_sbuf;
+    using libstring for string;
+//    using sbuf for s_sbuf;
     using libkeg for uma_keg;
 
     uint16 constant CDESC_ALL       = 1; // type -a

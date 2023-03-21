@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.61.2;
 
-library err {
+library liberr {
     uint8 constant ESUCCESS = 0; // Operation completed successfully
     uint8 constant EPERM    = 1; // Operation not permitted
     uint8 constant ENOENT   = 2; // No such file or directory

@@ -1,16 +1,15 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "libshellenv.sol";
 import "xio.sol";
-import "job_h.sol";
+//import "job_h.sol";
+import "libjobcommand.sol";
 import "libcommand.sol";
 
 contract esh {
 
-    using xio for s_of;
     using libstring for string;
-    using str for string;
-    using libshellenv for shell_env;
+//    using str for string;
     using libcommand for simple_com;
     using vars for string[];
 

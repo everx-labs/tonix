@@ -56,11 +56,11 @@ library fs {
         if (name == "/")
             return (sb.ROOT_DIR, libstat.FT_DIR);
         if (!inodes.exists(dir))
-            return (err.ENOENT, libstat.FT_UNKNOWN);
+            return (liberr.ENOENT, libstat.FT_UNKNOWN);
         Inode ino = inodes[dir];
         //if (libstat.mode_to_file_type(ino.mode) != libstat.FT_DIR)
         if (!libstat.is_dir(ino.mode))
-            return (err.ENOTDIR, libstat.FT_UNKNOWN);
+            return (liberr.ENOTDIR, libstat.FT_UNKNOWN);
         return lookup_dir(ino, data[dir], name);
     }
 
@@ -73,7 +73,7 @@ library fs {
         for (uint i = 0; i < n_parts; i++) {
             (uint16 index, uint8 t, uint16 dir_idx) = lookup_dir_ext(inodes[cur_dir], data[cur_dir], parts[i]);
             if (dir_idx == 0)
-                return err.ENOENT;
+                return liberr.ENOENT;
             if (t != libstat.FT_DIR)
                 return index;
             cur_dir = index;
@@ -82,7 +82,7 @@ library fs {
     }
 
     function xpath(string param, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string) {
-        return path.strip_path(xpath0(param, wd, inodes, data));
+        return libpath.strip_path(xpath0(param, wd, inodes, data));
     }
 
     function xpath0(string param, uint16 wd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string) {
@@ -95,7 +95,7 @@ library fs {
         if (len > 1 && param.substr(0, 2) == "./")
             return cwd + "/" + param.substr(2);
         if (len > 1 && param.substr(0, 2) == "..") {
-            (string dir_name, ) = path.dir(cwd);
+            (string dir_name, ) = libpath.dir(cwd);
             if (param == "..")
                 return dir_name;
             if (dir_name == "/")
@@ -116,7 +116,7 @@ library fs {
     }
 
     function get_file_contents_at_path(string spath, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string) {
-        (string dir_name, string file_name) = path.dir(spath);
+        (string dir_name, string file_name) = libpath.dir(spath);
         uint16 dir_index = resolve_absolute_path(dir_name, inodes, data);
         (uint16 file_index, uint8 t) = lookup_dir(inodes[dir_index], data[dir_index], file_name);
         if (t == libstat.FT_UNKNOWN)
@@ -129,7 +129,7 @@ library fs {
             return format("Inode {} does not exist\n", file_index);
         if (!data.exists(file_index))
             return format("Data {} does not exist\n", file_index);
-        return data[file_index];
+        return string(data[file_index]);
     }
 
     function get_passwd_group(mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (string, string, uint16, uint16) {
@@ -147,8 +147,8 @@ library fs {
             return (sb.ROOT_DIR, libstat.FT_DIR, sb.ROOT_DIR, 1);
         parent = name.substr(0, 1) == "/" ? sb.ROOT_DIR : dir;
 
-        (string dir_path, string base_name) = path.dir(name);
-        string[] parts = path.disassemble_path(dir_path);
+        (string dir_path, string base_name) = libpath.dir(name);
+        string[] parts = libpath.disassemble_path(dir_path);
         uint len = parts.length;
 
         for (uint i = len - 1; i > 0; i--) {
@@ -163,13 +163,13 @@ library fs {
         (index, file_type, dir_index) = lookup_dir_ext(inodes[parent], data[parent], base_name);
     }
 
-    function lookup_dir(Inode inode, bytes data, string file_name) internal returns (uint16 index, uint8 file_type) {
-        (index, file_type, ) = lookup_dir_ext(inode, data, file_name);
+    function lookup_dir(Inode ino, bytes data, string file_name) internal returns (uint16 index, uint8 file_type) {
+        (index, file_type, ) = lookup_dir_ext(ino, data, file_name);
     }
 
     function lookup_dir_ext(Inode ino, bytes data, string file_name) internal returns (uint16 index, uint8 file_type, uint16 dir_idx) {
         if (!libstat.is_dir(ino.mode))
-            return (err.ENOTDIR, libstat.FT_UNKNOWN, 0);
+            return (liberr.ENOTDIR, libstat.FT_UNKNOWN, 0);
         (DirEntry[] contents, int16 status) = udirent.read_dir(ino, data);
         if (status < 0)
             return (uint16(-status), libstat.FT_UNKNOWN, 0);
@@ -179,7 +179,7 @@ library fs {
                 if (name == file_name)
                     return (idx, t, uint16(i + 1));
             }
-            return (err.ENOENT, libstat.FT_UNKNOWN, 0);
+            return (liberr.ENOENT, libstat.FT_UNKNOWN, 0);
         }
     }
 }

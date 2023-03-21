@@ -1,6 +1,11 @@
-pragma ton-solidity >= 0.64.0;
+pragma ton-solidity >= 0.67.0;
 
 import "proc_h.sol";
+import "ucred_h.sol";
+import "filedesc_h.sol";
+import "racct_h.sol";
+import "signal_h.sol";
+import "sysent_h.sol";
 import "str.sol";
 library libproc {
 

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "job_control.sol";
 import "libjobspec.sol";
@@ -12,7 +12,7 @@ contract kill is job_control {
         e = e_in;
         j = j_in;
         cc = cc_in;
-        string[] page = e.environ[sh.JOB];
+//        string[] pg = e.environ[sh.JOB];
         rc = EXIT_SUCCESS;
         string[] params = cc.params();
         if (cc.flags_empty() && params.empty()) {
@@ -32,21 +32,21 @@ contract kill is job_control {
         if (do_list) {
             if (params.empty()) {
                 for (uint i = 0; i < libsignal.SIGRTMIN; i++) {
-                    ( , , string sval) = libsignal.get_name(uint8(i), sigspec);
-                    e.puts(format("{}) SIG{}\t", i, sval));
+                    ( , , string sval0) = libsignal.get_name(uint8(i), sigspec);
+                    e.puts(format("{}) SIG{}\t", i, sval0));
                 }
             }
             for (string param: params) {
                 sig_no = _arg_to_signo(param, true, sigspec);
-                ( , , string sval) = libsignal.get_name(sig_no, sigspec);
-                e.puts(sval);
+                ( , , string sval0) = libsignal.get_name(sig_no, sigspec);
+                e.puts(sval0);
             }
             return (rc, e, j, cc);
         }
-        uint8 nval = uint8(e.opt_value_int('n'));
+        uint8 nv = uint8(e.opt_value_int('n'));
         string sval = e.opt_value('s');
         bool success;
-        (success, sig_no, sig_name) = libsignal.validate(nval, sval, sigspec);
+        (success, sig_no, sig_name) = libsignal.validate(nv, sval, sigspec);
         if (!success) {
             e.perror(sig_name);
             rc = EXIT_FAILURE;
@@ -59,10 +59,10 @@ contract kill is job_control {
         for (string param: params) {
             if (param.substr(0, 1) == '%') {
                 if (param == "%%")
-                    nval = j_in.cur_job;
+                    nv = j_in.cur_job;
                 else
-                    nval = uint8(str.toi(param.substr(1)));
-                pid = libjobspec.find_pid(j.jobs, nval);
+                    nv = uint8(str.toi(param.substr(1)));
+                pid = libjobspec.find_pid(j.jobs, nv);
             } else {
                 pid = str.toi(param);
                 job_id = libjobspec.find_jid(j.jobs, pid);

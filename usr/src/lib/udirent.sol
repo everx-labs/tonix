@@ -27,21 +27,21 @@ library udirent {
 
     function getdents(uint16 fd, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal returns (uint8 ec, string buf) {
         if (!inodes.exists(fd) || !data.exists(fd))
-            ec = err.EBADF;
-        buf = data[fd];
+            ec = liberr.EBADF;
+        buf = string(data[fd]);
     }
 
     function parse_entry(string s) internal returns (DirEntry) {
         uint p = str.strchr(s, "\t");
         if (p > 1) {
             optional(int) index_u = stoi(s.substr(p));
-            return DirEntry(libstat.file_type(s.substr(0, 1)), s.substr(1, p - 2), index_u.hasValue() ? uint16(index_u.get()) : err.ENOENT);
+            return DirEntry(libstat.file_type(s.substr(0, 1)), s.substr(1, p - 2), index_u.hasValue() ? uint16(index_u.get()) : liberr.ENOENT);
         }
     }
 
     function parse_param(string s) internal returns (DirEntry) {
         (string attrs, string name, string value) = vars.split_var_record(s);
-        return DirEntry(libstat.file_type(attrs), name, name.empty() ? err.ENOENT : str.toi(value));
+        return DirEntry(libstat.file_type(attrs), name, name.empty() ? liberr.ENOENT : str.toi(value));
     }
 
     function parse_param_index(string params) internal returns (DirEntry[] contents) {
@@ -92,16 +92,16 @@ library udirent {
 
     function read_dir(Inode ino, bytes data) internal returns (DirEntry[] contents, int16 status) {
         if (!libstat.is_dir(ino.mode))
-            status = -err.ENOTDIR;
+            status = -int16(liberr.ENOTDIR);
         else
             return read_dir_data(data);
     }
 
     function get_symlink_target(Inode ino, bytes node_data) internal returns (DirEntry target) {
         if (!libstat.is_symlink(ino.mode))
-            target.index = err.ENOSYS;
+            target.index = liberr.ENOSYS;
         else
-            return parse_entry(node_data);
+            return parse_entry(string(node_data));
     }
 
     function dir_entry_line(uint16 index, string file_name, uint8 file_type) internal returns (string) {

@@ -37,7 +37,7 @@ library libfattr {
         s_dirent res;
         s_dirent[] des;
         if (abspath) {
-            (string sdir, string snotdir) = path.dir(sp);
+            (string sdir, string snotdir) = libpath.dir(sp);
             (ec, idx) = access(t, sdir, mode);
             if (ec == 0) {
                 (ec, des) = getdents(t, dfd);
@@ -58,7 +58,7 @@ library libfattr {
             s_of dd = fdt[fd];
             uint16 mode = libstat.st_mode(dd.attr);
             if (libstat.is_dir(mode)) {
-                string bf = dd.buf.buf;
+                string bf = string(dd.buf.buf);
                 (string[] lines, ) = libstring.split(bf, "\n");
                 for (string line: lines)
                     dirents.push(dirent.parse_dirent(line));

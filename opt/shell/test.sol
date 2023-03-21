@@ -1,10 +1,11 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "pbuiltin_base.sol";
 import "inode.sol";
 import "vars.sol";
 import "fs.sol";
 contract test is pbuiltin_base {
+    using libstring for string;
 
     function main(shell_env e_in, job_cmd cc, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) external pure returns (uint8 rc, shell_env e) {
         e = e_in;
@@ -12,7 +13,7 @@ contract test is pbuiltin_base {
         string dbg;
         string[] pool = e.environ[sh.VARIABLE];
 
-        (string arg_1, byte op, string arg_2) = _parse_test_args(sargs);
+        (string arg_1, bytes1 op, string arg_2) = _parse_test_args(sargs);
         dbg.append(format("arg 1: {} op: {} arg 2: {}\n", arg_1, bytes(op), arg_2));
         bool result;
         if (arg_2.empty()) {
@@ -21,7 +22,7 @@ contract test is pbuiltin_base {
         rc = result ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 
-    function _match_mode(byte op, uint16 mode) internal pure returns (bool res) {
+    function _match_mode(bytes1 op, uint16 mode) internal pure returns (bool res) {
         if (op == "b") return libstat.is_block_dev(mode);
         if (op == "c") return libstat.is_char_dev(mode);
         if (op == "d") return libstat.is_dir(mode);
@@ -35,7 +36,7 @@ contract test is pbuiltin_base {
         return false;
     }
 
-    function _can_access(byte op, uint16 mode, uint16 user_id, uint16 group_id, uint16 uid, uint16 gid) internal pure returns (bool) {
+    function _can_access(bytes1 op, uint16 mode, uint16 user_id, uint16 group_id, uint16 uid, uint16 gid) internal pure returns (bool) {
         bool user_owned = user_id == uid;
         bool group_owned = group_id == gid;
         if (op == "O")
@@ -53,7 +54,7 @@ contract test is pbuiltin_base {
         return false;
     }
 
-    function _eval_file_unary(byte op, string path, string[] pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
+    function _eval_file_unary(bytes1 op, string path, string[] pool, mapping (uint16 => Inode) inodes, mapping (uint16 => bytes) data) internal pure returns (bool res) {
         uint16 wd_index = vars.int_val("WD", pool);
         (uint16 index, uint8 file_type, , ) = fs.resolve_relative_path(path, wd_index, inodes, data);
 
@@ -77,7 +78,7 @@ contract test is pbuiltin_base {
         return false;
     }
 
-    function _parse_test_args(string sargs) internal pure returns (string arg_1, byte op, string arg_2) {
+    function _parse_test_args(string sargs) internal pure returns (string arg_1, bytes1 op, string arg_2) {
         (string[] fields, uint n_fields) = sargs.split(" ");
         arg_1 = n_fields > 0 ? fields[n_fields - 1] : "";
         bytes arg_op = n_fields > 1 ? fields[n_fields - 2] : "";

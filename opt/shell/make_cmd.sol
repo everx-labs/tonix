@@ -1,12 +1,11 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "libshellenv.sol";
 import "libcommand.sol";
+import "libjobcommand.sol";
 
 contract make_cmd {
 
-    using libfdt for s_of[];
-    using libshellenv for shell_env;
     using libstring for string;
     using vars for string[];
     using libcommand for simple_com;

@@ -1,13 +1,21 @@
-pragma ton-solidity >= 0.64.0;
-//import "liberr.sol";
-//import "str.sol";
+pragma ton-solidity >= 0.67.0;
 import "libstring.sol";
-import "sbuf_h.sol";
 import "uio_h.sol";
+struct s_sbuf {
+    bytes buf;       // storage buffer
+    uint8 error;     // current error code
+    uint32 size;     // size of storage buffer
+    uint16 len;      // current length of string
+    uint32 flags;    // flags
+    uint16 sect_len; // current length of section
+    uint32 rec_off;  // current record start offset
+}
+
+using sbuf for s_sbuf global;
+
 library sbuf {
 
     using str for string;
-    using sbuf for s_sbuf;
     using libstring for string;
 
     uint8 constant ENOMEM   = 12; // Cannot allocate memory
@@ -29,16 +37,6 @@ library sbuf {
     uint32 constant HD_OMIT_COUNT  = 1 << 16;
     uint32 constant HD_OMIT_HEX    = 1 << 17;
     uint32 constant HD_OMIT_CHARS  = 1 << 18;
-
-    /*struct s_sbuf {
-        bytes buf;       // storage buffer
-        uint8 error;    // current error code
-        uint32 size;     // size of storage buffer
-        uint32 len;      // current length of string
-        uint32 flags;    // flags
-        uint16 sect_len; // current length of section
-        uint32 rec_off;  // current record start offset
-    }*/
 
     function sbuf_new(s_sbuf s, string buf, uint32 length, uint32 flags) internal returns (s_sbuf) {
         uint16 len = buf.strlen();
@@ -97,7 +95,7 @@ library sbuf {
             s.add('\n', 1, true);
         return s.error;
     }
-    function sbuf_putc(s_sbuf s, byte b) internal returns (uint8) {
+    function sbuf_putc(s_sbuf s, bytes1 b) internal returns (uint8) {
         s.add(bytes(b), 1, true);
         return s.error;
     }
@@ -144,7 +142,7 @@ library sbuf {
         s.sect_len = 0;
     }
 
-    function sbuf_end_section(s_sbuf s, uint16 old_len, uint8 pad, byte c) internal returns (uint32) {
+    function sbuf_end_section(s_sbuf s, uint16 old_len, uint8 pad, bytes1 c) internal returns (uint32) {
 //        uint16 cur_len = s.sect_len;
         string padbuf;
         repeat (pad)

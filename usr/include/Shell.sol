@@ -32,11 +32,11 @@ abstract contract Shell is Base {
     string constant FLAG_ON = '-';
     string constant FLAG_OFF = '+';
 
-    using libstring for string;
-    using str for string;
-    using xio for s_of;
-    using io for s_proc;
-    using parg for s_proc;
+//    using libstring for string;
+//    using str for string;
+//    using xio for s_of;
+//    using io for s_proc;
+//    using parg for s_proc;
 //    using uma_keg for s_uma_keg;
 
     function builtin_help() external pure returns (BuiltinHelp bh) {

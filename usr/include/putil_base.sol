@@ -1,20 +1,9 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.67.0;
 
 import "libhelp.sol";
-import "parg.sol";
-import "io.sol";
-import "libfdt.sol";
 import "libshellenv.sol";
 
 abstract contract putil_base {
-
-    using io for s_proc;
-    using parg for s_proc;
-    using str for string;
-    using xio for s_of;
-    using libstring for string;
-    using libfdt for s_of[];
-    using libshellenv for shell_env;
 
     uint8 constant EXIT_SUCCESS = 0;
     uint8 constant EXIT_FAILURE = 1;

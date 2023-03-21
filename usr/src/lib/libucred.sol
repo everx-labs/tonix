@@ -17,7 +17,7 @@ library libucred {
     uint8 constant EACCES   = 13; // Permission denied
     uint8 constant EINVAL   = 22; // Invalid argument
     uint8 constant ENAMETOOLONG = 63; // File name too long
-
+    uint8 constant ENOSYS       = 78; // Function not implemented
     using libucred for s_proc;
     using libucred for s_ucred;
     using libucred for s_thread;
@@ -148,7 +148,7 @@ library libucred {
 //        if (ngroups > param.NGROUPS)
 //            return err.EINVAL;
         if (cr.cr_uid > 0)
-            return err.EPERM;
+            return EPERM;
         cr.cr_groups = gidset;
         cr.cr_ngroups = ngroups;
     }
@@ -207,7 +207,7 @@ library libucred {
             if (ec == 0)
                 td.td_ucred = nc;
         } else
-            ec = err.ENOSYS;
+            ec = ENOSYS;
         td.td_errno = ec;
     }
 
@@ -244,7 +244,7 @@ library libucred {
         } else {
             p = libproc.pfind(pid);
             if (p.p_pid == 0)
-                return err.ESRCH;
+                return ESRCH;
             error = p_cansee(td, p);
             if (error > 0)
                 return error;
@@ -264,7 +264,7 @@ library libucred {
         } else {
  //         p = pfind(pid);
             if (p.p_pid == 0)
-                return err.ESRCH;
+                return ESRCH;
             error = p_cansee(td, p);
             if (error > 0)
                 return error;
@@ -471,7 +471,7 @@ library libucred {
 //        uint16[XU_NGROUPS] smallgroups;
         uint16[] groups;
         if (gidsetsize > XU_NGROUPS + 1 || gidsetsize < 0)
-            return err.EINVAL;
+            return EINVAL;
 //      if (gidsetsize > XU_NGROUPS)
             //groups = malloc(gidsetsize * sizeof(gid_t), M_TEMP, M_WAITOK);
 //       else
@@ -798,7 +798,7 @@ library libucred {
     // This is common code for FIOSETOWN ioctl called by fcntl(fd, F_SETOWN, arg).
     // After permission checking, add a sigio structure to the sigio list for the process or process group.
     function fsetown(uint16 pgid, s_sigio sigiop) internal returns (uint8 ret) {
-        s_proc proc;
+        s_proc p;
         s_pgrp pgrp;
         s_sigio osigio;
            s_sigio sigio;
@@ -816,20 +816,20 @@ library libucred {
             osigio = funsetown_locked(sigiop);
             if (ret == 0) {
 //              _PRELE(proc);
-                if ((proc.p_flag & libproc.P_WEXIT) != 0) {
+                if ((p.p_flag & libproc.P_WEXIT) != 0) {
                     ret = ESRCH;
 //                } else if (proc.p_session != curthread.td_proc.p_session) {
                     // Policy - Don't allow a process to FSETOWN a process in another session.
                     // Remove this test to allow maximum flexibility or restrict FSETOWN to the current process or process group for maximum safety.
 //                    ret = err.EPERM;
                 } else {
-                    sigio.sio_proc = proc.p_pid;
+                    sigio.sio_proc = p.p_pid;
   //                SLIST_INSERT_HEAD(proc.p_sigiolst, sigio, sio_pgsigio);
                 }
             }
         } else /* if (pgid < 0) */ {
             osigio = funsetown_locked(sigiop);
-            pgrp = libproc.pgfind(-pgid);
+            pgrp = libproc.pgfind(pgid);
             if (pgrp.pg_id == 0) {
                 ret = ESRCH;
             } else {

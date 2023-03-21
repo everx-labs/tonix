@@ -16,7 +16,7 @@ import "cdev_h.sol";
 
 struct d_cdevsw {
     function (s_cdev, uint16, uint8, s_thread) internal returns (uint8) d_open_t;
-    function (s_cdev, uint16, s_thread, s_file) internal returns (uint8) d_fdopen_t;
+//    function (s_cdev, uint16, s_thread, s_file) internal returns (uint8) d_fdopen_t;
     function (s_cdev, uint16, uint8, s_thread) internal returns (uint8) d_close_t;
     function (s_cdev, uint8, uint32, uint16, s_thread) internal returns (uint8) d_ioctl_t;
     function (s_cdev, s_uio, uint16) internal returns (uint8) d_read_t;

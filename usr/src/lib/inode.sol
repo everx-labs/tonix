@@ -57,8 +57,9 @@ library inode {
     }
 
     function get_any_node(uint8 t, uint16 owner, uint16 group, uint16 device_id, uint16 n_blocks, string file_name, string text) internal returns (Inode, bytes) {
+        uint32 tnow = block.timestamp;
         if (t > libstat.FT_UNKNOWN && t <= libstat.FT_LAST)
-            return (Inode(libstat.get_def_mode(t), owner, group, t == libstat.FT_DIR ? 2 : 1, device_id, n_blocks, uint32(text.byteLength()),  now, now, file_name), text);
+            return (Inode(libstat.get_def_mode(t), owner, group, t == libstat.FT_DIR ? 2 : 1, device_id, n_blocks, uint32(text.byteLength()), tnow, tnow, file_name), bytes(text));
     }
 
     /* Getting an index node of a particular type */
@@ -71,7 +72,8 @@ library inode {
     }
 
     function bare() internal returns (Inode) {
-        return Inode(0, 0, 0, 0, 0, 0, 0, now, now, "");
+        uint32 tnow = block.timestamp;
+        return Inode(0, 0, 0, 0, 0, 0, 0, tnow, tnow, "");
     }
 
     function set_dots(Inode ino, uint16 this_dir, uint16 parent_dir) internal {
@@ -127,10 +129,10 @@ library inode {
             if (!inode_s.empty())
                 out.append(inode_s);
             if ((level & DUMP_TEXT_DIRS) > 0 && libstat.is_dir(imode) || (level & DUMP_TEXT_ALL) > 0) {
-                out.append(text);
+                out.append(string(text));
                 out.append("\x05");
                 if (data.exists(i))
-                    out.append(data[i]);
+                    out.append(string(data[i]));
             }
         }
     }
@@ -150,7 +152,7 @@ library inode {
             (uint16 imode, uint16 owner_id, uint16 group_id, uint16 n_links, uint16 device_id, uint16 n_blocks, uint32 file_size, , , string file_name) = ino.unpack();
             out.append(format("I {} {} PM {} O {} G {} NL {} DI {} NB {} SZ {}\n", i, file_name, imode, owner_id, group_id, n_links, device_id, n_blocks, file_size));
             if (level > 0 && (libstat.is_dir(imode) || libstat.is_symlink(imode) || level > 1))
-                out.append(data[i]);
+                out.append(string(data[i]));
         }
     }
 }

@@ -12,18 +12,8 @@ struct BuiltinHelp {
 import "parg.sol";
 import "libshellenv.sol";
 import "libjobcommand.sol";
-//import "udev.sol";
 
 abstract contract pbuiltin_base {
-//abstract contract pbuiltin_base is udev {
-//contract pbuiltin_base is udev {
-    using libstring for string;
-    using str for string;
-    using xio for s_of;
-    using io for s_proc;
-    using parg for s_proc;
-    using libshellenv for shell_env;
-    using libjobcommand for job_cmd;
 
     function builtin_help() external pure returns (BuiltinHelp bh) {
         return _builtin_help();

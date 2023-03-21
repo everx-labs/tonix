@@ -4,7 +4,7 @@ SOLD:=$(TOOLS_BIN)/sold
 LINKER:=$(TOOLS_BIN)/tvm_linker
 TOC:=$(TOOLS_BIN)/tonos-cli
 
-TOOLS_VERSION:=0.66.0
+TOOLS_VERSION:=0.67.0
 UNAME_S:=$(shell uname -s)
 ARC_PREFIX:=ever_tools
 ARC_SUFFIX:=txz

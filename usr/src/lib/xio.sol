@@ -6,10 +6,22 @@ import "sbuf.sol";
 import "libfdt.sol";
 import "libstat.sol";
 import "filedesc_h.sol";
+
+using xio for s_of global;
+
+struct s_of {
+    uint attr;
+    uint16 flags;
+    uint16 file;
+    string path;
+    uint32 offset;
+    s_sbuf buf;
+}
+
 library xio {
 
-    using str for string;
-    using sbuf for s_sbuf;
+    using str for bytes;
+//    using sbuf for s_sbuf;
     using libfdt for  s_of[];
 
     uint16 constant BUFSIZ  = 1024;   // size of buffer used by setbuf
@@ -32,11 +44,11 @@ library xio {
         f.offset += cap;
         if (f.offset >= file_len)
             f.flags |= io.SEOF;
-        return string(f.buf.buf).substr(offset, cap);
+        return f.buf.buf[offset : offset + cap];
     }
 
     function awrite(s_of f, bytes buf, uint32 nbytes) internal returns (s_of) {
-        f.buf.buf.append(string(buf).substr(0, nbytes));
+        f.buf.buf.append(buf[ : nbytes]);
         return f;
     }
 
@@ -93,7 +105,7 @@ library xio {
         return aread(f, size);
     }
 
-    function fputc(s_of f, byte c) internal {
+    function fputc(s_of f, bytes1 c) internal {
         s_sbuf s = f.buf;
         s.sbuf_putc(c);
         f.buf = s;
@@ -113,7 +125,7 @@ library xio {
         return aread(f, size * nmemb);
     }
 
-    function freopen(s_of stream, string path, string mode) internal {
+    function freopen(s_of stream, string spath, string mode) internal {
 
     }
 
@@ -179,7 +191,7 @@ library xio {
 
     function split(s_of f) internal returns (string[] fields, uint n_fields) {
         uint len = libstat.st_size(f.attr);
-        string text = f.buf.buf;
+        string text = string(f.buf.buf);
         if (len > 0) {
             uint prev;
             uint cur;
@@ -199,9 +211,9 @@ library xio {
 
     function getline(s_of f) internal returns (string) {
         uint pos = f.offset;
-        string buf = f.buf.buf;
+        string buf = string(f.buf.buf);
         string tail = buf.substr(pos);
-        uint p = tail.strchr("\n");
+        uint p = str.strchr(tail, "\n");
 
         uint32 file_len = libstat.st_size(f.attr);
 
@@ -222,9 +234,9 @@ library xio {
 
     function fgetln(s_of f) internal returns (string) {
         uint pos = f.offset;
-        string buf = f.buf.buf;
+        string buf = string(f.buf.buf);
         string tail = buf.substr(pos);
-        uint p = tail.strchr("\n");
+        uint p = str.strchr(tail, "\n");
         uint32 file_len = libstat.st_size(f.attr);
 
         if (p > 0) {
@@ -239,7 +251,7 @@ library xio {
     }
 
     function print_file(s_of f) internal returns (string) {
-        (uint attr, uint16 flags, uint16 file, string path, uint32 offset, s_sbuf buf) = f.unpack();
-        return format("A {} flags {} fd {} path {} off {} buf {}", attr, flags, file, path, offset, buf.buf);
+        (uint attr, uint16 flags, uint16 file, string spath, uint32 offset, s_sbuf buf) = f.unpack();
+        return format("A {} flags {} fd {} path {} off {} buf {}", attr, flags, file, spath, offset, buf.buf);
     }
 }

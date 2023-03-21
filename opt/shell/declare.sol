@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "pbuiltin.sol";
 
 contract declare is pbuiltin {
-
+    using vars for string[];
     function _main(shell_env e_in, job_cmd cc) internal pure override returns (uint8 rc, shell_env e) {
         e = e_in;
         (bool funcs, bool func_names, bool print_reusable, , , , , ) = cc.flag_values("fFp");
@@ -14,8 +14,8 @@ contract declare is pbuiltin {
         string[] res;
         bool print = no_args || print_reusable;
         bytes battrs = "aAxirtnf";
-        byte ba;
-        for (byte b: battrs)
+        bytes1 ba;
+        for (bytes1 b: battrs)
             if (cc.flag_set(b)) {
                 ba = b;
                 break;

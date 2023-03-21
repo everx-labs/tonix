@@ -1,9 +1,8 @@
-pragma ton-solidity >= 0.64.0;
+pragma ton-solidity >= 0.67.0;
 
-import "ged.sol";
 import "cons_h.sol";
 
-contract cons is ged {
+contract cons {
 
     uint8 constant CN_DEAD		= 0;	// device doesn't exist
     uint8 constant CN_LOW		= 1;	// device is a last restort only
@@ -15,11 +14,7 @@ contract cons is ged {
     bytes[] _buf;
     TvmCell[] _cells;
 
-    constructor(device_t dev) public ged(dev) {
-        tvm.accept();
-    }
-
-    function dcn_probe(s_consdev) internal {
+   function dcn_probe(s_consdev) internal {
         _cn.cn_pri = CN_INTERNAL;
     }
     function dcn_init(s_consdev) internal {

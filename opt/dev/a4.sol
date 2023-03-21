@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.65.0;
+pragma ton-solidity >= 0.67.0;
 contract a4 {
     function f() external pure {
         bytes bb;
@@ -9,7 +9,7 @@ contract a4 {
         uint b3 = 0x0014000000808000008000000000F8C600000000001000000000000000000000;
         string t;
         while (pos < len) {
-            byte b = bb[pos++];
+            bytes1 b = bb[pos++];
             uint op = uint8(b);
             uint v = 1 << op;
             if ((v & b1) > 0) {

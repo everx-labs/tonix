@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.66.0;
+pragma ton-solidity >= 0.67.0;
 import "fs.h";
 
 library libfattr {
@@ -53,24 +53,28 @@ library libfattr {
             st_dev, st_ino, st_nlink, st_mode, st_uid, st_gid, st_rdev, st_atim, st_mtim, st_ctim, st_birthtim, st_size, st_blocks, st_blksize, st_gen);
     }
     function set_time(stat st) internal {
-        st.st_atim = now;
-        st.st_mtim = now;
-        st.st_ctim = now;
-        st.st_birthtim = now;
+        uint32 tnow = block.timestamp;
+        st.st_atim = tnow;
+        st.st_mtim = tnow;
+        st.st_ctim = tnow;
+        st.st_birthtim = tnow;
     }
     function update_size(stat st, uint sz) internal {
+        uint32 tnow = block.timestamp;
         st.st_size = uint32(sz);
         st.st_blocks = uint16(sz / st.st_blksize) + 1;
-        st.st_mtim = now;
-        st.st_ctim = now;
+        st.st_mtim = tnow;
+        st.st_ctim = tnow;
         st.st_gen++;
     }
     function def_bdev_inode(uint16 dev_id, uint16 blk_size) internal returns (stat st) {
-        return stat(dev_id, 0, 1, S_IFBLK, UID_ROOT, GID_WHEEL, 0, now, now, now, now, 0, 1, blk_size, 0);
+        uint32 tnow = block.timestamp;
+        return stat(dev_id, 0, 1, S_IFBLK, UID_ROOT, GID_WHEEL, 0, tnow, tnow, tnow, tnow, 0, 1, blk_size, 0);
     }
     function def_dir_inode(stat stb) internal returns (stat st) {
         (, , , uint16 st_mode, uint16 st_uid, uint16 st_gid, uint16 st_rdev, , , , , , , uint16 st_blksize, ) = stb.unpack();
+        uint32 tnow = block.timestamp;
         if ((st_mode & S_IFBLK) == S_IFBLK)
-            return stat(st_rdev, 0, 2, S_IFDIR, st_uid, st_gid, 0, now, now, now, now, 0, 2, st_blksize, 0);
+            return stat(st_rdev, 0, 2, S_IFDIR, st_uid, st_gid, 0, tnow, tnow, tnow, tnow, 0, 2, st_blksize, 0);
     }
 }

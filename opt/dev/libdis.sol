@@ -1,9 +1,9 @@
-pragma ton-solidity >= 0.65.0;
+pragma ton-solidity >= 0.67.0;
 
 library libdis {
 
     // A.2 Stack manipulation primitives
-    function a2_stack(byte b, byte n) internal returns (string out, uint sh) {
+    function a2_stack(bytes1 b, bytes1 n) internal returns (string out, uint sh) {
         sh = 1;
         // A.2.1. Basic stack manipulation primitives.
         if (b == 0x00) out = "NOP";
@@ -83,7 +83,7 @@ library libdis {
     }
 
     // A.3 Tuple, List, and Null primitives
-    function a3_tuple(byte b, byte n) internal returns (string out, uint sh) {
+    function a3_tuple(bytes1 b, bytes1 n) internal returns (string out, uint sh) {
         sh = 1;
         // A.3.1. Null primitives.
         if (b == 0x6D) out = "NULL";
@@ -99,7 +99,7 @@ library libdis {
 
     // A.4 Constant, or literal primitives
     function a4_constant(bytes bb) internal returns (string out, uint sh) {
-        (byte b, byte n, byte na) = (bb[0], bb[1], bb[2]);
+        (bytes1 b, bytes1 n, bytes1 na) = (bb[0], bb[1], bb[2]);
         sh = 1;
         // A.4.1. Integer and boolean constants.
         if (b >= 0x70 && b < 0x80) {
@@ -180,7 +180,7 @@ library libdis {
     }
 
     // A.5 Arithmetic primitives
-    function a5_arithmetic(byte b, byte n, byte na) internal returns (string out, uint sh) {
+    function a5_arithmetic(bytes1 b, bytes1 n, bytes1 na) internal returns (string out, uint sh) {
         sh = 1;
         // A.5.1. Addition, subtraction, multiplication.
         if (b == 0xA0) out = "ADD";
@@ -256,7 +256,7 @@ library libdis {
     }
 
     // A.6.1. Integer comparison.
-    function int_comparison(byte b, byte n) internal returns (string out, uint sh) { // C7
+    function int_comparison(bytes1 b, bytes1 n) internal returns (string out, uint sh) { // C7
         sh = 1;
         if (b == 0xB8) out = "SGN";
         else if (b == 0xB9) out = "LESS";
@@ -278,7 +278,7 @@ library libdis {
     }
 
     // A.6.2. Other comparison.
-    function other_comparison(byte n) internal returns (string out) { // C7
+    function other_comparison(bytes1 n) internal returns (string out) { // C7
         // 00 - 13
         if (n == 0x00) out = "SEMPTY";
         else if (n == 0x01) out = "SDEMPTY";
@@ -302,7 +302,7 @@ library libdis {
     }
 
     // A.6 Comparison primitives
-    function a6_comparison(byte b, byte n) internal returns (string out, uint sh) {
+    function a6_comparison(bytes1 b, bytes1 n) internal returns (string out, uint sh) {
         sh = 1;
         if (b < 0xC7)
             (out, sh) = int_comparison(b, n);
@@ -314,7 +314,7 @@ library libdis {
     }
 
     // A.7 Cell primitives
-    function a7_cell(byte b, byte n, byte na) internal returns (string out, uint sh) {
+    function a7_cell(bytes1 b, bytes1 n, bytes1 na) internal returns (string out, uint sh) {
         sh = 1;
         // A.7.1. Cell serialization primitives
         if (b >= 0xC8 && b < 0xD0) {
@@ -433,7 +433,7 @@ library libdis {
     }
 
     // A.8 Continuation and control flow primitives
-    function a8_continuation(byte b, byte n, byte na) internal returns (string out, uint sh) {
+    function a8_continuation(bytes1 b, bytes1 n, bytes1 na) internal returns (string out, uint sh) {
         sh = 1;
         na;
         // A.8.1. Unconditional control flow primitives.
@@ -543,7 +543,7 @@ library libdis {
     }
 
     // A.9 Exception generating and handling primitives
-    function a9_exception(byte b, byte n, byte na) internal returns (string out, uint sh) {
+    function a9_exception(bytes1 b, bytes1 n, bytes1 na) internal returns (string out, uint sh) {
         sh = 2;
         // A.9.1. Throwing exceptions
         if (b == 0xF2) {
@@ -560,7 +560,7 @@ library libdis {
     }
 
     // A.10.11. Special Get dictionary and prefix code dictionary operations, and constant dictionaries
-    function a10_11_special_get_dictionary(byte n, byte na) internal returns (string out, uint sh) {
+    function a10_11_special_get_dictionary(bytes1 n, bytes1 na) internal returns (string out, uint sh) {
         sh = 2;
         if (n == 0xA0) out = "DICTIGETJMP";
         else if (n == 0xA1) out = "DICTUGETJMP";
@@ -579,7 +579,7 @@ library libdis {
         else out = uk("SPDICT", n);
     }
     // A.10 Dictionary manipulation primitives
-    function a10_dictionary(byte b, byte n, byte na) internal returns (string out, uint sh) {
+    function a10_dictionary(bytes1 b, bytes1 n, bytes1 na) internal returns (string out, uint sh) {
         sh = 1;
         // F4 - F7?
         // A.10.2. Dictionary serialization and deserialization.
@@ -595,9 +595,9 @@ library libdis {
     }
 
     // A.11.2. Gas-related primitives
-    function gas_related(byte n) internal returns (string out) { // F8
+    function gas_related(bytes1 n) internal returns (string out) { // F8
         // 00 - 0F
-        mapping (byte => string) m;
+        mapping (bytes1 => string) m;
         m[0x00] = "ACCEPT";
         m[0x01] = "SETGASLIMIT";
         m[0x02] = "BUYGAS";
@@ -616,7 +616,7 @@ library libdis {
     }
 
     // A.11.3. Pseudo-random number generator primitives.
-    function pseudo_random(byte n) internal returns (string out) { // F8
+    function pseudo_random(bytes1 n) internal returns (string out) { // F8
         // 10 - 1F
         if (n == 0x10) out = "RANDU256";
         else if (n == 0x11) out = "RAND";
@@ -626,7 +626,7 @@ library libdis {
     }
 
     // A.11.4. Configuration primitives
-    function config(byte n) internal returns (string out) { // F8
+    function config(bytes1 n) internal returns (string out) { // F8
         // 20 - 3F
         if (n == 0x23) out = "NOW";
         else if (n == 0x28) out = "MYADDR";
@@ -639,7 +639,7 @@ library libdis {
     }
 
     // A.11.5. Global variable primitives
-    function global(byte n) internal returns (string out) { // F8
+    function global(bytes1 n) internal returns (string out) { // F8
         // 40 - FF
         if (n == 0x40) out = "GETGLOBVAR";
         else if (n > 0x40 && n < 0x60) out = ppa2("GETGLOB ", n, 0x40);
@@ -649,9 +649,9 @@ library libdis {
     }
 
     // A.11.6. Hashing and cryptography primitives
-    function crypto(byte n) internal returns (string out) { // F9
+    function crypto(bytes1 n) internal returns (string out) { // F9
         // 10 - 1F
-        mapping (byte => string) m;
+        mapping (bytes1 => string) m;
         m[0x00] = "HASHCU";
         m[0x01] = "HASHSU";
         m[0x02] = "SHA256U";
@@ -677,7 +677,7 @@ library libdis {
     }
 
     // A.11 Application-specific primitives
-    function a11_application(byte b, byte n) internal returns (string out, uint sh) {
+    function a11_application(bytes1 b, bytes1 n) internal returns (string out, uint sh) {
         sh = 1;
         // F8 - FB
         if (b == 0xF8) {
@@ -694,21 +694,21 @@ library libdis {
         else out = uk("APP", b);
     }
 
-    function a12_debug(byte n) internal returns (string out, uint sh) {
+    function a12_debug(bytes1 n) internal returns (string out, uint sh) {
         sh = 2;
         if (n == 0x00) out = "DUMPSTK";
         else if (n < 0xF0) out = ppa("DEBUG", n);
         else out = uk("DEBUG", n);
     }
 
-    function a13_codepage(byte n) internal returns (string out, uint sh) {
+    function a13_codepage(bytes1 n) internal returns (string out, uint sh) {
         sh = 2;
         if (n == 0x00) out = "SETCP0";
         else if (n < 0xF0) out = ppa("SETCP", n);
         else out = uk("CODEPAGE", n);
     }
 
-    function is_ref(byte b, byte n) internal returns (bool res) {
+    function is_ref(bytes1 b, bytes1 n) internal returns (bool res) {
         if ((b == 0xDB && n >= 0x3C && n <= 0x3E) ||
             (b == 0xE3 && (n <= 0x03 || n >= 0x0D && n < 0x10)))
                 return true;
@@ -727,15 +727,15 @@ library libdis {
     function _dda3(bytes bb) internal returns (string[] res) {
         uint len = bb.length;
         uint pos;
-        byte b;
-        byte n;
-        byte na;
+        bytes1 b;
+        bytes1 n;
+        bytes1 na;
         string sout;
         uint sh;
         while (pos < len) {
             b = bb[pos];
-            n = pos + 1 < len ? bb[pos + 1] : byte(0x00);
-            na = pos + 2 < len ? bb[pos + 2] : byte(0x00);
+            n = pos + 1 < len ? bb[pos + 1] : bytes1(0x00);
+            na = pos + 2 < len ? bb[pos + 2] : bytes1(0x00);
             if (b < 0x6D) (sout, sh) = a2_stack(b, n);
             else if (b < 0x70) (sout, sh) = a3_tuple(b, n);
             else if (b < 0xA0) (sout, sh) = a4_constant(bb[pos : ]);
@@ -764,9 +764,9 @@ library libdis {
         uint clb;       // current indent region length
         uint[] subr;    // indent stack
         uint sd;        // indent depth
-        byte b;
-        byte n;
-        byte na;
+        bytes1 b;
+        bytes1 n;
+        bytes1 na;
         while (pos < len) {
             uint cnt;
             b = bb[pos];
@@ -816,26 +816,26 @@ library libdis {
         }
     }*/
 
-    function ppa(string insn, byte arg) internal returns (string out) {
+    function ppa(string insn, bytes1 arg) internal returns (string out) {
         return format("{}{}", insn, uint8(arg));
     }
-    function ppia(string insn, byte arg) internal returns (string out) {
+    function ppia(string insn, bytes1 arg) internal returns (string out) {
         TvmBuilder d;
         d.store(arg);
         return format("{} {}", insn, d.toSlice().loadSigned(d.bits()));
     }
-    function ppa1(string insn, byte arg) internal returns (string out) {
+    function ppa1(string insn, bytes1 arg) internal returns (string out) {
         return format("{} {}", insn, uint16(uint8(arg)) + 1);
     }
-    function ppa2(string insn, byte arg, int16 offset) internal returns (string out) {
-        return format("{}{}", insn, uint8(arg) - offset);
+    function ppa2(string insn, bytes1 arg, int16 offset) internal returns (string out) {
+        return format("{}{}", insn, int16(uint8(arg)) - offset);
     }
 
-    function ppa3(string insn, byte arg1, byte arg2, int16 offset) internal returns (string out) {
-        return format("{} {}", insn, (uint8(arg1) - offset << 8) + uint8(arg2));
+    function ppa3(string insn, bytes1 arg1, bytes1 arg2, int16 offset) internal returns (string out) {
+        return format("{} {}", insn, ((int16(uint8(arg1)) - offset) << 8) + int16(uint8(arg2)));
     }
 
-    function uk(string ctg, byte arg) internal returns (string out) {
+    function uk(string ctg, bytes1 arg) internal returns (string out) {
         return format("?? {}: {:X}", ctg, uint8(arg));
     }
 

@@ -381,7 +381,7 @@ library libzone {
 
     function fetch_bucket(uma_zone zone) internal returns (uma_bucket bucket) {
         uma_zone_domain zdom = zone.uz_domain;
-        bool dtor = false;
+        bool fdtor = false;
         if (zdom.uzd_buckets.empty())
             return zdom.uzd_cross;
         bucket = zdom.uzd_buckets[0];
@@ -390,7 +390,7 @@ library libzone {
 //    	if (bucket.ub_cnt > 0)
 //            this.er("zone_fetch_bucket", zone_id, FETCH_BUCKET_EMPTY_BUCKET_IN_CACHE);
         zdom.uzd_nitems -= bucket.ub_cnt;
-        if (dtor)
+        if (fdtor)
             for (uint16 i = 0; i < bucket.ub_cnt; i++)
                 zone.item_dtor(bucket.ub_bucket[i], zone.uz_size, "", zfreeskip.SKIP_NONE);
         zone.uz_domain = zdom;
