@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.66.0;
+pragma ton-solidity >= 0.67.0;
 
 import "disk.h";
 import "proc.h";
@@ -152,7 +152,7 @@ contract loader {
     	//td.thread_ctor();
     }
     function pdinit(uint16, bool) internal returns (uint16) {}
-    function proc_set_cred_init(proc p, ucred uc) internal {}
+    function proc_set_cred_init(proc p, ucred c) internal {}
     function siginit(proc p) internal {}
     function cpuset_thread0() internal {}
     function fdinit() internal returns (uint16) {}
@@ -415,12 +415,12 @@ ofile(libfdt.FD_TYPE_FDN, libfattr.FT_LINK, 8, libfdt.FRW,    makedev(0, 12), 13
 
     cmd_info[CMD_LAST + 1] constant CI = [
 cmd_info("a", "autoboot", "[seconds [prompt]]", "", "Proceeds to bootstrap the system",
-    "after a number of	seconds, if not interrupted by the user. The kernel will be loaded first if necessary.", [""]),
+    "after a number of seconds, if not interrupted by the user. The kernel will be loaded first if necessary.", [""]),
 cmd_info("b", "boot", "[-flag] kernelname [...]", "", "Immediately proceeds to bootstrap the system, loading the kernel if necessary.", "Any flags or arguments are passed to the kernel, but they must precede the kernel name, if a kernel name is provided.", [""]),
 cmd_info("e", "echo", "[-n] [<message>]", "n", "Displays text on the screen.", "", ["n\tdo not append newline"]),
-cmd_info("h", "help", "[topic [subtopic]]", "", "Shows help	messages read from /boot/loader.help.", "The special topic index will list the topics available.", [""]),
-cmd_info("i", "include", "file [file ...]", "", "Process script files", "Each file, in turn, is completely read into memory, and then each of its lines is passed to the command line interpreter.	If any error is	returned by the interpreter", [""]),
-cmd_info("k", "kload", "[-t type] file ...", "t:", "Loads a kernel", "kernel loadable module (kld), disk image, or file of opaque contents	tagged as being	of the type type.", [""]),
+cmd_info("h", "help", "[topic [subtopic]]", "", "Shows help messages read from /boot/loader.help.", "The special topic index will list the topics available.", [""]),
+cmd_info("i", "include", "file [file ...]", "", "Process script files", "Each file, in turn, is completely read into memory, and then each of its lines is passed to the command line interpreter. If any error is returned by the interpreter", [""]),
+cmd_info("k", "kload", "[-t type] file ...", "t:", "Loads a kernel", "kernel loadable module (kld), disk image, or file of opaque contents tagged as being of the type type.", [""]),
 cmd_info("l", "ls",	"[-l] [path]", "l", "Displays a listing of files in the directory path", "the root directory if path is not specified.",  ["l\tshow file sizes"]),
 cmd_info("d", "lsdev", "[-v]", "v", "Lists all of the devices", "from which it may be possible to load modules", ["v\tmore details are printed"]),
 cmd_info("m", "lsmod", "[-v]", "v", "Displays loaded modules.", "", ["v\tmore details are shown."]),
@@ -578,7 +578,7 @@ boot_info(8, 21, 0,  8,   2, 0, 0, "data", "data blocks", "")
             if (wl == 0)
                 continue;
             if (w[0] == '-' && wl > 1) {
-                byte b = w[1];
+                bytes1 b = w[1];
                 uint8 v = uint8(b);
                 uint q = libstr.strchr(optstring, b);
                 if (q == 0) {

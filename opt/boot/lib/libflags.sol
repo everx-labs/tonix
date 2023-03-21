@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.66.0;
+pragma ton-solidity >= 0.67.0;
 library libflags {
     function tou(string s) internal returns (uint val) {
         optional (int) p = stoi(s);
@@ -6,7 +6,7 @@ library libflags {
             return uint(p.get());
     }
 
-    function set(mapping (uint8 => string) flags, byte o) internal returns (bool) {
+    function set(mapping (uint8 => string) flags, bytes1 o) internal returns (bool) {
         return flags.exists(uint8(o));
     }
     function flags_set(mapping (uint8 => string) flags, bytes optstring) internal returns (bool f1, bool f2, bool f3, bool f4) {

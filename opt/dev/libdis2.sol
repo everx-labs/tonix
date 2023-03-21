@@ -1,8 +1,8 @@
-pragma ton-solidity >= 0.65.0;
+pragma ton-solidity >= 0.67.0;
 
 library libdis2 {
 
-    function is_ref(byte b, byte n) internal returns (bool res) {
+    function is_ref(bytes1 b, bytes1 n) internal returns (bool res) {
         if ((b == 0xDB && n >= 0x3C && n <= 0x3E) ||
             (b == 0xE3 && (n <= 0x03 || n >= 0x0D && n < 0x10)))
                 return true;
@@ -25,14 +25,14 @@ library libdis2 {
         uint pos;
         string t;
         while (pos < len) {
-            byte b = bb[pos++];
+            bytes1 b = bb[pos++];
             uint op = uint8(b);
             uint v = 1 << op;
             if ((v & b1) > 0) {
                 res.push(f1(b));
                 continue;
             }
-            byte n = bb[pos++];
+            bytes1 n = bb[pos++];
             if ((v & b2) > 0)
                 t = f2(b, n);
             else {
@@ -57,7 +57,7 @@ library libdis2 {
         }
     }
 
-    function f1(byte b) internal returns (string t) {
+    function f1(bytes1 b) internal returns (string t) {
         t = "? f1 ?";
         (uint b1, uint b2) = math.divmod(uint8(b), 16);
         if (b1 < 4) {
@@ -108,7 +108,7 @@ library libdis2 {
                 b2 == 7 ? "UNTILEND" : b2 == 8 ? "WHILE" : b2 == 9 ? "WHILEEND" : b2 == 10 ? "AGAIN" : b2 == 11 ? "AGAINEND" : uk("E", b);
         }
     }
-    function f2(byte b, byte n) internal returns (string t) {
+    function f2(bytes1 b, bytes1 n) internal returns (string t) {
         (uint b1, uint b2) = math.divmod(uint8(b), 16);
         (uint n1, uint n2) = math.divmod(uint8(n), 16);
         t = format("? f2 ? {:X}{:X}", uint8(b), uint8(n));
@@ -190,7 +190,7 @@ library libdis2 {
         }
     }
 
-    function arg_size(byte b, byte n) internal returns (uint bl, uint nb, uint nr) {
+    function arg_size(bytes1 b, bytes1 n) internal returns (uint bl, uint nb, uint nr) {
         if (b == 0x82) {
             bl = uint8(n) >> 3;
             nb = 8 * bl + 19;
@@ -219,7 +219,7 @@ library libdis2 {
         }
     }
 
-    function extra_size(byte b, byte n) internal returns (uint sh) {
+    function extra_size(bytes1 b, bytes1 n) internal returns (uint sh) {
         if (b == 0x54 && n < 0x80) sh++;
         else if (b == 0x81) sh++;
         else if (b == 0x82) {
@@ -244,11 +244,11 @@ library libdis2 {
         else if (b == 0xF2 && n >= 0xC0 && n < 0xF0) sh++;
         else if (b == 0xF4 && (n >= 0xA4 && n < 0xA8 || n >= 0xAC && n < 0xAE)) sh++;
     }
-    function fv(byte b, byte n, uint sh, bytes bb) internal returns (string t) {
+    function fv(bytes1 b, bytes1 n, uint sh, bytes bb) internal returns (string t) {
         t = format("? fv ? {:X}{:X}", uint8(b), uint8(n));
         if (b > 0x80 && b < 0xA0) t = const_ints(b, n, sh, bb); // F8C6
     }
-    function f3(byte b, byte n, byte na) internal returns (string t) {
+    function f3(bytes1 b, bytes1 n, bytes1 na) internal returns (string t) {
         t = format("? f3 ? {:X}{:X}", uint8(b), uint8(n));
         if (b == 0x54) t = todo("COMP STACK", b, n);
         else if (b > 0x80 && b < 0x90) t = const_ints3(b, n, na); // F8C6
@@ -260,11 +260,11 @@ library libdis2 {
         else if (b == 0xF4) t = dict_const3(n, na);
     }
 
-    function fo(byte b) internal returns (string t) {
+    function fo(bytes1 b) internal returns (string t) {
         t = format("? fo ? {:X}", uint8(b));
     }
 
-    function const_ints3(byte b, byte n, byte na) internal returns (string t) {
+    function const_ints3(bytes1 b, bytes1 n, bytes1 na) internal returns (string t) {
         (uint b1, uint b2) = math.divmod(uint8(b), 16);
         // A.4.1. Integer and boolean constants.
         if (b1 != 0x08) t = uk("8", b);
@@ -281,8 +281,8 @@ library libdis2 {
         else if (b2 >= 0x0e) t = "PUSHCONT";
     }
 
-    function const_ints(byte b, byte n, uint sh, bytes bb) internal returns (string t) {
-        byte na;
+    function const_ints(bytes1 b, bytes1 n, uint sh, bytes bb) internal returns (string t) {
+        bytes1 na;
         if (sh > 0) na = bb[0];
         (uint b1, uint b2) = math.divmod(uint8(b), 16);
         // A.4.1. Integer and boolean constants.
@@ -316,7 +316,7 @@ library libdis2 {
         else if (b2 >= 0x0e) t = "PUSHCONT { " + string(bb) + " }";
     }
     // A.6.2. Other comparison.
-    function cmp_other(byte b) internal returns (string out) {
+    function cmp_other(bytes1 b) internal returns (string out) {
         uint n = uint8(b);
         return n == 0 ? "SEMPTY" : n == 1 ? "SDEMPTY" : n == 2 ? "SREMPTY" : n == 3 ? "SDFIRST" : n == 4 ? "SDLEXCMP" : n == 5 ? "SDEQ" :
             n == 8 ? "SDPFX" : n == 9 ? "SDPFXREV" : n == 10 ? "SDPPFX" : n == 11 ? "SDPPFXREV" : n == 12 ? "SDSFX" : n == 13 ? "SDSFXREV" :
@@ -325,7 +325,7 @@ library libdis2 {
     }
 
     // A.5.2. Division.
-    function division(byte n) internal returns (string out) {
+    function division(bytes1 n) internal returns (string out) {
         if (n == 0x04) out = "DIV";// (x y – q := bx=yc).
         else if (n == 0x05) out = "DIVR";// (x y – q0 := bx=y + 1=2c).
         else if (n == 0x06) out = "DIVC";// (x y – q00 := dx=ye).
@@ -343,7 +343,7 @@ library libdis2 {
         else out = uk("DIV", n);
     }
 
-    function div3(byte n, byte na) internal returns (string out) {
+    function div3(bytes1 n, bytes1 na) internal returns (string out) {
         if (n == 0x34) out = ppa1("RSHIFT", na);
         else if (n == 0x38) out = ppa1("MODPOW2", na);
         else if (n == 0xB4) out = ppa1("MULRSHIFT", na);
@@ -352,7 +352,7 @@ library libdis2 {
         else if (n == 0xD5) out = ppa1("LSHIFTDIVR", na);
         else out = uk("DIV3", n);
     }
-    function cell_st3(byte n, byte na) internal returns (string out) {
+    function cell_st3(bytes1 n, bytes1 na) internal returns (string out) {
         if (n == 0x0A) out = ppa1("STIR", na);
         else if (n == 0x0B) out = ppa1("STUR", na);
         else if (n == 0x0C) out = ppa1("STIQ", na);
@@ -361,7 +361,7 @@ library libdis2 {
         else if (n == 0x0F) out = ppa1("STURQ", na);
         else out = uk("ST3", n);
     }
-    function cell_ld3(byte n, byte na) internal returns (string out) {
+    function cell_ld3(bytes1 n, bytes1 na) internal returns (string out) {
         if (n == 0x08) out = "LDI ";
         else if (n == 0x09) out = "LDU ";
         else if (n == 0x0A) out = "PLDI ";
@@ -373,19 +373,19 @@ library libdis2 {
         out = out.empty() ? uk("LD 3", n) : ppa2(out, na, -1);
     }
 
-    function throw3(byte n, byte na) internal returns (string out) {
+    function throw3(bytes1 n, bytes1 na) internal returns (string out) {
         if (n < 0xC8) out = ppa3("THROW", n, na, 0xC0);
         else if (n < 0xE8) out = ppa3("THROWIFNOT", n, na, 0xE0);
         else out = uk("THROW 3", n);
     }
 
-    function dict_const3(byte n, byte na) internal returns (string out) {
+    function dict_const3(bytes1 n, bytes1 na) internal returns (string out) {
         if (n < 0xA8) out = ppa3("DICTPUSHCONST", n, na, 0xA4);
         else if (n == 0xAE) out = ppa3("PFXDICTCONSTGETJMP", n, na, 0xAC);
         else out = uk("DICT CONST 3", n);
     }
 
-    function cell_st(byte n) internal returns (string out) {
+    function cell_st(bytes1 n) internal returns (string out) {
         if (n == 0x00) out = "STIX";
         else if (n == 0x01) out = "STUX";
         else if (n == 0x02) out = "STIXR";
@@ -446,7 +446,7 @@ library libdis2 {
         else out = uk("CELL SER", n);
     }
 
-    function cell_ld(byte n) internal returns (string out) {
+    function cell_ld(bytes1 n) internal returns (string out) {
         if (n == 0x00) out = "LDIX";
         else if (n == 0x01) out = "LDUX";
         else if (n == 0x02) out = "PLDIX";
@@ -460,7 +460,7 @@ library libdis2 {
         else out = uk("LD", n);
     }
     // A.8.1. Unconditional control flow primitives.
-    function uncond_cf(byte n) internal returns (string out) {
+    function uncond_cf(bytes1 n) internal returns (string out) {
         if (n == 0x30) out = "RET";
         else if (n == 0x31) out = "RETALT";
         else if (n == 0x32) out = "BRANCH";
@@ -477,7 +477,7 @@ library libdis2 {
     }
 
     // A.8.2. Conditional control flow primitives.
-    function cond_cf(byte n) internal returns (string out) {
+    function cond_cf(bytes1 n) internal returns (string out) {
         if (n == 0x00) out = "IFREF";
         else if (n == 0x01) out = "IFNOTREF";
         else if (n == 0x02) out = "IFJMPREF";
@@ -506,7 +506,7 @@ library libdis2 {
         else out = uk("COND CF", n);
     }
 
-    function conts(byte n) internal returns (string out) {
+    function conts(bytes1 n) internal returns (string out) {
         // A.8.4. Manipulating the stack of continuations.
         if (n < 0x10) out = ppa("RETURNARGS", n);
         else if (n == 0x10) out = "RETURNVARARGS";
@@ -525,7 +525,7 @@ library libdis2 {
     }
 
     // A.9 Exception generating and handling primitives
-    function a9_exception(byte n) internal returns (string out) {
+    function a9_exception(bytes1 n) internal returns (string out) {
         // A.9.1. Throwing exceptions
         if (n < 0x40) out = ppa("THROW ", n);
         else if (n < 0x80) out = ppa2("THROWIF ", n, 0x40);
@@ -534,7 +534,7 @@ library libdis2 {
     }
 
     // A.10.11. Special Get dictionary and prefix code dictionary operations, and constant dictionaries
-    function a10_11_special_get_dictionary(byte n) internal returns (string out) {
+    function a10_11_special_get_dictionary(bytes1 n) internal returns (string out) {
         if (n == 0xA0) out = "DICTIGETJMP";
         else if (n == 0xA1) out = "DICTUGETJMP";
         else if (n == 0xA2) out = "DICTIGETEXEC";
@@ -551,7 +551,7 @@ library libdis2 {
     }
 
     // A.10 Dictionary manipulation primitives
-    function a10_dictionary(byte n) internal returns (string out) {
+    function a10_dictionary(bytes1 n) internal returns (string out) {
         // A.10.2. Dictionary serialization and deserialization.
         if (n == 0x05) out = "PLDDICT";
         else if (n == 0x0E) out = "DICTUGET";
@@ -560,9 +560,9 @@ library libdis2 {
     }
 
     // A.11.2. Gas-related primitives
-    function gas_related(byte n) internal returns (string out) { // F8
+    function gas_related(bytes1 n) internal returns (string out) { // F8
         // 00 - 0F
-        mapping (byte => string) m;
+        mapping (bytes1 => string) m;
         m[0x00] = "ACCEPT";
         m[0x01] = "SETGASLIMIT";
         m[0x02] = "BUYGAS";
@@ -573,7 +573,7 @@ library libdis2 {
     }
 
     // A.11.3. Pseudo-random number generator primitives.
-    function pseudo_random(byte n) internal returns (string out) { // F8
+    function pseudo_random(bytes1 n) internal returns (string out) { // F8
         // 10 - 1F
         if (n == 0x10) out = "RANDU256";
         else if (n == 0x11) out = "RAND";
@@ -583,7 +583,7 @@ library libdis2 {
     }
 
     // A.11.4. Configuration primitives
-    function config(byte n) internal returns (string out) { // F8
+    function config(bytes1 n) internal returns (string out) { // F8
         // 20 - 3F
         if (n == 0x23) out = "NOW";
         else if (n == 0x28) out = "MYADDR";
@@ -596,7 +596,7 @@ library libdis2 {
     }
 
     // A.11.5. Global variable primitives
-    function global(byte n) internal returns (string out) { // F8
+    function global(bytes1 n) internal returns (string out) { // F8
         // 40 - FF
         if (n == 0x40) out = "GETGLOBVAR";
         else if (n > 0x40 && n < 0x60) out = ppa2("GETGLOB ", n, 0x40);
@@ -606,9 +606,9 @@ library libdis2 {
     }
 
     // A.11.6. Hashing and cryptography primitives
-    function crypto(byte n) internal returns (string out) { // F9
+    function crypto(bytes1 n) internal returns (string out) { // F9
         // 10 - 1F
-        mapping (byte => string) m;
+        mapping (bytes1 => string) m;
         m[0x00] = "HASHCU";
         m[0x01] = "HASHSU";
         m[0x02] = "SHA256U";
@@ -623,7 +623,7 @@ library libdis2 {
     }
 
     // A.11 Application-specific primitives
-    function a11_application(byte b, byte n) internal returns (string out) {
+    function a11_application(bytes1 b, bytes1 n) internal returns (string out) {
         // F8 - FB
         if (b == 0xF8) {
             if (n < 0x10) out = gas_related(n);
@@ -636,13 +636,13 @@ library libdis2 {
         else out = uk("APP", b);
     }
 
-    function a12_debug(byte n) internal returns (string out) {
+    function a12_debug(bytes1 n) internal returns (string out) {
         if (n == 0x00) out = "DUMPSTK";
         else if (n < 0xF0) out = ppa("DEBUG", n);
         else out = uk("DEBUG", n);
     }
 
-    function a13_codepage(byte n) internal returns (string out) {
+    function a13_codepage(bytes1 n) internal returns (string out) {
         if (n == 0x00) out = "SETCP0";
         else if (n < 0xF0) out = ppa("SETCP", n);
         else out = uk("CODEPAGE", n);
@@ -657,30 +657,30 @@ library libdis2 {
         string[16] sd = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
         return n < 16 ? " S" + sd[n] : "!ERROR!";
     }
-    function ppa(string insn, byte arg) internal returns (string out) {
+    function ppa(string insn, bytes1 arg) internal returns (string out) {
         return format("{}{}", insn, uint8(arg));
     }
-    function ppia(string insn, byte arg) internal returns (string out) {
+    function ppia(string insn, bytes1 arg) internal returns (string out) {
         TvmBuilder d;
         d.store(arg);
         return format("{} {}", insn, d.toSlice().loadSigned(d.bits()));
     }
-    function ppa1(string insn, byte arg) internal returns (string out) {
+    function ppa1(string insn, bytes1 arg) internal returns (string out) {
         return format("{} {}", insn, uint16(uint8(arg)) + 1);
     }
-    function ppa2(string insn, byte arg, int16 offset) internal returns (string out) {
-        return format("{}{}", insn, uint8(arg) - offset);
+    function ppa2(string insn, bytes1 arg, int16 offset) internal returns (string out) {
+        return format("{}{}", insn, int16(uint8(arg)) - offset);
     }
 
-    function ppa3(string insn, byte arg1, byte arg2, int16 offset) internal returns (string out) {
-        return format("{} {}", insn, (uint8(arg1) - offset << 8) + uint8(arg2));
+    function ppa3(string insn, bytes1 arg1, bytes1 arg2, int16 offset) internal returns (string out) {
+        return format("{} {}", insn, (int16(uint8(arg1)) - offset << 8) + int16(uint8(arg2)));
     }
 
-    function uk(string ctg, byte arg) internal returns (string out) {
+    function uk(string ctg, bytes1 arg) internal returns (string out) {
         return format("?? {}: {:X}", ctg, uint8(arg));
     }
 
-    function todo(string ctg, byte arg, byte arg2) internal returns (string out) {
+    function todo(string ctg, bytes1 arg, bytes1 arg2) internal returns (string out) {
         return format("TODO: {} {:X}{:X}", ctg, uint8(arg), uint8(arg2));
     }
 

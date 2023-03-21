@@ -1,10 +1,9 @@
-pragma ton-solidity >= 0.65.0;
+pragma ton-solidity >= 0.67.0;
 
-import "ged.sol";
 import "libctl.sol";
 import "libdis.sol";
 import "libdis2.sol";
-contract cstat is ged {
+contract cstat {
 
     uint32 _flags;
 
@@ -14,10 +13,6 @@ contract cstat is ged {
 
     function dda2(bytes bb) external pure returns (string out) {
         return libdis2.dda(bb);
-    }
-
-    constructor(device_t pdev) public ged(pdev) {
-        tvm.accept();
     }
 
     function conf(uint32 val) external {
@@ -82,7 +77,7 @@ contract cstat is ged {
         else if (len > 9 && bytes10(bb[ : 10]) == 0xED44D0D3FFD33FD30031) out = "c4_to_c7";
         else if (len > 9 && bytes4(bb[ : 4]) == 0x736F6C20) out = bb;
         else if (len > 8 && bytes9(bb[ : 9]) == 0xED44D0D749C301F866) {
-            byte b10 = bb[9];
+            bytes1 b10 = bb[9];
             if (b10 == 0x22) out = "main_internal";
             else if (b10 == 0x21) out = "main_external";
             else out = "!! unrecognized main";
@@ -97,7 +92,7 @@ contract cstat is ged {
     function _slice_as_bytes(TvmSlice s) internal pure returns (bytes bb) {
         uint16 rb = s.bits();
         while (rb >= 8) {
-            bb.append(bytes(byte(s.loadUnsigned(8))));
+            bb.append(bytes(bytes1(s.loadUnsigned(8))));
             rb -= 8;
         }
     }

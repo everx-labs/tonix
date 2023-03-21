@@ -30,7 +30,8 @@ library libsb {
         stat stdir = libfattr.def_dir_inode(stdev);
         (, , , uint16 st_mode, uint16 st_uid, uint16 st_gid, , , , , , , , uint16 st_blksize, ) = stdir.unpack();
         uint8 cnt;
-        dinode d1 = dinode(stdev.st_mode, cnt++, 1, 0, now, now, now, 0, 0, 0, 0, 0, st_uid, st_gid, 0);
+        uint32 tnow = block.timestamp;
+        dinode d1 = dinode(stdev.st_mode, cnt++, 1, 0, tnow, tnow, tnow, 0, 0, 0, 0, 0, st_uid, st_gid, 0);
         dinode d2 = d1;
         d2.di_mode = libfattr.S_IFREG;
         d2.di_ino = cnt++;
