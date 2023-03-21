@@ -2,7 +2,6 @@ pragma ton-solidity >= 0.61.2;
 
 import "libstring.sol";
 import "xio.sol";
-import "sbuf.sol";
 
 struct Err {
     uint8 reason;
@@ -13,7 +12,6 @@ struct Err {
 library er {
 
     using libstring for string;
-    using sbuf for s_sbuf;
 
     uint8 constant ESUCCESS  = 0;
     uint8 constant ENOENT    = 1;  // No such file or directory: a component of pathname does not exist or is a dangling symbolic link; pathname is an empty string and AT_EMPTY_PATH was not specified in flags
@@ -91,7 +89,7 @@ library er {
 
     /* Print error helpers */
     function print_errors(string command, Err[] errors) internal returns (string err) {
-        string command_specific_reason = command_specific_reason(command);
+        string csr = command_specific_reason(command);
         string reasons = "missing operand:cannot remove:cannot stat:cannot access:cannot create directory:cannot open:invalid option:extra operand:failed to remove:missing operand after:missing file operand:missing destination file operand after:invalid group:missing filename:invalid mode:invalid owner:cannot touch:cannot create regular file:too many arguments:too many operands:Try '--help' for more information:failed to access:-r not specified; omitting directory:cannot overwrite directory with non-directory:command not found:options -l and -s are incompatible:target:failed to create symbolic link:failed to create hard link:cannot make both hard and symbolic links:hard link not allowed for directory:mutually exclusive arguments -c -n -r -z:failed to locate login data:not a block device";
         string status = "No such file or directory:File exists:Not a directory:Is a directory:Permission denied:Directory not empty:Not owner:Invalid argument:Read-only file system:Bad address:Bad file number:fd is not a valid open file descriptor:Device busy:Operation not applicable:pathname is too long";
         (string[] rs, uint n_rs) = reasons.split(":");
@@ -103,7 +101,7 @@ library er {
             if (reason > n_rs)
                 err.append("Provided reason index is out of range: " + str.toa(reason) + "\n");
             else
-                sreason = reason > 0 ? rs[reason - 1] : command_specific_reason;
+                sreason = reason > 0 ? rs[reason - 1] : csr;
             if (explanation > n_ss)
                 err.append("Provided status index is out of range: " + str.toa(explanation) + "\n");
             else

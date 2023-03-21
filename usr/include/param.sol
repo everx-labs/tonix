@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.64.0;
 
-library param {
+library libparam {
     uint16 constant PAGE_SHIFT = 12; // LOG2(PAGE_SIZE)
     uint16 constant PAGE_SIZE = uint16(1) << PAGE_SHIFT;
     uint16 constant PAGE_MASK = PAGE_SIZE - 1;

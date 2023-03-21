@@ -220,7 +220,7 @@ library libdevice {
         bytes bb = bytes(dev.nameunit);
         uint len = get_blen(bb); //dev.nameunit.length;
         if (len > 0)
-            return bb[ : len - 1];
+            return string(bb[ : len - 1]);
     }
 
     function get_devclass(device_t dev) internal returns (uint32) {
@@ -303,7 +303,7 @@ library libdevice {
 	    s_sbuf sb;
 	    retval = 0;
 	    sb.sbuf_new(buf, 128, sbuf.SBUF_FIXEDLEN);
-	    bytes name;// = bytes(get_name(dev));
+	    string name;// = bytes(get_name(dev));
 	    if (name.empty())
 	    	sb.sbuf_cat("unknown: ");
 	    else {
@@ -320,7 +320,8 @@ library libdevice {
     function newdev(s_make_dev_args args) internal returns (s_cdev) {
         (uint16 mda_size, uint16 mda_flags, uint32 mda_devsw, uint32 mda_cr, uint16 mda_uid, uint16 mda_gid, uint16 mda_mode, uint8 mda_unit, uint32 mda_si_drv1, uint32 mda_si_drv2, string mda_name) = args.unpack();
         uint16 si_mount;
-        return s_cdev(mda_flags, now, now, now, mda_uid, mda_gid, mda_mode, mda_cr, mda_unit, 0, 0, si_mount, mda_si_drv1, mda_si_drv2, mda_devsw, mda_size, 1, 1, mda_name);
+        uint32 tnow = block.timestamp;
+        return s_cdev(mda_flags, tnow, tnow, tnow, mda_uid, mda_gid, mda_mode, mda_cr, mda_unit, 0, 0, si_mount, mda_si_drv1, mda_si_drv2, mda_devsw, mda_size, 1, 1, mda_name);
     }
     //function dev_dependsl(s_cdev cdev, s_cdev pdev) internal {
     function dev_dependsl(s_cdev cdev, uint32 pdev) internal {
@@ -350,7 +351,8 @@ library libdevice {
     function make_dev_s(s_make_dev_args args) internal returns (uint8, s_cdev dres) {
         (uint16 mda_size, uint16 mda_flags, uint32 mda_devsw, uint32 mda_cr, uint16 mda_uid, uint16 mda_gid, uint16 mda_mode, uint8 mda_unit, uint32 mda_si_drv1, uint32 mda_si_drv2, string mda_name) = args.unpack();
         uint16 si_mount;
-        return (0, s_cdev(mda_flags, now, now, now, mda_uid, mda_gid, mda_mode, mda_cr, mda_unit, 0, 0, si_mount, mda_si_drv1, mda_si_drv2, mda_devsw, mda_size, 1, 1, mda_name));
+        uint32 tnow = block.timestamp;
+        return (0, s_cdev(mda_flags, tnow, tnow, tnow, mda_uid, mda_gid, mda_mode, mda_cr, mda_unit, 0, 0, si_mount, mda_si_drv1, mda_si_drv2, mda_devsw, mda_size, 1, 1, mda_name));
     }
     function devtoname(s_cdev dev) internal returns (string) {
         return dev.si_name;
@@ -373,7 +375,7 @@ library libdevice {
     }*/
 
     function get_blen(bytes bb) internal returns (uint len) {
-        for (byte b: bb) {
+        for (bytes1 b: bb) {
             if (b == 0)
                 return len;
             len++;

@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "io.sol";
 import "libfdt.sol";
@@ -22,9 +22,9 @@ struct shell_env {
     */
 }
 
+using libshellenv for shell_env global;
+
 library libshellenv {
-    using xio for s_of;
-    using sbuf for s_sbuf;
     using libfdt for s_of[];
     using vars for string[];
 
@@ -33,7 +33,7 @@ library libshellenv {
         e.ofiles[libfdt.STDOUT_FILENO].fputs(libnv.dump(nvl, mask));
     }
 
-    function flag_set(shell_env e, byte b) internal returns (bool) {
+    function flag_set(shell_env e, bytes1 b) internal returns (bool) {
         bytes flags = vars.val("FLAGS", e.environ[sh.VARIABLE]);
         return flags.empty() ? false : str.strchr(flags, b) > 0;
     }
@@ -49,7 +49,7 @@ library libshellenv {
     function _flag_values(string flags_actual, bytes flags_query) internal returns (bool, bool, bool, bool, bool, bool, bool, bool) {
         bool[] tmp;
         uint len = flags_query.length;
-        for (byte b: flags_query)
+        for (bytes1 b: flags_query)
             tmp.push(str.strchr(flags_actual, b) > 0);
         return (len > 0 ? tmp[0] : false,
                 len > 1 ? tmp[1] : false,
@@ -65,7 +65,7 @@ library libshellenv {
         string flags = vars.val("FLAGS", e.environ[sh.VARIABLE]);
         bool[] tmp;
         uint i;
-        for (byte b: flags_query) {
+        for (bytes1 b: flags_query) {
             tmp.push(str.strchr(flags, b) > 0);
             i++;
         }
@@ -169,17 +169,17 @@ library libshellenv {
     function gets(shell_env e) internal returns (string res) {
         res = e.ofiles[libfdt.STDIN_FILENO].fflush();
     }
-    function puts(shell_env e, string str) internal {
-        e.ofiles[libfdt.STDOUT_FILENO].fputs(str + "\n");
+    function puts(shell_env e, string s) internal {
+        e.ofiles[libfdt.STDOUT_FILENO].fputs(s + "\n");
     }
-    function fputs(shell_env e, string str, s_of f) internal {
+    function fputs(shell_env e, string s, s_of f) internal {
         uint16 idx = f.fileno();
         if (idx >= 0 && idx < e.ofiles.length) {
-            f.fputs(str);
+            f.fputs(s);
             e.ofiles[idx] = f;
         }
     }
-    function putchar(shell_env e, byte c) internal {
+    function putchar(shell_env e, bytes1 c) internal {
         s_sbuf s = e.ofiles[libfdt.STDOUT_FILENO].buf;
         s.sbuf_putc(c);
         e.ofiles[libfdt.STDOUT_FILENO].buf = s;

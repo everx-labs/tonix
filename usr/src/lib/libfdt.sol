@@ -2,6 +2,7 @@ pragma ton-solidity >= 0.64.0;
 
 import "filedesc_h.sol";
 import "proc_h.sol";
+import "vnode_h.sol";
 import "cdev_h.sol";
 import "uio_h.sol";
 //import "liberr.sol";
@@ -380,7 +381,9 @@ library libfdt {
         auio.uio_td = td.td_tid;
         uint32 cnt = auio.uio_resid;
 //        (error, buf) = fp.fo_read(auio, td.td_ucred, flags, td);
-        (error, buf) = fo_read(fp, auio, td.td_ucred, flags, td);
+//        (error, buf) = fo_read(fp, auio, td.td_ucred, flags, td);
+        fp;
+        flags;
         if (error > 0) {
             if (auio.uio_resid != cnt && (error == ERESTART || error == EINTR || error == EWOULDBLOCK))
                 error = 0;
@@ -389,20 +392,20 @@ library libfdt {
         td.td_retval = cnt;
     }
 
-    function fo_read(s_file fp, s_uio auio, s_ucred uc, uint16 flags, s_thread td) internal returns (uint8, bytes buf) { // 2798694612
-        uint32 ops = fp.f_ops;
-//        fileops fo = get_fileops(ops);
-        fops fo = get_fops(ops);
-        function (s_file, s_uio, s_ucred, uint16, s_thread) internal returns (uint8, bytes) fread;
-        fread = fo.fo_read;
-        return fread(fp, auio, uc, flags, td);
-/*        buf = fp.f_data;
-        if (buf.empty()) {
-            for (s_iovec v: auio.uio_iov)
-                buf.append(v.iov_data);
-        }
-*/
-    }
+//    function fo_read(s_file fp, s_uio auio, s_ucred uc, uint16 flags, s_thread td) internal returns (uint8, bytes buf) { // 2798694612
+//        uint32 ops = fp.f_ops;
+////        fileops fo = get_fileops(ops);
+//        fops fo = get_fops(ops);
+//        function (s_file, s_uio, s_ucred, uint16, s_thread) internal returns (uint8, bytes) fread;
+//        fread = fo.fo_read;
+//        return fread(fp, auio, uc, flags, td);
+///*        buf = fp.f_data;
+//        if (buf.empty()) {
+//            for (s_iovec v: auio.uio_iov)
+//                buf.append(v.iov_data);
+//        }
+//*/
+//    }
     function dofilewrite(s_thread td, uint8, s_file fp, s_uio auio, uint32 offset, uint16) internal returns (uint8 error, s_file fpp) {
         fpp = fp;
         auio.uio_rw = uio_rwo.UIO_WRITE;
@@ -472,11 +475,11 @@ library libfdt {
         if (fps == badfileops) fo.fo_read = 3648250732;
     }
 
-    function get_fileops(uint32 fops) internal returns (fileops fo) { // 3124712959
+    function get_fileops(uint32 f_ops) internal returns (fileops fo) { // 3124712959
 //        if (fops == nofileops) return get_bad_fileops();
 //        if (fops == badfileops) return get_bad_fileops();
 //        if (fops == path_fileops) return get_path_fileops();
-        if (fops == vnops) return get_path_fileops();
+        if (f_ops == vnops) return get_path_fileops();
 //        if (fops == socketops) return get_path_fileops();
         return get_bad_fileops();
     }
@@ -833,7 +836,7 @@ library libfdt {
         uint32 m;
         uint32 o;
         uint8 known;
-        for (byte b: mode) {
+        for (bytes1 b: mode) {
             if (b == 'r') { // open for reading
                 ret = __SRD;
                 m = O_RDONLY;
@@ -854,7 +857,7 @@ library libfdt {
                 return (0, 0);
             }
         }
-        for (byte b: mode) {
+        for (bytes1 b: mode) {
             known = 1;
             if (b == 'b') // 'b' (binary) is ignored
                 break;
@@ -951,7 +954,7 @@ library libfdt {
                 rv = t.td_proc.p_fd.fdt_ofiles[fd - 1].file;
                 return (ec, rv);
             }
-            (string sdir, string snotdir) = path.dir(sp);
+            (string sdir, string snotdir) = libpath.dir(sp);
 //            (ec, idx) = access(t, sdir, mode | O_DIRECTORY);
             uint16 didx;
             uint16 fidx;
@@ -969,7 +972,7 @@ library libfdt {
         s_dirent res;
         s_dirent[] des;
         if (abspath) {
-            (string sdir, string snotdir) = path.dir(sp);
+            (string sdir, string snotdir) = libpath.dir(sp);
             (ec, idx) = access(t, sdir, mode);
             if (ec == 0) {
                 (ec, des) = getdents(t, dfd);
@@ -999,7 +1002,7 @@ library libfdt {
         if (ec == 0) {
             uint16 mode = libstat.st_mode(dd.attr);
             if (libstat.is_dir(mode)) {
-                (string[] lines, ) = libstring.split(dd.buf.buf, "\n");
+                (string[] lines, ) = libstring.split(string(dd.buf.buf), "\n");
                 for (string line: lines) {
                     s_dirent d0 = dirent.parse_dirent(line);
                     if (d0.d_name == s)
@@ -1020,7 +1023,7 @@ library libfdt {
         if (ec == 0) {
             uint16 mode = libstat.st_mode(dd.attr);
             if (libstat.is_dir(mode)) {
-                string bf = dd.buf.buf;
+                string bf = string(dd.buf.buf);
                 (string[] lines, ) = libstring.split(bf, "\n");
                 for (string line: lines)
                     dirents.push(dirent.parse_dirent(line));
@@ -1088,7 +1091,7 @@ library libfdt {
                     td.td_retval = uint32(n - 1);
                     return;
                 }
-                (string sdir, string snotdir) = path.dir(sarg1);
+                (string sdir, string snotdir) = libpath.dir(sarg1);
                 s_of fpd;
                 (ec, fpd) = lookup_dir(fdt, sdir);
                 if (ec == 0)
@@ -1172,9 +1175,9 @@ library libfdt {
             flags |= O_APPEND | O_CREAT;
     }
 
-    function fdfetch(s_of[] t, string path) internal returns (uint) {
+    function fdfetch(s_of[] t, string spath) internal returns (uint) {
         for (uint i = 0; i < t.length; i++)
-            if (t[i].path == path)
+            if (t[i].path == spath)
                 return i + 1;
     }
 
@@ -1199,19 +1202,19 @@ library libfdt {
         return f.buf.error;
     }
 
-    function fdputs(s_of[] t, string str) internal {
+    function fdputs(s_of[] t, string s) internal {
 //        t[STDOUT_FILENO].fputs(str + "\n");
 //        f.fputs(str);
 //        t[STDOUT_FILENO] = f;
     }
-    function fdfputs(s_of[] t, string str, s_of f) internal {
+    function fdfputs(s_of[] t, string s, s_of f) internal {
 //        uint16 idx = f.fileno();
 //        if (idx >= 0 && idx < t.length) {
 //            f.fputs(str);
 //            t[idx] = f;
 //        }
     }
-    function fdputchar(s_of[] t, byte) internal {
+    function fdputchar(s_of[] t, bytes1) internal {
         s_sbuf s = t[STDOUT_FILENO].buf;
 //        s.sbuf_putc(c);
         t[STDOUT_FILENO].buf = s;
@@ -1229,7 +1232,7 @@ library libfdt {
     function getdirdesc(s_of[] t, uint8 fd) internal returns (s_dirdesc) {
         (uint8 ec, s_of f) = fdopen(t, fd);
         if (ec == 0)
-            return s_dirdesc(uint8(f.file), 0, uint16(f.buf.size), f.buf.buf, uint16(f.buf.size), 0, 0, 0);
+            return s_dirdesc(uint8(f.file), 0, uint16(f.buf.size), string(f.buf.buf), uint16(f.buf.size), 0, 0, 0);
     }
 
     function opendir(s_of[] t, string filename) internal returns (s_dirdesc) {

@@ -1,6 +1,6 @@
-pragma ton-solidity >= 0.63.0;
-import "sbuf_h.sol";
+pragma ton-solidity >= 0.67.0;
 import "ucred_h.sol";
+import "xio.sol";
 struct s_xfile {
     uint8 xf_size;  // size of struct xfile
     uint16 xf_pid;  // owning process
@@ -66,15 +66,6 @@ struct pwddesc {
 	uint8 pd_pwd;   // smrpwd_t directories
 	uint8 pd_refcount;
 	uint16 pd_cmask;	// mask for file creation
-}
-
-struct s_of {
-    uint attr;
-    uint16 flags;
-    uint16 file;
-    string path;
-    uint32 offset;
-    s_sbuf buf;
 }
 
 struct s_dirent {

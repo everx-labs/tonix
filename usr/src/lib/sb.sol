@@ -38,13 +38,14 @@ library sb {
     function claim_inodes_and_blocks(Inode inodes_inode, uint inode_count, uint block_count) internal returns (Inode) {
         uint16 i_count = uint16(inode_count);
         uint16 b_count = uint16(block_count);
+        uint32 tnow = block.timestamp;
         if (i_count > 0) {
             inodes_inode.owner_id += i_count;
-            inodes_inode.modified_at = now;
+            inodes_inode.modified_at = tnow;
         }
         if (b_count > 0) {
             inodes_inode.group_id += b_count;
-            inodes_inode.last_modified = now;
+            inodes_inode.last_modified = tnow;
         }
         inodes_inode.n_links++;
         return inodes_inode;
@@ -104,11 +105,11 @@ library sb {
     }
 
     function get_sb_text(bytes data) internal returns (string[] values, uint n_fields) {
-        return libstring.split_line(data, " ", "\n");
+        return libstring.split_line(string(data), " ", "\n");
     }
 
     function get_sb_data(bytes data) internal returns (uint16[] values) {
-        (string[] fields, ) = libstring.split_line(data, " ", "\n");
+        (string[] fields, ) = libstring.split_line(string(data), " ", "\n");
         for (string s: fields)
             values.push(str.toi(s));
     }

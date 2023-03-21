@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.67.0;
 
 import "putil_base.sol";
 

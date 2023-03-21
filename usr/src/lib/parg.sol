@@ -6,10 +6,10 @@ import "xio.sol";
 library parg {
 
     using argmisc for s_ar_misc;
-    using str for string;
-    using libstring for string;
-    using io for s_proc;
-    using xio for s_of;
+//    using str for string;
+//    using libstring for string;
+//    using io for s_proc;
+//    using xio for s_of;
 
     /*function map_file(s_proc p, string name) internal returns (string[]) {
         string all_lines = read_file(p, name);
@@ -48,7 +48,7 @@ library parg {
 
     }
 
-    function flag_set(s_proc p, byte b) internal returns (bool) {
+    function flag_set(s_proc p, bytes1 b) internal returns (bool) {
         return p.p_args.ar_misc.flag_set(b);
     }
 
@@ -57,11 +57,11 @@ library parg {
     }
 
     function flags_set(s_proc p, string flags_query) internal returns (bool, bool, bool, bool) {
-        uint len = flags_query.strlen();
+        uint len = str.strlen(flags_query);
         string flags = p.p_args.ar_misc.flags;
         bool[] tmp;
         uint i;
-        for (byte b: bytes(flags_query)) {
+        for (bytes1 b: bytes(flags_query)) {
             tmp.push(str.strchr(flags, b) > 0);
             i++;
         }
@@ -103,9 +103,9 @@ library parg {
     function env_value(s_proc p, string env_name) internal returns (string) {
         string pat = env_name + "=";
         for (string s: p.environ) {
-            uint q = s.strstr(pat);
+            uint q = str.strstr(s, pat);
             if (q > 0)
-                return s.strtok(q + pat.strlen() - 1, "\n");
+                return str.strtok(s, q + str.strlen(pat) - 1, "\n");
         }
     }
 

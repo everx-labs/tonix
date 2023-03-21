@@ -1,8 +1,25 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 import "utypes.sol";
 import "libtable.sol";
 import "vnode_h.sol";
+
+struct s_stat {
+    uint16 st_dev;      // ID of device containing file
+    uint16 st_ino;      // Inode number
+    uint16 st_mode;     // File type and mode
+    uint16 st_nlink;    // Number of hard links
+    uint16 st_uid;      // User ID of owner
+    uint16 st_gid;      // Group ID of owner
+    uint16 st_rdev;     // Device ID (if special file)
+    uint32 st_size;     // Total size, in bytes
+    uint16 st_blksize;  // Block size for filesystem I/O
+    uint16 st_blocks;   // Number of 512B blocks allocated
+    uint32 st_mtim;     // Time of last modification
+    uint32 st_ctim;     // Time of last status change
+}
+
+using libstat for s_stat global;
 
 library libstat {
 
@@ -62,9 +79,9 @@ library libstat {
     uint constant TIME_MASK = (1 << 64) - 1;
 
     function att(s_stat st) internal returns (uint) {
-        (uint st_dev, uint st_ino, uint sst_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
+        (uint st_dev, uint sst_ino, uint sst_mode, uint st_nlink, uint st_uid, uint st_gid, uint st_rdev, uint sst_size, uint st_blksize,
             uint st_blocks, uint st_mtim, uint st_ctim) = st.unpack();
-        return (st_dev << 224) + (st_ino << 208) + (sst_mode << 192) + (st_nlink << 176) + (st_uid << 160) + (st_gid << 144) +
+        return (st_dev << 224) + (sst_ino << 208) + (sst_mode << 192) + (st_nlink << 176) + (st_uid << 160) + (st_gid << 144) +
             (st_rdev << 128) + (sst_size << 96) + (st_blksize << 80) + (st_blocks << 64) + (st_mtim << 32) + st_ctim;
     }
 
@@ -103,8 +120,8 @@ library libstat {
     function st_ino(uint val) internal returns (uint16) {
         return uint16(val >> 208 & 0xFFFF);
     }
-    function makedev(uint8 major, uint8 minor) internal returns (uint16) {
-        return uint16(major << 8) + minor;
+    function makedev(uint8 mj, uint8 mn) internal returns (uint16) {
+        return uint16(mj << 8) + mn;
     }
 
     function major(uint16 dev) internal returns (uint8) {
@@ -115,44 +132,44 @@ library libstat {
         return uint8(dev & 0xFF);
     }
 
-    function is_block_dev(uint16 mode) internal returns (bool) {
-        return (mode & S_IFMT) == S_IFBLK;
+    function is_block_dev(uint16 m) internal returns (bool) {
+        return (m & S_IFMT) == S_IFBLK;
     }
 
-    function is_char_dev(uint16 mode) internal returns (bool) {
-        return (mode & S_IFMT) == S_IFCHR;
+    function is_char_dev(uint16 m) internal returns (bool) {
+        return (m & S_IFMT) == S_IFCHR;
     }
 
-    function is_reg(uint16 mode) internal returns (bool) {
-        return (mode & S_IFMT) == S_IFREG;
+    function is_reg(uint16 m) internal returns (bool) {
+        return (m & S_IFMT) == S_IFREG;
     }
 
-    function is_dir(uint16 mode) internal returns (bool) {
-        return (mode & S_IFMT) == S_IFDIR;
+    function is_dir(uint16 m) internal returns (bool) {
+        return (m & S_IFMT) == S_IFDIR;
     }
 
-    function is_symlink(uint16 mode) internal returns (bool) {
-        return (mode & S_IFMT) == S_IFLNK;
+    function is_symlink(uint16 m) internal returns (bool) {
+        return (m & S_IFMT) == S_IFLNK;
     }
 
-    function is_socket(uint16 mode) internal returns (bool) {
-        return (mode & S_IFMT) == S_IFSOCK;
+    function is_socket(uint16 m) internal returns (bool) {
+        return (m & S_IFMT) == S_IFSOCK;
     }
 
-    function is_pipe(uint16 mode) internal returns (bool) {
-        return (mode & S_IFMT) == S_IFIFO;
+    function is_pipe(uint16 m) internal returns (bool) {
+        return (m & S_IFMT) == S_IFIFO;
     }
 
-    function is_gid(uint16 mode) internal returns (bool) {
-        return (mode & S_ISGID) > 0;
+    function is_gid(uint16 m) internal returns (bool) {
+        return (m & S_ISGID) > 0;
     }
 
-    function is_uid(uint16 mode) internal returns (bool) {
-        return (mode & S_ISUID) > 0;
+    function is_uid(uint16 m) internal returns (bool) {
+        return (m & S_ISUID) > 0;
     }
 
-    function is_vtx(uint16 mode) internal returns (bool) {
-        return (mode & S_ISVTX) > 0;
+    function is_vtx(uint16 m) internal returns (bool) {
+        return (m & S_ISVTX) > 0;
     }
 
     function type_long(s_stat st) internal returns (string) {
@@ -177,8 +194,9 @@ library libstat {
     function adjust(s_stat st, uint size) internal {
         st.st_size = uint32(size);
         st.st_blocks = uint16(size / st.st_blksize + 1);
-        st.st_mtim = now;
-        st.st_ctim = now;
+        uint32 tnow = block.timestamp;
+        st.st_mtim = tnow;
+        st.st_ctim = tnow;
     }
 
     function set_ino(uint st, uint val) internal {
@@ -206,7 +224,7 @@ library libstat {
 
     function adjust_attrs(uint val, uint size) internal returns (uint) {
         val.set_size(size);
-        val.set_time(now);
+        val.set_time(block.timestamp);
     }
 
     function as_row(uint st) internal returns (string[]) {
@@ -226,10 +244,10 @@ library libstat {
     function mode_to_file_type(uint16 imode) internal returns (uint8 t) {
         (t, , , , , ) = mode(imode);
     }
-    function sign(uint16 imode) internal returns (byte c) {
+    function sign(uint16 imode) internal returns (bytes1 c) {
         (, , c, , , ) = mode(imode);
     }
-    function mode(uint16 imode) internal returns (uint8, vtype, byte, string, string, uint16) {
+    function mode(uint16 imode) internal returns (uint8, vtype, bytes1, string, string, uint16) {
         uint16 m = imode & S_IFMT;
         if (m == S_IFBLK) return (FT_BLKDEV,   vtype.VBLK,  'b', "BLK", "block special", DEF_BLOCK_DEV_MODE);
         if (m == S_IFCHR) return (FT_CHRDEV,   vtype.VCHR,  'c', "CHR", "character special", DEF_CHAR_DEV_MODE);

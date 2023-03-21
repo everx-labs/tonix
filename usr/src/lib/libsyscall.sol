@@ -222,7 +222,7 @@ library libsyscall {
 //            rv = td.td_retval;
 //            ec = td.td_errno;
         } else
-            ec = err.ENOSYS;
+            ec = liberr.ENOSYS;
 //        td.td_errno = ec;
 //        td.td_retval = rv;
     }

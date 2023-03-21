@@ -28,7 +28,7 @@ struct s_biobufhdr {
 
 library libbio {
 
-    using libstat for s_stat;
+//    using libstat for s_stat;
 
     function Bopen(s_proc p, string file, uint16 mode) internal returns (s_biobuf) {
         s_of[] fdt = p.p_fd.fdt_ofiles;

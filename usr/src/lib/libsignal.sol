@@ -366,10 +366,10 @@ struct siginfo {
     function coredump(s_thread td) internal returns (uint8) {}
     function reschedule_signals(s_proc p, sigset_t blk, uint8 flags) internal {}
     function ast_sched(s_thread td, tda tdaa) internal {}
-    function sigfastblock_failed(s_thread td, bool sendsig, bool write) internal  {}
+    function sigfastblock_failed(s_thread td, bool fsendsig, bool write) internal  {}
     function sigfastblock_resched(s_thread td, bool resched) internal  {}
     function sigfastblock_setpend1(s_thread td) internal  {}
-    function sigfastblock_fetch_sig(s_thread td, bool sendsig, uint32 valp) internal returns (bool) {}
+    function sigfastblock_fetch_sig(s_thread td, bool fsendsig, uint32 valp) internal returns (bool) {}
     function sigdflt(s_sigacts ps, uint8 sig) internal {}
     function proc_set_p2_wexit(s_proc p) internal {}
     function exit1(s_thread td, uint8 rval, uint8 signo) internal {}
@@ -643,10 +643,10 @@ struct siginfo {
         uint8 action;
 //    	s_sigaction action;
         s_sigqueue sigqueue;
-        int prop;
+        uint8 prop;
         s_sigacts ps;
-        int intrval;
-        int wakeup_swapper;
+        uint8 intrval;
+        uint8 wakeup_swapper;
 //    	MPASS(td == NULL || p == td.td_proc);
 //    	if (!_SIG_VALID(sig))
 //    	    panic("%s(): invalid signal %d", __func__, sig);

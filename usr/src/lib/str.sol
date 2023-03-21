@@ -1,13 +1,13 @@
-pragma ton-solidity >= 0.62.0;
+pragma ton-solidity >= 0.67.0;
 
 /* Generic string manipulation routines */
 library str {
 
     /* Returns the position of the first occurrence of the character 'c'
      * in the string 's', counted from 1, or 0 if the character is not found. */
-    function strchr(bytes s, byte c) internal returns (uint) {
+    function strchr(bytes s, bytes1 c) internal returns (uint) {
         uint i;
-        for (byte b: s) {
+        for (bytes1 b: s) {
             if (b == c)
                 return i + 1;
             i++;
@@ -16,7 +16,7 @@ library str {
 
     /* Returns the position of the last occurrence of the character 'c'
      * in the string 's', counted from 1, or 0 if the character is not found. */
-    function strrchr(bytes s, byte c) internal returns (uint) {
+    function strrchr(bytes s, bytes1 c) internal returns (uint) {
         for (uint i = s.length; i > 0; i--)
             if (s[i - 1] == c)
                 return i;

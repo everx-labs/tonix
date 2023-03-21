@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.61.2;
+pragma ton-solidity >= 0.67.0;
 
 enum vgetstate  { VGET_NONE, VGET_HOLDCNT, VGET_USECOUNT }
 
@@ -19,21 +19,6 @@ enum idtype {
     P_CTID,    // (process) contract
     P_CPUID,   // CPU
     P_PSETID   // Processor set
-}
-
-struct s_stat {
-    uint16 st_dev;      // ID of device containing file
-    uint16 st_ino;      // Inode number
-    uint16 st_mode;     // File type and mode
-    uint16 st_nlink;    // Number of hard links
-    uint16 st_uid;      // User ID of owner
-    uint16 st_gid;      // Group ID of owner
-    uint16 st_rdev;     // Device ID (if special file)
-    uint32 st_size;     // Total size, in bytes
-    uint16 st_blksize;  // Block size for filesystem I/O
-    uint16 st_blocks;   // Number of 512B blocks allocated
-    uint32 st_mtim;     // Time of last modification
-    uint32 st_ctim;     // Time of last status change
 }
 
 struct s_kevent {

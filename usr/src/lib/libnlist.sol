@@ -629,7 +629,7 @@ library libnv {
     }
     function nvlist_header_as_row(nvlist_header nvlh) internal returns (string[] res) {
 	    (uint8 nvlh_magic, uint8 nvlh_version, uint8 nvlh_flags, uint64 nvlh_descriptors, uint64 nvlh_size) = nvlh.unpack();
-        return [bytes(byte(nvlh_magic)), str.toa(nvlh_version), str.toa(nvlh_flags), format("{}", nvlh_descriptors), format("{}", nvlh_size)];
+        return [bytes(bytes1(nvlh_magic)), str.toa(nvlh_version), str.toa(nvlh_flags), format("{}", nvlh_descriptors), format("{}", nvlh_size)];
     }
     function nvpair_as_row(nvpair_t nvp) internal returns (string[] res) {
 	    (uint24 nvp_magic, string nvp_name, uint8 nvp_type, string nvp_data, uint16 nvp_datasize, uint16 nvp_nitems) = nvp.unpack();

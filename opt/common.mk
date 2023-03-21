@@ -1,4 +1,4 @@
-R_ROOT:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))..
+R_ROOT:=$(realpath $(dir $(lastword $(MAKEFILE_LIST)))..)
 export
 .ONESHELL:
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
@@ -8,7 +8,8 @@ NET:=rfld
 GIVER:=Novi
 VAL0:=15
 VAL1:=1
-TOOLS_BIN:=$(R_ROOT)/bin
+TOOLS_BIN:=~/bin/0.67
+#TOOLS_BIN:=$(R_ROOT)/bin
 RKEYS:=$(R_ROOT)/k1.keys
 # Tools directories
 SOLD:=$(TOOLS_BIN)/sold
@@ -58,7 +59,8 @@ config:
 conf: $(CONFD)
 	-cat $^
 $(BLD)/%.tvc: %.sol
-	$(SOLD) $< $(foreach i,$(INC_PATH),-I $i) -O $(BLD)
+#	$(SOLD) $< $(foreach i,$(INC_PATH),-I $i) -O $(BLD)
+	$(SOLD) $< --base-path . $(foreach i,$(INC_PATH),-i $i) -o $(BLD)	
 $(BLD)/%.cs: $(BLD)/%.tvc
 	$(LINKER) decode --tvc $< | grep 'code:' | cut -d ' ' -f 3 | tr -d '\n' >$@
 
@@ -75,7 +77,7 @@ dd_%: $(BLD)/%.tvc
 	$(eval a!=$(TOC) -j genaddr $< --setkey $(RKEYS) | jq -r '.raw_address')
 	$(call _pay,$a,$(VAL1))
 	$(TOC) deploy $< --abi $(BLD)/$*.abi.json --sign $(RKEYS) {}
-	$(TOC) -c $(ETC)/$*.conf config --url $(URL) --addr $a --abi $(CURDIR)/$(BLD)/$*.abi.json --is_json true --balance_in_tons true --project_id 2e786c9575af406fa784085c88b5e7e3 --access_key 38f728004a4b40e2a8aa30f8fee45346
+	$(TOC) -c $(ETC)/$*.conf config --url $(URL) --addr $a --abi $(BLD)/$*.abi.json --is_json true --balance_in_tons true --project_id 2e786c9575af406fa784085c88b5e7e3 --access_key 38f728004a4b40e2a8aa30f8fee45346
 name?=
 val?=15
 pay: $(ETC)/$(name).conf
