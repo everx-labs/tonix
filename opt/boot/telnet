@@ -1,18 +1,29 @@
-#set -x
-X=xeen
-#X=loader
-R="../../bin/tonos-cli -c etc/$X.conf runx -m"
+set -x
+#X=xeen
+#X=ixeen
+X=loader
+#R="../../bin/tonos-cli -c etc/$X.conf runx -m"
+
+#read -p "> " -r inp
+#make open h=$inp
+#eval `tonos-cli -c etc/$X.conf runx -m open | jq -r .cmd`
+#tonos-cli -c etc/$X.conf runx -m open | jq -r .cmd >open.res
+#read -p "> " -rsn1 inp
 
 function run() {
-    $R $1 --$2 "$3" "$4" >qr
-    cmd=`jq -r .cmd qr`
+#    $R $1 --$2 "$3" "$4" >qr
+#    ../../bin/tonos-cli -c etc/$1.conf runx -m $2 "$3" >$1_$2.res
+   ../../bin/tonos-cli -c etc/$1.conf runx -m $2 "${@:3}" >$1_$2.res
+    cmd=`jq -r .cmd $1_$2.res`
     eval "$cmd"
 }
 while true
 do
-    read -p "> " -rsn1 inp
-    tonos-cli -c etc/$X.conf runx -m complete --b "$inp" >complete.res
-    cmd=`jq -r .cmd complete.res`
-    eval "$cmd"
+    read -p "> " -rsn1 i
+    run $X complete --b $i
+#    tonos-cli -c etc/$X.conf runx -m complete --b "$inp" >complete.res
+#    cmd=`jq -r .cmd complete.res`
+#    make complete
+#    eval "$cmd"
 done
 

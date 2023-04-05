@@ -1,14 +1,71 @@
 pragma ton-solidity >= 0.67.0;
-import "libstr.sol";
-import "common.h";
-contract tsh is common {
 
-    string constant SELF = "tsh";
+import "libstr.sol";
+//import "libflags.sol";
+import "disk_loader.sol";
+import "libufs2.sol";
+//library libcomplete {
+//    uint8 constant ACTION_LAST = 7;
+//    action_info[ACTION_LAST + 1] constant CA = [
+//action_info("0", "menu", "", "menu", "", "",
+//    "printf \"Quick commands:\n1) help\n2) compile\n3) update\n4) view\n5) apply\n6) discard\n7) quit\n\""),
+//action_info("1", "help", "", "help", "", "", "run ixeen rpw --s help"),
+//action_info("2", "compile", "", "compile", "", "", "make cc"),
+//action_info("3", "update", "", "update", "", "", "make uc"),
+//action_info("4", "view", "", "view changes", "", "", "[ -s st.args ] && tonos-cli -c etc/xeen.conf runx -m ck st.args | jq -r .out"),
+//action_info("5", "apply", "", "apply changes", "", "", "[ -s st.args ] && tonos-cli -c etc/xeen.conf callx -m st st.args"),
+//action_info("6", "discard", "", "discard changes", "", "", "rm -f st.args;"),
+//action_info("7", "quit", "", "quit", "", "", "echo Bye! && exit 0")
+//    ];
+//}
+
+contract ixeen is disk_loader {
+
+    function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, mapping (uint32 => TvmCell) m) {
+        uufsd ud = read_ufs_disk();
+        uufsd2 d;
+        d.clone(ud);
+        mapping (uint32 => TvmCell) m3 = _ram;
+        out.append(libvmem.dump_mem(m3));
+//        d.map(m0);
+        d.map(m3);
+//        out.append(libufs2.print_disk_header(d));
+        d.inherit_ufs();
+        out.append(libufs2.print_disk_header(d));
+        fsb f = d.d_fsb;
+        uint16 i;
+        repeat (f.ncg) {
+            cg g = abi.decode(m3[d.d_fs.fs_cblkno + i], cg);
+            out.append(libsb.print_cg(f, g));
+            i++;
+        }
+    }
+    TvmCell _rom;
+    uint32 _version;
+    function immap(mapping (uint32 => TvmCell) m) external accept {
+        for ((uint32 a, TvmCell c): m)
+            if (_ram[a] != c)
+                _ram[a] = c;
+    }
+    function ldr(uint32 a, uint32 n) external view returns (TvmCell[] cc) {
+        repeat(n) {
+            if (_ram.exists(a))
+                cc.push(_ram[a]);
+            a++;
+        }
+    }
+    function _dev_info() internal view returns (string out) {
+        out.append(format("version: {}\n", _version));
+    }
+
+    function open() external pure returns (string cmd) {
+        return "echo Welcome to Tonix!; read -p \"> \" -rsn1 inp; tonos-cli -c etc/$X.conf runx -m complete --b \"$inp\" >complete.res; cmd=`jq -r .cmd complete.res`; eval \"$cmd\"";
+    }
+    string constant SELF = "ixeen";
     string constant Q_PREFIX = "tonos-cli -c etc/";
     string constant Q_SUFFIX = ".conf runx -m ";
     string constant C_SUFFIX = ".conf callx -m ";
     string constant SELF_Q = Q_PREFIX + SELF + Q_SUFFIX;
-
     function complete(string b) external pure returns (string cmd) {
         for (cmd_info ci: CI)
             if (ci.hotkey == b) {
@@ -51,7 +108,6 @@ cmd_info("f", "fetch",   ""),
 cmd_info("t", "store",   ""),
 cmd_info("b", "boot",    "qv"),
 cmd_info("u", "ufsd",     "")];
-
     action_info[6] constant CA = [
 action_info("",  "",        ""),
 action_info("0", "menu",    "printf \"Quick commands:\n1) help\n2) menu\n3) compile\n4) update\n5) quit\n\""),

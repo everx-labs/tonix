@@ -1,10 +1,9 @@
 pragma ton-solidity >= 0.67.0;
-import "label_loader.sol";
-contract dump is label_loader {
+import "disk_loader.sol";
+contract dump is disk_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out) {
         (bool fa, bool fb, bool fc, bool fd) = libflags.flags_set(flags, "abcd");
         uufsd ud = read_ufs_disk();
-//        fsb f = ud.d_fsb; 
         mapping (uint32 => TvmCell) m = _ram;//libvmem.mmap(_ram, 0, 4);
         mapping (uint32 => TvmCell) m0 = _ram;//libvmem.mmap(_ram, 0, 4);
 //        TvmCell c = _ram[0];
@@ -95,11 +94,5 @@ contract dump is label_loader {
         uint32 a = p.p_offset;
         if (_ram.exists(a))
             return abi.decode(_ram[a], fsb);
-    }
-    uint8 constant UUDISK_LOC = 5;
-    function read_ufs_disk() internal view returns (uufsd) {
-        uint32 a = UUDISK_LOC;
-        if (_ram.exists(a))
-            return abi.decode(_ram[a], uufsd);
     }
 }

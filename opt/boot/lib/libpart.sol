@@ -74,11 +74,13 @@ library libpart {
         b1.store(g);
         cgsize = uint8(b1.bits() / 8);
         delete b1;
-        dinode di;
+//        dinode di;
+        udinode di;
         b1.store(di);
         inosize = uint8(b1.bits() / 8);
         delete b1;
-        idirent de;
+//        idirent de;
+        udirent de;
         b1.store(de);
         desize = uint8(b1.bits() / 8);
     }

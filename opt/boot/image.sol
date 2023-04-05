@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.67.0;
-import "label_loader.sol";
-contract image is label_loader {
+import "disk_loader.sol";
+contract image is disk_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c, mapping (uint32 => TvmCell) m) {
         c;
         m = _ram;
@@ -10,18 +10,19 @@ contract image is label_loader {
 //        v0;
         (bool fb, bool fo, , ) = libflags.flags_set(flags, "boIQ");
         fo;
-        out.append(libvmem.mem_check(m));
+//        out.append(libvmem.mem_check(m));
 //        if (fb)
-        out.append(libvmem.dump_bin(m));
+        out.append(libvmem.dump_mem(m));
         out.append("\n===================\n");
 //        mapping (uint32 => TvmCell) m3 = libvmem.remap_pages(m, 0);
-////        if (fo)
+//////        if (fo)
 //        out.append(libvmem.dump_mem(m3));
 //        (disklabel l, part_table pt) = read_label();
 //        disk d = libpart.create_disk(arg0, 2, 0);
 //        out.append(libpart.print_disk(d));
-//        fsb f = ud.d_fsb;
-//        uint ng = f.ncg;
+        uufsd ud = read_ufs_disk();
+        fsb f = ud.d_fsb;
+        uint ng = f.ncg;
 //        vector(TvmSlice) vino = libvmem.vuload(m[f.iblkno].toSlice());
 //        while (!vino.empty()) {
 //            TvmSlice s = vino.pop();

@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.67.0;
-import "label_loader.sol";
-contract gpart is label_loader {
+import "disk_loader.sol";
+contract gpart is disk_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
         uint len = args.length;
         string arg0 = len > 0 ? args[0] : "";

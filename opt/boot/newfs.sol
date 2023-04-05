@@ -1,6 +1,6 @@
 pragma ton-solidity >= 0.67.0;
-import "label_loader.sol";
-contract newfs is label_loader {
+import "disk_loader.sol";
+contract newfs is disk_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
         uint len = args.length;
 //        (bool fa, bool fb, bool fc, ) = libflags.flags_set(flags, "abcp");

@@ -1,6 +1,5 @@
-pragma ton-solidity >= 0.66.0;
+pragma ton-solidity >= 0.67.0;
 import "fs.h";
-import "libufs.h";
 import "uio.h";
 import "libsb.sol";
 import "libgenio.sol";
@@ -27,11 +26,14 @@ library libufs {
     uint8 constant FRAG_SHIFT   = 2; // LOG2(MAXFRAG)
     uint8 constant MINFREE		= 8;
     uint8 constant SB           = 2;
-    uint8 constant IPG          = 30;
+    uint8 constant IPG          = 96;
+    uint8 constant IPG_OLD      = 30;
     uint8 constant MINCYLGRPS	= 4;        // The minimal number of cylinder groups that should be created.
     uint8 constant AVFILESIZ	= 100;  	// expected average file size
 //    uint8 constant AFPDIR		= 8;	    // expected number of files per directory
-    uint16 constant MAXBPG      = 1024;     // 256 * 4;
+//    uint16 constant MAXBPG      = 1024;     // 256 * 4;
+    uint16 constant MAXBPG_OLD  = 1024;     // 256 * 4;
+    uint16 constant MAXBPG      = 250;     // 256 * 4;
 //    uint8 constant DEFAULTOPT	= 0;//libfs.FS_OPTTIME;
 //    uint8 constant MAXMNTLEN    = 32; // The path name on which the filesystem is mounted is maintained in fs_fsmnt
 //    uint8 constant MAXVOLLEN    = 8; // The volume name for this filesystem is maintained in fs_volname

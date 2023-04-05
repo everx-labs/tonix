@@ -61,3 +61,23 @@ struct pwd {
 	dinode pwd_cdir;	// current directory
 	dinode pwd_rdir;	// root directory
 }
+struct udirent { //2 + 5 = 7; 7 * 18 = 126
+    uint8 ft;
+    uint16 inode;
+    uint8 id;
+    uint8 seg;
+    uint8 off;
+    uint8 len;
+}
+struct udinode { // 4 + 3 + 5 x 2 + 3 = 20; 20 * 6 = 120
+	uint16 mode;   // IFMT, permissions
+    uint16 ino;	   // Inode no
+	uint8 nlink;   // File link count
+	uint24 size;   // File byte count
+	uint32 mtime;  // Last modified time
+    uint16 db1;
+    uint16 db2;
+	uint8 blocks;  // Blocks actually held
+	uint16 uid;	   // File owner
+	uint8 gid;	   // File group
+}
