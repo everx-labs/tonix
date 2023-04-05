@@ -1,8 +1,6 @@
 pragma ton-solidity >= 0.67.0;
-import "libflags.sol";
-import "libpart.sol";
-import "common.h";
-contract bsdlabel is common {
+import "label_loader.sol";
+contract bsdlabel is label_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
         uint len = args.length;
         string arg0 = len > 0 ? args[0] : "";
@@ -55,20 +53,6 @@ contract bsdlabel is common {
         if (fw) {
 //            (TvmCell lc, TvmCell ptc) = libpart.def_label();
 //            c = v0 > 0 ? ptc : lc;
-        }
-    }
-
-    function read_disk() internal view returns (s_disk d, disklabel l, part_table pt) {
-        uint32 a = libpart.LABELOFFSET;
-        if (_ram.exists(a)) {
-            d = abi.decode(_ram[a], s_disk);
-            a = libpart.LABELSECTOR;
-            if (_ram.exists(a)) {
-                l = abi.decode(_ram[a], disklabel);
-                a++;
-                if (_ram.exists(a))
-                    pt = abi.decode(_ram[a], part_table);
-            }
         }
     }
 }

@@ -1,11 +1,7 @@
 pragma ton-solidity >= 0.67.0;
-import "libflags.sol";
-import "libpart.sol";
-import "common.h";
-contract gpart is common {
+import "label_loader.sol";
+contract gpart is label_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
-  //      uint len = args.length;
-//        string arg0 = len > 0 ? args[0] : "";
         return _gpart(args, flags);
     }
     function _gpart(string[] args, mapping (uint8 => string) flags) internal view returns (string out, string err, TvmCell c) {
@@ -87,17 +83,4 @@ contract gpart is common {
             return uint(p.get());
     }
 
-    function read_disk() internal view returns (s_disk d, disklabel l, part_table pt) {
-        uint32 a = libpart.LABELOFFSET;
-        if (_ram.exists(a)) {
-            d = abi.decode(_ram[a], s_disk);
-            a = libpart.LABELSECTOR;
-            if (_ram.exists(a)) {
-                l = abi.decode(_ram[a], disklabel);
-                a++;
-                if (_ram.exists(a))
-                    pt = abi.decode(_ram[a], part_table);
-            }
-        }
-    }
 }
