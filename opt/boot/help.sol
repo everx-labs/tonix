@@ -142,5 +142,4 @@ cmd_helpfile("boot",  "<filename>", "system bootstrapping procedures", "", [
     "v\tbe verbose during device probing (and later)."]),
 cmd_helpfile("ufs",  "<command> <arg>", "operate on UFS file systems from userland",
 "access a UFS file system at a low level from userland", [""])];
-
 }

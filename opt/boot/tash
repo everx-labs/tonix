@@ -1,4 +1,4 @@
-set -x
+#set -x
 M=tsh
 R="tonos-cli -c etc/$M.conf runx -m"
 C="tonos-cli -c etc/$M.conf callx -m"

@@ -10,31 +10,6 @@ contract tsh is common {
     string constant C_SUFFIX = ".conf callx -m ";
     string constant SELF_Q = Q_PREFIX + SELF + Q_SUFFIX;
 
-    uint8 constant UNKNOWN    = 0;
-    uint8 constant HELP       = 1;
-    uint8 constant MKFS_FIRST = HELP + 1;
-    uint8 constant DUMP       = MKFS_FIRST;
-    uint8 constant MOUNT      = MKFS_FIRST + 1;
-    uint8 constant IMAGE      = MKFS_FIRST + 2;
-    uint8 constant LABEL      = MKFS_FIRST + 3;
-    uint8 constant GPART      = MKFS_FIRST + 4;
-    uint8 constant NEWFS      = MKFS_FIRST + 5;
-    uint8 constant MKFS_LAST  = NEWFS;
-    uint8 constant STAT_FIRST = MKFS_LAST + 1;
-    uint8 constant CS_STAT    = STAT_FIRST;
-    uint8 constant CS_ACCESS  = STAT_FIRST + 1;
-    uint8 constant STAT_LAST  = CS_ACCESS;
-    uint8 constant IO_FIRST   = STAT_LAST + 1;
-    uint8 constant IO_EXAMINE = IO_FIRST;
-    uint8 constant IO_READ    = IO_FIRST + 1;
-    uint8 constant IO_WRITE   = IO_FIRST + 2;
-    uint8 constant IO_FETCH   = IO_FIRST + 3;
-    uint8 constant IO_STORE   = IO_FIRST + 4;
-    uint8 constant IO_LAST    = IO_STORE;
-    uint8 constant BOOT       = IO_LAST + 1;
-    uint8 constant UFS        = BOOT + 1;
-    uint8 constant CMD_LAST   = UFS;
-
     function complete(string b) external pure returns (string cmd) {
         for (cmd_info ci: CI)
             if (ci.hotkey == b) {
@@ -52,14 +27,14 @@ contract tsh is common {
     }
     uint8 constant EXECUTE_SUCCESS  = 0;
     uint8 constant EXECUTE_FAILURE  = 1;
-    uint8 constant EX_BADUSAGE      = 2; // Usage messages by builtins result in a return status of 2
+    uint8 constant EX_BADUSAGE      = 2;
     uint8 constant EX_NOTFOUND	= 127;
     struct cmd_info {
         string hotkey;
         string name;
         string optstring;
     }
-    cmd_info[CMD_LAST] constant CI = [
+    cmd_info[] constant CI = [
 cmd_info("", "", ""),
 cmd_info("h", "help",    "dms"),
 cmd_info("d", "dump",    "abcdefghi:j:k:l:m:n:"),

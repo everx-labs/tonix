@@ -1,9 +1,10 @@
 X:=xeen
 P:=gpart
 L:=bsdlabel
-I:=help
+I:=image
+U:=dump
 N:=newfs
-H:=$N
+H:=$U
 D:=$L $L $I
 CTX:=$D $H
 INC_PATH+=include lib

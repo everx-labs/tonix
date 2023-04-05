@@ -82,5 +82,4 @@ contract gpart is label_loader {
         if (p.hasValue())
             return uint(p.get());
     }
-
 }
