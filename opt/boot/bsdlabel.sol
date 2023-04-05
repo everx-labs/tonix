@@ -3,10 +3,6 @@ import "libflags.sol";
 import "libpart.sol";
 import "common.h";
 contract bsdlabel is common {
-//    uint8 constant UNKNOWN    = 0;
-//    uint8 constant HELP       = 1;
-//    uint8 constant MKFS_FIRST = HELP + 1;
-//    uint8 constant LABEL      = MKFS_FIRST + 3;
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
         uint len = args.length;
         string arg0 = len > 0 ? args[0] : "";

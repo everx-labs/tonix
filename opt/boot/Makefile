@@ -1,9 +1,9 @@
 X:=xeen
-P:=pai
+P:=gpart
 L:=bsdlabel
 I:=help
 L:=tsh
-H:=$L
+H:=$P
 D:=$L $L $I
 CTX:=$D $H
 INC_PATH+=include lib
