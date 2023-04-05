@@ -3,10 +3,7 @@ import "label_loader.sol";
 contract bsdlabel is label_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
         uint len = args.length;
-        string arg0 = len > 0 ? args[0] : "";
-        return _label(arg0, flags);
-    }
-    function _label(string arg, mapping (uint8 => string) flags) internal view returns (string out, string err, TvmCell c) {
+        string arg = len > 0 ? args[0] : "";
         err;
         (bool fe, , bool fw, ) = libflags.flags_set(flags, "enwR");
         (bool fA, , , ) = libflags.flags_set(flags, "A");

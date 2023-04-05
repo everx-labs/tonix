@@ -3,9 +3,6 @@ import "libflags.sol";
 import "common.h";
 contract help is common {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err) {
-        return _help(args, flags);
-    }
-    function _help(string[] args, mapping (uint8 => string) flags) internal view returns (string out, string err) {
         if (args.empty()) {
             for (cmd_helpfile ci: CI) {
                 (string name, string synopsis, , , ) = ci.unpack();
@@ -24,7 +21,7 @@ contract help is common {
             if (c2 == UNKNOWN)
                 return (out, "-gash: help: no help topics match `" + s + "'.  Try `help help' or `man -k " + s + "' or `info " + s + "'.");
             cmd_helpfile ci;
-            if (c2 <= CMD_LAST && c2 > 0)
+            if (c2 <= CI.length && c2 > 0)
                 ci = CI[c2];
             (string name, string synopsis, string short_desc, string long_desc, string[] optlist) = ci.unpack();
             if (fd)
@@ -43,29 +40,6 @@ contract help is common {
         }
     }
     uint8 constant UNKNOWN    = 0;
-    uint8 constant HELP       = 1;
-    uint8 constant MKFS_FIRST = HELP + 1;
-    uint8 constant DUMP       = MKFS_FIRST;
-    uint8 constant MOUNT      = MKFS_FIRST + 1;
-    uint8 constant IMAGE      = MKFS_FIRST + 2;
-    uint8 constant LABEL      = MKFS_FIRST + 3;
-    uint8 constant GPART      = MKFS_FIRST + 4;
-    uint8 constant NEWFS      = MKFS_FIRST + 5;
-    uint8 constant MKFS_LAST  = NEWFS;
-    uint8 constant STAT_FIRST = MKFS_LAST + 1;
-    uint8 constant CS_STAT    = STAT_FIRST;
-    uint8 constant CS_ACCESS  = STAT_FIRST + 1;
-    uint8 constant STAT_LAST  = CS_ACCESS;
-    uint8 constant IO_FIRST   = STAT_LAST + 1;
-    uint8 constant IO_EXAMINE = IO_FIRST;
-    uint8 constant IO_READ    = IO_FIRST + 1;
-    uint8 constant IO_WRITE   = IO_FIRST + 2;
-    uint8 constant IO_FETCH   = IO_FIRST + 3;
-    uint8 constant IO_STORE   = IO_FIRST + 4;
-    uint8 constant IO_LAST    = IO_STORE;
-    uint8 constant BOOT       = IO_LAST + 1;
-    uint8 constant UFS        = BOOT + 1;
-    uint8 constant CMD_LAST   = UFS;
     struct cmd_helpfile {
         string name;
         string synopsis;
@@ -73,7 +47,7 @@ contract help is common {
         string long_desc;
         string[] optlist;
     }
-    cmd_helpfile[CMD_LAST] constant CI = [
+    cmd_helpfile[] constant CI = [
 cmd_helpfile("", "", "commands: help dump mount image newfs stat access examine read write fetch store boot", "", [""]),
 cmd_helpfile("help",   "[-dms] [pattern ...]", "Display information about builtin commands",
     "Displays brief summaries of builtin commands.", [

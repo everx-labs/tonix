@@ -3,9 +3,10 @@ P:=gpart
 L:=bsdlabel
 I:=image
 U:=ufsd
+E:=dump
 N:=newfs
-H:=$U
-D:=$L $L $I
+H:=$N
+D:=$L $L $I $E $U
 CTX:=$D $H
 INC_PATH+=include lib
 include ../common.mk

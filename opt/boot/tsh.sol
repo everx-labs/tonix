@@ -1,5 +1,4 @@
 pragma ton-solidity >= 0.67.0;
-import "libflags.sol";
 import "libstr.sol";
 import "common.h";
 contract tsh is common {
@@ -15,7 +14,7 @@ contract tsh is common {
             if (ci.hotkey == b) {
                 string s = ci.name;
                 cmd.append("read -p \"" + s + " \" input\n");
-                cmd.append(SELF_Q + " rl2 --params \"$input\" --optstring " + ci.optstring + " >tmp/rl2\n");
+                cmd.append(SELF_Q + " rl2 --params \"$input\" --optstring \"" + ci.optstring + "\" >tmp/rl2\n");
                 cmd.append(Q_PREFIX + s + Q_SUFFIX + " main -- tmp/rl2 >tmp/" + s + ".res\n");
                 cmd.append("jq -r .out tmp/" + s + ".res\n");
                 return cmd;
@@ -51,23 +50,19 @@ cmd_info("w", "write",   ""),
 cmd_info("f", "fetch",   ""),
 cmd_info("t", "store",   ""),
 cmd_info("b", "boot",    "qv"),
-cmd_info("u", "ufs",     "")];
+cmd_info("u", "ufsd",     "")];
 
     action_info[6] constant CA = [
-action_info("", "", "", "", "actions: 1) help 2) compile 3) update 4) quit", "", ""),
-action_info("1", "help", "", "help", "", "", "run rpw s help"),
-action_info("0", "menu", "", "menu", "", "", "printf \"Quick commands:\n1) help\n2) menu\n3) compile\n4) update\n5) quit\n\""),
-action_info("3", "compile", "", "compile", "", "", "make cc"),
-action_info("4", "update", "", "update", "", "", "make up_tsh"),
-action_info("5", "quit", "", "quit", "", "", "echo Bye! && exit 0")
+action_info("",  "",        ""),
+//action_info("1", "help",    "run rpw s help"),
+action_info("0", "menu",    "printf \"Quick commands:\n1) help\n2) menu\n3) compile\n4) update\n5) quit\n\""),
+action_info("3", "compile", "make cc"),
+action_info("4", "update",  "make up_tsh"),
+action_info("5", "quit",    "echo Bye! && exit 0")
     ];
     struct action_info {
         string hotkey;
         string name;
-        string synopsis;
-        string optstring;
-        string short_desc;
-        string long_desc;
         string body;
     }
     function rl2(string params, string optstring) external pure returns (uint8 ec, string[] args, mapping (uint8 => string) flags) {

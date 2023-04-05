@@ -1,12 +1,11 @@
 pragma ton-solidity >= 0.67.0;
 import "label_loader.sol";
 contract dump is label_loader {
-    function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
-        return _dump(args, flags);
-    }
-    function _dump(string[] args, mapping (uint8 => string) flags) internal view returns (string out, string err, TvmCell c) {
+    function main(string[] args, mapping (uint8 => string) flags) external view returns (string out) {
         (bool fa, bool fb, bool fc, bool fd) = libflags.flags_set(flags, "abcd");
-//        fsb f = ud.d_fsb;
+        uufsd ud = read_ufs_disk();
+//        fsb f = ud.d_fsb; 
+        mapping (uint32 => TvmCell) m = _ram;//libvmem.mmap(_ram, 0, 4);
         mapping (uint32 => TvmCell) m0 = _ram;//libvmem.mmap(_ram, 0, 4);
 //        TvmCell c = _ram[0];
 //        tvm.hexdump(c);
@@ -14,35 +13,38 @@ contract dump is label_loader {
         string arg = args.length > 0 ? args[0] : "";
         out.append(libvmem.dump_mem(m0));
         (s_disk d, disklabel l, part_table pt) = read_disk();
-//        if (arg == "ufs") out.append(libufs.print_disk(ud));
-//        else if (arg == "ud") out.append(libufs.print_disk_header(ud));
+        fsb f = read_sb(pt.d_partitions[0]);
+        if (arg == "ufs") out.append(libufs.print_disk(ud));
+        else if (arg == "ud") out.append(libufs.print_disk_header(ud));
+
         if (arg == "label") out.append(libpart.print_label(l));
         else if (arg == "disk") out.append(libpart.print_disk(d));
         else if (arg == "part") out.append(libpart.print_part_table(pt));
-//        else if (arg == "sb") out.append(libsb.print_sb(f));
-//        else if (arg == "cg") {
-//            uint16 i;
-//            repeat (f.ncg) {
+        else if (arg == "sb") out.append(libsb.print_sb(f));
+        else if (arg == "cg") {
+            uint16 i;
+            repeat (f.ncg) {
+                cg g = abi.decode(m[f.cblkno + i], cg);
 //                cg g = libufs.fetch_cg(f, m, i);
-//                out.append(libsb.print_cg(f, g));
-//                i++;
-//            }
-//        } else if (arg == "inodes") {
-//            vector(TvmSlice) vino = libvmem.vuload(m[f.iblkno].toSlice());
-//            out.append("USER\tTYPE   DEVICE SIZE/OFF  NODE\n");
-//            while (!vino.empty()) {
-//                TvmSlice s = vino.pop();
-//                if (s.bits() >= 248) {
-//                    dinode dd = s.decode(dinode);
-////                    out.append(libfattr.print_mode(dd.di_mode));
-//    //                out.append(libsb.print_dino(dd));
-//                    out.append(libfdt.print_dino_lsof(dd));
-//                } else
-//                    out.append("Thin ino\n");
-//            }
-//        }
+                out.append(libsb.print_cg(f, g));
+                i++;
+            }
+        } else if (arg == "inodes") {
+            vector(TvmSlice) vino = libvmem.vuload(m[f.iblkno].toSlice());
+            out.append("USER\tTYPE   DEVICE SIZE/OFF  NODE\n");
+            while (!vino.empty()) {
+                TvmSlice s = vino.pop();
+                if (s.bits() >= 248) {
+                    dinode dd = s.decode(dinode);
+//                    out.append(libfattr.print_mode(dd.di_mode));
+    //                out.append(libsb.print_dino(dd));
+                    out.append(libfdt.print_dino_lsof(dd));
+                } else
+                    out.append("Thin ino\n");
+            }
+        }
 
-//        out.append(libvmem.dump_bin(m));
+        out.append(libvmem.dump_bin(m));
 //        uufsd ud = read_ufs_disk();
 //        mapping (uint32 => TvmCell) m = libvmem.mmap(_ram, ud.d_fsb.cblkno, 20);
 //        out.append(libufs.print_disk(ud));
@@ -88,5 +90,16 @@ contract dump is label_loader {
         }
         if (fd) {}
 
+    }
+    function read_sb(partition p) internal view returns (fsb) {
+        uint32 a = p.p_offset;
+        if (_ram.exists(a))
+            return abi.decode(_ram[a], fsb);
+    }
+    uint8 constant UUDISK_LOC = 5;
+    function read_ufs_disk() internal view returns (uufsd) {
+        uint32 a = UUDISK_LOC;
+        if (_ram.exists(a))
+            return abi.decode(_ram[a], uufsd);
     }
 }

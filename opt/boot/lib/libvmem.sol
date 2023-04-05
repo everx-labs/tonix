@@ -22,6 +22,33 @@ library libvmem {
 //            p = m.next(a);
 //        }
 //    }
+    function mcmp(mapping (uint32 => TvmCell) src, mapping (uint32 => TvmCell) res) internal returns (string out) {
+        for ((uint32 a, TvmCell c): res) {
+            out.append(format("Block 0x{:03x}: ", a));
+            if (src.exists(a)) {
+                TvmCell d = src[a];
+                if (d == c) {
+                    out.append("Identical\n");
+                    continue;
+                }
+                out.append("Differs\n");
+                TvmSlice sc = c.toSlice();
+                uint nbc = sc.bits();
+                if ((nbc % 248) == 2) {
+                    (uint lc, uint248[] valc) = ufetch(c);
+                    (uint ld, uint248[] vald) = ufetch(d);
+                    uint i = 0;
+                    uint va = a * 4;
+                    repeat (lc) {
+                        out.append(format("0x{:03x}: {:X} | {:X}\n", va++, valc[i], i < ld ? vald[i] : 0));
+                        i++;
+                    }
+                }
+            } else
+                out.append("New\n");
+        }
+    }
+
     function uconv(TvmBuilder b, uint16 n) internal returns (TvmCell) {
         TvmSlice s = b.toSlice();
         uint16 nb = s.bits();

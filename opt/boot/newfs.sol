@@ -2,10 +2,6 @@ pragma ton-solidity >= 0.67.0;
 import "label_loader.sol";
 contract newfs is label_loader {
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
-        return _newfs(args, flags);
-    }
-
-    function _newfs(string[] args, mapping (uint8 => string) flags) internal view returns (string out, string err, TvmCell c) {
         uint len = args.length;
 //        (bool fa, bool fb, bool fc, ) = libflags.flags_set(flags, "abcp");
 //        (uint ubsize, uint ubpcg, uint umaxbpg, uint ufsize) = option_values_uint(flags, "bcef");
@@ -40,5 +36,21 @@ contract newfs is label_loader {
                 c = abi.encode(pt);
             }
         }
+//            fsb f = read_sb(p);
+            fsb f = libpart.create_default_fsb(p);
+            out.append(libsb.print_sb(f));
+//            c = abi.encode(f);
+            (cg[] cgs, fss s, fs_summary_info fsi) = libpart.create_default_cgroups(f);
+            fsi;
+            out.append(libsb.print_fss(s));
+            for (cg g: cgs)
+                out.append(libsb.print_cg(f, g));
+            uufsd ud = libpart.create_default_ufs_disk(f, s, cgs[0]);
+//            c = abi.encode(ud);
+            c = abi.encode(cgs[3]);
+//            out.append(libufs.print_disk(ud));
+//            out.append(libufs.print_disk_header(ud));
+//            uufsd ud = read_ufs_disk();
+//            fsb f = ud.d_fsb;
     }
 }

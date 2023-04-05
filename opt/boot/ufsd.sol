@@ -90,29 +90,20 @@ struct ufs {
 }
 
 contract ufsd is label_loader {
-    function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
-        return _ufsd(args, flags);
-    }
-    uint8 constant UUDISK_LOC = 5;
-    function read_ufs_disk() internal view returns (uufsd) {
-        uint32 a = UUDISK_LOC;
-        if (_ram.exists(a))
-            return abi.decode(_ram[a], uufsd);
-    }
-
-    function _ufsd(string[] args, mapping (uint8 => string) flags) internal view returns (string out, string err, TvmCell c) {
+    function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, mapping (uint32 => TvmCell) m) {
         uufsd ud = read_ufs_disk();
         uufsd2 d;
         d.clone(ud);
-        mapping (uint32 => TvmCell) m = _ram;
+        TvmCell c;
+        mapping (uint32 => TvmCell) m0 = _ram;
 //        out.append(libvmem.dump_bin(m));
-//        mapping (uint32 => TvmCell) m3 = libvmem.remap_pages(m, 0);
-//        out.append(libvmem.dump_mem(m3));
-////        d.map(m);
-//        d.map(m3);
+        mapping (uint32 => TvmCell) m3 = libvmem.remap_pages(m0, 0);
+        out.append(libvmem.dump_mem(m3));
+//        d.map(m0);
+        d.map(m3);
 //        out.append(libufs2.print_disk_header(d));
         d.inherit_ufs();
-//        out.append(libufs2.print_disk_header(d));
+        out.append(libufs2.print_disk_header(d));
 //        out.append(libufs2.print_ufs(d, libufs2.P_ALL));
         flags;
         uint len = args.length;
@@ -122,36 +113,29 @@ contract ufsd is label_loader {
         int8 rv;
         uint16 sz;
         uint16 ip;
-//        TvmSlice s;
-//        cg g;
-//        fsb f;
         uint32 a;
         dinode di;
-//        uint8 ec;
-//        out.append()
-//    	(uint8 ec, uint16 cnt, TvmCell c) = d.pread(devfd, fs.fs_cgsize,
-//            fsbtodb(fs, cgtod(fs, n)) * (fs.fs_fsize / fsbtodb(fs, 1)));
-            uint16 i;
-            fsb f = d.d_fsb;
-            repeat (f.ncg) {
-                cg g = libufs.fetch_cg(f, m, i);
-                out.append(libsb.print_cg(f, g));
-                i++;
-            }
+        uint16 i;
+        fsb f = d.d_fsb;
+        repeat (f.ncg) {
+            cg g = abi.decode(m0[d.d_fs.fs_cblkno + i], cg);
+            out.append(libsb.print_cg(f, g));
+            i++;
+        }
         if (cmd == "cgread") {
-            out.append(libufs2.print_ufs(d, libufs2.P_CG));
+//            out.append(libufs2.print_ufs(d, libufs2.P_CG));
             rv = d.cgread();
-            out.append(libufs2.print_ufs(d, libufs2.P_CG + libufs2.P_MEM));
+//            out.append(libufs2.print_ufs(d, libufs2.P_CG + libufs2.P_MEM));
         }
         else if (cmd == "cgread1") {
-            out.append(libufs2.print_ufs(d, libufs2.P_CG));
+//            out.append(libufs2.print_ufs(d, libufs2.P_CG));
             rv = d.cgread1(n);
-            out.append(libufs2.print_ufs(d, libufs2.P_CG  + libufs2.P_MEM));
+//            out.append(libufs2.print_ufs(d, libufs2.P_CG  + libufs2.P_MEM));
         }
         else if (cmd == "cgwrite1") {
-            out.append(libufs2.print_ufs(d, libufs2.P_CG));
+//            out.append(libufs2.print_ufs(d, libufs2.P_CG));
             rv = d.cgwrite1(n);
-            out.append(libufs2.print_ufs(d, libufs2.P_CG));
+//            out.append(libufs2.print_ufs(d, libufs2.P_CG));
         }
         else if (cmd == "sbread") rv = d.sbread();
         else if (cmd == "sbwrite") rv = d.sbwrite(0);
@@ -166,10 +150,10 @@ contract ufsd is label_loader {
         else if (cmd == "cgialloc") ip = d.cgialloc();
         else if (cmd == "cgwrite") rv = d.cgwrite();
         else if (cmd == "getinode") {
-            out.append(libufs2.print_ufs(d, libufs2.P_CG));
+//            out.append(libufs2.print_ufs(d, libufs2.P_CG));
             di = d.getinode(n);
 
-        } else if (cmd == "putinode") { 
+        } else if (cmd == "putinode") {
             rv = d.putinode();
         }
 
@@ -198,17 +182,25 @@ contract ufsd is label_loader {
         else
             out.append(format("cmd {}, rv {}\n", cmd, rv));
 
-//        out.append(libufs2.print_disk_header(d));
+        out.append(libufs2.print_disk_header(d));
+        out.append(libvmem.mcmp(m3, d.d_m));
+        m = d.d_m;
     }
     function tou(string s) internal pure returns (uint val) {
         optional (int) p = stoi(s);
         if (p.hasValue())
             return uint(p.get());
     }
-
+    uint8 constant UUDISK_LOC = 5;
+    function read_ufs_disk() internal view returns (uufsd) {
+        uint32 a = UUDISK_LOC;
+        if (_ram.exists(a))
+            return abi.decode(_ram[a], uufsd);
+    }
 }
 
-    using libufs2 for uufsd2 global;
+using libufs2 for uufsd2 global;
+
 library libufs2 {
 
     uint32 constant CG_MAGIC = 0x090255;
@@ -401,7 +393,7 @@ library libufs2 {
     		return 1;
     	}
 	    if (ec == EINTEGRITY) d.ERROR("cylinder group checks failed");
-	    else if (ec == EIO) d.ERROR("read error from block device");
+//	    else if (ec == EIO) d.ERROR("read error from block device");
         else d.ERROR(strerror(ec));
 	    return -1;
     }
@@ -422,44 +414,61 @@ library libufs2 {
     	return -1;
     }
     function cgget(uufsd2 d, uint8 devfd, ufs fs, uint8 n) internal returns (uint8) {
-        d.dlog.push(format("cgget: n {} cgtod {} fsz {}", n, cgtod(fs, n), fs.fs_fsize));
-    	(uint8 ec, uint16 cnt, TvmCell c) = d.pread(devfd, fs.fs_cgsize, cgtod(fs, n));
-        d.dlog.push(format("pread returned ec {} cnt {}", ec, cnt));
+//        d.dlog.push(format("cgget: n {} cgtod {} fsz {}", n, cgtod(fs, n), fs.fs_fsize));
+        devfd; fs;
+//    	(uint8 ec, uint16 cnt, TvmCell c) = d.pread(devfd, fs.fs_cgsize, cgtod(fs, n));
+//        d.dlog.push(format("pread returned ec {} cnt {}", ec, cnt));
 //            fsbtodb(fs, cgtod(fs, n)) * (fs.fs_fsize / fsbtodb(fs, 1)));
 //        cg g = libsb.fetch_cg(d.d_fsb, d.d_m, n);
 //        ec;
+//    	if (cnt == 0) {
+//    		d.d_error = "end of file from block device";
+//    		return EIO;
+//    	}
+//    	if (cnt != fs.fs_cgsize) {
+//    		d.d_error = "short read from block device";
+//    		return EIO;
+//    	}
+        TvmCell c = d.d_m[d.d_fs.fs_cblkno + n];
+        //TvmSlice s = libvmem.fuword(m, uint16(f.cblkno + n) * 4);
+
+        TvmSlice s = c.toSlice();
+        uint16 cnt = s.bits() / 8;
     	if (cnt == 0) {
     		d.d_error = "end of file from block device";
     		return EIO;
     	}
-    	if (cnt != fs.fs_cgsize) {
+    	if (cnt + 1 != d.d_fs.fs_cgsize) {
     		d.d_error = "short read from block device";
     		return EIO;
     	}
-        //TvmSlice s = libvmem.fuword(m, uint16(f.cblkno + n) * 4);
-        TvmSlice s = c.toSlice();
 //        if (s.bits() < 248)
 //            return EDOOFUS;
-        cg cgp = s.decode(cg);
-        d.dlog.push(libsb.print_cg_header(cgp));
-        d.dlog.push(libsb.print_cg(d.d_fsb, cgp));
+        cg cgp = abi.decode(c, cg);
+//        cg cgp = s.decode(cg);
+//        d.dlog.push(libsb.print_cg_header(cgp));
+//        d.dlog.push(libsb.print_cg(d.d_fsb, cgp));
 //        d.dlog.push(libsb.print_cg(d.d_fs, cgp));
         if (!cg_chkmagic(cgp) || cgp.cg_cgx != n)
 		    return EINTEGRITY;
 
         d.d_buf = c;
+        d.d_cg = cgp;
+        d.d_ccg = n;
     	return 0;
     }
     function cgput(uufsd2 disk, uint8 devfd, ufs fs, cg cgp) internal returns (int8) {
-    	(uint8 ec, uint16 cnt) = disk.pwrite(devfd, abi.encode(cgp), fs.fs_cgsize,
-            fsbtodb(fs, cgtod(fs, cgp.cg_cgx)) * (fs.fs_fsize / fsbtodb(fs,1)));
-        ec;
-    	if (cnt == 0)
-    		return -1;
-    	if (cnt != fs.fs_cgsize) {
-    		disk.d_error = "short write to block device";
-    		return -1;
-    	}
+        disk.d_m[disk.d_ccg + disk.d_fs.fs_cblkno] = abi.encode(cgp);
+        devfd; fs;
+//    	(uint8 ec, uint16 cnt) = disk.pwrite(devfd, abi.encode(cgp), fs.fs_cgsize,
+//            fsbtodb(fs, cgtod(fs, cgp.cg_cgx)) * (fs.fs_fsize / fsbtodb(fs,1)));
+//        ec;
+//    	if (cnt == 0)
+//    		return -1;
+//    	if (cnt != fs.fs_cgsize) {
+//    		disk.d_error = "short write to block device";
+//    		return -1;
+//    	}
     	return 0;
     }
     function cgwrite(uufsd2 disk) internal returns (int8) {
@@ -759,7 +768,6 @@ library libufs2 {
             uint8 d_lookupflags, uint8 d_mine, ,) = ud.unpack();
         out.append(print_ufs(d_fs));
         errno;
-//        d_fs;
         d_cg;
         d_sb;
         d_buf;

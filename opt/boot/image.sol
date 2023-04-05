@@ -1,26 +1,22 @@
 pragma ton-solidity >= 0.67.0;
 import "label_loader.sol";
 contract image is label_loader {
-    function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c) {
-        return _image(args, flags);
-    }
-    function _image(string[] args, mapping (uint8 => string) flags) internal view returns (string out, string err, TvmCell c) {
-        out;
+    function main(string[] args, mapping (uint8 => string) flags) external view returns (string out, string err, TvmCell c, mapping (uint32 => TvmCell) m) {
         c;
+        m = _ram;
         uint len = args.length;
         string arg0 = len > 0 ? args[0] : "";
 //        uint v0 = tou(arg0);
 //        v0;
         (bool fb, bool fo, , ) = libflags.flags_set(flags, "boIQ");
         fo;
-//        out.append(libvmem.mem_check(m));
+        out.append(libvmem.mem_check(m));
 //        if (fb)
-//        out.append(libvmem.dump_bin(m));
+        out.append(libvmem.dump_bin(m));
         out.append("\n===================\n");
 //        mapping (uint32 => TvmCell) m3 = libvmem.remap_pages(m, 0);
 ////        if (fo)
 //        out.append(libvmem.dump_mem(m3));
-        _ram;
 //        (disklabel l, part_table pt) = read_label();
 //        disk d = libpart.create_disk(arg0, 2, 0);
 //        out.append(libpart.print_disk(d));
