@@ -1,9 +1,9 @@
 X:=xeen
 P:=pai
-L:=loader
-I:=ixeen
-U:=hush
-H:=$P
+L:=bsdlabel
+I:=help
+L:=tsh
+H:=$L
 D:=$L $L $I
 CTX:=$D $H
 INC_PATH+=include lib

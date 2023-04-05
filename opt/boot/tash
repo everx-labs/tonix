@@ -1,0 +1,30 @@
+set -x
+M=tsh
+R="tonos-cli -c etc/$M.conf runx -m"
+C="tonos-cli -c etc/$M.conf callx -m"
+D="tonos-cli -c etc/$M.conf debug run -d build/$M.debug.json "
+#/bin/sh
+
+function run2() {
+    echo "$2" >$1.args
+    tonos-cli -c etc/$M.conf run $1 $1.args >$1.res
+    cmd=`jq -r .cmd $1.res`
+    args=`jq -r .args $1.res`
+    eval "$cmd"
+}
+function run() {
+    $R $1 --$2 "$3" "$4" >$1.res
+    cmd=`jq -r .cmd $1.res`
+    eval $cmd
+}
+#cd proc
+while true
+do
+    read -p "cash $ " -rsn1 inp
+#    run complete b $inp
+    tonos-cli -c etc/$M.conf runx -m complete --b $inp >complete.res
+    cmd=`jq -r .cmd complete.res`
+    eval "$cmd"
+done
+#cd -
+
