@@ -4,7 +4,7 @@ tools:
 	$(MAKE) -f tools.mk tools
 
 triage: tools
-	$(MAKE) -C opt/triage try1
+	$(MAKE) -C opt/triage dirs try1
 
 .PHONY: list
 
