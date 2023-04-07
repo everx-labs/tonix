@@ -4,6 +4,7 @@ import "disk.h";
 import "fs.h";
 
 import "libufs.sol";
+import "libufsd.sol";
 import "libvmem.sol";
 
 library libpart {

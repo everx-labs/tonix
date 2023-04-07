@@ -2,25 +2,25 @@ pragma ton-solidity >= 0.66.0;
 import "fs.h";
 import "libfattr.sol";
 struct mfiledesc {
-	uint8 fdt_nfiles;   // number of open files allocated
-	uint8 fd_freefile;	// approx. next free file
-	uint32 fd_map;		// bitmap of free fds
+    uint8 fdt_nfiles;   // number of open files allocated
+    uint8 fd_freefile;	// approx. next free file
+    uint32 fd_map;		// bitmap of free fds
     uint8 ec;
     uint8 cur;
     uint8 fdup;
     ofile fb;
     TvmCell cb;
     string sb;
-	ofile[] fdt_ofiles;  // open files
+    ofile[] fdt_ofiles;  // open files
 }
 struct ofile {
     uint8 fdtype;   // cwd/rtd/txt/mem/NOFD/
-	uint8 ftype;	// REG/DIR/FIFO/CHR/a_inode/unix/unknown
+    uint8 ftype;	// REG/DIR/FIFO/CHR/a_inode/unix/unknown
     uint8 fd;
     uint16 mode;    // r/w/u u: a_inode/unix
     uint16 dev;
-	uint16 inode;	// NULL or applicable vnode
-	uint16 szoff;   // DFLAG_SEEKABLE specific fields
+    uint16 inode;	// NULL or applicable vnode
+    uint16 szoff;   // DFLAG_SEEKABLE specific fields
     string name;
 }
 struct mproc {
@@ -35,9 +35,9 @@ struct mproc {
 }
 library libfdt {
     using libfdt for mfiledesc;
-    uint16 constant UID_ROOT	= 0;
+//    uint16 constant UID_ROOT	= 0;
     uint16 constant UID_BORIS	= 10;
-    uint16 constant GID_WHEEL	= 0;
+//    uint16 constant GID_WHEEL	= 0;
     uint8 constant FD_TYPE_UNK = 0; // ???
     uint8 constant FD_TYPE_CWD = 1; // cwd
     uint8 constant FD_TYPE_RTD = 2; // rtd
@@ -126,7 +126,7 @@ library libfdt {
 //        (uint16 di_mode, uint8 di_ino, uint8 di_nlink, uint16 di_size, uint32 di_mtime, uint32 di_ctime, uint32 di_btime, uint16 di_db1, uint16 di_db2, uint16 di_flags, uint8 di_blocks, uint8 di_gen, uint16 di_uid, uint16 di_gid, ) = di.unpack();
         (uint16 di_mode, uint8 di_ino, , uint16 di_size, , , , , , , , , uint16 di_uid, , ) = di.unpack();
         string suid = di_uid == UID_ROOT ? "root" : di_uid == UID_BORIS ? "boris" : "?";
-        uint8 fi = uint8(((di_mode & libfattr.S_IFMT) >> 12 & 0x0F) >> 1);
+        uint8 fi = uint8(((di_mode & S_IFMT) >> 12 & 0x0F) >> 1);
         return format("{}\t{}\t{}\t{}\n", suid, libfattr.FTS[libfattr.MTT[fi]], di_size, di_ino);
 //        return format("M {} I {} N {} S {} M {} C {} B {} 1 {} 2 {} F {} B {} G {} U {} G {}\n",
 //            di_mode, di_ino, di_nlink, di_size, di_mtime, di_ctime, di_btime, di_db1, di_db2, di_flags, di_blocks, di_gen, di_uid, di_gid);
@@ -141,7 +141,7 @@ library libfdt {
             smode = rwf == 0x03 ? "u" : rwf == 0x02 ? "w" : rwf == 0x01 ? "r" : "";
             sfdtype = format("{}", fd);
         }
-        string sszoff = ftype == libfattr.FT_CHR ? "0t0" : format("{}", szoff);
+        string sszoff = ftype == FT_CHR ? "0t0" : format("{}", szoff);
         out.append(format("{:3}{}\t{}\t{:6}\t{}\t{}\t{}\n",
             sfdtype, smode, libfattr.FTS[ftype], sdev, sszoff, inode, name));
     }

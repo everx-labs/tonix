@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.66.0;
+pragma ton-solidity >= 0.67.0;
 import "fs.h";
 import "sb.h";
 import "uio.h";
@@ -16,7 +16,7 @@ library libsb {
     uint8 constant CK_DIR		= 0x10;	// directory contents
     uint8 constant CK_SUPPORTED	= 0x07;	// supported flags, others cleared at mount
     function dir_dots(uint16 cur, uint16 par) internal returns (idirent, idirent) {
-        return (dir_ent(libfattr.FT_DIR, cur, "."), dir_ent(libfattr.FT_DIR, par, ".."));
+        return (dir_ent(FT_DIR, cur, "."), dir_ent(FT_DIR, par, ".."));
     }
     function dir_ent(uint8 ft, uint16 ino, bytes nm) internal returns (idirent) {
         return idirent(ft, ino, uint8(nm.length), bytes11(nm));
@@ -26,14 +26,14 @@ library libsb {
             b.store(dir_ent(ft, start++, bb));
     }
     function scratch_nodes(uint16 dev_id) internal returns (TvmCell c) {
-        stat stdev = libfattr.def_bdev_inode(dev_id, libufs.BLK_SIZE);
+        stat stdev = libfattr.def_bdev_inode(dev_id, BLK_SIZE);
         stat stdir = libfattr.def_dir_inode(stdev);
         (, , , uint16 st_mode, uint16 st_uid, uint16 st_gid, , , , , , , , uint16 st_blksize, ) = stdir.unpack();
         uint8 cnt;
         uint32 tnow = block.timestamp;
         dinode d1 = dinode(stdev.st_mode, cnt++, 1, 0, tnow, tnow, tnow, 0, 0, 0, 0, 0, st_uid, st_gid, 0);
         dinode d2 = d1;
-        d2.di_mode = libfattr.S_IFREG;
+        d2.di_mode = S_IFREG;
         d2.di_ino = cnt++;
         (idirent id1, idirent id2) = dir_dots(cnt, cnt);
         TvmBuilder b;
