@@ -18,7 +18,7 @@ library libufs {
 //    uint8 constant UFS_ALTSBLK	    = 0x10;	// Flag used internally
     uint16 constant CG_MAGIC    = 0x4347;
     uint16 constant CGFS_MAGIC  = 0x4346;
-    uint8 constant BLK_SIZE     = 127;
+//    uint8 constant BLK_SIZE     = 127;
     uint8 constant FRAG_SIZE_OLD = 124;
     uint8 constant FRAG_SIZE    = 31;
     uint8 constant FS_MAXCONTIG	= 16;
@@ -54,7 +54,7 @@ library libufs {
     	uint16 min = ud.d_inomin;
         uint16 max = ud.d_inomax;
         if (inum >= min && inum < max) {
-            out = "Success!";
+               out = "Success!";
             return out;
         }
         return "Inode out of range";

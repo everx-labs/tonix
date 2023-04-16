@@ -2,32 +2,9 @@ pragma ton-solidity >= 0.67.0;
 import "fs.h";
 
 library libfattr {
-    uint8 constant FT_UNK  = 0;
-    uint8 constant FT_REG  = 1;
-    uint8 constant FT_DIR  = 2;
-    uint8 constant FT_CHR  = 3;
-    uint8 constant FT_BLK  = 4;
-    uint8 constant FT_FIFO = 5;
-    uint8 constant FT_SOCK = 6;
-    uint8 constant FT_LINK = 7;
-    uint8 constant FT_INO  = 8;
-    uint8 constant FT_WHT  = 9;
-    uint8 constant FT_LAST = FT_WHT;
     string[10] constant FTS = ["unknown", "REG", "DIR", "CHR", "BLK", "FIFO", "unix", "a_inode", "WHT"];
     uint8[9] constant MTT = [FT_UNK, FT_CHR, FT_DIR, FT_BLK, FT_REG, FT_LINK, FT_SOCK, FT_INO, FT_WHT ];
-    uint16 constant UID_ROOT	= 0;
-    uint16 constant GID_WHEEL	= 0;
-    uint16 constant S_IFMT	= 0xF000;// 0170000; // type of file mask
-    uint16 constant S_IFIFO	= 0x1000;// 0010000; // named pipe (fifo)
-    uint16 constant S_IFCHR	= 0x2000;// 0020000; // character special
-    uint16 constant S_IFDIR	= 0x4000;// 0040000; // directory
-    uint16 constant S_IFBLK	= 0x6000;// 0060000; // block special
-    uint16 constant S_IFREG	= 0x8000;// 0100000; // regular
-    uint16 constant S_IFLNK	= 0xA000;// 0120000; // symbolic link
-    uint16 constant S_IFSOCK = 0xC000;// 0140000; // socket
-    uint16 constant S_ISVTX	= 0x0200;// 0001000; // save swapped text even after use
-    uint16 constant S_IFWHT = 0xE000;// 0160000; // whiteout
-    uint8 constant BLK_SIZE = 127;
+
     string[10] constant FTL = ["?", "-", "d", "c", "b", "p", "s", "l", "i", "w"];
     function makedev(uint major, uint minor) internal returns (uint16) {
         return uint16((major << 8) + minor);

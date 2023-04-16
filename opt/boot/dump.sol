@@ -1,14 +1,50 @@
 pragma ton-solidity >= 0.67.0;
 import "disk_loader.sol";
+import "libufsd.sol";
 contract dump is disk_loader {
+
+    function pp(uint8 t, TvmCell c) external pure returns (string out) {
+        if (t == 0)
+            out.append("Invalid content type");
+        else if (t == 11)
+            out = libufs.print_disk(abi.decode(c, uufsd));
+        else if (t == 12)
+            out = (libpart.print_disk(abi.decode(c, s_disk)));
+        else if (t == 13)
+            out = libpart.print_label(abi.decode(c, disklabel));
+        else if (t == 14)
+            out.append(libpart.print_part_table(abi.decode(c, part_table)));
+        else if (t == 15)
+            out.append(libsb.print_sb(abi.decode(c, fsb)));
+        else if (t == 16) {
+            ufsd d = abi.decode(c, ufsd);
+            out.append(libufsd.print_disk_header(d));
+            out.append(libufsd.print_ug(d.cg));
+            out.append(libufsd.print_sb(d.fs));
+        } else if (t == 17) {
+            ug g = abi.decode(c, ug);
+            out.append(libufsd.print_ug(g));
+        } else if (t == 18) {
+            ufsb sb = abi.decode(c, ufsb);
+            out.append(libufsd.print_sb(sb));
+        } else if (t == 19) {
+            udinode di = abi.decode(c, udinode);
+            out.append(libufsd.print_udino(di));
+        } else if (t == 20) {
+            udirent[] des = abi.decode(c, udirent[]);
+            for (udirent de: des)
+                out.append(libufsd.print_de(de));
+        } else if (t == 21) {
+            udinode[] dis = abi.decode(c, udinode[]);
+            for (udinode di: dis)
+                out.append(libufsd.print_udino(di));
+        }
+    }
     function main(string[] args, mapping (uint8 => string) flags) external view returns (string out) {
         (bool fa, bool fb, bool fc, bool fd) = libflags.flags_set(flags, "abcd");
         uufsd ud = read_ufs_disk();
         mapping (uint32 => TvmCell) m = _ram;//libvmem.mmap(_ram, 0, 4);
         mapping (uint32 => TvmCell) m0 = _ram;//libvmem.mmap(_ram, 0, 4);
-//        TvmCell c = _ram[0];
-//        tvm.hexdump(c);
-//        tvm.bindump(c);
         string arg = args.length > 0 ? args[0] : "";
         out.append(libvmem.dump_mem(m0));
         (s_disk d, disklabel l, part_table pt) = read_disk();

@@ -5,92 +5,88 @@ import "fs.h";
 import "libsb.sol";
 
 struct uufsd2 {
-	string d_name;	    // disk name
-	uint8 d_ufs;        // decimal UFS version
-	uint8 d_fd;		    // raw device file descriptor
-	uint32 d_bsize;		// device bsize
-	uint32 d_sblock;	// superblock location
-	fs_summary_info d_si;// Superblock summary info // fs_summary_info *
-	uint16 d_inoblock;	// inode block
-	uint16 d_inomin;	// low ino, not ino_t for ABI compat
-	uint16 d_inomax;	// high ino, not ino_t for ABI compat
-	uint16 d_dp;		// pointer to currently active inode // di_inode *
-	ufs d_fs;		    // filesystem information
-	fsb d_fsb;		    // filesystem information
+    string d_name;	    // disk name
+    uint8 d_ufs;        // decimal UFS version
+    uint8 d_fd;		    // raw device file descriptor
+    uint32 d_bsize;		// device bsize
+    uint32 d_sblock;	// superblock location
+    fs_summary_info d_si;// Superblock summary info // fs_summary_info *
+    uint16 d_inoblock;	// inode block
+    uint16 d_inomin;	// low ino, not ino_t for ABI compat
+    uint16 d_inomax;	// high ino, not ino_t for ABI compat
+    uint16 d_dp;		// pointer to currently active inode // di_inode *
+    ufs d_fs;		    // filesystem information
+    fsb d_fsb;		    // filesystem information
     TvmCell d_sb;       // superblock as buffer
-	fss d_fss;		    // filesystem information
-	cg d_cg;		    // cylinder group
+    fss d_fss;		    // filesystem information
+    cg d_cg;		    // cylinder group
     TvmCell d_buf;      // cylinder group storage
-	uint8 d_ccg;		// current cylinder group
-	uint8 d_lcg;		// last cylinder group (in d_cg)
+    uint8 d_ccg;		// current cylinder group
+    uint8 d_lcg;		// last cylinder group (in d_cg)
     uint8 errno;
-	string d_error;		// human readable disk error
-	uint16 d_sblockloc;	// where to look for the superblock
-	uint8 d_lookupflags;// flags to superblock lookup
-	uint8 d_mine;		// internal flags
+    string d_error;		// human readable disk error
+    uint16 d_sblockloc;	// where to look for the superblock
+    uint8 d_lookupflags;// flags to superblock lookup
+    uint8 d_mine;		// internal flags
     string[] dlog;
     mapping (uint32 => TvmCell) d_m;
 }
 struct ufs {
-	uint16 fs_sblkno;		// offset of super-block in filesys
-	uint16 fs_cblkno;		// offset of cyl-block in filesys
-	uint16 fs_iblkno;		// offset of inode-blocks in filesys
-	uint16 fs_dblkno;		// offset of first data after cg
-	uint8 fs_ncg;		    // number of cylinder groups
-	uint16 fs_bsize;		// size of basic blocks in fs
-	uint16 fs_fsize;		// size of frag blocks in fs
-	uint8 fs_frag;		    // number of frags in a block in fs
-	uint8 fs_minfree;		// minimum percentage of free blocks
-	uint32 fs_bmask;		// ``blkoff'' calc of blk offsets
-	uint32 fs_fmask;		// ``fragoff'' calc of frag offsets
-	uint32 fs_bshift;		// ``lblkno'' calc of logical blkno
-	uint32 fs_fshift;		// ``numfrags'' calc number of frags
-	uint8 fs_maxcontig;	    // max number of contiguous blks
-	uint16 fs_maxbpg;		// max number of blks per cyl group
-	uint32 fs_fragshift;	// block to frag shift
-	uint8 fs_fsbtodb;		// fsbtodb and dbtofsb shift constant
-	uint16 fs_sbsize;		// actual size of super block
-	uint32 fs_nindir;		// value of NINDIR
-	uint8 fs_inopb;		    // value of INOPB
-	uint32 fs_id;		    // unique filesystem id
-	uint32 fs_cssize;		// size of cyl grp summary area
-	uint16 fs_cgsize;		// cylinder group size
-	uint16 fs_old_ncyl;		// cylinders in filesystem
-	uint8 fs_old_cpg;		// cylinders per group
-	uint8 fs_ipg;		    // inodes per group
-	uint16 fs_fpg;		    // blocks per group * fs_frag
-	uint8 fs_fmod;		    // super block modified flag
-	uint8 fs_clean;		    // filesystem is clean flag
-	uint8 fs_ronly;		    // mounted read-only flag
-	string fs_fsmnt;	    // name mounted on
-	string fs_volname;	    // volume name
-	uint32 fs_swuid;		// system-wide uid
-	uint8 fs_cgrotor;		// last cg searched
-	fs_summary_info fs_si;  // In-core pointer to summary info
-	uint16 fs_unrefs;		// number of unreferenced inodes
-	uint32 fs_metaspace;	// size of area reserved for metadata
-	uint32 fs_sblockactualloc;	// byte offset of this superblock
-	uint32 fs_sblockloc;	// byte offset of standard superblock
-	csum_total fs_cstotal;	// cylinder summary information
-	uint32 fs_time;		    // last time written
-	uint32 fs_size;		    // number of blocks in fs
-	uint32 fs_dsize;		// number of data blocks in fs
-	uint32 fs_csaddr;		// blk addr of cyl grp summary area
-	uint16 fs_pendingblocks;// blocks being freed
-	uint16 fs_pendinginodes;// inodes being freed
-	uint16 fs_avgfilesize;	// expected average file size
-	uint8 fs_avgfpdir;		// expected # of files per directory
-	uint32 fs_mtime;		// Last mount or fsck time.
-//	uint32 fs_ckhash;		// if CK_SUPERBLOCK, its check-hash
-//	uint32 fs_metackhash;	// metadata check-hash, see CK_ below
-	uint8 fs_flags;		    // see FS_ flags below
-	uint32 fs_contigsumsize;// size of cluster summary array
-	uint8 fs_maxsymlinklen; // max length of an internal symlink
-	uint8 fs_old_inodefmt;	// format of on-disk inodes
-	uint32 fs_maxfilesize;	// maximum representable file size
-//	uint32 fs_qbmask;		// ~fs_bmask for use with 64-bit size
-//	uint32 fs_qfmask;		// ~fs_fmask for use with 64-bit size
-	uint32 fs_magic;		// magic number
+    uint16 fs_sblkno;		// offset of super-block in filesys
+    uint16 fs_cblkno;		// offset of cyl-block in filesys
+    uint16 fs_iblkno;		// offset of inode-blocks in filesys
+    uint16 fs_dblkno;		// offset of first data after cg
+    uint8 fs_ncg;		    // number of cylinder groups
+    uint16 fs_bsize;		// size of basic blocks in fs
+    uint16 fs_fsize;		// size of frag blocks in fs
+    uint8 fs_frag;		    // number of frags in a block in fs
+    uint8 fs_minfree;		// minimum percentage of free blocks
+    uint32 fs_bmask;		// ``blkoff'' calc of blk offsets
+    uint32 fs_fmask;		// ``fragoff'' calc of frag offsets
+    uint32 fs_bshift;		// ``lblkno'' calc of logical blkno
+    uint32 fs_fshift;		// ``numfrags'' calc number of frags
+    uint8 fs_maxcontig;	    // max number of contiguous blks
+    uint16 fs_maxbpg;		// max number of blks per cyl group
+    uint32 fs_fragshift;	// block to frag shift
+    uint8 fs_fsbtodb;		// fsbtodb and dbtofsb shift constant
+    uint16 fs_sbsize;		// actual size of super block
+    uint32 fs_nindir;		// value of NINDIR
+    uint8 fs_inopb;		    // value of INOPB
+    uint32 fs_id;		    // unique filesystem id
+    uint32 fs_cssize;		// size of cyl grp summary area
+    uint16 fs_cgsize;		// cylinder group size
+    uint16 fs_old_ncyl;		// cylinders in filesystem
+    uint8 fs_old_cpg;		// cylinders per group
+    uint8 fs_ipg;		    // inodes per group
+    uint16 fs_fpg;		    // blocks per group * fs_frag
+    uint8 fs_fmod;		    // super block modified flag
+    uint8 fs_clean;		    // filesystem is clean flag
+    uint8 fs_ronly;		    // mounted read-only flag
+    string fs_fsmnt;	    // name mounted on
+    string fs_volname;	    // volume name
+    uint32 fs_swuid;		// system-wide uid
+    uint8 fs_cgrotor;		// last cg searched
+    fs_summary_info fs_si;  // In-core pointer to summary info
+    uint16 fs_unrefs;		// number of unreferenced inodes
+    uint32 fs_metaspace;	// size of area reserved for metadata
+    uint32 fs_sblockactualloc;	// byte offset of this superblock
+    uint32 fs_sblockloc;	// byte offset of standard superblock
+    csum_total fs_cstotal;	// cylinder summary information
+    uint32 fs_time;		    // last time written
+    uint32 fs_size;		    // number of blocks in fs
+    uint32 fs_dsize;		// number of data blocks in fs
+    uint32 fs_csaddr;		// blk addr of cyl grp summary area
+    uint16 fs_pendingblocks;// blocks being freed
+    uint16 fs_pendinginodes;// inodes being freed
+    uint16 fs_avgfilesize;	// expected average file size
+    uint8 fs_avgfpdir;		// expected # of files per directory
+    uint32 fs_mtime;		// Last mount or fsck time.
+    uint8 fs_flags;		    // see FS_ flags below
+    uint32 fs_contigsumsize;// size of cluster summary array
+    uint8 fs_maxsymlinklen; // max length of an internal symlink
+    uint8 fs_old_inodefmt;	// format of on-disk inodes
+    uint32 fs_maxfilesize;	// maximum representable file size
+    uint32 fs_magic;		// magic number
 }
 
 using libufs2 for uufsd2 global;
