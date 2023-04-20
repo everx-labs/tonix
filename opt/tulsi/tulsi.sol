@@ -49,13 +49,14 @@ contract tulsi is common {
     uint8 constant REDIR_PRINT = 8;
     uint8 constant REDIR_DBG   = 16;
     uint8 constant REDIR_SRC   = 32;
+    uint8 constant REDIR_ARGS  = 64;
 
     enum MENU { MAIN, DUMP, PARSE, PARSEC, CONFIG, MISC, LAST }
     string[][] constant MCS = [
         ["Tulsi", "Dump", "Parse", "Parsec", "Misc"],
-        ["Dump", "TBD" ],
-        ["Parse", "Self", "Header", "Generate", "Test" ],
-        ["Parsec", "Self", "Header", "Generate", "Test" ],
+        ["Dump config", "Main", "As vars", "Project", "Parser", "Module" ],
+        ["Parse", "-", "-", "-", "Test" ],
+        ["Parse module", "Generate", "-", "Deploy", "Test" ],
         ["Config", "Print"],
         ["Misc", "Bin size"]
     ];
@@ -90,12 +91,13 @@ contract tulsi is common {
         string ofn = " " + sTMP + "/" + fn + ".res";
         string fargs = " -m " + fn + " " + args;
         string sredir =
-            redir == REDIR_OUT ? " | jq -r .out" :
-            (redir & REDIR_FILE) > 0 ? " >" + ofn :
-            redir == REDIR_PRINT ? " | xargs " + pp + " runx -m print `jq -c .` | jq -rj .out" :
+            redir == REDIR_OUT ? " | jq -r .out\n" :
+            (redir & REDIR_FILE) > 0 ? " >" + ofn + "\n":
+            redir == REDIR_PRINT ? " | xargs " + pp + " runx -m print `jq -c .` | jq -rj .out\n" :
+            redir == REDIR_ARGS ? " | xargs " :
             redir == REDIR_NONE ? "" : "";
         cmd.append(pq + (ccm == CRUN ? "runx" : "callx") + fargs);
-        cmd.append(sredir + "\n");
+        cmd.append(sredir);
         if (debug) {
             cmd.append(_cjoin([
                 "grep -q \"Error: {\"" + ofn,
@@ -175,9 +177,15 @@ contract tulsi is common {
         if (n == 1)
             cmd.append("du -b build/*.tvc\n");
     }
-    function _config(uint n) internal pure returns (string cmd) {
-        if (n == 1)
-            cmd.append("du -b build/*.tvc\n");
+    function _config(uint n) internal view returns (string cmd) {
+        if (n == 1) {
+            cmd.append(_print_cmd("File name?\n") + "read -r ii\n");
+            string cm1 = _ccmd("tulsi", CRUN, "enp", "`jq -cn --arg n $ii '{ss1:[\"Module\"],ss2:[$n],ss3:[\"MODULE\"]}'` | jq -r .c", REDIR_ARGS, false);
+            string cm2 = _ccmd("tulsi", CCALL, "st", " --a " + format("{}", CONFIG_VOL) + " --c ", REDIR_NONE, false);
+            cmd.append(cm1);
+            cmd.append(cm2);
+        }
+
     }
     function _cjoin(string[] args) internal pure returns (string out) {
         if (!args.empty()) {
@@ -243,10 +251,15 @@ contract tulsi is common {
             cmd.append(sMA + " " + sBLD + "/" + sMOD + "." + "deployed" + "\n");
         } else if (n == 4) {
             for (uint i = 6; i < 10; i++)
-                cmd.append(_print(sMOD, uint8(i), 6));
-            cmd.append(_print(sMOD, 5, 7));
-            cmd.append(_print(sMOD, 250, 1));
+                cmd.append(_print(sMOD, uint8(i), 7));
+            cmd.append(_print(sMOD, 5, 8));
+            cmd.append(_print(sMOD, 250, 2));
+        } else if (n == 5) {
+            cmd.append(_print(sMOD, 0, 2));
+            cmd.append(_print(sMOD, 1, 6));
+            cmd.append(_print(sMOD, 2, 7));
         }
+
     }
     function _parse(uint n) internal view returns (string cmd) {
         if (n == 4) {

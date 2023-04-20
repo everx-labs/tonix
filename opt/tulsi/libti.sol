@@ -31,20 +31,22 @@ library libti {
     uint8 constant STRUCT = 6;
     uint8 constant ARRAY  = 7;
     uint8 constant MAP    = 8;
+    uint8 constant ENUM   = 9;
 
    stt[] constant TI = [
 //     id pid rsz bsz nl nr noff attr
-stt(  NONE, 0, 0,   0, 0, 0,   0, 0),
-stt(  CELL, 0, 4, 127, 7, 1,   0, 0),
-stt(  UINT, 0, 0,   1, 4, 1,   7, 1),
-stt(  BOOL, 0, 0,   1, 4, 1,  11, 0),
-stt( BYTES, 0, 0,   8, 5, 1,  15, 8),
-stt(STRING, 0, 1,   0, 6, 1,  20, 0),
-stt(STRUCT, 0, 0,   0, 6, 1,  26, 2),
-stt( ARRAY, 0, 1,   0, 2, 1,  32, 4),
-stt(   MAP, 0, 1,   0, 7, 1,  34, 6)
+stt(  NONE, 0, 0,   0, 0, 0,   0, NONE),
+stt(  CELL, 0, 4, 127, 7, 1,   0, CELL),
+stt(  UINT, 0, 0,   1, 4, 1,   7, UINT),
+stt(  BOOL, 0, 0,   1, 4, 1,  11, BOOL),
+stt( BYTES, 0, 0,   8, 5, 1,  15, BYTES),
+stt(STRING, 0, 1,   0, 6, 1,  20, STRING),
+stt(STRUCT, 0, 0,   0, 6, 1,  26, STRUCT),
+stt( ARRAY, 0, 1,   0, 2, 1,  32, ARRAY),
+stt(   MAP, 0, 1,   0, 7, 1,  34, MAP),
+stt(  ENUM, 0, 0,   1, 4, 1,  41, ENUM)
     ];
-    string[] constant TN = ["", "TvmCell", "uint", "bool", "bytes", "string", "struct", "[]", "mapping"];
+    string[] constant TN = ["", "TvmCell", "uint", "bool", "bytes", "string", "struct", "[]", "mapping", "enum"];
 
     function with_base() internal returns (gti g) {
         g.no = 1;
@@ -75,8 +77,9 @@ stt(   MAP, 0, 1,   0, 7, 1,  34, 6)
             string tns = ss[i];
             if (nl < 4)
                 tns.append("\t");
+            string sat = (attr & 0xF) > 0 ? TN[attr] : "";
             out.append(format("{:2}) {}\t ({})\t{}/{}\t{} {}\t\n",
-                id, tns, pid, rsz, bsz, attr, (attr & 1) > 0 ? "INT" : ""));
+                id, tns, pid, rsz, bsz, attr, sat));
         }
         for (sti t: ti) {
             (uint8 id, uint8 pid, vari[] vv, string[] ssi) = t.unpack();

@@ -2,6 +2,7 @@ pragma ton-solidity >= 0.67.0;
 
 import "common.h";
 import "libtic.sol";
+import "libstr.sol";
 
 contract parsec is common {
 
@@ -30,7 +31,7 @@ contract parsec is common {
         g.gt = libti.with_base();
 
         g.gt.derive_fixed_length_type(libti.UINT, [1, 2, 3, 4, 31]);
-        g.gt.derive_fixed_length_type(libti.BYTES, [8, 12]);
+        g.gt.derive_fixed_length_type(libti.BYTES, [8, 12, 16]);
 
         bool hoard = false;
         bool act = false;
@@ -39,6 +40,8 @@ contract parsec is common {
         dbg.append(debug_parse(bb));
 
         strti s;
+        g.tc.push(s);
+        g.nt++;
         bytes[] ww = words(bb, '\n', true);
         for (bytes w: ww) {
             if (w == "}") {
@@ -57,6 +60,7 @@ contract parsec is common {
                 bytes[] www = words(w, ' ', true);
                 uint wwl = www.length;
                 bytes w1 = wwl > 0 ? www[0] : "";
+                uint w1l = w1.length;
                 bytes w2 = wwl > 1 ? www[1] : "";
                 bytes w3 = wwl > 2 ? www[2] : "";
                 bytes w4;
@@ -69,14 +73,53 @@ contract parsec is common {
                         s.id = g.nt;
                         s.tid = g.gt.nt;
                         s.attr = libti.STRUCT;
+//                        s.nb = 1;
+                    } else if (w1 == "enum") {
+                        s.name = w2;
+                        s.id = g.nt;
+                        s.tid = g.gt.nt;
+                        s.attr = libti.ENUM;
+                        s.nb = 1;
+                        uint8 cl;
+                        for (uint i = 3; i < wwl; i++) {
+//                            w4.append(string(www[i]) + (i + 1 < wwl ? " " : ""));
+                            bytes wi = www[i];
+                            if (wi == "{")
+                                continue;
+                            if (wi == "}")
+                                break;
+                            uint8 dl = uint8(wi.length);
+                            string emem = wi[dl - 1] == ',' ? wi[ : dl - 1] : wi;
+                            s.vd.push(vard(g.nt, 1, dl, cl, emem, ""));
+                            s.nv++;
+                        }
+                        g.tc.push(s);
+                        g.nt++;
+                        g.gt.ss.push(s.name);
+                        g.gt.tnc[tvm.hash(s.name)] = s.tid;
+                        g.gt.tt.push(stt(s.tid, libti.ENUM, s.nr, s.nb, uint8(s.name.byteLength()), 3, 0, s.attr));
+                        g.gt.nt++;
+                        delete s;
                     } else {
                         if (hoard) {
+                            uint8 vcnt = 1;
+                            if (w1l > 0 && w1[w1l - 1] == "]") {
+                                uint q = libstr.strrchr(w1, "[");
+                                if (q > 0) {
+                                    optional(int) vi = stoi(w1[q : w1l - 1]);
+                                    if (vi.hasValue())
+                                        vcnt = uint8(vi.get());
+                                    else
+                                        vcnt = 2;
+                                    w1 = w1[ : q - 1];
+                                }
+                            }
                             uint8 tn = g.gt.tnc[tvm.hash(w1)];
                             uint8 dl = uint8(w1.length + w2.length);
                             uint8 cl;
                             stt vt = g.gt.tt[tn];
-                            s.nr += vt.rsz;
-                            s.nb += vt.bsz;
+                            s.nr += vt.rsz * vcnt;
+                            s.nb += vt.bsz * vcnt;
                             s.nv++;
                             if (s.ldecl < dl)
                                 s.ldecl = dl;
@@ -88,7 +131,7 @@ contract parsec is common {
                                     s.ldesc = cl;
                             }
 
-                            s.vd.push(vard(tn, dl, cl, w2[ : w2.length - 1], w4));
+                            s.vd.push(vard(tn, vcnt, dl, cl, w2[ : w2.length - 1], w4));
                         }
                     }
                 }
