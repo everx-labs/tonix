@@ -24,6 +24,8 @@ struct vari {
 
 struct vard {
     uint8 vtype;
+    uint8 dlen;
+    uint8 slen;
     string vname;
     string vdesc;
 }

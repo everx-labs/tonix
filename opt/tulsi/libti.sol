@@ -58,7 +58,7 @@ stt(   MAP, 0, 1,   0, 7, 1,  34, 6)
     function derive_fixed_length_type(gti g, uint8 t, uint8[] ex) internal {
         for (uint8 i: ex) {
             string tn0 = format("{}{}", TN[t], i * 8 / TI[t].bsz);
-            stt tt = stt(g.nt, t, 0, i, uint8(tn0.byteLength()), 1, 0, 1);
+            stt tt = stt(g.nt, t, 0, i, uint8(tn0.byteLength()), 1, 0, TI[t].id);
             g.tt.push(tt);
             g.ss.push(tn0);
             g.tnc[tvm.hash(tn0)] = tt.id;
@@ -130,7 +130,7 @@ stt(   MAP, 0, 1,   0, 7, 1,  34, 6)
             out.append("        return abi.encode(val);\n    }\n\n");
         }
 
-        out.append("function print(uint8 t, TvmCell c) external pure returns (string out) {\n");
+        out.append("    function print(uint8 t, TvmCell c) external pure returns (string out) {\n");
         out.append("        if (t == 0) out.append(\"Invalid content type\\n\");\n");
         for (sti t: ti) {
             //(uint8 id, , vari[] vv, string[] ssi) = t.unpack();
