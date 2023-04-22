@@ -21,12 +21,12 @@ struct s_disk {
     string d_attachment;
 }
 struct partition {
-	uint32 p_size;	 // number of sectors in partition
-	uint32 p_offset; // starting sector
-	uint8 p_fsize;	 // filesystem basic fragment size
-	uint8 p_fstype;  // filesystem type, see below
-	uint8 p_frag;	 // filesystem fragments per block
-	uint8 p_cpg;	 // filesystem cylinders per group
+    uint32 p_size;   // number of sectors in partition
+    uint32 p_offset; // starting sector
+    uint8 p_fsize;   // filesystem basic fragment size
+    uint8 p_fstype;  // filesystem type, see below
+    uint8 p_frag;    // filesystem fragments per block
+    uint8 p_cpg;     // filesystem cylinders per group
 }
 struct disk_geometry {
     uint16 d_magic;      // the magic number
@@ -46,7 +46,7 @@ struct disk_type {
     bytes16 d_drivedata; // drive-type specific data
 }
 struct disklabel {
-    uint16 d_magic;	        // the magic number
+    uint16 d_magic;         // the magic number
     uint8 d_type;           // drive type
     uint8 d_subtype;        // controller/d_type specific
     bytes8 d_typename;      // type name, e.g. `eagle'

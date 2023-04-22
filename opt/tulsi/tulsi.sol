@@ -261,9 +261,10 @@ contract tulsi is common {
             cmd.append(_print(sMOD, 5, 8 + start));
             cmd.append(_print(sMOD, 250, 2 + start));
         } else if (n == 5) {
-            cmd.append(_print(sMOD, 0, 2));
-            cmd.append(_print(sMOD, 1, 6));
-            cmd.append(_print(sMOD, 2, 7));
+            uint8 start = 18;
+            cmd.append(_print(sMOD, 0, 0 + start));
+            cmd.append(_print(sMOD, 1, 4 + start));
+            cmd.append(_print(sMOD, 2, 5 + start));
         } else if (n == 6) {
             //tonos-cli -c etc/qx.conf runx -m store_mod_info `jq -c {val:.g.mi} qx.trs`
             cmd.append(_ccmd("qx", CRUN, "store_mod_info", "\"`jq -c {val:.g.mi} qx.trs`\" | jq -r .c", REDIR_ARGS, false));
