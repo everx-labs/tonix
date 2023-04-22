@@ -29,27 +29,27 @@ struct partition {
 	uint8 p_cpg;	 // filesystem cylinders per group
 }
 struct disk_geometry {
-    uint16 d_magic;     // the magic number
-    uint16 d_secsize;   // # of bytes per sector
-    uint16 d_nsectors;  // # of data sectors per track
-    uint16 d_ntracks;   // # of tracks per cylinder
-    uint16 d_ncylinders;// # of data cylinders per unit
-    uint16 d_secpercyl; // # of data sectors per cylinder
-    uint32 d_secperunit;// # of data sectors per unit
+    uint16 d_magic;      // the magic number
+    uint16 d_secsize;    // # of bytes per sector
+    uint16 d_nsectors;   // # of data sectors per track
+    uint16 d_ntracks;    // # of tracks per cylinder
+    uint16 d_ncylinders; // # of data cylinders per unit
+    uint16 d_secpercyl;  // # of data sectors per cylinder
+    uint32 d_secperunit; // # of data sectors per unit
 }
 struct disk_type {
     uint16 d_magic;      // the magic number
     uint8 d_type;        // drive type
     uint8 d_subtype;     // controller/d_type specific
-    bytes8 d_typename;   // type name, e.g. "eagle"
+    bytes8 d_typename;   // type name, e.g. `eagle'
     bytes8 d_packname;   // pack identifier
-    bytes16 d_drivedata; // drive-type specific data // [BSD_NDRIVEDATA] // 31
+    bytes16 d_drivedata; // drive-type specific data
 }
-struct disklabel { // 2 x 8 + 6 x 2 + 14 x 1 = 42 + 8 x 8 = 64 // 108 + 16 = 124
+struct disklabel {
     uint16 d_magic;	        // the magic number
     uint8 d_type;           // drive type
     uint8 d_subtype;        // controller/d_type specific
-    bytes8 d_typename;      // type name, e.g. "eagle"
+    bytes8 d_typename;      // type name, e.g. `eagle'
     bytes8 d_packname;      // pack identifier
     uint8 padding;          // to 31 bytes
     uint8 d_secsize;        // # of bytes per sector
@@ -64,12 +64,12 @@ struct disklabel { // 2 x 8 + 6 x 2 + 14 x 1 = 42 + 8 x 8 = 64 // 108 + 16 = 124
     uint8 d_trackskew;      // sector 0 skew, per track
     uint8 d_cylskew;        // sector 0 skew, per cylinder
     uint8 d_flags;          // generic flags
-    bytes16 d_drivedata;    // drive-type specific data // [BSD_NDRIVEDATA] // 31
+    bytes16 d_drivedata;    // drive-type specific data
     uint16 d_magic2;        // the magic number (again)
 }
 struct part_table {
     uint8 d_npartitions; // number of partitions in following
     uint16 d_bbsize;     // size of boot area at sn0, bytes
     uint8 d_sbsize;      // max size of fs superblock, bytes // 23
-    partition[8] d_partitions; // the partition table // BSD_NPARTS_MIN
+    partition[8] d_partitions; // the partition table
 }

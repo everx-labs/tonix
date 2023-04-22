@@ -178,9 +178,9 @@ library libpart {
         disk_type dt = def_disk_type(t);
         (, uint16 d_secsize, uint16 d_nsectors, , uint16 d_ncylinders, uint16 d_secpercyl, uint32 d_secperunit) = dg.unpack();
         (, , uint8 d_subtype, bytes8 d_typename, bytes8 d_packname, ) = dt.unpack();
-	    uint16 d_flags;
-	    uint32 d_mediasize = d_secpercyl * d_ncylinders;
-	    uint32 d_maxsize = d_secperunit;
+        uint16 d_flags;
+        uint32 d_mediasize = d_secpercyl * d_ncylinders;
+        uint32 d_maxsize = d_secperunit;
         return s_disk(false, false, disk_init_level.DISK_INIT_CREATE, d_flags, name, n, d_secsize, d_mediasize,
             d_nsectors, d_ncylinders, d_maxsize, bytes(d_typename), bytes(d_packname), t, d_subtype, name + format("{}", n));
     }
@@ -290,16 +290,16 @@ library libpart {
     }
     function def_disk_type(uint8 t) internal returns (disk_type dt) {
         if (t == DTYPE_DEC) {
-	        bytes16 d_drivedata;
+            bytes16 d_drivedata;
             return disk_type(DISKMAGIC, t, 2, "Wombat", "Wild", d_drivedata);
         }
     }
     function def_disk_geometry(uint8 t) internal returns (disk_geometry dg) {
         if (t == DTYPE_DEC) {
-    	    uint8 d_secsize = 31;
-    	    uint8 d_nsectors = 4;
-    	    uint8 d_ntracks = 1;//2;
-    	    uint16 d_ncylinders = 1211;
+            uint8 d_secsize = 31;
+            uint8 d_nsectors = 4;
+            uint8 d_ntracks = 1;//2;
+            uint16 d_ncylinders = 1211;
             uint16 d_secpercyl = uint16(d_nsectors) * d_ntracks;
             uint32 d_secperunit = uint32(d_secpercyl) * d_ncylinders;
             dg = disk_geometry(DISKMAGIC, d_secsize, d_nsectors, d_ntracks, d_ncylinders, d_secpercyl, d_secperunit);
@@ -354,7 +354,7 @@ library libpart {
             out.append(print_partition(i, d_partitions[i]));
     }
     function print_label(disklabel l) internal returns (string out) {
-	    (uint16 d_magic, uint8 d_type, uint8 d_subtype, bytes8 d_typename, bytes8 d_packname, , uint8 d_secsize,
+        (uint16 d_magic, uint8 d_type, uint8 d_subtype, bytes8 d_typename, bytes8 d_packname, , uint8 d_secsize,
         uint8 d_nsectors, uint8 d_ntracks, uint16 d_ncylinders, uint16 d_secpercyl, uint16 d_secperunit, uint8 d_sparespertrack,
         uint8 d_sparespercyl, uint8 d_acylinders, uint8 d_trackskew, uint8 d_cylskew, uint8 d_flags, bytes16 d_drivedata,
         uint16 d_magic2) = l.unpack();
@@ -368,7 +368,7 @@ library libpart {
             d_ncylinders, d_secperunit, d_trackskew, d_cylskew, bytes(d_drivedata)));
     }
     function print_disk(s_disk d) internal returns (string out) {
-	    (bool d_goneflag, bool d_destroyed, disk_init_level	d_init_level, uint16 d_flags, string d_name, uint8 d_unit, uint16 d_sectorsize, uint32 d_mediasize, uint16 d_fwsectors, uint16 d_fwheads, uint32 d_maxsize, string d_ident, string d_descr, uint16 d_hba_vendor, uint16 d_hba_device, string d_attachment) = d.unpack();
+        (bool d_goneflag, bool d_destroyed, disk_init_level	d_init_level, uint16 d_flags, string d_name, uint8 d_unit, uint16 d_sectorsize, uint32 d_mediasize, uint16 d_fwsectors, uint16 d_fwheads, uint32 d_maxsize, string d_ident, string d_descr, uint16 d_hba_vendor, uint16 d_hba_device, string d_attachment) = d.unpack();
         string sinit = d_init_level == disk_init_level.DISK_INIT_NONE ? "None" : d_init_level == disk_init_level.DISK_INIT_CREATE ?
         "Create" : d_init_level == disk_init_level.DISK_INIT_START ? "Start" : d_init_level == disk_init_level.DISK_INIT_DONE ? "DONE" : "Unknown";
         out.append(format("{} {} init {} flags {} name {} unit {} sectorsize {} mediasize {} sectors {} heads {} maxsize {} ident {} descr {} vendor {} device {} attach {}\n",
@@ -381,7 +381,7 @@ library libpart {
         cmd, flags, dev, dsk, offset, bcount, data, ma.empty() ? "" : abi.decode(ma[0], bytes), ma_n, error, resid, length, completed, t0, pblkno));
     }
     function print_bio_queue(bio_queue bq) internal returns (string out) {
-	    (bio[] queue, uint32 last_offset, uint32 insert_point, uint8 total, uint8 batched) = bq.unpack();
+        (bio[] queue, uint32 last_offset, uint32 insert_point, uint8 total, uint8 batched) = bq.unpack();
         out.append(format("last_offset {} insert_point {} total {} batched {}\n", last_offset, insert_point, total, batched));
         for (bio b: queue)
             out.append(print_bio(b));
