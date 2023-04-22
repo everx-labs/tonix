@@ -244,20 +244,31 @@ contract tulsi is common {
             cmd.append(_ccmd(sPA, CRUN, sFN, "\"`jq -cn --rawfile v " + sMOD + " '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
             cmd.append(sSOLD + " " + IF + " " + REST);
         } else if (n == 2) {
+            sFN = "parse_source";
+            cmd.append(_ccmd(sPA, CRUN, sFN, "\"`jq -cn --rawfile v " + sMOD + " '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
+            IF = sTMP + "/" + sFN + ".res.src";
+            cmd.append(sSOLD + " " + IF + " " + REST);
+//            cmd.append(sSOLD + " " + IF + " " + REST);
 //            cmd.append(_print_cmd("File name?\n") + "read -r ii\n");
 //            cmd.append(_toc_cmd("parsec", CRUN, "absorb_module", "\"`jq -cn --arg n $ii --rawfile v $ii '{name:$n,ss:$v}'`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
 //            cmd.append("~/bin/0.67.1/sold tmp/absorb_module.res.src -p $ii -o build\n");
         } else if (n == 3) {
             cmd.append(sMA + " " + sBLD + "/" + sMOD + "." + "deployed" + "\n");
         } else if (n == 4) {
+            uint8 start = 18;
             for (uint i = 6; i < 10; i++)
-                cmd.append(_print(sMOD, uint8(i), 7));
-            cmd.append(_print(sMOD, 5, 8));
-            cmd.append(_print(sMOD, 250, 2));
+                cmd.append(_print(sMOD, uint8(i), 7 + start));
+            cmd.append(_print(sMOD, 5, 8 + start));
+            cmd.append(_print(sMOD, 250, 2 + start));
         } else if (n == 5) {
             cmd.append(_print(sMOD, 0, 2));
             cmd.append(_print(sMOD, 1, 6));
             cmd.append(_print(sMOD, 2, 7));
+        } else if (n == 6) {
+            //tonos-cli -c etc/qx.conf runx -m store_mod_info `jq -c {val:.g.mi} qx.trs`
+            cmd.append(_ccmd("qx", CRUN, "store_mod_info", "\"`jq -c {val:.g.mi} qx.trs`\" | jq -r .c", REDIR_ARGS, false));
+            cmd.append(_ccmd("qx", CRUN, "print", "--t " + "20" + " --c ", REDIR_OUT, false));
+//            rawfile v " + sMOD + " '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
         }
 
     }
