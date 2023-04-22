@@ -144,14 +144,15 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
                 dbg.append(format("Error: index {} out of range {}, max: {}\n", i, ti.length, nt));
                 break;
             }
-            (, uint8 nv, , , , uint8 ldecl, , string sname, vard[] vd) = ti[i].unpack();
+            (, uint8 nv, , , , uint8 ldecl, uint8 ldesc, string sname, vard[] vd) = ti[i].unpack();
             string[] vds;
             string[] vns;
             string[] vts;
+            string[] vvs;
             string[] vas;
             string[] tyl;
             for (uint j = 0; j < nv; j++) {
-                (uint8 vtype, , uint8 dlen, , string vname, string vdesc) = vd[j].unpack();
+                (uint8 vtype, , uint8 dlen, uint8 clen, string vname, string vdesc) = vd[j].unpack();
                 strti vt = ti[vtype];
                 string tyd = vt.name + " " + vname + ";";
                 if (!vdesc.empty()) {
@@ -173,6 +174,12 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
                 else {
                     vns.push(pname);
                     vts.push(vname + ": {}");
+                    string svs = (clen > 0 ? vdesc : vname) + ":";
+                    uint pad = clen > 0 ? ldesc + 1 - clen : ldecl + 1 - dlen;
+                    repeat (pad)
+                        svs.append(" ");
+                    svs.append("{}");
+                    vvs.push(svs);
                 }
                 vds.push(vt.name + " " + vname);
             }
@@ -183,9 +190,10 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
             string var_list = join(vns, ", ");
             string vaals = vas.empty() ? "}" : enjoin("", "        out.append(", vas, ");", "}");
             string print_terse = print_format + join(vts, " ") + "\\n\",\n" + "            " + var_list + "));";
+            string print_verbose = print_format + join(vvs, "\\n") + "\\n\",\n" + "            " + var_list + "));";
 
             string fn_head = "function print_" + sname + "(" + sname + " val) internal returns (string out) {";
-            fns.push(join([fn_head, val_unpack, print_terse, vaals], "\n    "));
+            fns.push(join([fn_head, val_unpack, print_terse, print_verbose, vaals], "\n    "));
         }
 
         string[] fsto;
