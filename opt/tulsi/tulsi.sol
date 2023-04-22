@@ -29,10 +29,9 @@ contract tulsi is common {
         }
     }
     string constant SELF = "tulsi";
-    string constant PP = "parse";
     string constant TOC = "../../bin/tonos-cli";
 
-    bytes constant QUICKS = "cCuUhHbBqQwWxXzZ";
+    bytes constant QUICKS = "cCuUhHbBqQwWeExXzZ";
 
     uint8 constant CRUN = 1;
     uint8 constant CCALL = 2;
@@ -56,8 +55,8 @@ contract tulsi is common {
         ["Tulsi", "Dump", "Parse", "Parsec", "Misc"],
         ["Dump config", "Main", "As vars", "Project", "Parser", "Module" ],
         ["Parse", "-", "-", "-", "Test" ],
-        ["Parse module", "Generate", "-", "Deploy", "Test" ],
-        ["Config", "Print"],
+        ["Parse module", "-", "Generate", "Deploy", "Test 1", "Test 2", "Test 3" ],
+        ["Config", "Change input"],
         ["Misc", "Bin size"]
     ];
 
@@ -241,17 +240,15 @@ contract tulsi is common {
         string REST = "-p " + sMOD + " -o " + sBLD + "\n";
 
         if (n == 1) {
-            cmd.append(_ccmd(sPA, CRUN, sFN, "\"`jq -cn --rawfile v " + sMOD + " '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
-            cmd.append(sSOLD + " " + IF + " " + REST);
-        } else if (n == 2) {
             sFN = "parse_source";
-            cmd.append(_ccmd(sPA, CRUN, sFN, "\"`jq -cn --rawfile v " + sMOD + " '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
+            cmd.append(_ccmd(sPA, CRUN, sFN, "\"`jq -cn --rawfile v " + sMOD + " '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE, false));
+            string OF = sTMP + "/" + sFN + ".res";
+            sFN = "gen_module";
+            cmd.append(_ccmd("gensec", CRUN, sFN, "\"`jq '{g:.g}' " + OF + "`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
             IF = sTMP + "/" + sFN + ".res.src";
             cmd.append(sSOLD + " " + IF + " " + REST);
-//            cmd.append(sSOLD + " " + IF + " " + REST);
-//            cmd.append(_print_cmd("File name?\n") + "read -r ii\n");
-//            cmd.append(_toc_cmd("parsec", CRUN, "absorb_module", "\"`jq -cn --arg n $ii --rawfile v $ii '{name:$n,ss:$v}'`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
-//            cmd.append("~/bin/0.67.1/sold tmp/absorb_module.res.src -p $ii -o build\n");
+        } else if (n == 2) {
+
         } else if (n == 3) {
             cmd.append(sMA + " " + sBLD + "/" + sMOD + "." + "deployed" + "\n");
         } else if (n == 4) {
@@ -273,14 +270,8 @@ contract tulsi is common {
         }
 
     }
-    function _parse(uint n) internal view returns (string cmd) {
-        if (n == 4) {
-            for (uint i = 16; i < 19; i++) {
-                cmd.append(_test_print(16, i));
-                for (uint j = 17; j < 19; j++)
-                    cmd.append(_test_print(j, i));
-            }
-        }
+    function _parse(uint n) internal pure returns (string cmd) {
+        n;cmd;
     }
     function _dump(uint n) internal view returns (string out) {
         if (n < 6) {
@@ -346,6 +337,7 @@ contract tulsi is common {
     function _quick_command(uint8 v) internal pure returns (string cmd) {
         mapping (uint8 => string) q;
         q[0x63] = "make cc";
+        q[0x65] = "make up_" + "gensec";
         q[0x75] = "make up_" + SELF;
         q[0x77] = "make up_" + "parsec";
         q[0x71] = "echo Bye! && exit 0";

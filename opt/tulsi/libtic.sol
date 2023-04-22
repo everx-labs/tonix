@@ -215,7 +215,6 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
         string ctx = enjoin("contract " + name + " {", "    ", fsto, "", "}");
         string mod = join([prag, tdefs, lib, ctx], "\n\n");
 
-        dbg.append(mod);
         out.append(mod);
     }
 

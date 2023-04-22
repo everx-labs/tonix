@@ -1,6 +1,7 @@
 M:=tulsi
 T:=parsec
-H:=$T
+G:=gensec
+H:=$G
 D:=$H $T $M
 CTX:=$D $H
 include ../common.mk
