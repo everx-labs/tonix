@@ -12,17 +12,17 @@ uint8 constant FT_INO  = 8;
 uint8 constant FT_WHT  = 9;
 uint8 constant FT_LAST = FT_WHT;
 
-uint16 constant UID_ROOT	= 0;
-uint16 constant GID_WHEEL	= 0;
-uint16 constant S_IFMT	= 0xF000;// 0170000; // type of file mask
-uint16 constant S_IFIFO	= 0x1000;// 0010000; // named pipe (fifo)
-uint16 constant S_IFCHR	= 0x2000;// 0020000; // character special
-uint16 constant S_IFDIR	= 0x4000;// 0040000; // directory
-uint16 constant S_IFBLK	= 0x6000;// 0060000; // block special
-uint16 constant S_IFREG	= 0x8000;// 0100000; // regular
-uint16 constant S_IFLNK	= 0xA000;// 0120000; // symbolic link
+uint16 constant UID_ROOT    = 0;
+uint16 constant GID_WHEEL   = 0;
+uint16 constant S_IFMT  = 0xF000;// 0170000; // type of file mask
+uint16 constant S_IFIFO = 0x1000;// 0010000; // named pipe (fifo)
+uint16 constant S_IFCHR = 0x2000;// 0020000; // character special
+uint16 constant S_IFDIR = 0x4000;// 0040000; // directory
+uint16 constant S_IFBLK = 0x6000;// 0060000; // block special
+uint16 constant S_IFREG = 0x8000;// 0100000; // regular
+uint16 constant S_IFLNK = 0xA000;// 0120000; // symbolic link
 uint16 constant S_IFSOCK = 0xC000;// 0140000; // socket
-//uint16 constant S_ISVTX	= 0x0200;// 0001000; // save swapped text even after use
+//uint16 constant S_ISVTX = 0x0200;// 0001000; // save swapped text even after use
 uint16 constant S_IFWHT = 0xE000;// 0160000; // whiteout
 uint8 constant BLK_SIZE = 127;
 uint16 constant S_IXOTH = 1 << 0;
@@ -47,6 +47,7 @@ uint16 constant DEF_BLOCK_DEV_MODE = S_IFBLK + S_IRUSR + S_IWUSR;
 uint16 constant DEF_CHAR_DEV_MODE  = S_IFCHR + S_IRUSR + S_IWUSR;
 uint16 constant DEF_FIFO_MODE      = S_IFIFO + S_IRUSR + S_IWUSR + S_IRGRP + S_IROTH;
 uint16 constant DEF_SOCK_MODE      = S_IFSOCK + S_IRWXU + S_IRGRP + S_IXGRP + S_IROTH + S_IXOTH;
+
 struct stat {
     uint16 st_dev;      // inode's device
     uint16 st_ino;      // inode's number
@@ -71,8 +72,8 @@ struct idirent {
     bytes11 name;
 }
 struct dinode { // 4 x 4 + 6 x 2 + 3 = 31
-	uint16 di_mode;	 // IFMT, permissions; see below
-    uint8 di_ino;	 // Inode no
+    uint16 di_mode;  // IFMT, permissions; see below
+    uint8 di_ino;    // Inode no
     uint8 di_nlink;  // File link count
     uint16 di_size;  // File byte count
     uint32 di_mtime; // Last modified time
@@ -107,4 +108,14 @@ struct filedesc {
 struct pwd {
     dinode pwd_cdir;    // current directory
     dinode pwd_rdir;    // root directory
+}
+
+//function S_ISDIR(uint16 mode) returns (bool) {
+//    return (mode & S_IFDIR) == S_IFDIR;
+//}
+
+library libfs {
+    function S_ISDIR(uint16 mode) internal returns (bool) {
+        return (mode & S_IFDIR) == S_IFDIR;
+    }
 }

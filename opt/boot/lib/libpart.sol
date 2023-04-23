@@ -10,55 +10,55 @@ import "libvmem.sol";
 library libpart {
     using libvmem for vector(TvmBuilder);
     using libpart for partition;
-    string constant	_PATH_DISKTAB = "/etc/disktab";
-    uint8 constant BSD_NPARTS_MIN	= 8;
-    uint8 constant BSD_NPARTS_MAX	= 20;
+    string constant _PATH_DISKTAB = "/etc/disktab";
+    uint8 constant BSD_NPARTS_MIN   = 8;
+    uint8 constant BSD_NPARTS_MAX   = 20;
     uint16 constant BSD_BOOTBLOCK_SIZE= 3800;// Size of bootblock area in sector-size neutral bytes
-    uint8 constant BSD_PART_RAW	    = 2;    // partition containing whole disk
-    uint8 constant BSD_PART_SWAP	= 1;// partition normally containing swap
-    uint8 constant BSD_NDRIVEDATA	= 5;// Drive-type specific data size (in number of 32-bit inegrals)
-    uint8 constant BSD_NSPARE		= 5;    // Number of spare 32-bit integrals following drive-type data
-    uint16 constant BSD_MAGIC   = 0x8256; // The disk magic number
-    uint8 constant LABELSECTOR	= 1;			// sector containing label
-    uint8 constant LABELOFFSET	= 0;			// offset of label in sector
-    uint16 constant DISKMAGIC	= BSD_MAGIC;	// The disk magic number
+    uint8 constant BSD_PART_RAW     = 2;    // partition containing whole disk
+    uint8 constant BSD_PART_SWAP    = 1;    // partition normally containing swap
+    uint8 constant BSD_NDRIVEDATA   = 5;    // Drive-type specific data size (in number of 32-bit inegrals)
+    uint8 constant BSD_NSPARE       = 5;    // Number of spare 32-bit integrals following drive-type data
+    uint16 constant BSD_MAGIC   = 0x8256;   // The disk magic number
+    uint8 constant LABELSECTOR  = 1;            // sector containing label
+    uint8 constant LABELOFFSET  = 0;            // offset of label in sector
+    uint16 constant DISKMAGIC   = BSD_MAGIC;    // The disk magic number
     uint8 constant MAXPARTITIONS= BSD_NPARTS_MIN;
-    uint16 constant BBSIZE		= BSD_BOOTBLOCK_SIZE; // Size of bootblock area in sector-size neutral bytes
-    uint8 constant LABEL_PART	= BSD_PART_RAW;
-    uint8 constant RAW_PART	    = BSD_PART_RAW;
-    uint8 constant SWAP_PART	= BSD_PART_SWAP;
-    uint8 constant NDDATA		= BSD_NDRIVEDATA;
-    uint8 constant NSPARE		= BSD_NSPARE;
+    uint16 constant BBSIZE      = BSD_BOOTBLOCK_SIZE; // Size of bootblock area in sector-size neutral bytes
+    uint8 constant LABEL_PART   = BSD_PART_RAW;
+    uint8 constant RAW_PART     = BSD_PART_RAW;
+    uint8 constant SWAP_PART    = BSD_PART_SWAP;
+    uint8 constant NDDATA       = BSD_NDRIVEDATA;
+    uint8 constant NSPARE       = BSD_NSPARE;
     uint8 constant SCHEME_UNKNOWN = 0;
     uint8 constant SCHEME_GPT   = 1;
     uint8 constant SCHEME_MBR   = 2;
     uint8 constant SCHEME_VTOC  = 3;
-    uint8 constant DTYPE_DEC	= 3;  // other DEC (rk, rl)
-    uint8 constant FS_UNUSED	= 0;	// unused
-    uint8 constant FS_SWAP		= 1;	// swap
-    uint8 constant FS_TOFS		= 2;	// ToFS
-    uint8 constant D_REMOVABLE	= 0x01;	// removable media
-    uint8 constant D_ECC		= 0x02;	// supports ECC
-    uint8 constant D_BADSECT	= 0x04;	// supports bad sector forw.
-    uint8 constant D_RAMDISK	= 0x08;	// disk emulator
-    uint8 constant D_CHAIN		= 0x10;	// can do back-back transfers
+    uint8 constant DTYPE_DEC    = 3;    // other DEC (rk, rl)
+    uint8 constant FS_UNUSED    = 0;    // unused
+    uint8 constant FS_SWAP      = 1;    // swap
+    uint8 constant FS_TOFS      = 2;    // ToFS
+    uint8 constant D_REMOVABLE  = 0x01; // removable media
+    uint8 constant D_ECC        = 0x02; // supports ECC
+    uint8 constant D_BADSECT    = 0x04; // supports bad sector forw.
+    uint8 constant D_RAMDISK    = 0x08; // disk emulator
+    uint8 constant D_CHAIN      = 0x10; // can do back-back transfers
     string[31] constant FN = [
     "unused", "swap", "ToFS", "Version 7", "System V", "4.1BSD", "Eighth Edition", "4.2BSD", "MSDOS", "4.4LFS",
     "unknown", "OS/2 HPFS", "ISO 9660", "boot", "vinum", "raid", "Filecore", "ext2fs", "NTFS", "?", "ccd", "JFS2",
     "Hammer", "Hammer2", "UDF", "?", "EFS", "ZFS", "?", "?", "nandfs"];
-    uint8 constant BIO_READ	    = 0x01;	// Read I/O data
-    uint8 constant BIO_WRITE	= 0x02;	// Write I/O data
-    uint8 constant BIO_DELETE	= 0x03;	// TRIM or free blocks, i.e. mark as unused
-    uint8 constant BIO_GETATTR	= 0x04;	// Get GEOM attributes of object
-    uint8 constant BIO_FLUSH	= 0x05;	// Commit outstanding I/O now
-    uint8 constant BIO_CMD0	    = 0x06;	// Available for local hacks
-    uint8 constant BIO_CMD1	    = 0x07;	// Available for local hacks
-    uint8 constant BIO_CMD2	    = 0x08;	// Available for local hacks
-    uint8 constant BIO_ZONE	    = 0x09;	// Zone command
-    uint8 constant BIO_SPEEDUP	= 0x0a;	// Upper layers face shortage
-    uint8 constant BIO_ERROR	= 0x01;	// An error occurred processing this bio.
-    uint8 constant BIO_DONE	    = 0x02;	// This bio is finished.
-    uint8 constant BIO_ONQUEUE	= 0x04;	// This bio is in a queue & not yet taken.
+    uint8 constant BIO_READ     = 0x01; // Read I/O data
+    uint8 constant BIO_WRITE    = 0x02; // Write I/O data
+    uint8 constant BIO_DELETE   = 0x03; // TRIM or free blocks, i.e. mark as unused
+    uint8 constant BIO_GETATTR  = 0x04; // Get GEOM attributes of object
+    uint8 constant BIO_FLUSH    = 0x05; // Commit outstanding I/O now
+    uint8 constant BIO_CMD0     = 0x06; // Available for local hacks
+    uint8 constant BIO_CMD1     = 0x07; // Available for local hacks
+    uint8 constant BIO_CMD2     = 0x08; // Available for local hacks
+    uint8 constant BIO_ZONE     = 0x09; // Zone command
+    uint8 constant BIO_SPEEDUP  = 0x0a; // Upper layers face shortage
+    uint8 constant BIO_ERROR    = 0x01; // An error occurred processing this bio.
+    uint8 constant BIO_DONE     = 0x02; // This bio is finished.
+    uint8 constant BIO_ONQUEUE  = 0x04; // This bio is in a queue & not yet taken.
     function assess() internal returns (uint8 sbsize, uint8 cssize, uint8 cgsize, uint8 inosize, uint8 desize) {
         TvmBuilder b;
         fsb f;
@@ -199,8 +199,8 @@ library libpart {
             uint16 ncylinders, uint16 secpercyl, uint16 secperunit, , , , , , uint8 flags, bytes16 drivedata, ) = l.unpack();
         bytes bb = bytes(drivedata);
         uint len = bb.length;
-	    string name = len > 2 ? bb [ : 2] : "";
-	    uint8 unit = len > 2 ? uint8(bb[2]) : 0;
+        string name = len > 2 ? bb [ : 2] : "";
+        uint8 unit = len > 2 ? uint8(bb[2]) : 0;
         if (unit >= 0x30)
             unit -= 0x30;
         return s_disk(false, false, disk_init_level.DISK_INIT_CREATE, flags, name, unit, secsize, uint32(ncylinders) * secpercyl,
@@ -347,7 +347,7 @@ library libpart {
         out.append(format("  {}:\t{}\t{}\t{} {}\n", bytes(bytes1(0x61 + i)), p_size, p_offset, FN[p_fstype], nums));
     }
     function print_part_table(part_table t) internal returns (string out) {
-	    (uint8 d_npartitions, uint16 d_bbsize, uint8 d_sbsize, partition[8] d_partitions) = t.unpack();
+        (uint8 d_npartitions, uint16 d_bbsize, uint8 d_sbsize, partition[8] d_partitions) = t.unpack();
         out.append(format("{} partitions:  bbsize: {} sbsize: {}\n", d_npartitions, d_bbsize, d_sbsize));
         out.append("#  \tsize\toffset\tfstype\t[fsize bsize bps/cpg]\n");
         for (uint8 i = 0; i < d_npartitions; i++)
@@ -368,7 +368,7 @@ library libpart {
             d_ncylinders, d_secperunit, d_trackskew, d_cylskew, bytes(d_drivedata)));
     }
     function print_disk(s_disk d) internal returns (string out) {
-        (bool d_goneflag, bool d_destroyed, disk_init_level	d_init_level, uint16 d_flags, string d_name, uint8 d_unit, uint16 d_sectorsize, uint32 d_mediasize, uint16 d_fwsectors, uint16 d_fwheads, uint32 d_maxsize, string d_ident, string d_descr, uint16 d_hba_vendor, uint16 d_hba_device, string d_attachment) = d.unpack();
+        (bool d_goneflag, bool d_destroyed, disk_init_level d_init_level, uint16 d_flags, string d_name, uint8 d_unit, uint16 d_sectorsize, uint32 d_mediasize, uint16 d_fwsectors, uint16 d_fwheads, uint32 d_maxsize, string d_ident, string d_descr, uint16 d_hba_vendor, uint16 d_hba_device, string d_attachment) = d.unpack();
         string sinit = d_init_level == disk_init_level.DISK_INIT_NONE ? "None" : d_init_level == disk_init_level.DISK_INIT_CREATE ?
         "Create" : d_init_level == disk_init_level.DISK_INIT_START ? "Start" : d_init_level == disk_init_level.DISK_INIT_DONE ? "DONE" : "Unknown";
         out.append(format("{} {} init {} flags {} name {} unit {} sectorsize {} mediasize {} sectors {} heads {} maxsize {} ident {} descr {} vendor {} device {} attach {}\n",

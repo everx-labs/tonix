@@ -100,14 +100,29 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
         if (q1 > 0 && q2 > 0)
             res = string(sname[ : q1 - 1]) + "s";
     }
-    function gen_module(gtic g) internal returns (string out, string dbg) {
+
+    function conf_flags(uint vh, uint word) internal returns (bool f1, bool f2, bool f3, bool f4, bool f5, bool f6, bool f7, bool f8) {
+        uint h = vh >> word * 8 & 0xFF;
+        f1 = (h & 0x01) > 0;
+        f2 = (h & 0x02) > 0;
+        f3 = (h & 0x04) > 0;
+        f4 = (h & 0x08) > 0;
+        f5 = (h & 0x10) > 0;
+        f6 = (h & 0x20) > 0;
+        f7 = (h & 0x40) > 0;
+        f8 = (h & 0x80) > 0;
+    }
+
+    function gen_module(gtic g, uint h) internal returns (string out, string dbg) {
         (mod_info mi, strti[] ti, ) = g.unpack();
         (uint8 maj, uint8 min, uint8 nt, , , , , , , uint8 fla_start, uint8 fla_len, , uint8 da_len, uint8 enum_start, uint8 enum_len, uint8 struct_start, uint8 struct_len, string name) = mi.unpack();
+        (bool struct_defs, bool enum_defs, bool type_printing, bool terse_printing, bool verbose_printing, bool helper_encoders, bool print_cells_by_type, ) = conf_flags(h, 0);
 
         string libname = "lib" + name;
 
         string[] defs;
         string[] fns;
+        string[] empty;
         for (uint i = fla_start; i < fla_start + fla_len + da_len; i++) {
             (, , , , , , , string sname, vard[] vd) = ti[i].unpack();
             string pra = "function print_" + fix_arr_name(sname) + "(" + sname + " val) internal returns (string out) {";
@@ -134,7 +149,8 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
                 fnb.push("else if (val == " + sname + "." + vname + ") out.append(\"" + vname + "\");");
             }
             tyd.append(" }\n");
-            defs.push(tyd);
+            if (enum_defs)
+                defs.push(tyd);
             string fn_head = "function print_" + sname + "(" + sname + " val) internal returns (string out) {";
             fns.push(enjoin(fn_head, "    ", indent(fnb), "", "    }"));
         }
@@ -183,14 +199,15 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
                 }
                 vds.push(vt.name + " " + vname);
             }
-            defs.push(enjoin("struct " + sname + " {", "", indent(tyl), "", "}"));
+            if (struct_defs)
+                defs.push(enjoin("struct " + sname + " {", "", indent(tyl), "", "}"));
 
             string val_unpack = "    (" + join(vds, ", ") + ") = val.unpack();";
             string print_format = "    out.append(format(\"";
             string var_list = join(vns, ", ");
             string vaals = vas.empty() ? "}" : enjoin("", "        out.append(", vas, ");", "}");
-            string print_terse = print_format + join(vts, " ") + "\\n\",\n" + "            " + var_list + "));";
-            string print_verbose = print_format + join(vvs, "\\n") + "\\n\",\n" + "            " + var_list + "));";
+            string print_terse = terse_printing ? print_format + join(vts, " ") + "\\n\",\n" + "            " + var_list + "));" : "";
+            string print_verbose = verbose_printing ? print_format + join(vvs, "\\n") + "\\n\",\n" + "            " + var_list + "));" : "";
 
             string fn_head = "function print_" + sname + "(" + sname + " val) internal returns (string out) {";
             fns.push(join([fn_head, val_unpack, print_terse, print_verbose, vaals], "\n    "));
@@ -204,14 +221,16 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
                 break;
             }
             (uint8 id, , , , , , , string sname, ) = ti[i].unpack();
-            fsto.push(enjoin("function store_" + sname + "(" + sname + " val) external pure returns (TvmCell c) {", "        ", ["return abi.encode(val);"], "", "    }"));
+            if (helper_encoders)
+                fsto.push(enjoin("function store_" + sname + "(" + sname + " val) external pure returns (TvmCell c) {", "        ", ["return abi.encode(val);"], "", "    }"));
             ftp_body.push("else if (t == " + format("{}", id) + ") out.append(" + libname + ".print_" + sname + "(abi.decode(c, " + sname + ")));");
         }
-        fsto.push(enjoin("function print(uint8 t, TvmCell c) external pure returns (string out) {", "        ", ftp_body, "", "    }"));
+        if (print_cells_by_type)
+            fsto.push(enjoin("function print(uint8 t, TvmCell c) external pure returns (string out) {", "        ", ftp_body, "", "    }"));
 
         string prag = "pragma ton-solidity >= 0." + format("{}.{}", maj, min) + ";";
         string tdefs = join(defs, "\n");
-        string lib = enjoin("library " + libname + " {\n", "    ", fns, "\n", "}");
+        string lib = enjoin("library " + libname + " {\n", "    ", type_printing ? fns : empty, "\n", "}");
         string ctx = enjoin("contract " + name + " {", "    ", fsto, "", "}");
         string mod = join([prag, tdefs, lib, ctx], "\n\n");
 

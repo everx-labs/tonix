@@ -9,12 +9,12 @@ import "libufs.sol";
 library libsb {
     using libvmem for vector(TvmBuilder);
     uint16 constant CG_MAGIC    = 0x4347;
-    uint8 constant CK_SUPERBLOCK= 0x01;// the superblock
-    uint8 constant CK_CYLGRP	= 0x02;	// the cylinder groups
-    uint8 constant CK_INODE	    = 0x04;	// inodes
-    uint8 constant CK_INDIR	    = 0x08;	// indirect blocks
-    uint8 constant CK_DIR		= 0x10;	// directory contents
-    uint8 constant CK_SUPPORTED	= 0x07;	// supported flags, others cleared at mount
+    uint8 constant CK_SUPERBLOCK= 0x01; // the superblock
+    uint8 constant CK_CYLGRP    = 0x02; // the cylinder groups
+    uint8 constant CK_INODE     = 0x04; // inodes
+    uint8 constant CK_INDIR     = 0x08; // indirect blocks
+    uint8 constant CK_DIR       = 0x10; // directory contents
+    uint8 constant CK_SUPPORTED = 0x07; // supported flags, others cleared at mount
     function dir_dots(uint16 cur, uint16 par) internal returns (idirent, idirent) {
         return (dir_ent(FT_DIR, cur, "."), dir_ent(FT_DIR, par, ".."));
     }

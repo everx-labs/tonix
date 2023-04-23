@@ -50,14 +50,14 @@ contract tulsi is common {
     uint8 constant REDIR_SRC   = 32;
     uint8 constant REDIR_ARGS  = 64;
 
-    enum MENU { MAIN, DUMP, PARSE, PARSEC, CONFIG, MISC, LAST }
+    enum MENU { MAIN, DUMP, PARSE, GEN, CONFIG, MISC, LAST }
     string[][] constant MCS = [
-        ["Tulsi", "Dump", "Parse", "Parsec", "Misc"],
+        ["Tulsi", "Dump", "Parse", "Generate", "Configure", "Status"],
         ["Dump config", "Main", "As vars", "Project", "Parser", "Module" ],
-        ["Parse", "-", "-", "-", "Test" ],
-        ["Parse module", "-", "Generate", "Deploy", "Test 1", "Test 2", "Test 3" ],
-        ["Config", "Change input"],
-        ["Misc", "Bin size"]
+        ["Parse", "Module info", "Parse source", "View types information", "-" ],
+        ["Examine module", "Types information", "Generate helpers", "Deploy helpers", "Test UFS disk", "Test partition data", "Test type cache" ],
+        ["Configure", "Change input"],
+        ["Status", "Current module", "Input samples", "Type information", "Binary sizes"]
     ];
 
     function ens(string s1, string s2, string s3, string s4) external pure returns (TvmCell c) {
@@ -86,13 +86,17 @@ contract tulsi is common {
         string sCONF = _mval(cf, "CONFD");
         string sTO = sRT + "/" + sBIN + "/" + sTOC;
         string pq = sTO + " -c " + sETC + "/" + cn + "." + sCONF + " ";
-        string pp = sTO + " -c " + sETC + "/parser.conf ";
+//        string pp = sTO + " -c " + sETC + "/parser.conf ";
         string ofn = " " + sTMP + "/" + fn + ".res";
         string fargs = " -m " + fn + " " + args;
+
+        confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
+        string sMOD = _mval(cfv, "MODULE");
+
         string sredir =
             redir == REDIR_OUT ? " | jq -r .out\n" :
             (redir & REDIR_FILE) > 0 ? " >" + ofn + "\n":
-            redir == REDIR_PRINT ? " | xargs " + pp + " runx -m print `jq -c .` | jq -rj .out\n" :
+//            redir == REDIR_PRINT ? " | xargs " + pp + " runx -m print `jq -c .` | jq -rj .out\n" :
             redir == REDIR_ARGS ? " | xargs " :
             redir == REDIR_NONE ? "" : "";
         cmd.append(pq + (ccm == CRUN ? "runx" : "callx") + fargs);
@@ -107,7 +111,8 @@ contract tulsi is common {
             if ((redir & REDIR_OUT) > 0)
                 cmd.append("jq -r .out " + ofn + "\n");
             else if ((redir & REDIR_SRC) > 0)
-                cmd.append("jq -r .out " + ofn + " > " + ofn + ".src \n");
+//                cmd.append("jq -r .out " + ofn + " > " + ofn + ".src \n");
+                cmd.append("jq -r .out " + ofn + " > data/" + sMOD + "/" + sMOD + "_gen.src\n");
             if ((redir & REDIR_DBG) > 0)
                 cmd.append("jq -r .dbg " + ofn + "\n");
         }
@@ -172,17 +177,29 @@ contract tulsi is common {
         b.storeRef(bs3);
         return b.toCell();
     }
-    function _misc(uint n) internal pure returns (string cmd) {
+    function _misc(uint n) internal view returns (string cmd) {
+        confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
+        string sMOD = _mval(cfv, "MODULE");
         if (n == 1)
+            cmd.append("stat data/" + sMOD + ".sol\n");
+        else if (n == 2)
+            cmd.append("du -b data/*.sol\n");
+        else if (n == 3)
+            cmd.append("du -b data/" + sMOD + "/" + "*.tin\n");
+        else if (n == 4)
             cmd.append("du -b build/*.tvc\n");
     }
     function _config(uint n) internal view returns (string cmd) {
+        confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
+        string sMOD = _mval(cfv, "MODULE");
         if (n == 1) {
-            cmd.append(_print_cmd("File name?\n") + "read -r ii\n");
+            cmd.append(_print_cmd("Module name?\n") + "read -r ii\n");
             string cm1 = _ccmd("tulsi", CRUN, "enp", "`jq -cn --arg n $ii '{ss1:[\"Module\"],ss2:[$n],ss3:[\"MODULE\"]}'` | jq -r .c", REDIR_ARGS, false);
             string cm2 = _ccmd("tulsi", CCALL, "st", " --a " + format("{}", CONFIG_VOL) + " --c ", REDIR_NONE, false);
             cmd.append(cm1);
             cmd.append(cm2);
+        } else if (n == 2) {
+            cmd.append(_ccmd("gensec", CRUN, "print_config", "\"`jq -R '{h:.}' data/" + sMOD + "/tgen.cfg`\"", REDIR_OUT, false));
         }
 
     }
@@ -194,31 +211,8 @@ contract tulsi is common {
         }
     }
 
-    function _test_print_args(uint t, uint i, uint n) internal pure returns (string cmd) {
-        string si = format("{}", i);
-        string sn = format("{}", n);
-        cmd.append(
-            t == 16 ? "`jq -c {val:.g.tt[" + si + "]}" :
-            t == 17 ? "`jq -c '{val:.g.tti[] | select(.id == \"" + si + "\") .vv[" + sn + "]}'" :
-            t == 18 ? "`jq -c '.g.tti[] | select(.id == \"" + si + "\") | {val:{vtype:.vv[" + sn + "].pid,vname:.ss[" + sn + "],vdesc:\"\"}}'" : "???");
-    }
-    function _test_print(uint t, uint i) internal view returns (string cmd) {
-
-        string st = format("{}", t);
-        string targs = " tmp/parse_type.res` | jq -c '. + {t:" + st + "}'";
-        string fn = "store_" + (t == 16 ? "stt" : t == 17 ? "vari" : t == 18 ? "vard" : "??");
-        uint nv = i == 16 ? 8 : i  == 17 ? 6 : i == 18 ? 3 : 0;
-        if (t == 16)
-
-        for (uint n = 0; n < nv; n++) {
-            string args = _test_print_args(t, i, n);
-            //cmd.append(_toc_cmd("parser", CRUN, fn, args + targs, REDIR_PRINT, false));
-            cmd.append(_ccmd("parser", CRUN, fn, args + targs, REDIR_PRINT, false));
-        }
-    }
-
     function _print(string usingg, uint8 att, uint8 withh) internal view returns (string cmd) {
-        cmd.append("jq -r '.m[\"" + format("{}", att) + "\"]' " + usingg + ".tst | xargs " +
+        cmd.append("jq -r '.m[\"" + format("{}", att) + "\"]' " + "data/" + usingg + "/" + usingg + ".tst | xargs " +
             _ccmd(usingg, CRUN, "print", "--t " + format("{}", withh) + " --c ", REDIR_OUT, false));
     }
     function _parsec(uint n) internal view returns (string cmd) {
@@ -226,7 +220,7 @@ contract tulsi is common {
         confg cf = _decode_packed_config(_ram[CONFIG_PACKED]);
         confg cfp = _decode_packed_config(_ram[CONFIG_PARSER]);
         confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
-        string sPA = _mval(cfp, "PARSER");
+//        string sPA = _mval(cfp, "PARSER");
         string sFN = _mval(cfp, "FN");
         string sMOD = _mval(cfv, "MODULE");
         string sRT = _mval(cf, "R_ROOT");
@@ -234,31 +228,38 @@ contract tulsi is common {
         string sSO = _mval(cf, "SOLD");
         string sMA = _mval(cf, "MAKE");
         string sSOLD = sRT + "/" + sBIN + "/" + sSO;
-        string sTMP = _mval(cf, "TMP");
+//        string sTMP = _mval(cf, "TMP");
         string sBLD = _mval(cf, "BLD");
-        string IF = sTMP + "/" + sFN + ".res.src";
+//        string IF = sTMP + "/" + sFN + ".res.src";
+        string IF = "data/" + sMOD + "/" + sMOD + "_gen.src";
         string REST = "-p " + sMOD + " -o " + sBLD + "\n";
 
         if (n == 1) {
-            sFN = "parse_source";
-            cmd.append(_ccmd(sPA, CRUN, sFN, "\"`jq -cn --rawfile v " + sMOD + " '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE, false));
-            string OF = sTMP + "/" + sFN + ".res";
-            sFN = "gen_module";
-            cmd.append(_ccmd("gensec", CRUN, sFN, "\"`jq '{g:.g}' " + OF + "`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
-            IF = sTMP + "/" + sFN + ".res.src";
-            cmd.append(sSOLD + " " + IF + " " + REST);
+            cmd.append("[ -s data/" + sMOD + ".sol ] || echo Missing source\n");
+            cmd.append("[ -s data/" + sMOD + "/" + sMOD + ".tin ] || echo No type information avaialble\n");
+            cmd.append("[ -s data/" + sMOD + "/" + sMOD + ".tst ] || echo No test data supplied\n");
+            cmd.append("echo -n \"Module " + sMOD + " \" && [ -s etc/" + sMOD + ".conf ] && echo configured || echo Location unknown\n");
+            cmd.append("echo -n \"Helper sources \" && [ -s data/" + sMOD + "/" + sMOD + "_gen.src ] && echo found || echo not found\n");
         } else if (n == 2) {
-
+            sFN = "gen_module";
+            string gif = "data/" + sMOD + "/" + sMOD + ".tin";
+            string cfg = "data/" + sMOD + "/tgen.cfg";
+//            cmd.append(_ccmd("gensec", CRUN, sFN, "\"`jq '{g:.g}' " + gif + "`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
+            cmd.append(_ccmd("gensec", CRUN, sFN, "\"`jq --slurpfile v " + cfg + " '{g:.g,h:$v[]}' " + gif + "`\"", REDIR_FILE + REDIR_SRC + REDIR_DBG, true));
+//            jq --slurpfile v data/q0/tgen.cfg '{g:.g,h:$v[]}' data/q0/q0.tin
+            cmd.append(sSOLD + " " + IF + " " + REST);
         } else if (n == 3) {
             cmd.append(sMA + " " + sBLD + "/" + sMOD + "." + "deployed" + "\n");
         } else if (n == 4) {
-            uint8 start = 18;
+            uint8 start = 17;
+            sMOD = "q0";
             for (uint i = 6; i < 10; i++)
                 cmd.append(_print(sMOD, uint8(i), 7 + start));
             cmd.append(_print(sMOD, 5, 8 + start));
             cmd.append(_print(sMOD, 250, 2 + start));
         } else if (n == 5) {
             uint8 start = 18;
+            sMOD = "q1";
             cmd.append(_print(sMOD, 0, 0 + start));
             cmd.append(_print(sMOD, 1, 4 + start));
             cmd.append(_print(sMOD, 2, 5 + start));
@@ -270,8 +271,27 @@ contract tulsi is common {
         }
 
     }
-    function _parse(uint n) internal pure returns (string cmd) {
-        n;cmd;
+    function _parse(uint n) internal view returns (string cmd) {
+        confg cf = _decode_packed_config(_ram[CONFIG_PACKED]);
+        confg cfp = _decode_packed_config(_ram[CONFIG_PARSER]);
+        confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
+        string sPA = _mval(cfp, "PARSER");
+        string sMOD = _mval(cfv, "MODULE");
+        string sTMP = _mval(cf, "TMP");
+        if (n == 1) {
+            cmd.append("stat data/" + sMOD + ".sol\n");
+            cmd.append("du -b data/" + sMOD + "/" + sMOD + ".tin\n");
+            cmd.append("du -b data/" + sMOD + "/" + sMOD + ".tst\n");
+        } else if (n == 2) {
+            string sFN = "parse_source";
+            cmd.append(_ccmd(sPA, CRUN, sFN, "\"`jq -cn --rawfile v data/" + sMOD + ".sol '{name:\"" + sMOD + "\",ss:$v}'`\"", REDIR_FILE, false));
+            string OF = sTMP + "/" + sFN + ".res";
+            cmd.append("cp " + OF + " data/" + sMOD + "/" + sMOD + ".tin\n");
+        } else if (n == 3) {
+            string IF = "data/" + sMOD + "/" + sMOD + ".tin";
+            cmd.append(_ccmd("gensec", CRUN, "type_info", "\"`jq '{g:.g}' " + IF + "`\"", REDIR_OUT, false));
+        }
+
     }
     function _dump(uint n) internal view returns (string out) {
         if (n < 6) {
@@ -311,11 +331,11 @@ contract tulsi is common {
                 out.append(_dump(n));
             else if (ectx == MENU.PARSE)
                 cmd.append(_parse(n));
-            else if (ectx == MENU.PARSEC)
+            else if (ectx == MENU.GEN)
                 cmd.append(_parsec(n));
-            else if (ectx == MENU.CONFIG)
+            else if (ectx == MENU.CONFIG) {
                 cmd.append(_config(n));
-            else if (ectx == MENU.MISC)
+            } else if (ectx == MENU.MISC)
                 cmd.append(_misc(n));
             if (n == 0) // '0' prints current menu
                 out.append(print_menu(ectx));

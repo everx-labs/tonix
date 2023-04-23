@@ -3,8 +3,8 @@ import "fs.h";
 import "libfattr.sol";
 struct mfiledesc {
     uint8 fdt_nfiles;   // number of open files allocated
-    uint8 fd_freefile;	// approx. next free file
-    uint32 fd_map;		// bitmap of free fds
+    uint8 fd_freefile;  // approx. next free file
+    uint32 fd_map;      // bitmap of free fds
     uint8 ec;
     uint8 cur;
     uint8 fdup;
@@ -15,11 +15,11 @@ struct mfiledesc {
 }
 struct ofile {
     uint8 fdtype;   // cwd/rtd/txt/mem/NOFD/
-    uint8 ftype;	// REG/DIR/FIFO/CHR/a_inode/unix/unknown
+    uint8 ftype;    // REG/DIR/FIFO/CHR/a_inode/unix/unknown
     uint8 fd;
     uint16 mode;    // r/w/u u: a_inode/unix
     uint16 dev;
-    uint16 inode;	// NULL or applicable vnode
+    uint16 inode;   // NULL or applicable vnode
     uint16 szoff;   // DFLAG_SEEKABLE specific fields
     string name;
 }
@@ -35,9 +35,9 @@ struct mproc {
 }
 library libfdt {
     using libfdt for mfiledesc;
-//    uint16 constant UID_ROOT	= 0;
-    uint16 constant UID_BORIS	= 10;
-//    uint16 constant GID_WHEEL	= 0;
+//    uint16 constant UID_ROOT  = 0;
+    uint16 constant UID_BORIS   = 10;
+//    uint16 constant GID_WHEEL = 0;
     uint8 constant FD_TYPE_UNK = 0; // ???
     uint8 constant FD_TYPE_CWD = 1; // cwd
     uint8 constant FD_TYPE_RTD = 2; // rtd
@@ -155,40 +155,40 @@ library libfdt {
             flag, count, data, vnode, DT[ftype], offset));
     }
     using libfdt for fdescenttbl;
-    uint8 constant FREAD	= 0x01;
-    uint8 constant FWRITE	= 0x02;
+    uint8 constant FREAD    = 0x01;
+    uint8 constant FWRITE   = 0x02;
     uint8 constant FRW      = FREAD + FWRITE;
-    uint8 constant FEXEC	= 0x04;	// Open for execute only
-    uint8 constant EBADF    = 9;  // Bad file descriptor
+    uint8 constant FEXEC    = 0x04; // Open for execute only
+    uint8 constant EBADF    = 9;    // Bad file descriptor
     function fget_unlocked(fdescenttbl fdt, uint8 fd) internal returns (uint8 error, file fpp) {
-    	if (fd >= fdt.fdt_nfiles)
-    		error = EBADF;
+        if (fd >= fdt.fdt_nfiles)
+            error = EBADF;
         else
             fpp = fdt.fdt_ofiles[fd];
     }
     function fget_write(fdescenttbl fdt, uint8 fd) internal returns (uint8 error, file fpp) {
-    	return fdt._fget(fd, FWRITE);
+        return fdt._fget(fd, FWRITE);
     }
     function fget_read(fdescenttbl fdt, uint8 fd) internal returns (uint8 error, file fpp) {
-    	return fdt._fget(fd, FREAD);
+        return fdt._fget(fd, FREAD);
     }
     function _fget(fdescenttbl fdt, uint8 fd, uint8 flags) internal returns (uint8 error, file fpp) {
-    	file fp;
-    	(error, fp) = fdt.fget_unlocked(fd);
-    	if (error != 0)
-    		return (error, fpp);
-    	if (flags == FREAD || flags == FWRITE) {
-    		if ((fp.f_flag & flags) == 0)
-    			error = EBADF;
-        } else if (flags == FEXEC) {
-    		if (//fp.f_ops != &path_fileops &&
-    		    ((fp.f_flag & (FREAD | FEXEC)) == 0 ||
-    		    (fp.f_flag & FWRITE) != 0))
-    			error = EBADF;
+        file fp;
+        (error, fp) = fdt.fget_unlocked(fd);
+        if (error != 0)
+            return (error, fpp);
+        if (flags == FREAD || flags == FWRITE) {
+            if ((fp.f_flag & flags) == 0)
+                error = EBADF;
+            } else if (flags == FEXEC) {
+            if (//fp.f_ops != &path_fileops &&
+                ((fp.f_flag & (FREAD | FEXEC)) == 0 ||
+                (fp.f_flag & FWRITE) != 0))
+                error = EBADF;
+           }
+        if (error != 0) {
+            return (error, fpp);
         }
-    	if (error != 0) {
-    		return (error, fpp);
-    	}
-    	fpp = fp;
+        fpp = fp;
     }
 }
