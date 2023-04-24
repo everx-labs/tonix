@@ -8,21 +8,37 @@ contract settings is common {
     bytes constant QUICKS = "cCuUhHbBqQwWeExXzZ";
     string constant CONFIG_FILE = "default.cfg";
 
+    uint8 constant CUR_CFG = 44;
+    uint8 constant DEF_CFG = 55;
+
     enum MENU { MAIN, SELECT, CONFIG, LAST }
     string[][] constant MCS = [
         ["Preferences", "Settings", "Configure"],
         ["Settings", "Generation", "Other"],
-        ["Configuration", "Save settings", "Load settings"],
+        ["Configuration", "Save to file", "Load from file", "Print current settings", "Backup", "Restore", "Set as default", "Reset to default"],
         ["Generation settings", "Structure type definitions", "Enum type definitions", "Type printing functions",
             "Terse printing format", "Verbose printing format", "Helper contract encoders", "Print cell by type index"],
         ["Other settings", "Other 1", "Other 2", "Other 3", "Other 4", "Other 5"]
     ];
 
+    function enc(uint h, uint v) external pure returns (TvmCell c) {
+        (, , uint ctx, , , ) = _from_handle(h);
+        if (ctx == uint(MENU.CONFIG)) {
+            c = abi.encode(v);
+        }
+    }
+    function print(uint h, uint v) external view returns (string out) {
+        (, , uint ctx, , , ) = _from_handle(h);
+        if (ctx == uint(MENU.CONFIG)) {
+            for (uint i = 1; i <= MCS.length - uint(MENU.LAST); i++)
+                out.append(_fill_vals(i, v));
+        }
+    }
     function _fill_vals(uint itm, uint v) internal view returns (string out) {
         string[] opts = MCS[itm + uint(MENU.LAST) - 1];
         uint len = opts.length;
         if (len > 0)
-           out.append(opts[0] + "\n\n");
+           out.append("\n" + opts[0] + "\n\n");
         v = v >> 8 * itm;
         uint shift = 1;
         for (uint i = 1; i < len; i++) {
@@ -36,14 +52,24 @@ contract settings is common {
             h;
         }
     }
-    function _config(uint n, uint h) internal pure returns (string cmd) {
+    function _config(uint n, uint h) internal view returns (string cmd) {
         h;
-        if (n == 1) {
+        if (n == 1)
             cmd = "jq -r .vout $of >" + CONFIG_FILE + " && echo Configuration saved to " + CONFIG_FILE + "\n";
-        } else if (n == 2) {
+        else if (n == 2)
             cmd = "v=`cat " + CONFIG_FILE + "` && echo Loaded configuration from " + CONFIG_FILE + "\n";
-        }
+        else if (n == 3)
+            cmd = "eval \"$R print --h $h --v $v | jq -r .out\"";
+        else if (n == 4)
+            cmd = "eval \"$R enc --h $h --v $v | jq -r .c | xargs ../../bin/tonos-cli -c etc/" + SELF + ".conf callx -m st --a " + format("{}", CUR_CFG) + " --c \"";
+        else if (n == 5)
+            cmd = "v=" + format("{}", abi.decode(_ram[CUR_CFG], uint)) + "\n";
+        else if (n == 6)
+            cmd = "eval \"$R enc --h $h --v $v | jq -r .c | xargs ../../bin/tonos-cli -c etc/" + SELF + ".conf callx -m st --a " + format("{}", DEF_CFG) + " --c \"";
+        else if (n == 7)
+            cmd = "v=" + format("{}", abi.decode(_ram[DEF_CFG], uint)) + "\n";
     }
+
     function onc(uint h, uint vin, string s) external view returns (uint hout, uint vout, string cmd, string out) {
         if (s.empty())
             return (h, vin, cmd, out);
