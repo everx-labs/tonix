@@ -1,6 +1,9 @@
-A:=mesh
+M:=mesh
+S:=settings
+A:=anset
 H:=$A
-D:=
+D:=$A $S $M
+
 CTX+=$D $H
 
-include $(PWD)/../common.mk
+include ../common.mk

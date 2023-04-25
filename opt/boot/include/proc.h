@@ -10,9 +10,9 @@ struct proc {
     uint16 p_flag;      // P_* flags
     uint16 p_flag2;     // P2_* flags
     p_states p_state;   // Process status
-    uint16 p_pid;	    // Process identifier
-    uint16 p_pptr;	    // Pointer to parent process // proc
-    uint16 p_ksi;	    // Locked by parent proc lock // ksiginfo
+    uint16 p_pid;       // Process identifier
+    uint16 p_pptr;      // Pointer to parent process // proc
+    uint16 p_ksi;       // Locked by parent proc lock // ksiginfo
     uint32 p_siglist;   // Sigs not delivered to a td
     uint16 p_oppid;     // Real parent pid
     uint16 p_vmspace;   // Address space // vmspace
@@ -71,13 +71,13 @@ struct session {
 struct pgrp {
     uint16[] pg_members;// Pointer to pgrp members
     uint16 pg_session;  // Pointer to session // session
-    sigio[]	pg_sigiolst;// List of sigio sources
+    sigio[] pg_sigiolst;// List of sigio sources
     uint16 pg_id;       // Process group id
     uint16 pg_flags;    // PGRP_ flags
 }
 struct sigio {
     uint16 siu_proc;  // process to receive SIGIO/SIGURG
-    uint16 sio_myref; // location of the pointer that holds	the reference to this structure // sigio **
+    uint16 sio_myref; // location of the pointer that holds the reference to this structure
     uint16 sio_ucred; // current credentials // ucred
     uint16 sio_pgid;  // pgid for signals
 }

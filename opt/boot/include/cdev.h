@@ -8,7 +8,7 @@ struct cdev {
     uint16 si_uid;
     uint16 si_gid;
     uint16 si_mode;
-    uint16 si_cred;	      // cached clone-time credential // ucred
+    uint16 si_cred;       // cached clone-time credential // ucred
     uint16 si_drv0;
     uint16 si_refcount;
     uint16 si_list;        // cdev

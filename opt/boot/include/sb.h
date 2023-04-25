@@ -1,4 +1,5 @@
 pragma ton-solidity >= 0.67.0;
+
 struct csum {
     uint8 cs_ndir;      // number of directories
     uint16 cs_nbfree;   // number of free blocks
@@ -37,7 +38,7 @@ struct fsb { // 1 x 4 + 12 x 2 + 18 x 1 + 10 = 56
     uint8 sblkno;    // offset of super-block in filesys
     uint8 cblkno;    // offset of cyl-block in filesys
     uint8 iblkno;    // offset of inode-blocks in filesys
-    uint8 dblkno;    // offset of first data	after cg
+    uint8 dblkno;    // offset of first data after cg
     uint8 ncg;       // number of cylinder groups
     uint8 bsize;     // size of basic blocks in fs
     uint8 fsize;     // size of frag blocks in fs
@@ -60,18 +61,18 @@ struct fsb { // 1 x 4 + 12 x 2 + 18 x 1 + 10 = 56
     uint8 padding;   // padding to 31
 }
 struct fss {
-    uint8 fmod;		    // super block modified	flag
-    uint8 clean;    	// filesystem is clean flag
-    uint8 cgrotor;	    // last	cg searched
-    uint16 si;          // In-core pointer to summary info // fs_summary_info
-    uint16 metaspace;	// byte offset of this superblock
-    uint16 sblockactualloc;	// byte offset of this superblock
+    uint8 fmod;         // super block modified flag
+    uint8 clean;        // filesystem is clean flag
+    uint8 cgrotor;      // last cg searched
+    uint16 si;          // In-core pointer to summary info
+    uint16 metaspace;   // byte offset of this superblock
+    uint16 sblockactualloc; // byte offset of this superblock
     uint16 sblockloc;   // byte offset of standard superblock
     csum_total cstotal;
-    uint32 time;	    // last	time written
-    uint16 size;		// number of blocks in fs
-    uint16 dsize;	    // number of data blocks in fs
-    uint24 padding;	    // padding to 31
+    uint32 time;        // last time written
+    uint16 size;        // number of blocks in fs
+    uint16 dsize;       // number of data blocks in fs
+    uint24 padding;     // padding to 31
 }
 struct fs_summary_info {
     uint8[] si_contigdirs;  // # of contig. allocated dirs
@@ -104,7 +105,7 @@ struct uufsd {
     uint8 d_ccg;        // current cylinder group
     uint8 d_lcg;        // last cylinder group (in d_cg)
     uint8 d_error;      // human readable disk error
-    uint16 d_sblockloc;	// where to look for the superblock
+    uint16 d_sblockloc; // where to look for the superblock
     uint8 d_lookupflags;// flags to superblock lookup
     uint8 d_mine;       // internal flags
 }

@@ -38,14 +38,14 @@ library libgenio {
     uint8 constant ENEEDAUTH = 81; // Need authenticator
     uint8 constant EDOOFUS   = 88; // Programming error
     uint8 constant EINTEGRITY   = 97; // Integrity check failed
-    uint8 constant DFLAG_SEEKABLE =	0x02;	// seekable / nonsequential
-    uint8 constant FOF_OFFSET	= 0x01;	// Use the offset in uio argument
+    uint8 constant DFLAG_SEEKABLE = 0x02; // seekable / nonsequential
+    uint8 constant FOF_OFFSET   = 0x01; // Use the offset in uio argument
     uint16 constant IOSIZE_MAX = 64000;
     function fsbtodb(fsb f, uint b) internal returns (uint) {
-    	return b << f.fsbtodb;
+        return b << f.fsbtodb;
     }
     function cgtod(fsb f, uint c) internal returns (uint) {
-        return cgstart(f, c) + f.cblkno;	/* cg block */
+        return cgstart(f, c) + f.cblkno;    /* cg block */
     }
     function cgstart(fsb f, uint c) internal returns (uint) {
         return f.fpg * c;
@@ -54,30 +54,30 @@ library libgenio {
         return n * f.frag;
     }
     function pread(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 fd, uint16 pbuf, uint8 nbyte, uint16 offset) internal returns (uint8 error, uint16 cnt, TvmBuilder pb) {
-    	if (nbyte > IOSIZE_MAX)
-    		return (EINVAL, 0, pb);
-    	uio auio = uio([iovec(uint8(pbuf), nbyte)], 1, offset, nbyte, uio_seg.UIO_USERSPACE, uio_rw.UIO_READ);
-    	if (auio.uio_resid == 0)
-    		return (0, 0, pb);
-	    (error, cnt, pb) = m.kern_preadv(fdt, fd, auio, offset);
+        if (nbyte > IOSIZE_MAX)
+            return (EINVAL, 0, pb);
+        uio auio = uio([iovec(uint8(pbuf), nbyte)], 1, offset, nbyte, uio_seg.UIO_USERSPACE, uio_rw.UIO_READ);
+        if (auio.uio_resid == 0)
+            return (0, 0, pb);
+        (error, cnt, pb) = m.kern_preadv(fdt, fd, auio, offset);
 //        error = m.fo_read(auio, m[fd].toSlice(), FOF_OFFSET);
 //        uint16 cnt = nbyte;
-    	if (error > 0) {
-    		if (auio.uio_resid != nbyte && (error == EINTR || error == EWOULDBLOCK))
-    			error = 0;
-    	}
-//    	if (cnt >= auio.uio_resid)
+        if (error > 0) {
+            if (auio.uio_resid != nbyte && (error == EINTR || error == EWOULDBLOCK))
+                error = 0;
+        }
+//      if (cnt >= auio.uio_resid)
 //            cnt -= auio.uio_resid;
     }
 //    function readsuper(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 devfd, uint16 sblockloc, uint8 flags) internal returns (uint8 error, fsb f) {
 //        flags;
-////    	uint8 res;
+////        uint8 res;
 //        uint16 cnt;
 //        TvmBuilder b;
 //        (error, cnt, b) = m.pread(fdt, devfd, 6, 57, sblockloc);
 //        if (error == 0)
 //            f = abi.decode(b.toCell(), fsb);
-////    	error = (devfd, sblockloc, (void **)fsp, SBLOCKSIZE);
+////        error = (devfd, sblockloc, (void **)fsp, SBLOCKSIZE);
 //    }
 //    function sbget(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 devfd, uint16 sblockloc, uint8 flags) internal returns (uint8 error, fsb f) {
 ////        uio auio;
@@ -94,33 +94,33 @@ library libgenio {
 //    }
 //    function ffs_sbget(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 devfd, uint16 sblock, uint8 flags) internal returns (uint8 error, fsb f) {
 //        (error, f) = m.readsuper(fdt, devfd, sblock, flags | libufs.UFS_ALTSBLK);
-//		if (error != 0) {
+//      if (error != 0) {
 //        }
 //    }
     function dofileread(mapping (uint32 => TvmCell) m, file fp, uio auio, uint16 offset, uint8 flags) internal returns (uint8 error, uint16 retval, TvmBuilder b) {
-    	/* Finish zero length reads right here */
-    	if (auio.uio_resid == 0)
-    		return (0, 0, b);
-    	auio.uio_rwo = uio_rw.UIO_READ;
-    	auio.uio_offset = offset;
-    	uint16 cnt = auio.uio_resid;
+        /* Finish zero length reads right here */
+        if (auio.uio_resid == 0)
+            return (0, 0, b);
+        auio.uio_rwo = uio_rw.UIO_READ;
+        auio.uio_offset = offset;
+        uint16 cnt = auio.uio_resid;
         uint16 nread;
         (error, nread, b) = m.fo_read(fp, auio, flags);
-    	if (error > 0) {
-    		if (auio.uio_resid != cnt && (error == EINTR || error == EWOULDBLOCK))
-    			error = 0;
-    	}
-    	cnt -= auio.uio_resid;
-    	return (error, cnt, b);
+        if (error > 0) {
+            if (auio.uio_resid != cnt && (error == EINTR || error == EWOULDBLOCK))
+                error = 0;
+        }
+        cnt -= auio.uio_resid;
+        return (error, cnt, b);
     }
     function kern_preadv(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 fd, uio auio, uint16 offset) internal returns (uint8 error, uint16 cnt, TvmBuilder b) {
-    	file fp;
-    	(error, fp) = fdt.fget_read(fd);
-    	if (error == 0) {
-        	if (offset < 0)// &&
-        		error = EINVAL;
-        	else
-        		(error, cnt, b) = m.dofileread(fp, auio, offset, FOF_OFFSET);
+        file fp;
+        (error, fp) = fdt.fget_read(fd);
+        if (error == 0) {
+            if (offset < 0)// &&
+                error = EINVAL;
+            else
+                (error, cnt, b) = m.dofileread(fp, auio, offset, FOF_OFFSET);
         }
     }
     function fo_read(mapping (uint32 => TvmCell) m, file fp, uio auio, uint8 flags) internal returns (uint8 error, uint16 cnt, TvmBuilder b) {
@@ -149,8 +149,8 @@ library libgenio {
     }
     function pwrite(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 fd, TvmCell pb, uint8 nbyte, uint16 offset) internal returns (uint8 error, uint16 cnt) {
         pb;
-    	if (nbyte > IOSIZE_MAX)
-    		return (EINVAL, 0);
+        if (nbyte > IOSIZE_MAX)
+            return (EINVAL, 0);
         uio auio = uio([iovec(uint8(offset), nbyte)], 1, offset, nbyte, uio_seg.UIO_USERSPACE, uio_rw.UIO_WRITE);
         error = m.kern_pwritev(fdt, fd, auio, offset);
 //        (error, cnt) = m.fo_write(fp, auio, pb, FOF_OFFSET);
@@ -160,30 +160,24 @@ library libgenio {
         }
     }
     function dofilewrite(mapping (uint32 => TvmCell) m, file fp, uio auio, uint16 offset, uint8 flags) internal returns (uint8 error, uint16 retval) {
-    	uint16 cnt;
-    	auio.uio_rwo = uio_rw.UIO_WRITE;
-    	auio.uio_offset = offset;
-    	cnt = auio.uio_resid;
+        uint16 cnt;
+        auio.uio_rwo = uio_rw.UIO_WRITE;
+        auio.uio_offset = offset;
+        cnt = auio.uio_resid;
         (error, ) = m.fo_write(fp, auio, flags);
-    	if (error > 0) {
-    		if (auio.uio_resid != cnt && (error == EINTR || error == EWOULDBLOCK))
-    			error = 0;
-    	}
-    	cnt -= auio.uio_resid;
-    	return (error, cnt);
+        if (error > 0) {
+            if (auio.uio_resid != cnt && (error == EINTR || error == EWOULDBLOCK))
+                error = 0;
+        }
+        cnt -= auio.uio_resid;
+        return (error, cnt);
     }
     function kern_pwritev(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 fd, uio auio, uint16 offset) internal returns (uint8 error) {
-    	file fp;
-    	(error, fp) = fdt.fget_write(fd);
-    	if (error > 0)
-    		return error;
-//    	if (!(fp->f_ops->fo_flags & DFLAG_SEEKABLE))
-//    		error = ESPIPE;
-//    	else if (offset < 0 &&
-//    	    (fp->f_vnode == NULL || fp->f_vnode->v_type != VCHR))
-//    		error = EINVAL;
-//    	else
-    	(error, )  = m.dofilewrite(fp, auio, offset, FOF_OFFSET);
+        file fp;
+        (error, fp) = fdt.fget_write(fd);
+        if (error > 0)
+            return error;
+        (error, )  = m.dofilewrite(fp, auio, offset, FOF_OFFSET);
     }
     function fo_write(mapping (uint32 => TvmCell) m, file fp, uio auio, uint8 flags) internal returns (uint8 error, uint16 cnt) {
         flags;
@@ -210,55 +204,15 @@ library libgenio {
         }
         m[fp.f_data] = b.toCell();
     }
-//    function ffs_sbput(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 devfd, fss f, uint16 loc) internal returns (uint8 error) {
-//        f.time = now;
-//        f.fmod = 0;
-//        error;
-////        uint16 cnt;
-////        (error, cnt) = m.pwrite(fdt, devfd, abi.encode(f), f.sbsize, loc);
-//    }
-//    function sbput(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 devfd, fss f, uint8 numaltwrite) internal returns (uint8 error) {
-////    	struct csum *savedcsp;
-////    	uint16 savedactualloc;
-////    	int i;
-//        TvmCell c = abi.encode(f);
-////        uint16 cnt;
-//        c;
-//        devfd;
-////        cnt;
-////        (error, cnt) = m.pwrite(devfd, c, 58, f.sblockactualloc);
-////        error = m.ffs_sbput(fdt, devfd, f, f.sblockactualloc);
-//    	if (error != 0)
-//    		return error;
-//    	if (numaltwrite == 0)
-//    		return 0;
-////    	savedactualloc = fs->fs_sblockactualloc;
-////    	if (fs->fs_si != NULL) {
-////    		savedcsp = fs->fs_csp;
-////    		fs->fs_csp = NULL;
-////    	}
-//    	for (uint i = 0; i < numaltwrite; i++) {
-////    		f.sblockactualloc = dbtob(fsbtodb(f, cgsblock(f, i)));
-//            //error = fp.ffs_sbput(f, f.sblockactualloc, use_pwrite);
-////    		if (error != 0) {
-////    			fs.fs_sblockactualloc = savedactualloc;
-////    			fs.fs_csp = savedcsp;
-////    			return error;
-////    		}
-//    	}
-////    	f.sblockactualloc = savedactualloc;
-////    	if (f.si != NULL)
-////    		f.csp = savedcsp;
-//    }
     function cgput(mapping (uint32 => TvmCell) m, fdescenttbl fdt, uint8 devfd, fsb f, cg cgp) internal returns (bool success) {
-    	(uint8 ec, uint16 cnt) = m.pwrite(fdt, devfd, abi.encode(cgp), f.cgsize, uint16(fsbtodb(f, cgtod(f, cgp.cg_cgx)) * (f.fsize / fsbtodb(f, 1))));
+        (uint8 ec, uint16 cnt) = m.pwrite(fdt, devfd, abi.encode(cgp), f.cgsize, uint16(fsbtodb(f, cgtod(f, cgp.cg_cgx)) * (f.fsize / fsbtodb(f, 1))));
         ec;
-    	if (cnt == 0)
-    		return false;
-    	if (cnt != f.cgsize) {
-    		return false;
+        if (cnt == 0)
+            return false;
+        if (cnt != f.cgsize) {
+            return false;
             //"short write to block device"
-    	}
-    	success = true;
+        }
+        success = true;
     }
 }

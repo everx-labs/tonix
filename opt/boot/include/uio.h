@@ -9,7 +9,7 @@ struct uio {
     uio_rw uio_rwo;     // operation
 }
 enum uio_rw { UIO_READ, UIO_WRITE }
-enum uio_seg { UIO_USERSPACE, UIO_SYSSPACE,	UIO_NOCOPY }
+enum uio_seg { UIO_USERSPACE, UIO_SYSSPACE, UIO_NOCOPY }
 struct iovec {
     uint8 iov_base;
     uint8 iov_len;

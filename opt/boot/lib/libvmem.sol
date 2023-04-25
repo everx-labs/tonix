@@ -2,14 +2,14 @@ pragma ton-solidity >= 0.66.0;
 
 library libvmem {
     uint8 constant FRAG_SIZE    = 31;
-    uint8 constant FS_MAXCONTIG	= 16;
-    uint8 constant MAXFRAG 	    = 4;
-    uint8 constant MINCORE_INCORE	 	    = 0x1;  // Page is incore
-    uint8 constant MINCORE_REFERENCED	    = 0x2;  // Page has been referenced by us
-    uint8 constant MINCORE_MODIFIED	        = 0x4;  // Page has been modified by us
+    uint8 constant FS_MAXCONTIG = 16;
+    uint8 constant MAXFRAG      = 4;
+    uint8 constant MINCORE_INCORE           = 0x1;  // Page is incore
+    uint8 constant MINCORE_REFERENCED       = 0x2;  // Page has been referenced by us
+    uint8 constant MINCORE_MODIFIED         = 0x4;  // Page has been modified by us
     uint8 constant MINCORE_REFERENCED_OTHER = 0x8;  // Page has been referenced
-    uint8 constant MINCORE_MODIFIED_OTHER	= 0x10; // Page has been modified
-    uint8 constant MINCORE_SUPER		    = 0x60; // Page is a "super" page
+    uint8 constant MINCORE_MODIFIED_OTHER   = 0x10; // Page has been modified
+    uint8 constant MINCORE_SUPER            = 0x60; // Page is a "super" page
 //    function mincore(mapping (uint32 => TvmCell) m, uint32 addr, uint32 len) internal returns (TvmCell vec) {
 //        TvmBuilder b;
 //        uint32 cap = addr + len;

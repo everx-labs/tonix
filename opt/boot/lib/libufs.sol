@@ -8,50 +8,50 @@ import "libvmem.sol";
 library libufs {
     using libufs for uufsd;
     uint8 constant FSBTODB = 8;
-    uint8 constant DFLAG_SEEKABLE =	0x02;	// seekable / nonsequential
-    uint8 constant FOF_OFFSET	= 0x01;	// Use the offset in uio argument
+    uint8 constant DFLAG_SEEKABLE = 0x02; // seekable / nonsequential
+    uint8 constant FOF_OFFSET   = 0x01;  // Use the offset in uio argument
     uint16 constant IOSIZE_MAX = 64000;
-//    uint8 constant UFS_NOHASHFAIL	= 0x01;	// Ignore check-hash failure
-//    uint8 constant UFS_NOWARNFAIL	= 0x03;	// Ignore non-fatal inconsistencies
-//    uint8 constant UFS_NOMSG	    = 0x04;	// Print no error message
-//    uint8 constant UFS_NOCSUM	    = 0x08;	// Read just the superblock without csum
-//    uint8 constant UFS_ALTSBLK	    = 0x10;	// Flag used internally
+//    uint8 constant UFS_NOHASHFAIL = 0x01; // Ignore check-hash failure
+//    uint8 constant UFS_NOWARNFAIL = 0x03; // Ignore non-fatal inconsistencies
+//    uint8 constant UFS_NOMSG      = 0x04; // Print no error message
+//    uint8 constant UFS_NOCSUM     = 0x08; // Read just the superblock without csum
+//    uint8 constant UFS_ALTSBLK    = 0x10; // Flag used internally
     uint16 constant CG_MAGIC    = 0x4347;
     uint16 constant CGFS_MAGIC  = 0x4346;
 //    uint8 constant BLK_SIZE     = 127;
     uint8 constant FRAG_SIZE_OLD = 124;
     uint8 constant FRAG_SIZE    = 31;
-    uint8 constant FS_MAXCONTIG	= 16;
-    uint8 constant MAXFRAG 	    = 4;
+    uint8 constant FS_MAXCONTIG = 16;
+    uint8 constant MAXFRAG      = 4;
     uint8 constant FRAG_SHIFT   = 2; // LOG2(MAXFRAG)
-    uint8 constant MINFREE		= 8;
+    uint8 constant MINFREE      = 8;
     uint8 constant SB           = 2;
     uint8 constant IPG          = 96;
     uint8 constant IPG_OLD      = 30;
-    uint8 constant MINCYLGRPS	= 4;        // The minimal number of cylinder groups that should be created.
-    uint8 constant AVFILESIZ	= 100;  	// expected average file size
-//    uint8 constant AFPDIR		= 8;	    // expected number of files per directory
+    uint8 constant MINCYLGRPS   = 4;    // The minimal number of cylinder groups that should be created.
+    uint8 constant AVFILESIZ    = 100;  // expected average file size
+//    uint8 constant AFPDIR     = 8;    // expected number of files per directory
 //    uint16 constant MAXBPG      = 1024;     // 256 * 4;
     uint16 constant MAXBPG_OLD  = 1024;     // 256 * 4;
     uint16 constant MAXBPG      = 250;     // 256 * 4;
-//    uint8 constant DEFAULTOPT	= 0;//libfs.FS_OPTTIME;
+//    uint8 constant DEFAULTOPT = 0;    //libfs.FS_OPTTIME;
 //    uint8 constant MAXMNTLEN    = 32; // The path name on which the filesystem is mounted is maintained in fs_fsmnt
 //    uint8 constant MAXVOLLEN    = 8; // The volume name for this filesystem is maintained in fs_volname
-    uint8 constant MINE_NAME	= 0x01; // Internally, track the 'name' value, it's ours.
+    uint8 constant MINE_NAME    = 0x01; // Internally, track the 'name' value, it's ours.
     uint8 constant MINE_WRITE   = 0x02; // Track if its fd points to a writable device
     uint16 constant O_RDONLY    = 0;
     uint16 constant O_WRONLY    = 1;
     uint16 constant O_RDWR      = 2;
     function checkinode(uufsd ud, uint16 inum) internal returns (string out) {
-    	fsb f = ud.d_fsb;
-    	if (inum >= f.ipg * f.ncg)
+        fsb f = ud.d_fsb;
+        if (inum >= f.ipg * f.ncg)
             return "inode number out of range";
-    	uint8 inoblock = ud.d_inoblock;
-    	if (inoblock == 0)
+        uint8 inoblock = ud.d_inoblock;
+        if (inoblock == 0)
             return "unable to allocate inode block";
         if (ud.d_ufs != 1)
             return "unknown UFS filesystem type";
-    	uint16 min = ud.d_inomin;
+        uint16 min = ud.d_inomin;
         uint16 max = ud.d_inomax;
         if (inum >= min && inum < max) {
                out = "Success!";
@@ -61,10 +61,10 @@ library libufs {
     }
     function getinode(uufsd ud, mapping (uint32 => TvmCell) m, uint16 inum) internal returns (dinode di) {
 //        TvmSlice s = libvmem.fuword(m, uint16(disk.d_fsb.iblkno * 4 + inum));
-    	fsb f = ud.d_fsb;
+        fsb f = ud.d_fsb;
         uint8 ec;
-    	if (inum < f.ipg * f.ncg) {
-    	    uint8 inoblock = ud.d_inoblock;
+        if (inum < f.ipg * f.ncg) {
+            uint8 inoblock = ud.d_inoblock;
             if (inoblock > 0) {
                 if (inum >= ud.d_inomin && inum < ud.d_inomax) {
                     uint16 dp = inum + ud.d_inoblock * 4;
@@ -102,28 +102,28 @@ library libufs {
             return ud.d_fd;
     }
     function ufs_disk_close(uufsd ud) internal {
-    	close(ud.d_fd);
-    	ud.d_fd = 0;
+        close(ud.d_fd);
+        ud.d_fd = 0;
         delete ud.d_inoblock;
-    	if ((ud.d_mine & MINE_NAME) > 0)
-    		delete ud.d_name;
-    	if (ud.d_si > 0) {
-//    		delete disk.d_si.si_csp;
-    		delete ud.d_si;
-    	}
+        if ((ud.d_mine & MINE_NAME) > 0)
+            delete ud.d_name;
+        if (ud.d_si > 0) {
+//          delete disk.d_si.si_csp;
+        delete ud.d_si;
+        }
     }
     function ufs_disk_write(uufsd ud) internal returns (bool) {
-    	if ((ud.d_mine & MINE_WRITE) > 0)
-    		return true;
-    	uint8 fd = ud.open(bytes(ud.d_name), O_RDWR);
-    	if (fd < 0) {
-//    		ERROR(disk, "failed to open disk for writing");
-    		return false;
-    	}
-    	close(ud.d_fd);
-    	ud.d_fd = fd;
-    	ud.d_mine |= MINE_WRITE;
-    	return true;
+        if ((ud.d_mine & MINE_WRITE) > 0)
+            return true;
+        uint8 fd = ud.open(bytes(ud.d_name), O_RDWR);
+        if (fd < 0) {
+//          ERROR(disk, "failed to open disk for writing");
+            return false;
+        }
+        close(ud.d_fd);
+        ud.d_fd = fd;
+        ud.d_mine |= MINE_WRITE;
+        return true;
     }
     function unpack_fs(TvmCell c) internal returns (uufsd ud, mapping (uint32 => TvmCell) m) {
         TvmSlice s00 = c.toSlice();
@@ -256,17 +256,17 @@ library libufs {
         ud.ERROR(0);
         if (error > 0) {
             ud.ERROR(error);
-    		ud.d_ufs = 0;
-    		return false;
+            ud.d_ufs = 0;
+            return false;
     	}
-    	ud.d_fsb = f;
+        ud.d_fsb = f;
         if (f.magic == CGFS_MAGIC)
             ud.d_ufs = 1;
         if (f.fsize > 0) {
-    	    ud.d_bsize = uint16(f.fsize / libgenio.fsbtodb(f, 1));
-    	    ud.d_sblock = s.sblockloc / ud.d_bsize;
-    	    ud.d_si = s.si;
-    	    return true;
+            ud.d_bsize = uint16(f.fsize / libgenio.fsbtodb(f, 1));
+            ud.d_sblock = s.sblockloc / ud.d_bsize;
+            ud.d_si = s.si;
+            return true;
         }
         return false;
     }

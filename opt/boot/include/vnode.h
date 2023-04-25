@@ -1,7 +1,7 @@
 pragma ton-solidity >= 0.67.0;
 
-enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD, VMARKER }
-enum vgetstate	{ VGET_NONE, VGET_HOLDCNT, VGET_USECOUNT }
+enum vtype { VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD, VMARKER }
+enum vgetstate { VGET_NONE, VGET_HOLDCNT, VGET_USECOUNT }
 struct vnode {
     vtype v_type;           // vnode type
     uint8 v_irflag;         // frequently read flags
