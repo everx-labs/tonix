@@ -1,7 +1,8 @@
 A:=psh
 B:=pp
 H:=$A
-D:=$A
+D:=$A $B
+INIT:=$H $B
 CTX+=$D $H
 
 T:=test2.sol
