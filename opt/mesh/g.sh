@@ -1,6 +1,6 @@
 #set -x
 function err() {
-    ~/bin/0.67.1/tonos-cli -c $CFG debug run -d build/$X.debug.json -m $1 -- --h $h --vin $v --s "$i"
+    $TOC debug run -d build/$X.debug.json -m $1 -- --h $h --vin $v --s "$i"
     tail -n15 trace.log | head -n-5
     exit 1
 }
@@ -18,6 +18,7 @@ function open() {
     IDEV=$2
     X=$1
     CFG=etc/$1.conf
+    TOC="../../bin/tonos-cli -c $CFG "
     R="../../bin/tonos-cli -c $CFG runx -m "
     mkdir -p tmp
     of=tmp/${1}_$IDEV.res
@@ -25,7 +26,7 @@ function open() {
     v=`cat default.cfg`
 }
 
-open settings onc
+open anset onc
 
 while true
 do

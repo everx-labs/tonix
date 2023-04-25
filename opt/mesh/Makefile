@@ -1,7 +1,9 @@
-A:=mesh
+M:=mesh
 S:=settings
-H:=$S
-D:=$A
+A:=anset
+H:=$A
+D:=$A $S $M
+
 CTX+=$D $H
 
 include ../common.mk
