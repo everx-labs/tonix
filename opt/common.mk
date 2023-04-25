@@ -35,6 +35,7 @@ H?=
 CTX?=
 INIT?=$H
 DEPLOYED=$(patsubst %,$(BLD)/%.deployed,$(INIT))
+INSTALLED=$(patsubst %,$(BLD)/%.installed,$(INIT))
 CONFD=$(patsubst %,$(ETC)/%.conf,$(CTX))
 CCS=$(patsubst %,$(BLD)/%.cs,$(CTX))
 CSS=$(patsubst %,$(BLD)/%.tvc,$(CTX))
@@ -46,18 +47,22 @@ $(DIRS):
 	mkdir -p $@
 dirs:
 	mkdir -p $(DIRS)
-cs: $(CCS) | $(DIRS) ## compile source contracts to generate a cell with code
+cs: $(CCS) | $(DIRS) ## obtain a cell containing the smart-contract code
 	@true
-cc: $(CSS) | $(DIRS) ## compile source contracts to generate a cell with code
+cc: $(CSS) | $(DIRS) ## compile source contracts to generate the initial state
 	@true
 clean:
 	rm -f $(BLD)/*.cs
 deploy: $(DEPLOYED) ## Deploy a set of contracts marked as initial
 	-cat $^
+install: $(INSTALLED)
 config:
-	$(TOC) config --url $(URL) --is_json true
+	$(TOC) config --url $(URL) --is_json true --balance_in_tons true
 conf: $(CONFD)
 	-cat $^
+
+$(BLD)/%.installed: $(BLD)/%.shift $(BLD)/%.abi.json
+	$(TOC) -c $(ETC)/$*.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 2,$^) --is_json true --balance_in_tons true >$@
 $(BLD)/%.tvc: %.sol
 #	$(SOLD) $< $(foreach i,$(INC_PATH),-I $i) -O $(BLD)
 	$(SOLD) $< --base-path . $(foreach i,$(INC_PATH),-i $i) -o $(BLD)
