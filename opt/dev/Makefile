@@ -1,6 +1,6 @@
 H:=cstat
 V:=cview
-D:=cell a1 a2 a3 a4 cstat
+D:=cell a1 a2 a3 a4 cstat $V
 CTX:=$H $D
 INIT:=$H $V
 INC_PATH+=../include ../../usr/include ../../usr/src/lib
