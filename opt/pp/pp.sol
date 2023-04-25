@@ -1,4 +1,4 @@
-pragma ever-solidity >= 0.66.0;
+pragma ever-solidity >= 0.67.0;
 
 import "b0.sol";
 import "libstr.sol";
@@ -9,7 +9,7 @@ struct sy0 {
 }
 struct sym {
     uint8 nl;
-    byte sb;
+    bytes1 sb;
     uint nh;
     string name;
     string val;
@@ -45,7 +45,7 @@ library liblexer {
         uint p = l.pos;
         bytes bb = l.bb;
         uint pa = p;
-        byte b;
+        bytes1 b;
         while (b != ')' ) {
             b = bb[p++];
             if (b == ',') {
@@ -60,7 +60,7 @@ library liblexer {
     function function_macro_definition(lbuf l) internal returns (fsym fs) {
         (uint p, bytes bb) = l.unpack();
         uint t1 = p;
-        byte b;
+        bytes1 b;
         while (!libctype.isspace(b))
             b = bb[p--];
         string name = bb[p + 2 : t1];
@@ -79,7 +79,7 @@ library liblexer {
         uint sa = p;
         uint pw = sa;
         bytes w;
-        byte b;
+        bytes1 b;
         bool ident;
         while (b != '\n') {
             b = bb[p++];
@@ -120,7 +120,7 @@ library liblexer {
 
     function parse_line(lbuf l) internal returns (string out) {
         (uint p, bytes bb) = l.unpack();
-        byte b;
+        bytes1 b;
         while (b != "\n") {
             b = bb[p++];
         }
@@ -156,7 +156,7 @@ contract pp is b0 {
             uint wp;
             uint wc;
             while (p++ + 1 < len) {
-                byte b = bb[p];
+                bytes1 b = bb[p];
                 if (!libctype.isspace(b))
                     wc++;
                 if (wc == 0)
@@ -246,8 +246,8 @@ contract pp is b0 {
         lbuf l = lbuf(p, bb);
 
 //        uint p0;
-        mapping (byte => sym2[]) ms2;
-        mapping (byte => fsym[]) msf;
+        mapping (bytes1 => sym2[]) ms2;
+        mapping (bytes1 => fsym[]) msf;
 
 //        out = s;
         out.append(l.parse_line());
@@ -261,11 +261,11 @@ contract pp is b0 {
         uint len = bb.length - 1;
         uint p;
         uint p0;
-        mapping (byte => sym2[]) ms2;
-        mapping (byte => fsym[]) msf;
+        mapping (bytes1 => sym2[]) ms2;
+        mapping (bytes1 => fsym[]) msf;
 
         while (p++ < len) {
-            byte b = bb[p];
+            bytes1 b = bb[p];
             if (b == "#") {
                 out.append(bb[p0 : p]);
                 uint t0 = p + 1;
@@ -432,14 +432,14 @@ contract pp is b0 {
                 bytes[] ww = libstr.split(ln, ' ');
                 if (ww[0] == "#define") {
                     string sm = ww[1];
-                    byte b = ww[1][0];
+                    bytes1 b = ww[1][0];
                     mcs.push(sym(uint8(sm.byteLength()), b, tvm.hash(sm), sm, ww[2]));
                     mm.append(bytes(b));
                 }
             } else {
                 if (!mm.empty()) {
                     for (uint i = 0; i < lnl - 1; i++) {
-                        byte b = ln[i];
+                        bytes1 b = ln[i];
                         if (libstr.strchr(mm, b) > 0) {
                             for (sym sy: mcs) {
                                 if (sy.sb == b) {
