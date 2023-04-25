@@ -1,16 +1,16 @@
 M:=tulsi
 T:=parsec
 G:=gensec
-S:=settings
-H:=$S
+H:=$M
 D:=$H $T $M
+INIT:=$D
 CTX:=$D $H
 include ../common.mk
 
 SHELL = /bin/bash
 DAT:=data
 
-s?=q0
+s?=q2
 c?=ixeen
 sc: $(TMP)/scan_mem.res
 $(TMP)/scan_mem.res: $(DAT)/$s/$s.tin $c.ram
@@ -40,3 +40,5 @@ test: $(DAT)/$s/$s.tst
 	$(call _test,2,34)
 	$(call _test,5,28)
 	$(foreach n,6 7 8 9,$(call _test,$n,27);)
+
+run: test
