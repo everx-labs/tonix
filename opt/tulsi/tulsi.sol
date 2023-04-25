@@ -50,14 +50,16 @@ contract tulsi is common {
     uint8 constant REDIR_SRC   = 32;
     uint8 constant REDIR_ARGS  = 64;
 
-    enum MENU { MAIN, DUMP, PARSE, GEN, CONFIG, MISC, LAST }
+    enum MENU { MAIN, DUMP, PARSE, GEN, CONFIG, MISC, TYINFO, SCAN, LAST }
     string[][] constant MCS = [
-        ["Tulsi", "Dump", "Parse", "Generate", "Configure", "Status"],
+        ["Tulsi", "Dump", "Parse", "Generate", "Configure", "Status", "Types", "Scan" ],
         ["Dump config", "Main", "As vars", "Project", "Parser", "Module" ],
         ["Parse", "Module info", "Parse source", "View types information", "-" ],
         ["Examine module", "Types information", "Generate helpers", "Deploy helpers", "Test UFS disk", "Test partition data", "Test type cache" ],
         ["Configure", "Change input"],
-        ["Status", "Current module", "Input samples", "Type information", "Binary sizes"]
+        ["Status", "Current module", "Input samples", "Type information", "Binary sizes"],
+        ["Type information", "List", "Summary"],
+        ["Scan", "Memory"]
     ];
 
     function ens(string s1, string s2, string s3, string s4) external pure returns (TvmCell c) {
@@ -176,6 +178,28 @@ contract tulsi is common {
         b.storeRef(bs2);
         b.storeRef(bs3);
         return b.toCell();
+    }
+
+    function _scan(uint n) internal view returns (string cmd) {
+        confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
+        string sMOD = _mval(cfv, "MODULE");
+        if (n == 1) {
+            string IF = "data/" + sMOD + "/" + sMOD + ".tin";
+            cmd.append(_ccmd("gensec", CRUN, "scan_mem", "\"`jq -s '{g:.[0].g,m:.[1]._ram}' " + IF + " dump.ram`\"",  REDIR_OUT, false));
+        }
+        //scan_mem -- "`jq -s '{g:.[0].g,m:.[1]._ram}' data/q0/q0.tin dump.ram`" | jq -r .out
+    }
+
+    function _tyinfo(uint n) internal view returns (string cmd) {
+        confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
+        string sMOD = _mval(cfv, "MODULE");
+        if (n == 1) {
+            string IF = "data/" + sMOD + "/" + sMOD + ".tin";
+            cmd.append(_ccmd("gensec", CRUN, "type_info", "\"`jq '{g:.g}' " + IF + "`\"", REDIR_OUT, false));
+        }  else if (n == 2) {
+            string IF = "data/" + sMOD + "/" + sMOD + ".tin";
+            cmd.append(_ccmd("gensec", CRUN, "struct_types", "\"`jq '{g:.g}' " + IF + "`\"", REDIR_OUT, false));
+        }
     }
     function _misc(uint n) internal view returns (string cmd) {
         confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
@@ -333,10 +357,14 @@ contract tulsi is common {
                 cmd.append(_parse(n));
             else if (ectx == MENU.GEN)
                 cmd.append(_parsec(n));
-            else if (ectx == MENU.CONFIG) {
+            else if (ectx == MENU.CONFIG)
                 cmd.append(_config(n));
-            } else if (ectx == MENU.MISC)
+            else if (ectx == MENU.MISC)
                 cmd.append(_misc(n));
+            else if (ectx == MENU.TYINFO)
+                cmd.append(_tyinfo(n));
+            else if (ectx == MENU.SCAN)
+                cmd.append(_scan(n));
             if (n == 0) // '0' prints current menu
                 out.append(print_menu(ectx));
             nitm = n;

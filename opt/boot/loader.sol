@@ -13,65 +13,64 @@ import "libpart.sol";
 
 import "kproc.sol";
 struct namecache {
-	uint16 nc_src;	// source vnode list // (namecache)
-	uint16 nc_dst;	// destination vnode list // (namecache)
-	uint16 nc_hash; // hash chain // (namecache)
-	uint16 nc_dvp;  // vnode of parent of name // vnode
-	uint16 nu_vp;	// vnode the name refers to // vnode
-	uint8 nc_flag;	// flag bits
-	uint8 nc_nlen;	// length of name
-	string nc_name;	// segment name + nul
+    uint16 nc_src;  // source vnode list // (namecache)
+    uint16 nc_dst;  // destination vnode list // (namecache)
+    uint16 nc_hash; // hash chain // (namecache)
+    uint16 nc_dvp;  // vnode of parent of name // vnode
+    uint16 nu_vp;   // vnode the name refers to // vnode
+    uint8 nc_flag;  // flag bits
+    uint8 nc_nlen;  // length of name
+    string nc_name; // segment name + nul
 }
 
 struct mount {
-	uint8 mnt_vfs_ops;		// pending vfs ops
-	uint8 mnt_kern_flag;	// kernel only flags
-	uint64 mnt_flag;		// flags shared with user
-	uint16 mnt_rootvnode;   // vnode
-	uint16 mnt_vnodecovered;// vnode we mounted on // vnode
-	uint16 mnt_op;		    // operations on fs // vfsops
-	vfsconf	mnt_vfc;		// configuration info
-	uint8 mnt_gen;		    // struct mount generation
-	uint16 mnt_syncer;		// syncer vnode // vnode
+    uint8 mnt_vfs_ops;		// pending vfs ops
+    uint8 mnt_kern_flag;	// kernel only flags
+    uint64 mnt_flag;		// flags shared with user
+    uint16 mnt_rootvnode;   // vnode
+    uint16 mnt_vnodecovered;// vnode we mounted on // vnode
+    uint16 mnt_op;          // operations on fs // vfsops
+    vfsconf	mnt_vfc;		// configuration info
+    uint8 mnt_gen;		    // struct mount generation
+    uint16 mnt_syncer;		// syncer vnode // vnode
     uint16[] mnt_nvnodelist;// list of vnodes // vnode
     uint8 mnt_nvnodelistsize;// # of vnodes
-	uint8 mnt_writeopcount;	// write syscalls pending
-	vfsopt[] mnt_opt;		// current mount options
-	vfsopt[] mnt_optnew;	// new options passed to fs
-	uint16 mnt_stat;		// cache of filesystem stats // statfs
-	uint16 mnt_cred;		// credentials of mounter // ucred
-	uint32 mnt_data;		// private data
-	uint32 mnt_time;		// last time writte
-	uint16 mnt_iosize_max;	// max size for clusters, etc
-	uint16 mnt_export;	    // export list // netexport
-	uint16[] mnt_lazyvnodelist;	// list of lazy vnodes
-	uint8 mnt_lazyvnodelistsize;// # of lazy vnodes
-	uint8 mnt_upper_pending;	// # of pending ops on mnt_uppers
-	uint16[] mnt_uppers;    // upper mounts over us // mount_upper_node
-	uint16[] mnt_notify;    // upper mounts for notification // mount_upper_node
+    uint8 mnt_writeopcount;	// write syscalls pending
+    vfsopt[] mnt_opt;	    // current mount options
+    vfsopt[] mnt_optnew;    // new options passed to fs
+    uint16 mnt_stat;        // cache of filesystem stats // statfs
+    uint16 mnt_cred;        // credentials of mounter // ucred
+    uint32 mnt_data;        // private data
+    uint32 mnt_time;        // last time writte
+    uint16 mnt_iosize_max;	// max size for clusters, etc
+    uint16 mnt_export;	    // export list // netexport
+    uint16[] mnt_lazyvnodelist;	// list of lazy vnodes
+    uint8 mnt_lazyvnodelistsize;// # of lazy vnodes
+    uint8 mnt_upper_pending;	// # of pending ops on mnt_uppers
+    uint16[] mnt_uppers;    // upper mounts over us // mount_upper_node
+    uint16[] mnt_notify;    // upper mounts for notification // mount_upper_node
 }
 
 struct vfsconf {
-	uint16 vfc_version;		// ABI version number
-	string vfc_name;	    // filesystem type name
-	uint16 vfc_vfsops;	    // filesystem operations vector // vfsops
-	uint16 vfc_vfsops_sd;	// ... signal-deferred // vfsops
-	uint8 vfc_typenum;		// historic filesystem type number
-	uint8 vfc_refcount;		// number mounted of this type
-	uint8 vfc_flags;		// permanent flags
-	uint8 vfc_prison_flag;	// prison allow.mount.* flag
-	vfsopt[] vfc_opts;	    // mount options
+    uint16 vfc_version;	    // ABI version number
+    string vfc_name;        // filesystem type name
+    uint16 vfc_vfsops;	    // filesystem operations vector // vfsops
+    uint16 vfc_vfsops_sd;   // ... signal-deferred // vfsops
+    uint8 vfc_typenum;	    // historic filesystem type number
+    uint8 vfc_refcount;	    // number mounted of this type
+    uint8 vfc_flags;        // permanent flags
+    uint8 vfc_prison_flag;	// prison allow.mount.* flag
+    vfsopt[] vfc_opts;	    // mount options
 }
 
 struct vfsopt {
-	uint16 link;
-	string name;
-	string value;
-	uint8 len;
-	uint8 pos;
-	uint8 seen;
+    uint16 link;
+    string name;
+    string value;
+    uint8 len;
+    uint8 pos;
+    uint8 seen;
 }
-
 
 //union vm_map_object {
 //	struct vm_object *vm_object;	/* object object */
@@ -107,49 +106,49 @@ contract loader {
         thread curthread;
         uint32 osreldate;
 
-    	ucred newcred;
-    	loginclass tmplc;
-    	uint32 pageablemem;
-    	int i;
-    	proc p = proc0;
+        ucred newcred;
+        loginclass tmplc;
+        uint32 pageablemem;
+        int i;
+        proc p = proc0;
         uint16 a; // proc0 address
-    	thread td = thread0;
-    	p.p_magic = P_MAGIC;
-    	p.p_osrel = osreldate;
-    	procinit();	    // set up proc zone
-    	threadinit();   // set up UMA zones
-    	allproc.push(a);
-    	p.p_pgrp = p0a;//pgrp0;
-    	pgrp0.pg_members.push(a);
-    	pgrp0.pg_session = s0a;//session0;
-    	session0.s_count = 1;
-    	session0.s_leader = a;
+        thread td = thread0;
+        p.p_magic = P_MAGIC;
+        p.p_osrel = osreldate;
+        procinit();	    // set up proc zone
+        threadinit();   // set up UMA zones
+        allproc.push(a);
+        p.p_pgrp = p0a;//pgrp0;
+        pgrp0.pg_members.push(a);
+        pgrp0.pg_session = s0a;//session0;
+        session0.s_count = 1;
+        session0.s_leader = a;
 //    	p.p_flag = P_SYSTEM | P_INMEM | P_KPROC;
-    	p.p_state = p_states.PRS_NORMAL;
-    	p.p_nice = 0;
-    	td.td_tid = THREAD0_TID;
-    	td.td_state = td_states.TDS_RUNNING;
-    	td.td_flags = TDF_INMEM;
-    	td.td_pflags = TDP_KTHREAD;
-    	p.p_leader = a;
-    	p.p_comm = "kernel";
-    	td.td_name = "swapper";
-    	newcred = crget();
-    	newcred.cr_ngroups = 1;
-    	curthread.td_ucred = 1;//newcred;
-    	newcred.cr_loginclass = 1;//tmplc;
-    	proc_set_cred_init(p, newcred);
-    	p.p_sigacts = sigacts_alloc();
-    	siginit(proc0);
-    	p.p_pd = pdinit(0, false);
-    	p.p_fd = fdinit();
-    	p.p_vmspace = vms0a; //vmspace0;
-//    	pmap_pinit0(vmspace_pmap(vmspace0));
-//    	vm_map_init(vmspace0.vm_map, vmspace_pmap(vmspace0), p.p_sysent.sv_minuser, p.p_sysent.sv_maxuser);
-    	//p.process_init();
-    	//td.thread_init();
-    	//p.process_ctor();
-    	//td.thread_ctor();
+        p.p_state = p_states.PRS_NORMAL;
+        p.p_nice = 0;
+        td.td_tid = THREAD0_TID;
+        td.td_state = td_states.TDS_RUNNING;
+        td.td_flags = TDF_INMEM;
+        td.td_pflags = TDP_KTHREAD;
+        p.p_leader = a;
+        p.p_comm = "kernel";
+        td.td_name = "swapper";
+        newcred = crget();
+        newcred.cr_ngroups = 1;
+        curthread.td_ucred = 1;//newcred;
+        newcred.cr_loginclass = 1;//tmplc;
+        proc_set_cred_init(p, newcred);
+        p.p_sigacts = sigacts_alloc();
+        siginit(proc0);
+        p.p_pd = pdinit(0, false);
+        p.p_fd = fdinit();
+        p.p_vmspace = vms0a; //vmspace0;
+//      pmap_pinit0(vmspace_pmap(vmspace0));
+//      vm_map_init(vmspace0.vm_map, vmspace_pmap(vmspace0), p.p_sysent.sv_minuser, p.p_sysent.sv_maxuser);
+        //p.process_init();
+        //td.thread_init();
+        //p.process_ctor();
+        //td.thread_ctor();
     }
     function pdinit(uint16, bool) internal returns (uint16) {}
     function proc_set_cred_init(proc p, ucred c) internal {}

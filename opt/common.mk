@@ -8,8 +8,8 @@ NET:=rfld
 GIVER:=Novi
 VAL0:=15
 VAL1:=1
-#TOOLS_BIN:=~/bin/0.67
-TOOLS_BIN:=$(R_ROOT)/bin
+TOOLS_BIN:=~/bin/0.67.1
+#TOOLS_BIN:=$(R_ROOT)/bin
 RKEYS:=$(R_ROOT)/k1.keys
 # Tools directories
 SOLD:=$(TOOLS_BIN)/sold
@@ -38,6 +38,8 @@ DEPLOYED=$(patsubst %,$(BLD)/%.deployed,$(INIT))
 CONFD=$(patsubst %,$(ETC)/%.conf,$(CTX))
 CCS=$(patsubst %,$(BLD)/%.cs,$(CTX))
 CSS=$(patsubst %,$(BLD)/%.tvc,$(CTX))
+ASM=$(patsubst %,$(BLD)/%.code,$(CTX))
+ABI=$(patsubst %,$(BLD)/%.abi.json,$(CTX))
 DIRS:=$(BLD) $(ETC) $(TMP)
 INC_PATH?=
 all: dirs config cc
@@ -66,12 +68,12 @@ $(BLD)/%.cs: $(BLD)/%.tvc
 
 $(BLD)/%.shift: $(BLD)/%.tvc $(RKEYS)
 	$(TOC) -j genaddr $< --setkey $(word 2,$^) | jq -r '.raw_address' >$@
-$(BLD)/%.cargs:
-	$(file >$@,{})
+#$(BLD)/%.cargs:
+#	$(file >$@,{})
 $(BLD)/$H.deployed: VAL1 = 10
-$(BLD)/%.deployed: $(BLD)/%.shift $(BLD)/%.tvc $(BLD)/%.abi.json $(RKEYS) $(BLD)/%.cargs
+$(BLD)/%.deployed: $(BLD)/%.shift $(BLD)/%.tvc $(BLD)/%.abi.json $(RKEYS)
 	$(call _pay,$(file < $<),$(VAL1))
-	$(TOC) -u $(URL) deploy $(word 2,$^) --abi $(word 3,$^) --sign $(word 4,$^) $(word 5,$^) >$@
+	$(TOC) -u $(URL) deploy $(word 2,$^) --abi $(word 3,$^) --sign $(word 4,$^) {} >$@
 	$(TOC) -c $(ETC)/$*.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 3,$^) --is_json true --balance_in_tons true
 dd_%: $(BLD)/%.tvc
 	$(eval a!=$(TOC) -j genaddr $< --setkey $(RKEYS) | jq -r '.raw_address')

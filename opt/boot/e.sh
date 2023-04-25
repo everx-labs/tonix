@@ -1,18 +1,14 @@
 set -x
 function err() {
-    ~/bin/0.65.0/tonos-cli -c $CFG debug run -d build/$X.debug.json -m $1 -- --h $h --s "$i"
+    ~/bin/0.67.1/tonos-cli -c $CFG debug run -d build/$X.debug.json -m $1 -- --h $h --s "$i"
     tail -n15 trace.log | head -n-5
     exit 1
 }
 function run_input() {
     read -p '> ' -rsn1 i
     $R $1 --h $h --s "$i" >$of
-#jq {udin:.,s:,h:} uf
-#    $R $1 --h $h --s "$i" -- "``" >$of
-#    make $of h=$h s=$i
     grep -q "Error: {" $of && err $1
     h=`jq -r .hout $of`
-#    jq .ud >ufo
     printf "\n"
     jq -r .out $of
     jq -r .cmd $of >tmp/scr

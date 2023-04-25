@@ -7,7 +7,7 @@ struct strti {
     uint8 id;
     uint8 nv;
     uint8 nr;
-    uint8 nb;
+    uint16 nb;
     uint8 attr;
     uint8 ldecl;
     uint8 ldesc;
@@ -63,17 +63,17 @@ vard(0, 0, 0, 0, "N/A", "??")
     ];
    strti[] constant BT = [
 ////     id  nv  nr  nb   attr  ldc ldd name
-strti(  NONE, 0, 0,   0, NONE, 0, 0, "?",      VVD),
-strti(  BOOL, 0, 0,   1, BOOL, 4, 0, "bool",   VVD),
-strti(   INT, 0, 0,   1, NONE, 3, 0, "int",    VVD),
-strti(  UINT, 0, 0,   1, NONE, 4, 0, "uint",   VVD),
-strti( BYTES, 0, 0,   8, NONE, 5, 0, "bytes",  VVD),
-strti(STRING, 0, 1,   0, NONE, 6, 0, "string", VVD),
-strti(  CELL, 0, 4, 127, NONE, 4, 0, "TvmCell",    VVD),
-strti(STRUCT, 0, 0,   0, NONE, 6, 0, "struct", VVD),
-strti( ARRAY, 0, 1,   0, NONE, 2, 0, "array",  VVD),
-strti(   MAP, 0, 1,   0, NONE, 7, 0, "map",    VVD),
-strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
+strti(  NONE, 0, 0,    0, NONE, 0, 0, "?",      VVD),
+strti(  BOOL, 0, 0,    1, BOOL, 4, 0, "bool",   VVD),
+strti(   INT, 0, 0,    1, NONE, 3, 0, "int",    VVD),
+strti(  UINT, 0, 0,    1, NONE, 4, 0, "uint",   VVD),
+strti( BYTES, 0, 0,    8, NONE, 5, 0, "bytes",  VVD),
+strti(STRING, 0, 1,    0, NONE, 6, 0, "string", VVD),
+strti(  CELL, 0, 4, 1023, NONE, 4, 0, "TvmCell",VVD),
+strti(STRUCT, 0, 0,    0, NONE, 6, 0, "struct", VVD),
+strti( ARRAY, 0, 1,    0, NONE, 2, 0, "array",  VVD),
+strti(   MAP, 0, 1,    0, NONE, 7, 0, "map",    VVD),
+strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
     ];
 
 
@@ -237,16 +237,20 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
         out.append(mod);
     }
 
-    function add_fixed_length_type(gtic g, uint8 t, uint8 size) internal {
+    function add_fixed_length_type(gtic g, uint8 t, uint16 size) internal {
         vard[] vv;
-        strti ti = strti(g.mi.nt, 1, 0, size, t, 0, 0, format("{}{}", BT[t].name, size * 8 / BT[t].nb), vv);
+        strti ti = strti(g.mi.nt, 1, 0, size, t, 0, 0, format("{}{}", BT[t].name, size / BT[t].nb), vv);
         g.add_type(ti);
     }
 
     function fill_type(gtic g, uint8 t, uint8 id, string tname, vard[] vd) internal {
+//        uint8 nv;
+//        uint8 nr;
+//        uint16 nb;
+        strti pti = g.tc[t];
         uint8 nv;
-        uint8 nr;
-        uint8 nb;
+        uint8 nr = pti.nr;
+        uint16 nb = pti.nb;
         uint8 ldecl;
         uint8 ldesc;
         for (vard v: vd) {
@@ -266,9 +270,10 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
 
     function add_type(gtic g, uint8 t, string tname, vard[] vd) internal {
         uint8 id = g.mi.nt;
+        strti pti = g.tc[t];
         uint8 nv;
-        uint8 nr;
-        uint8 nb;
+        uint8 nr = pti.nr;
+        uint16 nb = pti.nb;
         uint8 ldecl;
         uint8 ldesc;
         for (vard v: vd) {
@@ -307,8 +312,8 @@ strti(  ENUM, 0, 0,   1, NONE, 4, 0, "enum",   VVD)
         for (uint i = 1; i < nt; i++) {
             if (i >= ti.length)
                 continue;
-            (uint8 id, uint8 nv, uint8 nr, uint8 nb, uint8 attr, uint8 ldecl, uint8 ldesc, string sname, ) = ti[i].unpack();
-            out.append(format("{:2}) {:2} {} {:3} {:2} {:2} {:3} {}\n",
+            (uint8 id, uint8 nv, uint8 nr, uint16 nb, uint8 attr, uint8 ldecl, uint8 ldesc, string sname, ) = ti[i].unpack();
+            out.append(format("{:2}) {:2} {} {:4} {:2} {:2} {:3} {}\n",
                 id, nv, nr, nb, attr, ldecl, ldesc, sname));
         }
     }
