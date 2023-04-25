@@ -1,4 +1,4 @@
-pragma ever-solidity >= 0.66.0;
+pragma ever-solidity >= 0.67.0;
 
 import "b0.sol";
 import "libstr.sol";
@@ -30,13 +30,13 @@ contract psh is b0 {
         string out;
         if (s.empty())
             return (hout, cmd);
-        byte b0 = bytes(s)[0];
-        uint8 v = uint8(b0);
+        bytes1 b00 = bytes(s)[0];
+        uint8 v = uint8(b00);
         (uint idev, uint ct, uint ctx, uint itm, uint arg, uint val) = _from_handle(h);
         MENU ectx = MENU(ctx);
         uint nitm;
 
-        if (libstr.strchr(QUICKS, b0) > 0) {    // quick command
+        if (libstr.strchr(QUICKS, b00) > 0) {    // quick command
             if (v >= 0x41 && v <= 0x5A) // convert to lowercase
                 v += 0x20;
             if (v == 0x62)  // go back to main menu
