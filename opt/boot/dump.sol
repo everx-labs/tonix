@@ -220,9 +220,6 @@ stti(8, 0, 1,   0, 6, 119734536)
 
 contract dump is disk_loader {
 
-    function nono(uint64 n) external override pure returns (TvmCell depopo) {
-        return abi.encode(n);
-    }
     function read_ufsd() internal view returns (ufsd) {
         uint32 a = UUDISK_LOC;
         if (_ram.exists(a))
