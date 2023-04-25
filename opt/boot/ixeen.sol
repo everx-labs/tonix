@@ -6,15 +6,8 @@ import "libsb.sol";
 import "libufsd.sol";
 contract ixeen is common {
 
-    function libu(ufsd ud, uint8 n) external pure returns (ufsd d, mapping (uint32 => TvmCell) res, string out, string cmd) {
-        d = ud;
-        res;
-        out;cmd;
-        if (n == 1) {
-
-        } else if (n == 2) {
-
-        }
+    function mmap(uint32 a, uint32 n) external view returns (mapping (uint32 => TvmCell) m) {
+        return libvmem.mmap(_ram, a, n);
     }
     function read_ufs_disk() internal view returns (ufsd) {
         uint32 a = UUDISK_LOC;
@@ -45,36 +38,43 @@ contract ixeen is common {
         return "echo Welcome to Tonix!; read -p \"> \" -rsn1 inp; tonos-cli -c etc/$X.conf runx -m complete --b \"$inp\" >complete.res; cmd=`jq -r .cmd complete.res`; eval \"$cmd\"";
     }
     string constant SELF = "ixeen";
+    string constant PP = "dump";
     string constant Q_PREFIX = "tonos-cli -c etc/";
     string constant Q_SUFFIX = ".conf runx -m ";
     string constant C_SUFFIX = ".conf callx -m ";
     string constant SELF_Q = Q_PREFIX + SELF + Q_SUFFIX;
+    string constant PQ = Q_PREFIX + "dump" + Q_SUFFIX;
     bytes constant QUICKS = "cCuUhHbBqQwWxXzZ";
     uint constant CLAST = 7;
-    enum MENU { MAIN, DUMP, ALLOC, CMP, MIR, LAST }
+    enum MENU { MAIN, DUMP, ALLOC, CMP, FIX, ULIB, LAST }
     string[][] constant MCS = [
-        ["UFS disk helper", "Dump", "Allocate", "Compare", "Mirror", "Details"],
-        ["Dump", "Memory", "Cylinder groups", "UFS disk header", "Superblock", "Root", "Inode table" ],
+        ["UFS disk helper", "Dump", "Allocate", "Compare", "Mirror", "Library"],
+        ["Dump", "Memory", "Cylinder groups", "UFS disk header", "Superblock", "Root", "Inode table", "Open files" ],
         ["Allocate", "Dirs", "Inodes", "Blocks", "Root" ],
-        ["Compare", "cgget", "cgput", "Apply"],
-        ["Adjust", "Data block count"],
-        ["Details", "Info"]
+        ["Compare", "-"],
+        ["Adjust", "-"],
+        ["UFS library", "Get inode", "Current inode", "Put inode"]
     ];
-    function _mir(uint n) internal view returns (string cmd) {
-        cmd;
-        ufsd ud = read_ufs_disk();
+
+    function _ulib(uint n) internal pure returns (string cmd) {
         if (n == 1) {
-//            ud.
-        }
-//            return CO_Q + " mk --n " + format("{}", dev_id) + " | jq -r .out\n";
+            cmd.append(_print_cmd("Inode number?\n"));
+            cmd.append("read -r ii && " + SELF_Q + " oin --n $ii --t " + format("{}", n + 4) + " >tmp/oin.res\n");
+        } else if (n == 2) {
+            cmd.append(SELF_Q + " oin --n 0 --t " + format("{}", n + 4) + " >tmp/oin.res\n");
+        } else if (n == 3) {
+            cmd.append(SELF_Q + " oin --n 1 --t " + format("{}", n + 4) + " >tmp/oin.res\n");
+        } else
+            return cmd;
+        cmd.append("jq -r .out tmp/oin.res\n");
+        cmd.append("jq -r .cmd tmp/oin.res >tmp/scr && source tmp/scr\n");
     }
-    function _cmp(uint n) internal view returns (string cmd) {
-        ufsd ud = read_ufs_disk();
-        if (n == 1) {
-            cmd.append(SELF_Q + " oa --h $h --n " + format("{} --t {} ", ud.ccg, n) + " >tmp/oa.res\n");
-//            cmd.append()
-        }
-//            return CO_Q + " mk --n " + format("{}", dev_id) + " | jq -r .out\n";
+    function _fix(uint n) internal pure returns (string cmd) {
+        cmd;n;
+    }
+
+    function _cmp(uint n) internal pure returns (string cmd) {
+        n;cmd;
     }
 
     function _alloc_dirs(ufsd ud, uint8 n) internal view returns (ufsd d, mapping (uint32 => TvmCell) res) {
@@ -82,123 +82,197 @@ contract ixeen is common {
         uint16 bn = ud.cg.nblk;
         TvmBuilder b;
         uint16 des = ud.fs.desize;
-        udinode pdi = abi.decode(_ram[ud.dp], udinode);
+        uodir uod = abi.decode(_ram[ud.dp], uodir);
+        (TvmCell pdc, , ) = uod.unpack();
+        udinode pdi = abi.decode(pdc, udinode);
+//        udinode pdi = abi.decode(_ram[ud.dp], udinode);
+        uint16 pino = pdi.ino;
 //        udirent[] pdes = abi.decode(_ram[pdi.db1], udirent[]);
-        udinode di = udinode(DEF_DIR_MODE, stt, 2, 2 * des, block.timestamp, bn, 0, 1, UID_ROOT, uint8(GID_WHEEL));
-        udirent dot = udirent(FT_DIR, stt, 1, 1, 0, 1);
-        udirent dotdot = udirent(FT_DIR, pdi.ino, 2, 1, 1, 2);
+        udinode di = udinode(DEF_DIR_MODE, stt, 2, 2 * des, block.timestamp, bn, bn + 1, 2, UID_ROOT, uint8(GID_WHEEL));
+
+        TvmCell tc = libufsd.tdots(stt, pino);
+        TvmCell nc = libufsd.conc();
+//        udirent dot = udirent(FT_DIR, stt, uint32(libufsd._tag_name(1, 1, 0, 1)));
+//        udirent dotdot = udirent(FT_DIR, pdi.ino, uint32(libufsd._tag_name(2, 1, 1, 2)));
         repeat(n) {
             b.store(di);
-            res[bn] = abi.encode([dot, dotdot]);
+            res[bn] = tc;
+            res[bn + 1] = nc;
 //            pdes.push(udirent(FT_DIR, ud.dp, 2, 1, 1, 2));
             stt++;
-            bn++;
-            dot.ino = stt;
+            bn += 2;
+            tc = libufsd.tdots(stt, pino);
             di.ino = stt;
             di.db1 = bn;
+            di.db2 = bn + 1;
         }
         d = ud;
     }
 
-    function oa(uint h, uint8 n, uint8 t) external view returns (ug g1, ug g2, mapping (uint32 => TvmCell) res) {
-        h;
-        ufsd ud = read_ufs_disk();
-        ufsb f = ud.fs;
-        g1 = ud.cg;
-        g2 = abi.decode(_ram[f.cblkno + n], ug);
+    function oin(uint8 n, uint8 t) external view returns (ufsd ud, string cmd, string out, mapping (uint32 => TvmCell) res) {
+        ud = read_ufs_disk();
+        uint16 stt = ud.cg.nino;
+        uint16 bn = ud.cg.nblk;
         if (t == 1) {
+//            (ud, res) = _alloc_dirs(ud, n);
+            udinode[] udis = abi.decode(_ram[ud.inoblock], udinode[]);
+            uint clen = udis.length;
+            if (clen + n > ud.fs.inopb)
+                out.append("Can't allocate that many\n");
+            uint cap = math.min(n, ud.fs.inopb - clen);
 
-        } else if (t == 2) {
+            uint16 des = ud.fs.desize;
+            uodir uod = abi.decode(_ram[ud.dp], uodir);
+            (TvmCell pdc, , ) = uod.unpack();
+            udinode pdi = abi.decode(pdc, udinode);
+            uint16 pino = pdi.ino;
+            udinode di = udinode(DEF_DIR_MODE, stt, 2, 2 * des, block.timestamp, bn, bn + 1, 2, UID_ROOT, uint8(GID_WHEEL));
+            TvmCell nc = libufsd.conc();
 
-        } else if (t == 3) {
-
-        } else
-            return (g1, g2, res);
-        res[f.cblkno + n] = abi.encode(g1);
-    }
-
-    function oin(uint h, uint8 n, uint8 t) external view returns (ufsd ud1, ufsd ud2, mapping (uint32 => TvmCell) res) {
-        h;
-        ud1 = read_ufs_disk();
-        ud2 = ud1;
-        uint16 stt = ud1.cg.nino;
-        uint16 bn = ud1.cg.nblk;
-        if (t == 1) {
-            (ud2, res) = _alloc_dirs(ud1, n);
-            ud2.alloc_dirs(n);
+            repeat(cap) {
+                di.ino = stt;
+                di.db1 = bn;
+                di.db2 = bn + 1;
+                udis.push(di);
+                TvmCell tc = libufsd.tdots(stt, pino);
+                res[bn] = tc;
+                res[bn + 1] = nc;
+                stt++;
+                bn += 2;
+            }
+            res[ud.inoblock] = abi.encode(udis);
+            ud.alloc_dirs(uint8(cap));
+            cmd.append(PQ + " pp -- --t 21 " + _fc("c", ud.inoblock) + " | jq -r .out\n");
+            cmd.append(PQ + " pp -- --t 16 " + _fc("c", UUDISK_LOC) + " | jq -r .out\n");
+            cmd.append(PQ + " pcmp -- --t 21 " + _fc("c", ud.inoblock) + " | jq -r .out\n");
+            cmd.append(PQ + " pcmp -- --t 16 " + _fc("c", UUDISK_LOC) + " | jq -r .out\n");
         } else if (t == 2)
-            ud2.alloc_inodes(n);
+            ud.alloc_inodes(n);
         else if (t == 3)
-            ud2.alloc_blocks(n);
+            ud.alloc_blocks(n);
         else if (t == 4) {
-            ud2.alloc_inodes(1);
-            ud2.alloc_dirs(1);
+            ud.alloc_inodes(1);
+            ud.alloc_dirs(1);
             udinode d0;
             res[250] = abi.encode(d0);
             stt++;
-            udinode dr = udinode(DEF_DIR_MODE, stt, 2, 2 * ud2.fs.desize, block.timestamp, bn, 0, 1, UID_ROOT, uint8(GID_WHEEL));
-            uint16 dp = ud2.dp > 0 ? ud2.dp : 251;
+            udinode dr = udinode(DEF_DIR_MODE, stt, 2, 2 * ud.fs.desize, block.timestamp, bn, bn + 1, 2, UID_ROOT, uint8(GID_WHEEL));
+            uint16 dp = ud.dp > 0 ? ud.dp : 251;
             res[dp] = abi.encode(dr);
-            res[ud2.inoblock] = abi.encode([d0, dr]);
-            udirent dot = udirent(FT_DIR, stt, 1, 1, 0, 1);
-            udirent dotdot = udirent(FT_DIR, stt, 2, 1, 1, 2);
-            res[bn] = abi.encode([dot, dotdot]);
-
-
-        } else
-            return (ud1, ud2, res);
-        res[UUDISK_LOC] = abi.encode(ud2);
+            res[ud.inoblock] = abi.encode([d0, dr]);
+            TvmCell tc = libufsd.tdots(1, 1);
+            TvmCell nc = libufsd.conc();
+            res[bn] = tc;
+            res[bn + 1] = nc;
+        } else if (t == 5) {
+            out.append("Get inode\n");
+            uint16 ndp = 0xFB + n;
+            ud.dp = ndp;
+            out.append("New inode: " + (ndp > 0 ? libufsd.print_udino(abi.decode(_ram[ndp], udinode)) : "none") + "\n");
+            if (ndp > 0) {
+                res[ndp] = _ram[ndp];
+                udinode ndi = abi.decode(_ram[ndp], udinode);
+                res[ndi.db1] = _ram[ndi.db1];
+                res[ndi.db2] = _ram[ndi.db2];
+                cmd.append(PQ + " pi -- --t 2 " + _fc("dic", ndp) + _fc("dc1", ndi.db1) + _fc("dc2", ndi.db2) + " | jq -r .out\n");
+            }
+        } else if (t == 6) {
+            uint16 ndp = ud.dp;
+            out.append("Current inode: ");
+            if (ndp > 0) {
+                res[ndp] = _ram[ndp];
+                cmd.append(PQ + " pp -- --t 3 " + _fc("c", ndp) + " | jq -r .out\n");
+            } else
+                out.append("None\n");
+        } else if (t == 7) {
+            uint16 odp = ud.dp;
+            uodir uod = abi.decode(_ram[odp], uodir);
+            (TvmCell di, TvmCell tc, TvmCell nc) = uod.unpack();
+            udinode cdi = abi.decode(di, udinode);
+            udinode[] udis = abi.decode(_ram[ud.inoblock], udinode[]);
+            res[cdi.db1] = tc;
+            res[cdi.db2] = nc;
+            cdi.size = uint24(libufsd._sizeof(tc) + libufsd._sizeof(nc));
+            cdi.mtime = block.timestamp;
+            udis[cdi.ino] = cdi;
+            res[ud.inoblock] = abi.encode(udis);
+         } else
+            return (ud, cmd, out, res);
+        res[UUDISK_LOC] = abi.encode(ud);
+        out.append(libufsd.bcmp(_ram, res));
     }
 
-    function _input(uint t) internal pure returns (string cmd) {
-        string out = "How many?\n";
-        cmd.append(_print_cmd(out));
-        cmd.append("read -r ii && " + SELF_Q + " oin --h $h --n $ii --t " + format("{}", t) + " >tmp/oin.res\n");
-//        cmd.append("h=`jq -r .hout tmp/oin.res`\n");
-//        cmd.append("run_input $IDEV\n");
+    function _fc(string cn, uint n) internal pure returns (string cmd) {
+        return " --" + cn + " `jq -r '.res | to_entries[] | select (.key == \"" + format("{}", n) + "\") .value' tmp/oin.res` ";
     }
-
     function _alloc(uint n) internal pure returns (string cmd) {
-        if (n == 1)
-            cmd = _input(n);
-        else if (n == 2)
-            cmd = _input(n);
-        else if (n == 3)
-            cmd = _input(n);
-        else if (n == 4)
-            cmd = SELF_Q + " oin --h $h --n 1 --t " + format("{}", n) + " >tmp/oin.res\n";
+        if (n < 4) {
+            cmd.append(_print_cmd("How many?\n"));
+            cmd.append("read -r ii && " + SELF_Q + " oin --n $ii --t " + format("{}", n) + " >tmp/oin.res\n");
+        } else if (n == 4)
+            cmd = SELF_Q + " oin --n 1 --t " + format("{}", n) + " >tmp/oin.res\n";
+        else
+            return cmd;
+        cmd.append("jq -r .out tmp/oin.res\n");
+        cmd.append("jq -r .cmd tmp/oin.res >tmp/scr && source tmp/scr\n");
     }
+//    function open_file(string name, ) internal returns (uofile uof) {
+//        uint8 fdtype; // cwd/rtd/txt/mem/NOFD/
+//        uint8 ftype;  // REG/DIR/FIFO/CHR/a_inode/unix/unknown
+//        uint8 fd;
+//        uint16 mode;  // r/w/u u: a_inode/unix
+//        uint16 dev;
+//        uint16 ino;	  // NULL or applicable vnode
+//        uint24 szoff; // DFLAG_SEEKABLE specific fields
+//        uint32 name;
+//        return uofile()
+//    }
+
+//    function makedev(uint major, uint minor) internal returns (uint16) {
+//        return uint16((major << 8) + minor);
+//    }
+
+//        mp1.cwd = uofile(FD_TYPE_CWD, FT_DIR, 0, 0, makedev(8, 32), 2, 30, "/");
+//        mp1.rtd = uofile(FD_TYPE_RTD, FT_DIR, 0, 0, makedev(8, 32), 2, 30, "/");
+//        mp1.txt = uofile(FD_TYPE_TXT, FT_REG, 0, 0, makedev(0, 20), 60000, 50000, "/init");
+
     function _dump(uint n) internal view returns (string out) {
         ufsd ud = read_ufs_disk();
         mapping (uint32 => TvmCell) m3 = _ram;
         if (n == 1)
             out.append(libvmem.dump_mem(m3));
-        else if (n == 4)
-            out.append(libufsd.print_sb(ud.fs));
-        else if (n == 3)
-            out.append(libufsd.print_disk_header(ud));
-        else if (n == 5) {
-//            out.append(libufsd.print_disk_header(ud));
-            out.append(libufsd.print_udino(abi.decode(_ram[0xFB], udinode)));
-        } else if (n == 6) {
-            udinode[] dis = abi.decode(_ram[ud.inoblock], udinode[]);
-            for (udinode di: dis)
-                out.append(libufsd.print_udino(di));
-//            out.append(libufsd.print_disk_header(ud));
-        } else {
+        else if (n == 2) {
             ufsb f = ud.fs;
             uint16 i;
             repeat (f.ncg) {
                 ug g = abi.decode(m3[f.cblkno + i], ug);
-                if (n == 2)
-                    out.append(libufsd.print_ug(g));
+                out.append(libufsd.print_ug(g));
                 i++;
             }
+        } else if (n == 3)
+            out.append(libufsd.print_disk_header(ud));
+        else if (n == 4)
+            out.append(libufsd.print_sb(ud.fs));
+        else if (n == 5) {
+            TvmCell c = _ram[0xFB];
+            if (libufsd._sizeof(c) == 20) {
+                udinode rd = abi.decode(c, udinode);
+                udirent[] des = abi.decode(_ram[rd.db1], udirent[]);
+                TvmSlice stas = _ram[rd.db2].toSlice();
+                for (udirent de: des)
+                    out.append(libufsd.get_name(de.tag, stas));
+                out.append(libufsd.print_udino(rd));
+            } else
+                out.append("Wrong data size\n");
+        } else if (n == 6) {
+            udinode[] dis = abi.decode(_ram[ud.inoblock], udinode[]);
+            for (udinode di: dis)
+                out.append(libufsd.print_udino(di));
+        } else if (n == 7) {
+
         }
     }
     function onc(uint h, string s) external view returns (uint hout, string cmd, string out) {
-//    function onc(uint h, string s, ufsd udin) external view returns (uint hout, string cmd, string out, ufsd ud) {
-//        ud = udin;
         if (s.empty())
             return (hout, cmd, out);
         bytes1 b0 = bytes(s)[0];
@@ -207,13 +281,11 @@ contract ixeen is common {
         MENU ectx = MENU(ctx);
         uint nitm;
 
-        if (libstr.strchr(QUICKS, b0) > 0) {    // quick co    mmand
+        if (libstr.strchr(QUICKS, b0) > 0) {    // quick command
             if (v >= 0x41 && v <= 0x5A) // convert to lowercase
                 v += 0x20;
             if (v == 0x62)  // go back to main menu
                 ectx = MENU.MAIN;
-//            else if (v == 0x68)
-//                out.append(_print_help(ctx, itm));
             else    // execute a quick command
                 cmd.append(_quick_command(v));
             nitm = itm;
@@ -221,14 +293,16 @@ contract ixeen is common {
             uint8 n = v - 0x30; // digit ascii to value
             if (ectx == MENU.MAIN)   // switch context to a sub-menu
                 ectx = MENU(n);
-            else if (ectx == MENU.DUMP)  // do
+            else if (ectx == MENU.DUMP)
                 out.append(_dump(n));
-            else if (ectx == MENU.ALLOC)  // do
+            else if (ectx == MENU.ALLOC)
                 cmd.append(_alloc(n));
-            else if (ectx == MENU.CMP)  // do
+            else if (ectx == MENU.CMP)
                 cmd.append(_cmp(n));
-            else if (ectx == MENU.MIR)  // do
-                cmd.append(_mir(n));
+            else if (ectx == MENU.FIX)
+                cmd.append(_fix(n));
+            else if (ectx == MENU.ULIB)
+                cmd.append(_ulib(n));
             if (n == 0) // '0' prints current menu
                 out.append(print_menu(ectx));
             nitm = n;

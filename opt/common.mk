@@ -8,8 +8,8 @@ NET:=rfld
 GIVER:=Novi
 VAL0:=15
 VAL1:=1
-#TOOLS_BIN:=~/bin/0.67
-TOOLS_BIN:=$(R_ROOT)/bin
+TOOLS_BIN:=~/bin/0.67.1
+#TOOLS_BIN:=$(R_ROOT)/bin
 RKEYS:=$(R_ROOT)/k1.keys
 # Tools directories
 SOLD:=$(TOOLS_BIN)/sold
@@ -39,6 +39,8 @@ INSTALLED=$(patsubst %,$(BLD)/%.installed,$(INIT))
 CONFD=$(patsubst %,$(ETC)/%.conf,$(CTX))
 CCS=$(patsubst %,$(BLD)/%.cs,$(CTX))
 CSS=$(patsubst %,$(BLD)/%.tvc,$(CTX))
+ASM=$(patsubst %,$(BLD)/%.code,$(CTX))
+ABI=$(patsubst %,$(BLD)/%.abi.json,$(CTX))
 DIRS:=$(BLD) $(ETC) $(TMP)
 INC_PATH?=
 all: dirs config cc

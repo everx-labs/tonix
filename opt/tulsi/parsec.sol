@@ -111,27 +111,27 @@ contract parsec is common {
             uint8 t;
             uint8 sh;
             uint8 fac;
-            uint8 i;
+            uint16 i;
             if (b0 == 'i') {
                 t = libtic.INT;
                 sh = 3;
-                fac = 8;
+                fac = 1;
             } else if (b0 == 'u') {
                 t = libtic.UINT;
                 sh = 4;
-                fac = 8;
+                fac = 1;
             } else if (b0 == 'b') {
                 t = libtic.BYTES;
                 sh = 5;
-                fac = 1;
+                fac = 8;
             }
             if (t == 0)
                 continue;
             bytes bv = s[sh : ];
             optional(int) vi = stoi(bv);
             if (vi.hasValue())
-                i = uint8(vi.get());
-            g.add_fixed_length_type(t, i / fac);
+                i = uint16(vi.get());
+            g.add_fixed_length_type(t, i * fac);
         }
 
         vard[] vv;
