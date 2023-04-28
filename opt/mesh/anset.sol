@@ -5,16 +5,19 @@ import "libstr.sol";
 contract anset is common {
 
     string constant SELF = "anset";
-    bytes constant QUICKS = " cCuUhHbBqQwWeExXzZ,.<>";
+    bytes constant QUICKS = "cCuUhHbBqQwWeExXzZ,.<>";
     string constant CONFIG_FILE = "default.cfg";
     string constant E = "\\033[";
     string constant ECHO = "echo -en '" + E;
 
     enum MENU { MAIN, SELECT, CONFIG, LAST }
 
-    uint8 constant SETTINGS_UI  = 3;
-    uint8 constant SETTINGS_KEY = 4;
-    uint8 constant SETTINGS_DEV = 5;
+    uint8 constant SETTINGS_FIRST   = 3;
+    uint8 constant SETTINGS_UI      = SETTINGS_FIRST;
+    uint8 constant SETTINGS_KEY     = SETTINGS_FIRST + 1;
+    uint8 constant SETTINGS_DEV     = SETTINGS_FIRST + 2;
+    uint8 constant SETTINGS_LAST    = SETTINGS_DEV;
+    uint8 constant SETTINGS_COUNT   = SETTINGS_LAST - SETTINGS_FIRST + 1;
 
     string[][] constant MCS = [
         ["Preferences", "Settings", "Configure"],
@@ -62,28 +65,27 @@ contract anset is common {
     }
 
     function _draw(uint h, uint v) internal view returns (string cmd) {
-        (, , uint ctx, uint itm, uint arg, uint val) = _from_handle(h);
+        (, , uint ctx, uint itm, uint arg, ) = _from_handle(h);
         string s;
-        string[] opts = MCS[uint(MENU.MAIN)];
-        if (opts.length == 0)
-            return _echo("5mEmpty...");
         string[] vals;
-        if (ctx > 0)
-            s.append(_draw_list(MCS[uint(MENU.MAIN)], 10, 1, ctx, 0, vals));
-        if (itm > 0)
-            s.append(_draw_list(MCS[ctx], 1, 3, itm, 0, vals));
-        if (arg > 0)
-            s.append(_draw_list(MCS[itm + uint(MENU.LAST) - 1], 26, 7, arg, 0, vals));
-
-        if (val > 0) {
-            v = v >> 8 * (arg + 1);
-            for (uint i = 1; i < MCS[arg + SETTINGS_UI - 1].length; i++)
-                vals.push(format("[{}]", (v >> (i - 1) & 1) > 0 ? "X" : " "));
-            s.append(_draw_list(MCS[arg + SETTINGS_UI - 1], 56, 12, val, 80, vals));
+        if (ctx > 0) {
+            s.append(_draw_list(MCS[uint(MENU.MAIN)], 8, 1, ctx, 0, vals));
+            s.append(_draw_list(MCS[uint(MENU.MAIN)], 1, 3, ctx, 0, vals));
         }
-
+        if (itm > 0)
+            s.append(_draw_list(MCS[ctx], 18, 3, itm, 0, vals));
+        if (arg > 0) {
+            v = v >> 8 * (itm + 1);
+            if (itm == SETTINGS_KEY - SETTINGS_FIRST + 1)
+                vals = ["b", "h", "x", "z", "q", "c", "u", "h"];
+            else {
+                for (uint i = 1; i < MCS[itm + SETTINGS_UI - 1].length; i++)
+                    vals.push(format("[{}]", (v >> (i - 1) & 1) > 0 ? "X" : " "));
+            }
+            s.append(_draw_list(MCS[itm + SETTINGS_UI - 1], 39, 3, arg, 60, vals));
+        }
         s.append(_eseq(["0m", "0J"]));
-        s.append(val > 0 ? _e(format("{};{}H", 13 + val, 81)) + _e("?25h") : _e("?25l"));
+        s.append(arg > 0 ? _e(format("{};{}H", 1 + arg, 70)) : _e("?25l"));
         cmd = "echo -en '" + s + "'\n";
     }
     function _help(uint n, uint h) internal pure returns (string out) {
@@ -99,105 +101,109 @@ contract anset is common {
             cmd = "v=`cat " + CONFIG_FILE + "` && echo Loaded configuration from " + CONFIG_FILE;
     }
 
-    function ona(uint h, uint vin, string s) external pure returns (uint hout, uint vout) {
+    function ona(uint h, uint vin, string s) external view returns (uint hout, uint vout) {
         vout = vin;
         (uint idev, uint ct, uint ctx, uint itm, uint arg, uint val) = _from_handle(h);
-        MENU ectx = MENU(ctx);
 
-        if (s == "[C") {
-            if (val > 0) {
-                if (val < 8)
-                    val++;
-            } else if (arg > 0)
-                val = 1;
-            else if (itm > 0)
-                arg = 1;
-            else if (ectx < MENU.LAST)
-                ctx++;
-        } else if (s == "[D") {
-            if (val > 0)
-                val = 0;
-            else if (arg > 0)
+        bytes bb = bytes(s);
+        uint len = bb.length;
+        bytes1 b0 = len > 0 ? bytes(s)[0] : bytes1(0x20);
+        bytes1 b1 = len > 1 ? bytes(s)[1] : bytes1(0x20);
+        uint8 v0 = uint8(b0);
+        uint8 v1 = uint8(b1);
+
+        if (v0 == 0x5B) { // Handle arrow keys
+            if (v1 == 0x41) {   // Up
+                if (arg > 0) {
+                    if (arg > 1)
+                        arg--;
+                } else if (itm > 0) {
+                    if (itm > 1)
+                        itm--;
+                } else if (ctx > 0)
+                    ctx--;
+            } else if (v1 == 0x42) { // Down
+                if (arg > 0) {
+                    if (arg + 1 < MCS[SETTINGS_FIRST + itm - 1].length)
+                        arg++;
+                } else if (itm > 0) {
+                    if (itm < SETTINGS_COUNT)
+                        itm++;
+                } else if (ctx > 0) {
+                    itm = 1;
+                }
+            } else if (v1 == 0x43) { // Right: expand the highlighted menu item
+                if (itm > 0)
+                    arg = 1;
+                else if (ctx > 0)
+                    itm = 1;
+            } else if (v1 == 0x44) { // Left: collapse the open menu
+                if (arg > 0)
+                    arg = 0;
+                else if (itm > 0)
+                    itm = 0;
+                else
+                    ctx = 0;
+            }
+        }
+
+        if (v0 == 0x62 || v1 == 0x48) { // 'b' key: collapse the open menu
+            if (arg > 0)
                 arg = 0;
             else if (itm > 0)
                 itm = 0;
             else
                 ctx = 0;
-        } else if (s == "[A") {
-            if (val > 0) {
-                if (val > 1)
-                    val--;
-            } else if (arg > 0) {
-                if (arg > 1)
-                    arg--;
-            } else if (itm > 0) {
-                if (itm > 1)
-                    itm--;
-            } else if (ectx > MENU.MAIN)
-                ctx--;
-        } else if (s == "[B") {
-            if (val > 0) {
-                if (val < 7)
-                    val++;
-            } else if (arg > 0) {
-                if (arg < 3)
-                    arg++;
-            } else if (itm > 0 && itm < 3) {
-                itm++;
-            } else if (ectx > MENU.MAIN && itm < 3)
-                itm++;
+        } else if (s == "[") {  // Space: toggle the current box item, or expand the highlighted menu item
+            if (arg > 0) {
+                uint bit_mask = 1 << (itm + 1) * 8 + arg - 1;
+                vout = vin ^ bit_mask;
+            } else {
+                if (itm > 0)
+                    arg = 1;
+                else if (ctx > 0)
+                    itm = 1;
+            }
         }
         hout = _to_handle(idev, ct, ctx, itm, arg, val);
     }
-    function onc(uint h, uint vin, string s) external view returns (uint hout, uint vout, string cmd) {
-        vout = vin;
+    function onc(uint h, string s) external pure returns (uint hout, string cmd) {
         bytes1 b0 = s.empty() ? bytes1(0x20) : bytes(s)[0];
         uint8 v = uint8(b0);
 
         (uint idev, uint ct, uint ctx, uint itm, uint arg, uint val) = _from_handle(h);
-        if (v == 0x1b) {
+        if (v == 0x1b || v == 0x62 || v == 0x20) {
             hout = h;
-            cmd.append(_draw(hout, vout));
-            cmd.append("read -rsn2 j;eval \"$R ona --h $h --vin $v --s '$j' >tmp/ona.res\";h=`jq -r .hout tmp/ona.res`;v=`jq -r .vout tmp/ona.res`;");
+            if (v == 0x1b)
+                cmd.append("read -rsn2 j;eval \"$R ona --h $h --vin $v --s '$j'\"");
+            else if (v == 0x62 || v == 0x20) {
+                if (v == 0x20)
+                    s = "[" + s;
+                cmd.append("eval \"$R ona --h $h --vin $v\" --s \"" + s + "\"");
+            }
+            cmd.append(" >tmp/ona.res;h=`jq -r .hout tmp/ona.res`;v=`jq -r .vout tmp/ona.res`;");
             cmd.append("eval \"$R draw --h $h --v $v\" | jq -r .cmd >tmp/sdr && source tmp/sdr;");
-            return (h, vin, cmd);
+            return (hout, cmd);
         }
 
         MENU ectx = MENU(ctx);
-        uint8 n;
 
         if (libstr.strchr(QUICKS, b0) > 0) {    // quick command
             if (v >= 0x41 && v <= 0x5A)         // convert a letter to lowercase
                 v += 0x20;
             else if (v >= 0x3C && v <= 0x3F)    // strip "shift" modifier
                 v -= 0x10;
-            if (v == 0x62) {                    // 'b': go back to the parent menu
-                if (val > 0)
-                    val = 0;
-                else if (arg > 0)
-                    arg = 0;
-                else if (itm > 0)
-                    itm = 0;
-                else
-                    ectx = MENU.MAIN;
-            } else if (v == 0x68)               // 'h': help
+            if (v == 0x68)               // 'h': help
                 cmd = _echo("29;H" + _e("0J") + _help(itm, h));
             else if (v == 0x2C && ectx > MENU.MAIN)
                 ectx = MENU(ctx - 1);
             else if (v == 0x2E && ectx < MENU.LAST)
                 ectx = MENU(ctx + 1);
-            else if (v == 0x20) {
-                uint bit_mask = 1 << (arg + 1) * 8 + val - 1;
-                string cpos = format("{};81H", 13 + val);
-                vout = vin ^ bit_mask;
-                cmd = _echo(cpos + ((vout & bit_mask) > 0 ? "X" : " ") + _e(cpos));
-            } else                                // execute a quick command
+            else                                // execute a quick command
                 cmd = _quick_command(v) + "\n";
         } else if (v >= 0x30 && v <= 0x39) {    // decimal digit
-            n = v - 0x30;                       // digit ascii to its numerical value
-            if (val > 0)
-                val = n;
-            else if (arg > 0)
+            uint8 n = v - 0x30;                       // digit ascii to its numerical value
+            if (arg > 0)
                 arg = n;
             else if (itm > 0)
                 itm = n;
@@ -206,7 +212,6 @@ contract anset is common {
         } else
             cmd = _echo("39;HPress \"h\" for help");
         hout = _to_handle(idev, ct, uint(ectx), itm, arg, val);
-        cmd = _draw(hout, vout) + cmd;
     }
 
     function _quick_command(uint8 v) internal pure returns (string cmd) {
