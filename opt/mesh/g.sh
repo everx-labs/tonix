@@ -7,7 +7,6 @@ function err() {
 function run_input() {
     read -rsn1 i
     $R $1 --h $h --vin $v --s "$i" >$of || err $1
-#    read -r h v < <(jq -r .hout,.vout,.cmd $of)
     h=`jq -r .hout $of`
     v=`jq -r .vout $of`
     jq -r .cmd $of >tmp/scr
@@ -24,6 +23,7 @@ function open() {
     of=tmp/${1}_$IDEV.res
     h=0
     v=`cat default.cfg`
+    run_input $IDEV $(echo -n " ")
 }
 
 open anset onc
