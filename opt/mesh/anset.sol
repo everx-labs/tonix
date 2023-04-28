@@ -12,9 +12,12 @@ contract anset is common {
 
     enum MENU { MAIN, SELECT, CONFIG, LAST }
 
-    uint8 constant SETTINGS_UI  = 3;
-    uint8 constant SETTINGS_KEY = 4;
-    uint8 constant SETTINGS_DEV = 5;
+    uint8 constant SETTINGS_FIRST   = 3;
+    uint8 constant SETTINGS_UI      = SETTINGS_FIRST;
+    uint8 constant SETTINGS_KEY     = SETTINGS_FIRST + 1;
+    uint8 constant SETTINGS_DEV     = SETTINGS_FIRST + 2;
+    uint8 constant SETTINGS_LAST    = SETTINGS_DEV;
+    uint8 constant SETTINGS_COUNT   = SETTINGS_LAST - SETTINGS_FIRST + 1;
 
     string[][] constant MCS = [
         ["Preferences", "Settings", "Configure"],
@@ -64,26 +67,21 @@ contract anset is common {
     function _draw(uint h, uint v) internal view returns (string cmd) {
         (, , uint ctx, uint itm, uint arg, uint val) = _from_handle(h);
         string s;
-        string[] opts = MCS[uint(MENU.MAIN)];
-        if (opts.length == 0)
-            return _echo("5mEmpty...");
         string[] vals;
-        if (ctx > 0)
+        if (ctx > 0) {
             s.append(_draw_list(MCS[uint(MENU.MAIN)], 10, 1, ctx, 0, vals));
-        if (itm > 0)
-            s.append(_draw_list(MCS[ctx], 1, 3, itm, 0, vals));
-        if (arg > 0)
-            s.append(_draw_list(MCS[itm + uint(MENU.LAST) - 1], 26, 7, arg, 0, vals));
-
-        if (val > 0) {
-            v = v >> 8 * (arg + 1);
-            for (uint i = 1; i < MCS[arg + SETTINGS_UI - 1].length; i++)
-                vals.push(format("[{}]", (v >> (i - 1) & 1) > 0 ? "X" : " "));
-            s.append(_draw_list(MCS[arg + SETTINGS_UI - 1], 56, 12, val, 80, vals));
+            s.append(_draw_list(MCS[uint(MENU.MAIN)], 1, 3, ctx, 0, vals));
         }
-
+        if (itm > 0)
+            s.append(_draw_list(MCS[ctx], 26, 7, itm, 0, vals));
+        if (arg > 0) {
+            v = v >> 8 * (itm + 1);
+            for (uint i = 1; i < MCS[itm + SETTINGS_UI - 1].length; i++)
+                vals.push(format("[{}]", (v >> (i - 1) & 1) > 0 ? "X" : " "));
+            s.append(_draw_list(MCS[itm + SETTINGS_UI - 1], 56, 12, arg, 80, vals));
+        }
         s.append(_eseq(["0m", "0J"]));
-        s.append(val > 0 ? _e(format("{};{}H", 13 + val, 81)) + _e("?25h") : _e("?25l"));
+        s.append(arg > 0 ? _e(format("{};{}H", 13 + arg, 81)) : _e("?25l"));
         cmd = "echo -en '" + s + "'\n";
     }
     function _help(uint n, uint h) internal pure returns (string out) {
@@ -102,28 +100,8 @@ contract anset is common {
     function ona(uint h, uint vin, string s) external pure returns (uint hout, uint vout) {
         vout = vin;
         (uint idev, uint ct, uint ctx, uint itm, uint arg, uint val) = _from_handle(h);
-        MENU ectx = MENU(ctx);
 
-        if (s == "[C") {
-            if (val > 0) {
-                if (val < 8)
-                    val++;
-            } else if (arg > 0)
-                val = 1;
-            else if (itm > 0)
-                arg = 1;
-            else if (ectx < MENU.LAST)
-                ctx++;
-        } else if (s == "[D") {
-            if (val > 0)
-                val = 0;
-            else if (arg > 0)
-                arg = 0;
-            else if (itm > 0)
-                itm = 0;
-            else
-                ctx = 0;
-        } else if (s == "[A") {
+        if (s == "[A") { // Up
             if (val > 0) {
                 if (val > 1)
                     val--;
@@ -133,19 +111,47 @@ contract anset is common {
             } else if (itm > 0) {
                 if (itm > 1)
                     itm--;
-            } else if (ectx > MENU.MAIN)
+            } else if (ctx > uint(MENU.MAIN))
                 ctx--;
-        } else if (s == "[B") {
+        } else if (s == "[B") { // Down
             if (val > 0) {
                 if (val < 7)
                     val++;
             } else if (arg > 0) {
-                if (arg < 3)
+                if (arg < 8)
                     arg++;
-            } else if (itm > 0 && itm < 3) {
+            } else if (itm > 0 && itm < SETTINGS_COUNT) {
                 itm++;
-            } else if (ectx > MENU.MAIN && itm < 3)
+            } else if (ctx > uint(MENU.MAIN) && itm < SETTINGS_COUNT)
                 itm++;
+        } else if (s == "[C") { // Right
+            if (val > 0) {
+                if (val < 8)
+                    val++;
+            } else if (arg > 0)
+                val = 1;
+            else if (itm > 0)
+                arg = 1;
+            else if (ctx > 0)
+                itm = 1;
+        } else if (s == "[D") { // Left
+            if (val > 0)
+                val = 0;
+            else if (arg > 0)
+                arg = 0;
+            else if (itm > 0)
+                itm = 0;
+            else
+                ctx = 0;
+        } else if (s == "[H" || s == "b") {
+            if (val > 0)
+                val = 0;
+            else if (arg > 0)
+                arg = 0;
+            else if (itm > 0)
+                itm = 0;
+            else
+                ctx = 0;
         }
         hout = _to_handle(idev, ct, ctx, itm, arg, val);
     }
@@ -187,8 +193,8 @@ contract anset is common {
             else if (v == 0x2E && ectx < MENU.LAST)
                 ectx = MENU(ctx + 1);
             else if (v == 0x20) {
-                uint bit_mask = 1 << (arg + 1) * 8 + val - 1;
-                string cpos = format("{};81H", 13 + val);
+                uint bit_mask = 1 << (itm + 1) * 8 + arg - 1;
+                string cpos = format("{};81H", 13 + arg);
                 vout = vin ^ bit_mask;
                 cmd = _echo(cpos + ((vout & bit_mask) > 0 ? "X" : " ") + _e(cpos));
             } else                                // execute a quick command
