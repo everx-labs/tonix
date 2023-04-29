@@ -1,8 +1,9 @@
 M:=mesh
 S:=settings
 A:=anset
-H:=$A
-D:=$A $S $M
+T:=tup
+H:=$T
+D:=$A $S $M $T
 INIT:=$D
 CTX+=$D $H
 #NET:=fld
@@ -17,4 +18,6 @@ run3: g.sh
 run2: f.sh
 	. $<
 run: g.sh
+	. $<
+setup: h.sh
 	. $<

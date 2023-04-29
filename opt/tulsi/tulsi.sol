@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.67.0;
+pragma ton-solidity >= 0.68.0;
 
 import "common.h";
 import "libstr.sol";
@@ -87,7 +87,7 @@ contract tulsi is common {
         string sTMP = _mval(cf, "TMP");
         string sCONF = _mval(cf, "CONFD");
         string sTO = sRT + "/" + sBIN + "/" + sTOC;
-        string pq = sTO + " -c " + sETC + "/" + cn + "." + sCONF + " ";
+        string pq = TOC + " -c " + sETC + "/" + cn + "." + sCONF + " ";
 //        string pp = sTO + " -c " + sETC + "/parser.conf ";
         string ofn = " " + sTMP + "/" + fn + ".res";
         string fargs = " -m " + fn + " " + args;
@@ -250,7 +250,7 @@ contract tulsi is common {
         string sRT = _mval(cf, "R_ROOT");
         string sBIN = _mval(cf, "TOOLS_BIN");
         string sSO = _mval(cf, "SOLD");
-        string sMA = _mval(cf, "MAKE");
+        string sMA = "make";//_mval(cf, "MAKE");
         string sSOLD = sRT + "/" + sBIN + "/" + sSO;
 //        string sTMP = _mval(cf, "TMP");
         string sBLD = _mval(cf, "BLD");

@@ -2,13 +2,15 @@ M:=tulsi
 T:=parsec
 G:=gensec
 H:=$M
-D:=$H $T $M
+D:=$H $T $M $G
 INIT:=$D
 CTX:=$D $H
 include ../common.mk
 
 SHELL = /bin/bash
 DAT:=data
+
+#../../bin/tonos-cli -c etc/tulsi.conf runx -m enp --ss1 ["TOOLS_BIN","RKEYS","SOLD","LINKER","TOC","BIN","BLD","ETC","TMP","URL","DEPLOYED","INSTALLED","CONFD","CCS","CSS","ASM","ABI","INC_PATH"] --ss2 ["bin","k1.keys","sold","tvm_linker","tonos-cli","bin","build","etc","tmp","rfld-dapp.itgold.io","deployed","installed","conf","cs","tvc","code","abi.json","."] --ss3 ["Tools","Keys","Compiler","Linker","TOC","Binary","Build","Config","Temp","URL","Depld","Instd","Config","Code","StateInit","Assembly","JSON","Headers"]
 
 s?=q2
 c?=ixeen

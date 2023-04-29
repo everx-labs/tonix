@@ -39,22 +39,22 @@ contract gensec is common {
                 dbg.append(" -\n");
         }
     }
-
-    function _pcmp(gtic g, mapping (uint32 => TvmCell) m1, mapping (uint32 => TvmCell) m2) internal view returns (string out) {
-        (uint nc, uint nb, uint nr) = c.dataSize(200);
-        bool f = false;
-        if (cid > 0) {
-            stot st = ST[cid];
-            out.append(print_stot(st));
-            if (st.pid == 4)
-                f = c != _ram[st.roff];
-            out.append(st.tname + ": " + (f ? "differs" : "identical"));
-        } else
-            out.append("not found");
-        out.append("\n");
-        if (!f)
-            return out;
-
+//
+//    function _pcmp(gtic g, mapping (uint32 => TvmCell) m1, mapping (uint32 => TvmCell) m2) internal view returns (string out) {
+//        (uint nc, uint nb, uint nr) = c.dataSize(200);
+//        bool f = false;
+//        if (cid > 0) {
+//            stot st = ST[cid];
+//            out.append(print_stot(st));
+//            if (st.pid == 4)
+//                f = c != _ram[st.roff];
+//            out.append(st.tname + ": " + (f ? "differs" : "identical"));
+//        } else
+//            out.append("not found");
+//        out.append("\n");
+//        if (!f)
+//            return out;
+//    }
 
     function _match_size(gtic g, uint sz) internal pure returns (uint) {
         for (uint i = g.mi.struct_start; i < g.mi.struct_start + g.mi.struct_len; i++) {
