@@ -3,7 +3,7 @@ export
 .ONESHELL:
 MAKEFLAGS += --no-builtin-rules --warn-undefined-variables --no-print-directory
 NET:=rfld
-#NET:=fld
+NET:=fld
 #NET:=dev
 GIVER:=Novi
 VAL0:=15
@@ -103,5 +103,15 @@ $(TMP)/%.boc: $(ETC)/%.conf
 	$(TOC) account `jq -r .config.addr $<` -b $@
 dump2_%: $(TMP)/%.boc $(BLD)/%.abi.json
 	$(TOC) decode account boc $<
+
+SHX?=e.sh
+$(TMP)/dev.tar.xz: Makefile $(SHX) $(patsubst %,%.sol,$(CTX))
+#$(TMP)/%.tar.xz: Makefile $(SHX) $(patsubst %,$(BLD)/%.abi.json,$(CTX)) $(patsubst %,$(ETC)/%.conf,$(CTX))
+$(TMP)/%.tar.xz: Makefile $(SHX) $(BLD)/%.abi.json $(ETC)/%.conf
+	tar cJvf $@ $^
+#pack_%: $(TMP)/%.tar.xz
+#$(TMP)/%.tar.xz:
+#	tar cJvf $@ $^
+
 list:   ## List the existing targets
 	LC_ALL=C $(MAKE) -pRrq -f Makefile : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'

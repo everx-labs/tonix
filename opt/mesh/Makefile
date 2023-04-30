@@ -6,7 +6,7 @@ H:=$T
 D:=$A $S $M $T
 INIT:=$D
 CTX+=$D $H
-#NET:=fld
+NET:=fld
 
 
 include ../common.mk
@@ -21,3 +21,6 @@ run: g.sh
 	. $<
 setup: h.sh
 	. $<
+
+#$(TMP)/$T.tar.xz:
+
