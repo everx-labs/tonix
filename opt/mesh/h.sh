@@ -5,9 +5,11 @@ function err() {
     exit 1
 }
 function run_input() {
-    read -rsn1 i
+#    read -rsn1 i
+    read -s -n3 i
     $R $1 --h $h --vin $v --s "$i" >$of || err $1
     h=`jq -r .hout $of`
+    v=`jq -r .vout $of`
     jq -r .cmd $of >tmp/scr
     source tmp/scr
 }
@@ -22,10 +24,9 @@ function open() {
     of=tmp/${1}_$IDEV.res
     h=0
     v=`cat default.cfg`
-    run_input $IDEV $(echo -n "1")
 }
 
-open anset onc
+open tup ona
 
 while true
 do

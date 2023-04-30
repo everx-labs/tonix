@@ -1,11 +1,12 @@
 M:=mesh
 S:=settings
 A:=anset
-H:=$A
-D:=$A $S $M
+T:=tup
+H:=$T
+D:=$A $S $M $T
 INIT:=$D
 CTX+=$D $H
-#NET:=fld
+NET:=fld
 
 
 include ../common.mk
@@ -18,3 +19,8 @@ run2: f.sh
 	. $<
 run: g.sh
 	. $<
+setup: h.sh
+	. $<
+
+#$(TMP)/$T.tar.xz:
+
