@@ -33,6 +33,8 @@ struct mod_info {
     uint8 enum_len;
     uint8 struct_start;
     uint8 struct_len;
+    uint8 map_start;
+    uint8 map_len;
     string name;
 }
 
@@ -62,18 +64,18 @@ library libtic {
 vard(0, 0, 0, 0, "N/A", "??")
     ];
    strti[] constant BT = [
-////     id  nv  nr  nb   attr  ldc ldd name
-strti(  NONE, 0, 0,    0, NONE, 0, 0, "?",      VVD),
-strti(  BOOL, 0, 0,    1, BOOL, 4, 0, "bool",   VVD),
-strti(   INT, 0, 0,    1, NONE, 3, 0, "int",    VVD),
-strti(  UINT, 0, 0,    1, NONE, 4, 0, "uint",   VVD),
-strti( BYTES, 0, 0,    8, NONE, 5, 0, "bytes",  VVD),
-strti(STRING, 0, 1,    0, NONE, 6, 0, "string", VVD),
-strti(  CELL, 0, 4, 1023, NONE, 4, 0, "TvmCell",VVD),
-strti(STRUCT, 0, 0,    0, NONE, 6, 0, "struct", VVD),
-strti( ARRAY, 0, 1,    0, NONE, 2, 0, "array",  VVD),
-strti(   MAP, 0, 1,    0, NONE, 7, 0, "map",    VVD),
-strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
+////     id  nv nr nb  attr ldc ldd name
+strti(  NONE, 0, 0, 0, NONE, 0, 0, "?",      VVD),
+strti(  BOOL, 0, 0, 1, BOOL, 4, 0, "bool",   VVD),
+strti(   INT, 0, 0, 1, NONE, 3, 0, "int",    VVD),
+strti(  UINT, 0, 0, 1, NONE, 4, 0, "uint",   VVD),
+strti( BYTES, 0, 0, 8, NONE, 5, 0, "bytes",  VVD),
+strti(STRING, 0, 1, 0, NONE, 6, 0, "string", VVD),
+strti(  CELL, 0, 1, 0, NONE, 4, 0, "TvmCell",VVD),
+strti(STRUCT, 0, 0, 0, NONE, 6, 0, "struct", VVD),
+strti( ARRAY, 0, 1, 0, NONE, 2, 0, "array",  VVD),
+strti(   MAP, 0, 1, 0, NONE, 7, 0, "map",    VVD),
+strti(  ENUM, 0, 0, 1, NONE, 4, 0, "enum",   VVD)
     ];
 
 
@@ -101,6 +103,15 @@ strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
             res = string(sname[ : q1 - 1]) + "s";
     }
 
+    function fix_map_name(bytes sname) internal returns (string res) {
+        uint q1 = libstr.strchr(sname, '(');
+        uint q2 = libstr.strchr(sname, ')');
+        uint q3 = libstr.strchr(sname, '=');
+        uint q4 = libstr.strchr(sname, '>');
+        if (q1 > 0 && q2 > 0 && q3 > 0 && q4 > 0)
+            res = string(sname[q1 : q3 - 2]) + "to" + string(sname[q4 + 1 : q2 - 1]);
+    }
+
     function conf_flags(uint vh, uint word) internal returns (bool f1, bool f2, bool f3, bool f4, bool f5, bool f6, bool f7, bool f8) {
         uint h = vh >> word * 8 & 0xFF;
         f1 = (h & 0x01) > 0;
@@ -115,7 +126,7 @@ strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
 
     function gen_module(gtic g, uint h) internal returns (string out, string dbg) {
         (mod_info mi, strti[] ti, ) = g.unpack();
-        (uint8 maj, uint8 min, uint8 nt, , , , , , , uint8 fla_start, uint8 fla_len, , uint8 da_len, uint8 enum_start, uint8 enum_len, uint8 struct_start, uint8 struct_len, string name) = mi.unpack();
+        (uint8 maj, uint8 min, uint8 nt, , , , , , , uint8 fla_start, uint8 fla_len, , uint8 da_len, uint8 enum_start, uint8 enum_len, uint8 struct_start, uint8 struct_len, uint8 map_start, uint8 map_len, string name) = mi.unpack();
         (bool struct_defs, bool enum_defs, bool type_printing, bool terse_printing, bool verbose_printing, bool helper_encoders, bool print_cells_by_type, ) = conf_flags(h, 0);
 
         string libname = "lib" + name;
@@ -134,6 +145,20 @@ strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
                 uint8 tattr = vt.attr & 0x0F;
                 loop_head = "for (uint i = 0; i < val.length; i++)";
                 loop_body = "    out.append(" + (tattr == STRUCT ? "print_" + ti[vt.id].name + "(val[i]))" : "format(\"{} \", val[i]))") + ";";
+            }
+            fns.push(enjoin(pra, "    ", indent([loop_head, loop_body]), "", "    }"));
+        }
+
+        for (uint i = map_start; i < map_start + map_len; i++) {
+            (, , , , , , , string sname, vard[] vd) = ti[i].unpack();
+            string pra = "function print_" + fix_map_name(sname) + "(" + sname + " val) internal returns (string out) {";
+            string loop_head;
+            string loop_body;
+            if (vd.length > 1) {
+                strti tk = ti[vd[0].vtype];
+                strti tv = ti[vd[1].vtype];
+                loop_head = "for ((" + tk.name + " key, " + tv.name + " value): val)";
+                loop_body = "    out.append(format(\"{} \", key) + " + (tv.attr & 0x0F == STRUCT ? "print_" + tv.name + "(value))" : "format(\"{} \", value))") + ";";
             }
             fns.push(enjoin(pra, "    ", indent([loop_head, loop_body]), "", "    }"));
         }
@@ -183,9 +208,11 @@ strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
                     attr == BYTES ? "string(bytes(" + vname + "))" :
                     attr == ENUM || attr == STRUCT ?  "print_" + ti[vt.id].name + "(" + vname + ")" :
                     attr == ARRAY ? "print_" + fix_arr_name(ti[vt.id].name) +  "(" + vname + ")" :
+                    attr == MAP ? "print_" + fix_map_name(ti[vt.id].name) +  "(" + vname + ")" :
                     attr == BOOL ?  vname + " ? \"Yes\" : \"No\"" :
+                    vt.id == CELL ? "tvm.hash(" + vname + ")" :
                                     vname;
-                if (attr == ARRAY)
+                if (attr == ARRAY || attr == MAP)
                     vas.push(pname);
                 else {
                     vns.push(pname);
@@ -244,9 +271,6 @@ strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
     }
 
     function fill_type(gtic g, uint8 t, uint8 id, string tname, vard[] vd) internal {
-//        uint8 nv;
-//        uint8 nr;
-//        uint16 nb;
         strti pti = g.tc[t];
         uint8 nv;
         uint8 nr = pti.nr;
@@ -301,9 +325,9 @@ strti(  ENUM, 0, 0,    1, NONE, 4, 0, "enum",   VVD)
     function print_types(gtic g) internal returns (string out) {
         (mod_info mi, strti[] ti, mapping (uint => uint8) tnc) = g.unpack();
         (uint8 maj, uint8 min, uint8 nt, uint8 start, uint8 len, uint8 base_start, uint8 base_len, uint8 fixed_start, uint8 fixed_len,
-            uint8 fla_start, uint8 fla_len, uint8 da_start, uint8 da_len, uint8 enum_start, uint8 enum_len, uint8 struct_start, uint8 struct_len, string name) = mi.unpack();
-        out.append(format(" maj: {} min: {} nt: {} start: {} len: {} base_start: {} base_len: {} fixed_start: {} fixed_len: {} fla_start: {} fla_len: {} da_start: {} da_len: {} enum_start: {} enum_len: {} struct_start: {} struct_len: {} name: {}\n",
-            maj, min, nt, start, len, base_start, base_len, fixed_start, fixed_len, fla_start, fla_len, da_start, da_len, enum_start, enum_len, struct_start, struct_len, name));
+            uint8 fla_start, uint8 fla_len, uint8 da_start, uint8 da_len, uint8 enum_start, uint8 enum_len, uint8 struct_start, uint8 struct_len, uint8 map_start, uint8 map_len, string name) = mi.unpack();
+        out.append(format(" maj: {} min: {} nt: {} start: {} len: {} base_start: {} base_len: {} fixed_start: {} fixed_len: {} fla_start: {} fla_len: {} da_start: {} da_len: {} enum_start: {} enum_len: {} struct_start: {} struct_len: {} map_start: {} map_len: {} name: {}\n",
+            maj, min, nt, start, len, base_start, base_len, fixed_start, fixed_len, fla_start, fla_len, da_start, da_len, enum_start, enum_len, struct_start, struct_len, map_start, map_len, name));
 
         for ((, uint8 n): tnc)
             out.append(format("{}) ", n) + (n < ti.length ? ti[n].name : "???") + "\n");

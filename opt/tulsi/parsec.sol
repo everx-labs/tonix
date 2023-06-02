@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.67.0;
+pragma ton-solidity >= 0.68.0;
 
 import "common.h";
 import "libtic.sol";
@@ -6,6 +6,18 @@ import "libstr.sol";
 
 contract parsec is common {
 
+    bytes constant WHITESPACE = "\t\n ";
+    uint8 constant ERROR = 0xFF;
+    function strip_leading(bytes s, bytes cc) internal pure returns (bytes) {
+        uint pos;
+        for (bytes1 b: s) {
+            if (libstr.strchr(cc, b) > 0)
+                pos++;
+            else
+                break;
+        }
+        return pos > 0 ? s[pos : ] : s;
+    }
     function strip_trailing(bytes s, bytes1 c) internal pure returns (bytes) {
         uint len = s.length;
         return len > 0 && s[len - 1] == c ? s[ : len - 1] : s;
@@ -31,7 +43,48 @@ contract parsec is common {
             ww.push(s[t : ]);
     }
 
-    function scan(bytes bb) internal pure returns (mapping (uint => uint8) tnc, string[] prags, string[] fls, string[] enums, string[] flas, string[] das, string[] strus) {
+    function _var_decl(bytes w) internal pure returns (bytes vtype, bytes vname, bytes vcom, bytes err, uint8 hint) {
+        uint q1 = libstr.strrchr(w, '/');
+        if (q1 > 0)
+            vcom = w[q1 : ];
+        uint q2 = libstr.strchr(w, ';');
+        if (q2 > 0) {
+            bytes vdecl = w[ : q2 - 1];
+            uint q3 = libstr.strrchr(vdecl, ' ');
+            if (q3 > 0) {
+                vname = vdecl[q3 : ];
+                vtype = strip_leading(vdecl[ : q3 - 1], WHITESPACE);
+                uint vl = vtype.length;
+                uint q4 = libstr.strrchr(vtype, '[');
+                if (q4 > 0)
+                    hint = libtic.ARRAY;
+                else if (vl > 7 && vtype[ : 7] == "mapping")
+                    hint = libtic.MAP;
+            } else
+                err = "No variable separator in declaration";
+        } else
+            err = "No semicolon in declaration";
+        if (!err.empty())
+            hint = ERROR;
+    }
+
+    function paw(string ss) external pure returns (string out) {
+        bytes[] ww = words(ss, '\n', true);
+        for (bytes w: ww) {
+            out.append("Line: " + string(w) + "\n");
+            (bytes vtype, bytes vname, bytes vcom, bytes err, uint8 hint) = _var_decl(w);
+            if (!err.empty())
+                out.append("Error: " + string(err) + "\n");
+            else {
+                out.append(format("hint: {}", hint) + "Type: " + string(vtype) + " name: " + string(vname));
+                if (!vcom.empty())
+                    out.append(" comments: " + string(vcom));
+                out.append("\n");
+            }
+        }
+    }
+
+    function scan(bytes bb) internal pure returns (mapping (uint => uint8) tnc, string[] prags, string[] fls, string[] enums, string[] flas, string[] das, string[] strus, string[] mas) {
         uint8 cur;
         for (uint i = 0; i < libtic.BT.length; i++)
             tnc[tvm.hash(libtic.BT[i].name)] = uint8(i);
@@ -51,19 +104,25 @@ contract parsec is common {
                     else if (w1 == "enum") enums.push(w2);
                     tnc[tvm.hash(w2)] = cur;
                     cur++;
-                } else if (tnc[tvm.hash(w1)] == 0) {
-                    tnc[tvm.hash(w1)] = cur;
-                    cur++;
-                    if (w1l > 0 && w1[w1l - 1] == "]") {
-                        uint q = libstr.strrchr(w1, "[");
-                        if (q > 0) {
-                            if (q + 1 < w1l)
-                                flas.push(w1);
-                            else
-                                das.push(w1);
-                        }
-                    } else
-                        fls.push(w1);
+                } else {
+                    (bytes vtype, , , bytes err, uint8 hint) = _var_decl(w);
+                    if (err.empty() && tnc[tvm.hash(vtype)] == 0) {
+                        tnc[tvm.hash(vtype)] = cur;
+                        cur++;
+                        w1l = vtype.length;
+                        if (vtype[w1l - 1] == "]") {
+                            uint q = libstr.strrchr(vtype, "[");
+                            if (q > 0) {
+                                if (q + 1 < w1l)
+                                    flas.push(vtype);
+                                else
+                                    das.push(vtype);
+                            }
+                        } else if (hint == libtic.MAP)
+                            mas.push(vtype);
+                        else
+                            fls.push(vtype);
+                    }
                 }
             }
         }
@@ -75,14 +134,14 @@ contract parsec is common {
         for (string s: das) tnc[tvm.hash(s)] = cur++;
         for (string s: enums) tnc[tvm.hash(s)] = cur++;
         for (string s: strus) tnc[tvm.hash(s)] = cur++;
+        for (string s: mas) tnc[tvm.hash(s)] = cur++;
     }
-
 
     function parse_source(string name, string ss) external pure returns (gtic g) {
         tvm.accept();
         g.mi.name = name;
 
-        (mapping (uint => uint8) tnc, , string[] fls, string[] enums, string[] flas, string[] das, string[] strus) = scan(bytes(ss));
+        (mapping (uint => uint8) tnc, , string[] fls, string[] enums, string[] flas, string[] das, string[] strus, string[] mas) = scan(bytes(ss));
 
         g.tnc = tnc;
         g.tc = libtic.BT;
@@ -100,11 +159,16 @@ contract parsec is common {
         uint8 enum_len = uint8(enums.length);
         uint8 struct_start = enum_start + enum_len;
         uint8 struct_len = uint8(strus.length);
-        uint8 len = struct_start + struct_len;
+        uint8 map_start = struct_start + struct_len;
+        uint8 map_len = uint8(mas.length);
+        uint8 len = map_start + map_len;
 
         uint8 nt = fixed_start;
 
-        g.mi = mod_info(0, 0, nt, start, len, base_start, base_len, fixed_start, fixed_len, fla_start, fla_len, da_start, da_len, enum_start, enum_len, struct_start, struct_len, name);
+        g.mi = mod_info(0, 0, nt, start, len, base_start, base_len,
+            fixed_start, fixed_len, fla_start, fla_len,
+            da_start, da_len, enum_start, enum_len,
+            struct_start, struct_len, map_start, map_len, name);
 
         for (bytes s: fls) {
             bytes1 b0 = s[0];
@@ -143,6 +207,8 @@ contract parsec is common {
             g.add_type(libtic.ENUM, s, vv);
         for (bytes s: strus)
             g.add_type(libtic.STRUCT, s, vv);
+        for (bytes s: mas)
+            g.add_type(libtic.MAP, s, vv);
 
         bytes[] ww = words(ss, '\n', true);
         string sname;
@@ -162,9 +228,6 @@ contract parsec is common {
             bytes w1 = wwl > 0 ? www[0] : "";
             uint w1l = w1.length;
             bytes w2 = wwl > 1 ? www[1] : "";
-            uint w2l = w2.length;
-            bytes w3 = wwl > 2 ? www[2] : "";
-            bytes w4;
 
             if (!w2.empty()) {
                 if (w1 == "struct") {
@@ -184,7 +247,7 @@ contract parsec is common {
                     }
                     g.fill_type(libtic.ENUM, tn, w2, vv0);
                 } else if (w1 == "pragma" && (w2 == "ton-solidity" || w2 == "ever-solidity")) {
-                    w4 = wwl > 3 ? www[3] : "";
+                    bytes w4 = wwl > 3 ? www[3] : "";
                     bytes[] wx = words(w4, '.', true);
                     optional(int) vi = stoi(wx[1]);
                     if (vi.hasValue())
@@ -193,34 +256,37 @@ contract parsec is common {
                     if (vi.hasValue())
                         g.mi.min = uint8(vi.get());
                 } else {
-                    if (sname.empty())
+                    if (sname.empty() || w1l == 0)
                         continue;
-                    uint8 tn = g.tnc[tvm.hash(w1)];
-                    uint8 dl = uint8(w1l + w2l);
-                    uint8 cl;
+                    (bytes vtype, bytes vname, bytes vcom, bytes err, uint8 hint) = _var_decl(w);
+                    hint;
+                    if (!err.empty())
+                        continue;
+                    w1l = w1.length;
+                    uint8 tn = g.tnc[tvm.hash(vtype)];
                     uint8 vcnt = 1;
-                    bytes w1b;
-                    uint8 tb;
-                    if (w1l > 0 && w1[w1l - 1] == "]") {
-                        uint q = libstr.strrchr(w1, "[");
+                    if (vtype[w1l - 1] == "]") {
+                        uint8 tb;
+                        uint q = libstr.strrchr(vtype, "[");
                         if (q > 0) {
                             if (q + 1 < w1l) {
-                                optional(int) vi = stoi(w1[q : w1l - 1]);
+                                optional(int) vi = stoi(vtype[q : w1l - 1]);
                                 if (vi.hasValue())
                                     vcnt = uint8(vi.get());
                             } else
                                 vcnt = 0;
-                            w1b = w1[ : q - 1];
-                            tb = g.tnc[tvm.hash(w1b)];
+                            tb = g.tnc[tvm.hash(vtype[ : q - 1])];
                         }
-                        g.fill_type(libtic.ARRAY, tn, w1, [vard(tb, vcnt, dl, cl, w2[ : w2l - 1], w4)]);
+                        g.fill_type(libtic.ARRAY, tn, vtype, [vard(tb, vcnt, uint8(w1l + vname.length), uint8(vcom.length), vname, vcom)]);
+                    } else if (hint == libtic.MAP) {
+                        bytes[] wwm = words(vtype, ' ', false);
+                        bytes tk = wwm[1][1 : ];
+                        bytes tv = strip_trailing(wwm[3], ')');
+                        g.fill_type(libtic.MAP, tn, vtype, [
+                            vard(g.tnc[tvm.hash(tk)], 1, 3, 0, "key", ""),
+                            vard(g.tnc[tvm.hash(tv)], 1, 5, 0, "value", "")]);
                     }
-                    if (w3 == "//") {
-                        for (uint i = 3; i < wwl; i++)
-                            w4.append(string(www[i]) + (i + 1 < wwl ? " " : ""));
-                        cl = uint8(w4.length);
-                    }
-                    vv.push(vard(tn, vcnt, dl, cl, w2[ : w2l - 1], w4));
+                    vv.push(vard(tn, vcnt, uint8(w1l + vname.length), uint8(vcom.length), vname, vcom));
                 }
             }
         }

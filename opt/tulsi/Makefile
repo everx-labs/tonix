@@ -1,7 +1,8 @@
 M:=tulsi
 T:=parsec
 G:=gensec
-H:=$M
+P:=pav
+H:=$P
 D:=$H $T $M $G
 INIT:=$D
 CTX:=$D $H
@@ -10,7 +11,30 @@ include ../common.mk
 SHELL = /bin/bash
 DAT:=data
 
-#../../bin/tonos-cli -c etc/tulsi.conf runx -m enp --ss1 ["TOOLS_BIN","RKEYS","SOLD","LINKER","TOC","BIN","BLD","ETC","TMP","URL","DEPLOYED","INSTALLED","CONFD","CCS","CSS","ASM","ABI","INC_PATH"] --ss2 ["bin","k1.keys","sold","tvm_linker","tonos-cli","bin","build","etc","tmp","rfld-dapp.itgold.io","deployed","installed","conf","cs","tvc","code","abi.json","."] --ss3 ["Tools","Keys","Compiler","Linker","TOC","Binary","Build","Config","Temp","URL","Depld","Instd","Config","Code","StateInit","Assembly","JSON","Headers"]
+check:
+	$(TOC) -c $(ETC)/$M.conf runx -m onc --h 0x0000000000000000000000000000000000000000000000000000000000020000 --s 2
+
+V1=R_PATH TOOLS_BIN RKEYS SOLD LINKER TOC BIN BLD ETC TMP URL DEPLOYED INSTALLED CONFD CCS CSS ASM ABI INC_PATH
+V2=../.. bin k1.keys sold tvm_linker tonos-cli bin build etc tmp rfld-dapp.itgold.io ployed installed conf cs tvc code abi.json .
+V3=Root Tools Keys Compiler Linker TOC Binary Build Config Temp URL Depld Instd Config Code StateInit Assembly JSON Headers
+comma=,
+null=
+space=$(null) $(null)
+_toa=$(subst $(space),,["$(firstword $1)"$(patsubst %,$(comma)"%",$(wordlist 2,$(words $1),$1))])
+
+define t-enc
+enc_$4:
+	$(TOC) -c $(ETC)/$M.conf callx -m st --a $4 --c `$$(call _enp,$1,$2,$3)`
+endef
+
+#$(info $(call t-enc,$(V1),$(V2),$(V3),33))
+$(eval $(call t-enc,$(V1),$(V2),$(V3),33))
+$(eval $(call t-enc,PROJ,awt,Client,36))
+$(eval $(call t-enc,PARSER FN,parsec parse_source,parser worker,38))
+$(eval $(call t-enc,MODULE,rt,MODULE,42))
+
+3?=
+_enp=$(TOC) -c $(ETC)/$M.conf runx -m enp --ss1 $(call _toa,$1) --ss2 $(call _toa,$2) --ss3 $(call _toa,$3) | jq -r .c
 
 s?=q2
 c?=ixeen
