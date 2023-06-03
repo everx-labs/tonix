@@ -46,7 +46,7 @@ contract parsec is common {
     function _var_decl(bytes w) internal pure returns (bytes vtype, bytes vname, bytes vcom, bytes err, uint8 hint) {
         uint q1 = libstr.strrchr(w, '/');
         if (q1 > 0)
-            vcom = w[q1 : ];
+            vcom = strip_leading(w[q1 : ], WHITESPACE);
         uint q2 = libstr.strchr(w, ';');
         if (q2 > 0) {
             bytes vdecl = w[ : q2 - 1];
@@ -137,6 +137,26 @@ contract parsec is common {
         for (string s: mas) tnc[tvm.hash(s)] = cur++;
     }
 
+    function add_type(gtic gin, strti s) internal pure returns (gtic g) {
+        g = gin;
+        g.tc.push(s);
+        g.mi.nt++;
+        g.tnc[tvm.hash(s.name)] = s.id;
+    }
+
+    function add_types(gtic gin, uint8 t, string[] tnames) internal pure returns (gtic g) {
+        g = gin;
+        uint8 id = g.mi.nt;
+        strti pti = g.tc[t];
+        for (string tn: tnames) {
+            strti ti = strti(id, 0, pti.nr, pti.nb, t, 0, 0, tn);
+            g.tc.push(ti);
+            g.mi.nt++;
+            g.tnc[tvm.hash(tn)] = id;
+            id++;
+        }
+    }
+
     function parse_source(string name, string ss) external pure returns (gtic g) {
         tvm.accept();
         g.mi.name = name;
@@ -170,6 +190,7 @@ contract parsec is common {
             da_start, da_len, enum_start, enum_len,
             struct_start, struct_len, map_start, map_len, name);
 
+        vard[] vv;
         for (bytes s: fls) {
             bytes1 b0 = s[0];
             uint8 t;
@@ -195,20 +216,18 @@ contract parsec is common {
             optional(int) vi = stoi(bv);
             if (vi.hasValue())
                 i = uint16(vi.get());
-            g.add_fixed_length_type(t, i * fac);
+//            g.add_fixed_length_type(t, i * fac);
+            strti ti = strti(g.mi.nt, 1, 0, i * fac, t, 0, 0, format("{}{}", libtic.BT[t].name, i * fac / libtic.BT[t].nb));
+            g.tc.push(ti);
+            g.mi.nt++;
+            g.tnc[tvm.hash(ti.name)] = ti.id;
         }
 
-        vard[] vv;
-        for (bytes s: flas)
-            g.add_type(libtic.ARRAY, s, vv);
-        for (bytes s: das)
-            g.add_type(libtic.ARRAY, s, vv);
-        for (bytes s: enums)
-            g.add_type(libtic.ENUM, s, vv);
-        for (bytes s: strus)
-            g.add_type(libtic.STRUCT, s, vv);
-        for (bytes s: mas)
-            g.add_type(libtic.MAP, s, vv);
+        g = add_types(g, libtic.ARRAY, flas);
+        g = add_types(g, libtic.ARRAY, das);
+        g = add_types(g, libtic.ENUM, enums);
+        g = add_types(g, libtic.STRUCT, strus);
+        g = add_types(g, libtic.MAP, mas);
 
         bytes[] ww = words(ss, '\n', true);
         string sname;

@@ -58,29 +58,29 @@ contract gensec is common {
 
     function _match_size(gtic g, uint sz) internal pure returns (uint) {
         for (uint i = g.mi.struct_start; i < g.mi.struct_start + g.mi.struct_len; i++) {
-            (uint8 id, uint8 nv, uint8 nr, uint16 nb, uint8 attr, uint8 ldecl, uint8 ldesc, string sname, ) = g.tc[i].unpack();
             if (g.tc[i].nb == sz)
                 return i;
         }
     }
     function struct_types(gtic g) external pure returns (string out, string dbg) {
-        (mod_info mi, strti[] ti, mapping (uint => uint8) tnc) = g.unpack();
-        (, , uint8 nt, , , , , , , , , , , uint8 enum_start, uint8 enum_len, uint8 struct_start, uint8 struct_len, uint8 map_start, uint8 map_len, string name) = mi.unpack();
+        (mod_info mi, strti[] ti, , ) = g.unpack();
+        (, , , , , , , , , , , , , , , uint8 struct_start, uint8 struct_len, uint8 map_start, uint8 map_len, ) = mi.unpack();
         dbg.append(format("id  nv nr nb att dcl dsc   name\n"));
         out.append(format("id  nv nr nb  name\n"));
         for (uint i = struct_start; i < struct_start + struct_len; i++) {
-            (uint8 id, uint8 nv, uint8 nr, uint16 nb, uint8 attr, uint8 ldecl, uint8 ldesc, string sname, ) = ti[i].unpack();
+            (uint8 id, uint8 nv, uint8 nr, uint16 nb, uint8 attr, uint8 ldecl, uint8 ldesc, string sname) = ti[i].unpack();
             dbg.append(format("{:2}) {:2} {} {:5} {:2} {:2} {:3} {}\n", id, nv, nr, nb, attr, ldecl, ldesc, sname));
             out.append(format("{:2}) {:2} {} {:5} {}\n", id, nv, nr, nb, sname));
         }
         for (uint i = map_start; i < map_start + map_len; i++) {
-            (uint8 id, uint8 nv, uint8 nr, uint16 nb, uint8 attr, uint8 ldecl, uint8 ldesc, string sname, ) = ti[i].unpack();
+            (uint8 id, uint8 nv, uint8 nr, uint16 nb, uint8 attr, uint8 ldecl, uint8 ldesc, string sname) = ti[i].unpack();
             dbg.append(format("{:2}) {:2} {} {:5} {:2} {:2} {:3} {}\n", id, nv, nr, nb, attr, ldecl, ldesc, sname));
             out.append(format("{:2}) {:2} {} {:5} {}\n", id, nv, nr, nb, sname));
         }
     }
     function print_config(uint h) external pure returns (string out, string dbg) {
         uint shift = 1;
+        dbg;
         for (string o: OPTS) {
             out.append(o + ((h & shift) > 0 ? "X" : " ") + "]\n");
             shift <<= 1;
