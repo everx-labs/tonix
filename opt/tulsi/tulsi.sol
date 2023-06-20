@@ -80,7 +80,7 @@ contract tulsi is common {
     }
     function _ccmd(string cn, uint8 ccm, string fn, string args, uint8 redir, bool debug) internal view returns (string cmd) {
         confg cf = _decode_packed_config(_ram[CONFIG_PACKED]);
-        string sRT = _mval(cf, "R_ROOT");
+        string sRT = _mval(cf, "R_PATH");
         string sBIN = _mval(cf, "TOOLS_BIN");
         string sTOC = _mval(cf, "TOC");
         string sETC = _mval(cf, "ETC");
@@ -156,7 +156,7 @@ contract tulsi is common {
             (uint8 off1, uint8 len1) = s1.decode(uint8, uint8);
             (uint8 off2, uint8 len2) = s2.decode(uint8, uint8);
             (uint8 off3, uint8 len3) = s3.decode(uint8, uint8);
-            cf.params.push(cparam(svv[off3 : off3 + len3], sv[off2 : off2 + len2], sn[off1 : off1 + len1]));
+            cf.params.push(cparam(sn[off1 : off1 + len1], sv[off2 : off2 + len2], svv[off3 : off3 + len3]));
         }
     }
 
@@ -204,6 +204,15 @@ contract tulsi is common {
     function _misc(uint n) internal view returns (string cmd) {
         confg cfv = _decode_packed_config(_ram[CONFIG_VOL]);
         string sMOD = _mval(cfv, "MODULE");
+        if (sMOD.empty()) {
+            string out;
+            for (uint i = 0; i < cfv.n; i++) {
+                cparam p = cfv.params[i];
+                out.append(format("[{}] [{}] [{}]\n", p.mvar, p.val, p.desc));
+                out.append("val of " + p.mvar + " is " + _mval(cfv, p.mvar) + "\n");
+            }
+            return _print_cmd(out);
+        }
         if (n == 1)
             cmd.append("stat data/" + sMOD + ".sol\n");
         else if (n == 2)
@@ -247,12 +256,13 @@ contract tulsi is common {
 //        string sPA = _mval(cfp, "PARSER");
         string sFN = _mval(cfp, "FN");
         string sMOD = _mval(cfv, "MODULE");
-        string sRT = _mval(cf, "R_ROOT");
+        string sRT = _mval(cf, "R_PATH");
         string sBIN = _mval(cf, "TOOLS_BIN");
         string sSO = _mval(cf, "SOLD");
         string sMA = "make";//_mval(cf, "MAKE");
         string sSOLD = sRT + "/" + sBIN + "/" + sSO;
 //        string sTMP = _mval(cf, "TMP");
+        string sDEPLOYED = _mval(cf, "DEPLOYED");
         string sBLD = _mval(cf, "BLD");
 //        string IF = sTMP + "/" + sFN + ".res.src";
         string IF = "data/" + sMOD + "/" + sMOD + "_gen.src";
@@ -273,7 +283,8 @@ contract tulsi is common {
 //            jq --slurpfile v data/q0/tgen.cfg '{g:.g,h:$v[]}' data/q0/q0.tin
             cmd.append(sSOLD + " " + IF + " " + REST);
         } else if (n == 3) {
-            cmd.append(sMA + " " + sBLD + "/" + sMOD + "." + "deployed" + "\n");
+            //cmd.append(sMA + " " + sBLD + "/" + sMOD + "." + "deployed" + "\n");
+            cmd.append(sMA + " " + sBLD + "/" + sMOD + "." + sDEPLOYED + "\n");
         } else if (n == 4) {
             uint8 start = 17;
             sMOD = "q0";
