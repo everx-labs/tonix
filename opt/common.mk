@@ -87,6 +87,8 @@ $(BLD)/%.ployed: $(BLD)/%.shift $(BLD)/%.tvc $(BLD)/%.abi.json $(RKEYS)
 	$(call _pay,$(file < $<),$(VAL1))
 	$(TOC) -u $(URL) deploy $(word 2,$^) --abi $(word 3,$^) --sign $(word 4,$^) {} >$@
 	$(TOC) -c $(ETC)/$*.conf config --url $(URL) --wc 0 --addr $(file <$<) --abi $(word 3,$^) --is_json true --balance_in_tons true $(PAK)
+	$(TOC) config alias add --addr $(file <$<) --abi $(word 3,$^) $*
+
 dd_%: $(BLD)/%.tvc
 	$(eval a!=$(TOC) -j genaddr $< --setkey $(RKEYS) | jq -r '.raw_address')
 	$(call _pay,$a,$(VAL1))
@@ -111,6 +113,16 @@ $(TMP)/%.boc: $(ETC)/%.conf
 dump2_%: $(TMP)/%.boc $(BLD)/%.abi.json
 	$(TOC) decode account boc $<
 
+remap_%: $(ETC)/%.conf $(BLD)/%.abi.json
+	$(TOC) config alias add --addr `jq -r .config.addr $<` --abi $(word 2,$^) $*
+
+#remap: $(patsubst %,$(ETC)/%.conf,$(CTX))
+#	$(foreach a,$^,$(MAKE) remap_$a;)
+
+remap:
+	$(foreach a,$(CTX),$(MAKE) remap_$a;)
+	$(TOC) config alias print
+
 SHX?=e.sh
 $(TMP)/dev.tar.xz: Makefile $(SHX) $(patsubst %,%.sol,$(CTX))
 #$(TMP)/%.tar.xz: Makefile $(SHX) $(patsubst %,$(BLD)/%.abi.json,$(CTX)) $(patsubst %,$(ETC)/%.conf,$(CTX))
@@ -119,6 +131,13 @@ $(TMP)/%.tar.xz: Makefile $(SHX) $(BLD)/%.abi.json $(ETC)/%.conf
 #pack_%: $(TMP)/%.tar.xz
 #$(TMP)/%.tar.xz:
 #	tar cJvf $@ $^
+
+define t-run
+R$1=$(TOC) -c $(ETC)/$1.conf runx -m
+r$1=$(TOC) runx --addr $1 -m
+endef
+
+$(foreach a,$(CTX),$(eval $(call t-run,$a)))
 
 _fa=$(foreach c,$(CTX),$(call $1,$c);)
 _ping=$(TOC) account `jq -r .config.addr etc/$1.conf` | jq -c .balance | xargs echo $1:
