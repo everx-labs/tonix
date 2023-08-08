@@ -1,6 +1,6 @@
 #set -x
 function err() {
-    ~/bin/0.67.1/tonos-cli -c $CFG debug run -d build/$X.debug.json -m $1 -- --h $h --vin $v --s "$i"
+    ../../bin/tonos-cli -c $CFG debug run -d build/$X.debug.json -m $1 -- --h $h --vin $v --s "$i"
     tail -n15 trace.log | head -n-5
     exit 1
 }

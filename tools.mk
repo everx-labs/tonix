@@ -1,10 +1,10 @@
 R_ROOT:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-TOOLS_BIN:=$(R_ROOT)/bin
+TOOLS_BIN:=$(R_ROOT)bin
 SOLD:=$(TOOLS_BIN)/sold
 LINKER:=$(TOOLS_BIN)/tvm_linker
 TOC:=$(TOOLS_BIN)/tonos-cli
 
-TOOLS_VERSION:=0.68.0
+TOOLS_VERSION:=0.71.0
 UNAME_S:=$(shell uname -s)
 ARC_PREFIX:=ever_tools
 ARC_SUFFIX:=txz
@@ -22,5 +22,3 @@ tools: $(TOOLS_ARCHIVE) | $(TOOLS_BIN)
 	tar -xJf $< -C $|
 	$(foreach t,$(TOOLS_BINARIES),$t --version;)
 	rm -f $<
-check:
-	$(foreach t,$(TOOLS_BINARIES),$t --version;)

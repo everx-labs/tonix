@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.68.0;
+pragma ton-solidity >= 0.71.0;
 import "common.h";
 import "libstr.sol";
 

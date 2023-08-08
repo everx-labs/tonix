@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.67.0;
+pragma ton-solidity >= 0.71.0;
 contract common {
     function _from_handle(uint h) internal pure returns (uint8 n, uint8 t, uint8 c, uint8 f, uint8 o, uint8 a) {
         return (uint8(h & 0xFF), uint8(h >> 8 & 0xFF), uint8(h >> 16 & 0xFF), uint8(h >> 24 & 0xFF), uint8(h >> 32 & 0xFF), uint8(h >> 40 & 0xFF));

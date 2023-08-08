@@ -1,11 +1,7 @@
 L:=gen
 O:=par
 C:=check
-H:=$L
-D:=$H $L $O $C
-#INIT:=$D
-INIT:=$H
-CTX:=$D $H
+CTX:=$L $O $C
 
 include ../common.mk
 

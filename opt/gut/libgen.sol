@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.68.0;
+pragma ton-solidity >= 0.71.0;
 import "types.h";
 
 library libprint {
@@ -120,5 +120,3 @@ function _strcat(string[] fields, string suffix) returns (string[] res) {
     for (string s: fields)
         res.push(s + suffix);
 }
-
-

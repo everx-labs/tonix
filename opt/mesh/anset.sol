@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.67.0;
+pragma ton-solidity >= 0.71.0;
 import "common.h";
 import "libstr.sol";
 
@@ -193,7 +193,7 @@ contract anset is common {
                 v += 0x20;
             else if (v >= 0x3C && v <= 0x3F)    // strip "shift" modifier
                 v -= 0x10;
-            if (v == 0x68)               // 'h': help
+            if (v == 0x68)                      // 'h': help
                 cmd = _echo("29;H" + _e("0J") + _help(itm, h));
             else if (v == 0x2C && ectx > MENU.MAIN)
                 ectx = MENU(ctx - 1);
@@ -202,12 +202,12 @@ contract anset is common {
             else                                // execute a quick command
                 cmd = _quick_command(v) + "\n";
         } else if (v >= 0x30 && v <= 0x39) {    // decimal digit
-            uint8 n = v - 0x30;                       // digit ascii to its numerical value
+            uint8 n = v - 0x30;                 // digit ascii to its numerical value
             if (arg > 0)
                 arg = n;
             else if (itm > 0)
                 itm = n;
-            else
+            else if (n < uint(MENU.LAST))
                 ectx = MENU(n);
         } else
             cmd = _echo("39;HPress \"h\" for help");

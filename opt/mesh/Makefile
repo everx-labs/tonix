@@ -2,12 +2,7 @@ M:=mesh
 S:=settings
 A:=anset
 T:=tup
-H:=$T
-D:=$A $S $M $T
-INIT:=$D
-CTX+=$D $H
-NET:=fld
-
+CTX:=$A $S $M $T
 
 include ../common.mk
 
@@ -21,6 +16,3 @@ run: g.sh
 	. $<
 setup: h.sh
 	. $<
-
-#$(TMP)/$T.tar.xz:
-

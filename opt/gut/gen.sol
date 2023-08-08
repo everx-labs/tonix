@@ -1,4 +1,4 @@
-pragma ton-solidity >= 0.68.0;
+pragma ton-solidity >= 0.71.0;
 import "common.h";
 import "libgen.sol";
 import "libparse.sol";
@@ -64,4 +64,3 @@ contract lgen is common {
         res.print_lines(ctx);
     }
 }
-
